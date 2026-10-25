@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-25",
+  "featureAcceptance": "INCOMPLETE / NOT ACCEPTED",
+  "checks": {
+    "workspaceTests": {
+      "log": "/tmp/blue118-final-pnpm-test-recheck.log",
+      "sha256": "2a4eb7f2e42625887986a3b8cff22f739e0da53d919331795d87b1db52e5e958",
+      "status": "PASS",
+      "app": "5798 passed, 3 skipped",
+      "data": "3114 passed, 1 skipped",
+      "engineClient": "47 passed",
+      "cli": "7 passed",
+      "native": "38 script tests and 14 CTest tests passed",
+      "rootScripts": "59 passed"
+    },
+    "workspaceTestsInitial": {
+      "log": "/tmp/blue118-final-pnpm-test.log",
+      "sha256": "b38955ac3df2e9fd277f0f4a601bc6684bf53e99b0bfb5a017522b90c4a562f0",
+      "status": "FAIL",
+      "reason": "Existing meter-stress renderer latency assertion exceeded its bound while lint ran concurrently; no test or threshold changed."
+    },
+    "isolatedMeterStressRetry": {
+      "log": "/tmp/blue118-meter-stress-recheck.log",
+      "sha256": "824dcb66f4c6035ca754a08ec1f9b2dbc112a8e7f079a171fc0bfed9a94b7844",
+      "status": "PASS",
+      "tests": 3
+    },
+    "lint": {
+      "log": "/tmp/blue118-final-pnpm-lint.log",
+      "sha256": "5d9a165a1ef8c26c900366e11a1ce933b36aa4932bab69126a41524635f76cf2",
+      "status": "PASS"
+    },
+    "mainBuild": {
+      "log": "/tmp/blue118-final-main-build.log",
+      "sha256": "dff087eb4f5c14ad3405f617bbaf32e6feb937d485904fd460653546afe5694c",
+      "status": "PASS"
+    },
+    "nativeIntegration": {
+      "log": "/tmp/blue118-final-native-integration.log",
+      "sha256": "8e5c6aba36aa884f8db5abafecca82f975fe8cbbcf68d02e8d39f6bc736e195b",
+      "status": "FAIL",
+      "passed": 4,
+      "total": 5,
+      "failedTest": "CsoundIntegrationTests",
+      "message": "sndinfo utility did not complete",
+      "runtime": "Csound 7.0 double 19b39531b26d87347c640f53ef55317aa74967c2",
+      "note": "ChannelBridgeTests, CsoundLifecycleStress, MeterSamplingTests, MeteringBenchmarkSoak passed. Runtime utility failure was not repaired or waived by this mixer feature."
+    }
+  }
+}

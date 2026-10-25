@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T00:26:53.154711+00:00",
+  "task": "Spec 118 T038 native platform acceptance matrix",
+  "status": "Implementation COMPLETE and accepted; macOS evidence passes. Native Windows/Linux release acceptance remains INCOMPLETE and deferred.",
+  "macOS": {
+    "status": "Phase 8 available matrix PASS; scoped native utility exception documented separately",
+    "correctness": {
+      "manifestEntries": 379,
+      "offlineComparisons": 197,
+      "panningComparisons": 38,
+      "managedTimelineAndBlueLiveTraces": 2,
+      "evidence": "phase8-identity-verification.json"
+    },
+    "performance": {
+      "status": "PASS: 72 SC-002 representative comparisons",
+      "evidence": "phase8-representative-results.json",
+      "rates": [
+        44100,
+        48000
+      ],
+      "blocks": [
+        32,
+        64,
+        128
+      ],
+      "pairsPerCase": 7,
+      "warmupCycles": 1024,
+      "measuredCycles": 65536,
+      "maximumRegressionPct": 3.608284188068369
+    },
+    "nativeUtilityDisposition": "phase8-native-utility-disposition.json",
+    "historicalMacOSEvidence": "phase8-history/platform-acceptance.json"
+  },
+  "windows": {
+    "status": "UNAVAILABLE on this host",
+    "required": "native correctness runs, Release benchmark matrix, path-with-space and native Windows artifact handling"
+  },
+  "linux": {
+    "status": "UNAVAILABLE on this host",
+    "required": "native correctness runs and Release benchmark matrix"
+  },
+  "rules": [
+    "Unit-test skips never count as platform evidence.",
+    "A missing runtime/fixture is a failed/incomplete run, not a pass.",
+    "No competing validation jobs during measurements."
+  ],
+  "convergence": {
+    "date": "2026-10-25",
+    "status": "SC-001 shortfall owner-accepted; native platform acceptance still INCOMPLETE",
+    "primaryReferenceGate": "FAIL: 32 samples 9.56% and 9.14%; 64 samples 11.49%.",
+    "representativeMatrix": "Phase 8 macOS 72/72 pass. Native Windows/Linux unavailable; T038/T053/T056 remain unchecked.",
+    "evidence": "convergence-performance-results.json",
+    "correctness": "Phase 8 197 offline comparisons, 38 panning cases, and two managed live traces pass; pinned four-thread baseline defect does not establish vincr concurrency acceptance."
+  },
+  "ownerDecision": {
+    "date": "2026-10-25",
+    "source": "tasks.md Phase 8 owner decision / T058",
+    "scope": "Accept the current candidate\u2019s SC-001 shortfall only; no further optimization or revert solely to reach 10%.",
+    "numericPrimaryGate": "FAIL at ksmps32; raw primaryImprovementMet remains false. No global threshold changed.",
+    "remainingObligations": [
+      "correctness",
+      "SC-002 representative regression bound <=5%",
+      "native macOS/Windows/Linux evidence",
+      "scoped native-validation disposition"
+    ],
+    "accepted": true
+  },
+  "implementationClosure": {
+    "date": "2026-10-25",
+    "status": "COMPLETE \u2014 implementation accepted and spec work closed",
+    "authority": "Owner request in this chat to complete the spec documents and commit the feature",
+    "sc001": "Scoped owner acceptance of recorded 9.56% / 9.14% improvements at ksmps32; raw numerical checks and global threshold unchanged",
+    "nativeUtilityDisposition": "phase8-native-utility-disposition.json",
+    "releaseValidation": "DEFERRED \u2014 native Windows/Linux evidence remains unavailable; no pass claimed",
+    "deferredReleaseTaskIds": [
+      "T038",
+      "T053",
+      "T056",
+      "T059"
+    ]
+  }
+}

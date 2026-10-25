@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-24T20:23:05.903141+00:00",
+  "purpose": "Spec 118 T012 foundation proof: unchanged-baseline self-comparison through the shared audio and performance harness before any emitter edit",
+  "audioSelfComparison": {
+    "command": "BLUE_RUN_REAL_ENGINE=1 BLUE_MIXER_BASELINE_DIR=<evidence>/baseline pnpm --filter @blue/app test src/main/mixer-optimization.integration.test.ts",
+    "candidateRevision": "6d884110241e55b779210eb93dee5071c0068c02",
+    "candidateDirtyDiffHash": "e8227ad9e1959000b9b56a33ac3c9c19ed75ed3fd137c1e69ae1f4f89e71a9c3",
+    "exporterHash": "746ca0a3604b3817c528a1d9f26db900adb788b6af4ea3d63b13be43901ca42e",
+    "csoundRuntime": "",
+    "fixturesCompared": 21,
+    "allAudioAccepted": true,
+    "worstPeakResidual": 0,
+    "residualLimits": {
+      "linear": 1e-12,
+      "stateful": 1e-06
+    },
+    "structuralChecks": "ordered reset-set equality and structural binding equality per fixture; disabled-mixer has no BlueMixer on both sides",
+    "artifacts": "/tmp/blue-mixer-evidence.PSp3/candidate/comparison-results.json"
+  },
+  "nativeBenchmarkSelfComparison": {
+    "command": "node scripts/benchmark.mjs --csd <baseline>/primary-send-heavy-44100-32-50s.csd --baseline-csd <same file> --trials 7 --cycles 65536",
+    "benchmarkKind": "mixer-generated-csd",
+    "schemaVersion": 1,
+    "seed": 1180,
+    "trials": null,
+    "medianDeltaPct": 0.23034283788411833,
+    "gatePassed": true,
+    "candidateFasterPct10": false,
+    "note": "identical CSD on both sides; delta is measurement noise, not a claimed speedup",
+    "artifacts": "/tmp/blue-mixer-evidence.PSp3/foundation-primary-32.json"
+  },
+  "baselineLocation": "/tmp/blue-mixer-evidence.PSp3/baseline",
+  "baselineFixtureCount": 84
+}

@@ -1,3 +1,5 @@
+import { ProjectHistory } from './project-history';
+import { buildLiveTraceFixtures } from './mixer-optimization-test-support';
 import { describe, expect, it } from 'vitest';
 import type { BlueData } from '@blue/data';
 import { ProjectSession, createDocumentLifetimeId, createHistoryStateId } from './project-session';
@@ -207,4 +209,38 @@ describe('ProjectSession', () => {
       expect(preservedSnap.sessionId).toBe(2);
     });
   });
+});
+
+it('successful and failed sync/async generation leave active session, dirty state and history unchanged (Spec 118 T051)', async () => {
+  for (const invalid of [false, true]) {
+    const project = buildLiveTraceFixtures()[0]!.build();
+    if (invalid) {
+      project.getMixer().setPanningEnabled(true);
+      project.getProjectProperties().channels = '4';
+    }
+    const session = new ProjectSession();
+    session.replace(project, null);
+    const history = new ProjectHistory({ session });
+    history.markClean();
+    const before = session.read(),
+      xml = project.saveToString(),
+      saved = history.getSavedStateId();
+    for (const generate of [
+      () => project.toRealtimePlaybackCSD(),
+      () => project.toRealtimePlaybackCSDAsync(),
+    ]) {
+      if (invalid)
+        await expect(Promise.resolve().then(generate)).rejects.toThrow(
+          /Unsupported project output channel count/,
+        );
+      else await generate();
+      expect(project.saveToString()).toBe(xml);
+      expect(session.read()).toEqual(before);
+      expect(session.read().data).toBe(project);
+      expect(history.getCursor()).toBe(0);
+      expect(history.getEntries()).toHaveLength(0);
+      expect(history.getSavedStateId()).toBe(saved);
+      expect(history.isDirty()).toBe(false);
+    }
+  }
 });

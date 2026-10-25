@@ -1,0 +1,67 @@
+{
+  "accepted": true,
+  "count": 82,
+  "artifact": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-candidate/comparison-results.json",
+  "sha256": "b8f61a760ff902add31db00721b638ef8cf20f2ae9995951e29d859c7edf541f",
+  "cases": [
+    {
+      "id": "routing-direct-chain-1",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "07c9d3cf5d054404b72d634e0c9949538538f65a8da1bd760c428d110c5a06b5"
+    },
+    {
+      "id": "routing-direct-chain-2",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "cfd4e039386528d53a97ac6f54d38448bb832d07bd87e6f1c9caaa005d53fe3f"
+    },
+    {
+      "id": "routing-direct-chain-4",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "76cc056ad6da42cbd222b2c2aa5057bc8fb5201e99766645cc07b66dec65feba"
+    },
+    {
+      "id": "routing-no-source",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "d21019a511d2c2d50f0dd627c2f9624d58dc2ff1b7c41519a4085edfd6d7e80a"
+    },
+    {
+      "id": "routing-mixer-in",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "571b213f79f9185fa1606248bf8e2b9145ced6bb194672691db7730b10c662e4"
+    },
+    {
+      "id": "routing-nested-observer-writer",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "e51c0bb234e4be23e9687f870229b937abecd7414f508adf1fe60d26f55137d1"
+    },
+    {
+      "id": "java-project-corpus",
+      "profile": "realtime",
+      "peakResidual": 0,
+      "frames": 132352,
+      "csdSha256": "01866f90f34ff0dcd5a6cb34842a54e8bdb50cde0a6b5333d173b678b37bec71"
+    },
+    {
+      "id": "typescript-project-corpus",
+      "profile": "disk",
+      "peakResidual": 0,
+      "frames": 70876,
+      "csdSha256": "787ebea3a161c5506d4613e6ef645e3b1e3be4c28f5ac68241364f0c7de70185"
+    }
+  ],
+  "unrelatedLimitations": [
+    "Pinned baseline BlueX7 corpus CSD at ksmps64 stalled / exceeded default subprocess output capacity (realtime and disk probes); task-owned processes were stopped. Original project disk ksmps1 passes. This is not counted as a passing ksmps64 corpus result."
+  ]
+}

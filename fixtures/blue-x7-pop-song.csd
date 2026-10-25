@@ -5216,12 +5216,7 @@ ga_bluesub_Master_0 = ga_bluesub_Master_0 * kMixGateState_2
 ga_bluesub_Master_1 = ga_bluesub_Master_1 * kMixGateState_2
 outc ga_bluesub_Master_0, ga_bluesub_Master_1
 gk_blue_mixgate_applied = kMixGateCommit
-ga_bluemix_0_0 = 0
-ga_bluemix_0_1 = 0
-ga_bluemix_1_0 = 0
-ga_bluemix_1_1 = 0
-ga_bluesub_Master_0 = 0
-ga_bluesub_Master_1 = 0
+clear ga_bluemix_0_0, ga_bluemix_0_1, ga_bluemix_1_0, ga_bluemix_1_1, ga_bluesub_Master_0, ga_bluesub_Master_1
 
 	endin
 

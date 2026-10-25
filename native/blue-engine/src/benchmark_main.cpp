@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
@@ -20,6 +21,12 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
 
 namespace {
 
@@ -534,7 +541,478 @@ void printUsage() {
   std::cout << "Usage: benchmark_engine [--scenario NAME|all] [--trials N] "
                "[--warmup N|--warmup-cycles N] "
                "[--cycles N|--measure-cycles N] [--compare FILE] "
-               "[--output FILE] [--json]\n";
+               "[--output FILE] [--json] [--csd FILE]\n";
+  std::cout << "  --csd FILE runs the supplied-CSD developer mode "
+               "(mutually exclusive with --scenario and --compare)\n";
+}
+
+// ============================================================================
+// Supplied-CSD developer mode (SPEC 118 mixer-optimization evidence).
+//
+// The mode loads a complete CSD file, compiles its <CsInstruments> through the
+// same engine compileOrc/readScore path used by the fixed scenarios, and
+// reports steady-clock ksmps perform timing after the warmup window. It is
+// separate from the fixed-scenario code paths above and leaves them untouched.
+// ============================================================================
+
+struct CsdProgram {
+  std::string instruments;
+  std::string score;
+};
+
+struct CsdHeaderValues {
+  double sampleRate = 0.0;
+  int ksmps = 0;
+  int nchnls = 0;
+  bool hasZeroDbFs = false;
+  double zeroDbFs = 0.0;
+};
+
+struct CsdTrialResult {
+  double performKsmpsAvgUs = 0.0;
+  uint64_t measuredCycles = 0;
+};
+
+// Extract the required top-level CSD sections. Section tags are matched
+// exactly as Csound defines them; anything else is rejected rather than
+// guessed at.
+CsdProgram parseCsdProgram(const std::string &text, const std::string &path) {
+  const auto extract = [&text, &path](const char *section,
+                                      std::string *output) {
+    const std::string startTag = std::string("<") + section + ">";
+    const std::string endTag = std::string("</") + section + ">";
+    const auto start = text.find(startTag);
+    if (start == std::string::npos) {
+      throw std::runtime_error("CSD is missing the <" + std::string(section) +
+                               "> section: " + path);
+    }
+    const auto bodyStart = start + startTag.size();
+    const auto end = text.find(endTag, bodyStart);
+    if (end == std::string::npos) {
+      throw std::runtime_error("CSD has an unterminated <" +
+                               std::string(section) + "> section: " + path);
+    }
+    *output = text.substr(bodyStart, end - bodyStart);
+  };
+  CsdProgram program;
+  extract("CsInstruments", &program.instruments);
+  extract("CsScore", &program.score);
+  return program;
+}
+
+// Read sr/ksmps/nchnls/0dbfs from the CsInstruments header region (the lines
+// before the first instr/opcode definition). The derived values are also
+// cross-checked against the running engine in runCsdTrial.
+CsdHeaderValues parseCsdHeader(const std::string &instruments,
+                               const std::string &path) {
+  static const std::regex assignment(
+      "^\\s*(sr|ksmps|nchnls|0dbfs)\\s*=\\s*([0-9]+(?:\\.[0-9]+)?)");
+  static const std::regex definition("^\\s*(instr|opcode)\\b");
+
+  bool hasSampleRate = false;
+  bool hasKsmps = false;
+  bool hasNchnls = false;
+  CsdHeaderValues values;
+  std::istringstream stream(instruments);
+  std::string line;
+  while (std::getline(stream, line)) {
+    if (std::regex_search(line, definition)) {
+      break;
+    }
+    std::smatch match;
+    if (!std::regex_search(line, match, assignment)) {
+      continue;
+    }
+    const std::string key = match[1].str();
+    const double value = std::stod(match[2].str());
+    if (key == "sr" && !hasSampleRate) {
+      values.sampleRate = value;
+      hasSampleRate = true;
+    } else if (key == "ksmps" && !hasKsmps) {
+      values.ksmps = static_cast<int>(value);
+      hasKsmps = true;
+    } else if (key == "nchnls" && !hasNchnls) {
+      values.nchnls = static_cast<int>(value);
+      hasNchnls = true;
+    } else if (key == "0dbfs" && !values.hasZeroDbFs) {
+      values.zeroDbFs = value;
+      values.hasZeroDbFs = true;
+    }
+  }
+  if (!hasSampleRate || !hasKsmps || !hasNchnls) {
+    throw std::runtime_error(
+        "CSD CsInstruments header must declare sr, ksmps, and nchnls: " +
+        path);
+  }
+  if (values.sampleRate <= 0.0 || values.ksmps <= 0 || values.nchnls <= 0) {
+    throw std::runtime_error(
+        "CSD CsInstruments header values must be positive: " + path);
+  }
+  return values;
+}
+
+// SHA-256 message digest implemented directly from the published FIPS 180-4
+// §6.2.2 algorithm (original arrangement; no external dependencies). Used to
+// identify the supplied CSD content in the benchmark report.
+std::string sha256Hex(const std::string &data) {
+  static const uint32_t kRoundConstants[64] = {
+      0x428a2f98u, 0x71374491u, 0xb5c0fbcfu, 0xe9b5dba5u, 0x3956c25bu,
+      0x59f111f1u, 0x923f82a4u, 0xab1c5ed5u, 0xd807aa98u, 0x12835b01u,
+      0x243185beu, 0x550c7dc3u, 0x72be5d74u, 0x80deb1feu, 0x9bdc06a7u,
+      0xc19bf174u, 0xe49b69c1u, 0xefbe4786u, 0x0fc19dc6u, 0x240ca1ccu,
+      0x2de92c6fu, 0x4a7484aau, 0x5cb0a9dcu, 0x76f988dau, 0x983e5152u,
+      0xa831c66du, 0xb00327c8u, 0xbf597fc7u, 0xc6e00bf3u, 0xd5a79147u,
+      0x06ca6351u, 0x14292967u, 0x27b70a85u, 0x2e1b2138u, 0x4d2c6dfcu,
+      0x53380d13u, 0x650a7354u, 0x766a0abbu, 0x81c2c92eu, 0x92722c85u,
+      0xa2bfe8a1u, 0xa81a664bu, 0xc24b8b70u, 0xc76c51a3u, 0xd192e819u,
+      0xd6990624u, 0xf40e3585u, 0x106aa070u, 0x19a4c116u, 0x1e376c08u,
+      0x2748774cu, 0x34b0bcb5u, 0x391c0cb3u, 0x4ed8aa4au, 0x5b9cca4fu,
+      0x682e6ff3u, 0x748f82eeu, 0x78a5636fu, 0x84c87814u, 0x8cc70208u,
+      0x90befffau, 0xa4506cebu, 0xbef9a3f7u, 0xc67178f2u};
+  const uint32_t initialState[8] = {0x6a09e667u, 0xbb67ae85u, 0x3c6ef372u,
+                                   0xa54ff53au, 0x510e527fu, 0x9b05688cu,
+                                   0x1f83d9abu, 0x5be0cd19u};
+  const auto rotateRight = [](uint32_t value, int bits) {
+    return (value >> bits) | (value << (32 - bits));
+  };
+
+  uint32_t state[8];
+  for (int index = 0; index < 8; ++index) {
+    state[index] = initialState[index];
+  }
+
+  std::string message = data;
+  const uint64_t bitLength = static_cast<uint64_t>(data.size()) * 8u;
+  message.push_back(static_cast<char>(0x80));
+  while (message.size() % 64 != 56) {
+    message.push_back('\0');
+  }
+  for (int byte = 7; byte >= 0; --byte) {
+    message.push_back(static_cast<char>((bitLength >> (byte * 8)) & 0xffu));
+  }
+
+  for (size_t offset = 0; offset < message.size(); offset += 64) {
+    uint32_t w[64];
+    for (int t = 0; t < 16; ++t) {
+      w[t] = 0;
+      for (int b = 0; b < 4; ++b) {
+        w[t] = (w[t] << 8) |
+               static_cast<uint8_t>(message[offset + t * 4 + b]);
+      }
+    }
+    for (int t = 16; t < 64; ++t) {
+      const uint32_t s0 = rotateRight(w[t - 15], 7) ^
+                          rotateRight(w[t - 15], 18) ^ (w[t - 15] >> 3);
+      const uint32_t s1 = rotateRight(w[t - 2], 17) ^
+                          rotateRight(w[t - 2], 19) ^ (w[t - 2] >> 10);
+      w[t] = w[t - 16] + s0 + w[t - 7] + s1;
+    }
+    uint32_t a = state[0], b = state[1], c = state[2], d = state[3];
+    uint32_t e = state[4], f = state[5], g = state[6], h = state[7];
+    for (int t = 0; t < 64; ++t) {
+      const uint32_t sum1 =
+          rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+      const uint32_t choice = (e & f) ^ ((~e) & g);
+      const uint32_t t1 = h + sum1 + choice + kRoundConstants[t] + w[t];
+      const uint32_t sum0 =
+          rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+      const uint32_t majority = (a & b) ^ (a & c) ^ (b & c);
+      const uint32_t t2 = sum0 + majority;
+      h = g;
+      g = f;
+      f = e;
+      e = d + t1;
+      d = c;
+      c = b;
+      b = a;
+      a = t1 + t2;
+    }
+    state[0] += a;
+    state[1] += b;
+    state[2] += c;
+    state[3] += d;
+    state[4] += e;
+    state[5] += f;
+    state[6] += g;
+    state[7] += h;
+  }
+
+  std::ostringstream hex;
+  static const char *digits = "0123456789abcdef";
+  for (int index = 0; index < 8; ++index) {
+    for (int shift = 28; shift >= 0; shift -= 4) {
+      hex << digits[(state[index] >> shift) & 0xfu];
+    }
+  }
+  return hex.str();
+}
+
+CsdTrialResult runCsdTrial(const CsdProgram &program,
+                           const CsdHeaderValues &header, int warmupCycles,
+                           int measuredCycles, int trialIndex) {
+  using namespace blue;
+
+  SharedMemory sharedMemory;
+  const auto uniqueId = std::chrono::steady_clock::now()
+                            .time_since_epoch()
+                            .count();
+  // Keep the POSIX shared-memory name short: macOS caps names at 31 bytes
+  // (PSHMNAMLEN), so the fixed-mode "be-bench-" prefix is shortened here.
+  const std::string sharedMemoryName =
+      "be-bcsd-" + std::to_string(uniqueId) + "-" +
+      std::to_string(trialIndex);
+  if (!sharedMemory.create(sharedMemoryName)) {
+    throw std::runtime_error(
+        "shared-memory setup failed for CSD benchmark (name=" +
+        sharedMemoryName + "); run the benchmark where POSIX shared memory "
+        "or Windows file mappings are available");
+  }
+
+  CsoundEngine engine;
+  engine.setSharedMemory(&sharedMemory);
+  engine.setThreadPriorityElevationEnabled(false);
+  engine.setPerformanceWindow(static_cast<uint64_t>(warmupCycles),
+                              static_cast<uint64_t>(measuredCycles));
+
+  auto require = [&](bool condition, const std::string &message) {
+    if (!condition) {
+      throw std::runtime_error(message +
+                               (engine.getLastError().empty()
+                                    ? std::string{}
+                                    : ": " + engine.getLastError()));
+    }
+  };
+
+  require(engine.create(), "engine create failed");
+  require(engine.setOption("-n"), "failed to disable audio output");
+  require(engine.setOption("-d"), "failed to disable displays");
+  require(engine.setOption("-m0"), "failed to disable Csound messages");
+  require(engine.compileOrc(program.instruments),
+          "CSD orchestra compilation failed");
+  require(engine.readScore(program.score), "CSD score setup failed");
+  require(engine.start(), "engine start failed");
+
+  const auto snapshot = engine.getStateSnapshot();
+  if (snapshot.sampleRate != header.sampleRate ||
+      snapshot.ksmps != header.ksmps) {
+    std::ostringstream detail;
+    detail << "CSD header disagrees with the compiled engine (header sr="
+           << header.sampleRate << " ksmps=" << header.ksmps
+           << ", engine sr=" << snapshot.sampleRate
+           << " ksmps=" << snapshot.ksmps << ")";
+    throw std::runtime_error(detail.str());
+  }
+
+  // Null audio normally outruns wall clock; the deadline still scales with
+  // the audio duration of the requested window so an engine that cannot
+  // outrun real time fails explicitly instead of hanging.
+  const double windowAudioSeconds =
+      static_cast<double>(warmupCycles + measuredCycles) *
+      static_cast<double>(header.ksmps) / header.sampleRate;
+  const auto deadline =
+      std::chrono::steady_clock::now() +
+      std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+          std::chrono::duration<double>(10.0 + windowAudioSeconds));
+  while (engine.isRunning() && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  require(!engine.isRunning(), "CSD performance did not complete");
+
+  // A naturally completed perform thread has already published STOPPED but
+  // is still joinable while it emits its final counters; join before reading
+  // the summary (same boundary as the fixed-scenario trials).
+  engine.stop();
+
+  const auto summary = engine.getLastPerformanceSummary();
+  require(summary.available, "engine did not publish performance counters");
+  require(summary.cycleCount >= static_cast<uint64_t>(measuredCycles),
+          "CSD performance ended before the requested measurement window");
+
+  CsdTrialResult result;
+  result.measuredCycles = summary.cycleCount;
+  result.performKsmpsAvgUs = summary.performAvgUs;
+  engine.destroy();
+
+  if (!std::isfinite(result.performKsmpsAvgUs) ||
+      result.performKsmpsAvgUs <= 0.0) {
+    throw std::runtime_error(
+        "CSD benchmark produced a non-finite or non-positive "
+        "performKsmpsAvgUs");
+  }
+  return result;
+}
+
+std::string buildCsdJson(const std::string &csdPath, const std::string &csdSha256,
+                         const CsdHeaderValues &header, int trials, bool research,
+                         int warmupCycles, int measuredCycles,
+                         const std::vector<CsdTrialResult> &results) {
+  std::vector<CsdTrialResult> sorted = results;
+  std::sort(sorted.begin(), sorted.end(),
+            [](const CsdTrialResult &left, const CsdTrialResult &right) {
+              return left.performKsmpsAvgUs < right.performKsmpsAvgUs;
+            });
+  const CsdTrialResult median = sorted[sorted.size() / 2];
+
+#ifdef BLUE_ENGINE_SOURCE_REVISION
+  const std::string sourceRevision = BLUE_ENGINE_SOURCE_REVISION;
+#else
+  const std::string sourceRevision = "unknown";
+#endif
+  const auto &loaderReport = blue::CsoundLoader::getReport();
+  std::ifstream libraryInput(loaderReport.loadedPath, std::ios::binary);
+  if (!libraryInput) throw std::runtime_error("cannot hash loaded Csound library: " + loaderReport.loadedPath);
+  std::ostringstream libraryContents;
+  libraryContents << libraryInput.rdbuf();
+  const auto libraryHash = sha256Hex(libraryContents.str());
+
+
+  std::ostringstream output;
+  output << std::setprecision(12);
+  output << "{\n"
+         << "  \"benchmarkKind\": \"mixer-generated-csd\",\n"
+         << "  \"schemaVersion\": 1,\n"
+         << "  \"research\": " << (research ? "true" : "false") << ",\n"
+         << "  \"timestamp\": \"" << timestampNow() << "\",\n"
+         << "  \"csdPath\": \"" << jsonEscape(csdPath) << "\",\n"
+         << "  \"csdSha256\": \"" << csdSha256 << "\",\n"
+         << "  \"metric\": {\n"
+         << "    \"name\": \"performKsmpsAvgUs\",\n"
+         << "    \"clock\": \"steady_clock\",\n"
+         << "    \"units\": \"microseconds per ksmps block\",\n"
+         << "    \"summary\": \"mean steady-clock elapsed Csound perform time per ksmps block within a trial; median across trials reported as medianPerformKsmpsAvgUs; elapsed time, not CPU time\"\n"
+         << "  },\n"
+         << "  \"metadata\": {\n"
+         << "    \"buildType\": \"Release\",\n"
+         << "    \"compiler\": \"" << jsonEscape(compilerName()) << "\",\n"
+         << "    \"targetArch\": \"" << targetArchitecture() << "\",\n"
+         << "    \"operatingSystem\": \"" << operatingSystem() << "\",\n"
+         << "    \"csoundVersion\": " << loaderReport.versionRaw << ",\n"
+         << "    \"csoundLibraryPath\": \"" << jsonEscape(loaderReport.loadedPath) << "\",\n"
+         << "    \"csoundLibrarySha256\": \"" << libraryHash << "\",\n"
+         << "    \"sampleBytes\": 8,\n"
+         << "    \"precisionDerivation\": \"csoundGetSizeOfMYFLT() verified on loaded library\",\n"
+         << "    \"threading\": \"single perform thread, priority elevation disabled, no multicore option\",\n"
+
+         << "    \"engineSourceRevision\": \"" << jsonEscape(sourceRevision) << "\",\n"
+         << "    \"sampleRate\": " << header.sampleRate << ",\n"
+         << "    \"ksmps\": " << header.ksmps << ",\n"
+         << "    \"nchnls\": " << header.nchnls << ",\n"
+         << "    \"zeroDbFs\": "
+         << (header.hasZeroDbFs ? std::to_string(header.zeroDbFs)
+                                : std::string("null"))
+         << ",\n"
+         << "    \"headerDerivation\": \"effective sr/ksmps/nchnls/0dbfs inspected on an untimed compiled instance; explicit header values cross-checked; omitted 0dbfs uses runtime default\"\n"
+         << "    , \"csoundOptions\": [\"-n\", \"-d\", \"-m0\"],\n"
+         << "    \"csdCsOptionsIgnored\": true,\n"
+         << "    \"warmupCycles\": " << warmupCycles << ",\n"
+         << "    \"measuredCycles\": " << measuredCycles << ",\n"
+         << "    \"trials\": " << trials << "\n"
+         << "  },\n"
+         << "  \"trials\": [\n";
+  for (size_t index = 0; index < results.size(); ++index) {
+    output << "    {\n"
+           << "      \"performKsmpsAvgUs\": " << results[index].performKsmpsAvgUs
+           << ",\n"
+           << "      \"measuredCycles\": " << results[index].measuredCycles
+           << "\n"
+           << "    }" << (index + 1 < results.size() ? "," : "") << "\n";
+  }
+  output << "  ],\n"
+         << "  \"medianPerformKsmpsAvgUs\": " << median.performKsmpsAvgUs
+         << "\n"
+         << "}\n";
+  return output.str();
+}
+
+// Developer-only inspection of the loaded library. No production protocol or
+// loader capability changes: resolve only the public introspection functions
+// needed to validate this benchmark's assumed ABI and effective header.
+void validateCsdRuntime(const CsdProgram &program, CsdHeaderValues &header) {
+  const auto &path = blue::CsoundLoader::getLoadedPath();
+#ifdef _WIN32
+  auto library = LoadLibraryA(path.c_str());
+  auto symbol = [&](const char *name) { return GetProcAddress(library, name); };
+#else
+  auto library = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
+  auto symbol = [&](const char *name) { return dlsym(library, name); };
+#endif
+  if (!library) throw std::runtime_error("cannot inspect loaded Csound library");
+  auto sampleSize = reinterpret_cast<int32_t (*)()>(symbol("csoundGetSizeOfMYFLT"));
+  using Csound = blue::csound::CSOUND;
+  auto channels = reinterpret_cast<uint32_t (*)(Csound *, int32_t)>(symbol("csoundGetChannels"));
+  auto zeroDbFs = reinterpret_cast<double (*)(Csound *)>(symbol("csoundGet0dBFS"));
+  const bool symbolsPresent = sampleSize && channels && zeroDbFs;
+  const bool doubleSamples = symbolsPresent && sampleSize() == 8;
+  bool headerMatches = false;
+  if (doubleSamples) {
+    std::unique_ptr<Csound, decltype(blue::CsoundLoader::csoundDestroy)> instance(
+        blue::CsoundLoader::csoundCreate(nullptr, nullptr), blue::CsoundLoader::csoundDestroy);
+    if (instance && blue::CsoundLoader::csoundSetOption(instance.get(), "-n") == 0 &&
+        blue::CsoundLoader::csoundSetOption(instance.get(), "-d") == 0 &&
+        blue::CsoundLoader::csoundSetOption(instance.get(), "-m0") == 0 &&
+        blue::CsoundLoader::csoundCompileOrc(instance.get(), program.instruments.c_str(), 0) == 0 &&
+        blue::CsoundLoader::csoundStart(instance.get()) == 0) {
+      if (!header.hasZeroDbFs) { header.zeroDbFs = zeroDbFs(instance.get()); header.hasZeroDbFs = true; }
+      headerMatches = blue::CsoundLoader::csoundGetSr(instance.get()) == header.sampleRate &&
+        blue::CsoundLoader::csoundGetKsmps(instance.get()) == static_cast<uint32_t>(header.ksmps) &&
+        channels(instance.get(), 0) == static_cast<uint32_t>(header.nchnls) &&
+        header.hasZeroDbFs && zeroDbFs(instance.get()) == header.zeroDbFs;
+    }
+  }
+#ifdef _WIN32
+  FreeLibrary(library);
+#else
+  dlclose(library);
+#endif
+  if (!doubleSamples) throw std::runtime_error("benchmark requires verified double-sample Csound introspection");
+  if (!headerMatches) throw std::runtime_error("CSD header differs from effective compiled sr/ksmps/nchnls/0dbfs");
+}
+
+int runCsdBenchmark(const std::string &csdPath, int trials, int warmupCycles,
+                    int measuredCycles, bool json, const std::string &outputPath, bool research) {
+  std::ifstream input(csdPath, std::ios::binary);
+  if (!input) {
+    throw std::runtime_error("cannot open CSD file: " + csdPath);
+  }
+  std::ostringstream contents;
+  contents << input.rdbuf();
+  const std::string csdText = contents.str();
+
+  const CsdProgram program = parseCsdProgram(csdText, csdPath);
+  CsdHeaderValues header = parseCsdHeader(program.instruments, csdPath);
+  const std::string csdSha256 = sha256Hex(csdText);
+  validateCsdRuntime(program, header);
+
+  std::vector<CsdTrialResult> results;
+  results.reserve(static_cast<size_t>(trials));
+  for (int trial = 0; trial < trials; ++trial) {
+    results.push_back(
+        runCsdTrial(program, header, warmupCycles, measuredCycles, trial));
+  }
+
+  const std::string output = buildCsdJson(csdPath, csdSha256, header, trials, research,
+                                          warmupCycles, measuredCycles, results);
+  if (!outputPath.empty()) {
+    std::ofstream file(outputPath);
+    if (!file) {
+      throw std::runtime_error("cannot write benchmark output: " + outputPath);
+    }
+    file << output;
+  }
+  if (json) {
+    std::cout << output;
+  } else {
+    std::vector<CsdTrialResult> sorted = results;
+    std::sort(sorted.begin(), sorted.end(),
+              [](const CsdTrialResult &left, const CsdTrialResult &right) {
+                return left.performKsmpsAvgUs < right.performKsmpsAvgUs;
+              });
+    const CsdTrialResult &median = sorted[sorted.size() / 2];
+    std::cout << "mixer-generated-csd: perform_ksmps_avg_us="
+              << median.performKsmpsAvgUs
+              << " measured_cycles=" << median.measuredCycles << '\n';
+  }
+  return 0;
 }
 
 } // namespace
@@ -547,6 +1025,10 @@ int main(int argc, char **argv) {
   bool json = false;
   std::string outputPath;
   std::string comparePath;
+  std::string csdPath;
+  bool scenarioExplicit = false;
+  bool cyclesExplicit = false;
+  bool research = false;
 
   try {
     for (int index = 1; index < argc; ++index) {
@@ -562,27 +1044,62 @@ int main(int argc, char **argv) {
         return 0;
       } else if (argument == "--scenario") {
         targetScenario = nextValue("--scenario");
+        scenarioExplicit = true;
       } else if (argument == "--trials") {
         trials = std::max(1, std::stoi(nextValue("--trials")));
       } else if (argument == "--warmup" || argument == "--warmup-cycles") {
         warmupCycles = std::max(1024, std::stoi(nextValue(argument.c_str())));
       } else if (argument == "--cycles" || argument == "--measure-cycles") {
-        measuredCycles = std::max(4096, std::stoi(nextValue(argument.c_str())));
+        measuredCycles = std::stoi(nextValue(argument.c_str()));
+        cyclesExplicit = true;
+      } else if (argument == "--research") {
+        research = true;
       } else if (argument == "--compare") {
         comparePath = nextValue("--compare");
       } else if (argument == "--output") {
         outputPath = nextValue("--output");
       } else if (argument == "--json") {
         json = true;
+      } else if (argument == "--csd") {
+        csdPath = nextValue("--csd");
       } else {
         throw std::runtime_error("unknown argument: " + argument);
       }
     }
 
+    if (!csdPath.empty()) {
+      if (!cyclesExplicit) measuredCycles = 65536;
+      if (measuredCycles <= 0 || (!research && measuredCycles < 65536)) {
+        throw std::runtime_error("supplied-CSD acceptance requires at least 65536 measured cycles; shorter runs require --research");
+      }
+      if (scenarioExplicit) {
+        throw std::runtime_error(
+            "--csd cannot be combined with --scenario (the supplied-CSD mode "
+            "derives rate, block size, and layout from the CSD file)");
+      }
+      if (!comparePath.empty()) {
+        throw std::runtime_error(
+            "--csd cannot be combined with --compare (use the wrapper's "
+            "--baseline-csd for a supplied-CSD baseline)");
+      }
+      // Fail fast on an unreadable file before loading the Csound runtime.
+      std::ifstream probe(csdPath);
+      if (!probe) {
+        throw std::runtime_error("cannot open CSD file: " + csdPath);
+      }
+    }
+
+    if (csdPath.empty()) measuredCycles = std::max(4096, measuredCycles);
+
     if (!blue::CsoundLoader::initialize()) {
       std::cerr << "benchmark unavailable: Csound 7 could not be loaded: "
                 << blue::CsoundLoader::getError() << '\n';
       return 2;
+    }
+
+    if (!csdPath.empty()) {
+      return runCsdBenchmark(csdPath, trials, warmupCycles, measuredCycles,
+                             json, outputPath, research);
     }
 
     std::vector<const Scenario *> selected;

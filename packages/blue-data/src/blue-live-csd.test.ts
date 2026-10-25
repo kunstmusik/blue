@@ -3,6 +3,8 @@ import { BlueData } from './blue-data';
 import { BlueSynthBuilder } from './instruments/blue-synth-builder';
 import { GenericInstrument } from './instruments/generic-instrument';
 import { OpcodeDefinition } from './opcodes/opcode-definition';
+import { Channel } from './mixer/channel';
+import { Send } from './mixer/send';
 
 function createProjectWithInstrument(): BlueData {
   const data = new BlueData();
@@ -192,5 +194,61 @@ describe('Blue Live compiled MIDI target catalog', () => {
       kind: 'orchestra',
       assignmentId: '1',
     });
+  });
+});
+
+// ─── Spec 118 T021: optimized send paths in BlueLive generation ───
+
+describe('Blue Live mixer optimization parity (Spec 118 T021)', () => {
+  function createLiveSendProject(): BlueData {
+    const data = new BlueData();
+    const mixer = data.getMixer();
+    mixer.setEnabled(true);
+    const bus = new Channel();
+    bus.setName('Bus');
+    bus.setOutChannel('Master');
+    mixer.getSubChannels().push(bus);
+    const source = new Channel();
+    source.setName('Track 1');
+    source.setAssociation('track-1');
+    source.setOutChannel('Master');
+    for (const [chain, level, pre] of [
+      [source.getPreEffects(), 0.35, true],
+      [source.getPostEffects(), 0.5, false],
+    ] as const) {
+      const send = new Send();
+      send.setSendChannel('Bus');
+      send.setLevel(level);
+      chain.push(send);
+    }
+    mixer.getChannels().push(source);
+    const instrument = new GenericInstrument();
+    instrument.setName('Sine');
+    instrument.setText('aL oscili 0.2, 440\naR oscili 0.2, 441\nblueMixerOut aL, aR');
+    data.getArrangement().addInstrument(instrument, '1');
+    return data;
+  }
+
+  it('uses combined send gains in BlueLive and stays deterministic across rebuilds', () => {
+    const data = createLiveSendProject();
+    const first = data.toBlueLiveCSD();
+    const second = data.toBlueLiveCSD();
+    expect(second.csdText).toBe(first.csdText);
+    expect((first.csdText.match(/^kMixSendGain = /gm) ?? []).length).toBe(2);
+    // One batched clear of the full accumulator set.
+    const clearLines = first.csdText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('clear '));
+    expect(clearLines).toHaveLength(1);
+    expect(clearLines[0]).toContain('ga_bluemix_0_0');
+    expect(clearLines[0]).toContain('ga_bluesub_Master_1');
+  });
+
+  it('keeps gate ordinals consumed identically: combined statements do not shift gate numbering', () => {
+    const data = createLiveSendProject();
+    const result = data.toBlueLiveCSD();
+    const gates = result.mixerGateBindings?.gates ?? [];
+    expect(gates.map((gate) => gate.ordinal)).toEqual(gates.map((_gate, index) => index));
   });
 });

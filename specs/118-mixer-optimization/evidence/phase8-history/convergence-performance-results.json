@@ -1,0 +1,170 @@
+{
+  "recordedDate": "2026-10-25",
+  "task": "T052",
+  "status": "FAILED PRIMARY GATE; task remains open",
+  "accepted": false,
+  "reason": "Both independent seven-pair 32-sample runs miss the unrounded >=10% improvement gate. 64 samples passes. Ablations preserve baseline audio but neither independently reaches 10%. No threshold, workload, or residual limit was weakened.",
+  "comparisons": [
+    {
+      "name": "primary-32-r1",
+      "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-primary-32-r1.json",
+      "sha256": "48ef3aedfa80c658e1605281deacb6ed24d2284ab7a68098f6345452fe02bd1b",
+      "medianDeltaPct": -9.564537037596473,
+      "metricsValid": true,
+      "primaryImprovementMet": false,
+      "representativeRegressionMet": true,
+      "baselineMedianUs": 64.5466928711,
+      "candidateMedianUs": 58.3731005249,
+      "trialCount": 7,
+      "environment": {
+        "executable": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/benchmark_engine",
+        "executableSha256": "b182ed30936a0f6c8e0633e18a6549a7db17c0103da7dc2f5d291441db004a90",
+        "operatingSystem": "darwin",
+        "osRelease": "23.2.0",
+        "architecture": "arm64",
+        "cpu": "Apple M3 Pro",
+        "logicalCpus": 12,
+        "compilerCommand": {
+          "directory": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release",
+          "command": "/usr/bin/c++ -DBLUE_ENGINE_USE_PERFORMANCE_TRACKING=1 -DZMQ_STATIC -I/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/generated -I/Users/stevenyi/work/blue3/native/blue-engine/src -isystem /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/vcpkg_installed/blue-arm64-osx/include -O3 -DNDEBUG -std=gnu++17 -arch arm64 -ffp-contract=off -fno-associative-math -o CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o -c /Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "file": "/Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "output": "CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o"
+        }
+      },
+      "candidateCsdSha256": "448ae55075593a4763300ff0d9c0930b0d5c8070ed3359606ac271a10baed5a4",
+      "baselineCsdSha256": "7c8d90895ff86c0d42681e5233d8359cc543d6f8c714676fcd6eb35c0d74a7eb"
+    },
+    {
+      "name": "primary-32-r2",
+      "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-primary-32-r2.json",
+      "sha256": "e2da438098ff6d483a39d04e53392aa9c15c2a722021ea582f0259646eee710c",
+      "medianDeltaPct": -9.141414144726173,
+      "metricsValid": true,
+      "primaryImprovementMet": false,
+      "representativeRegressionMet": true,
+      "baselineMedianUs": 64.7561521454,
+      "candidateMedianUs": 58.8365240936,
+      "trialCount": 7,
+      "environment": {
+        "executable": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/benchmark_engine",
+        "executableSha256": "b182ed30936a0f6c8e0633e18a6549a7db17c0103da7dc2f5d291441db004a90",
+        "operatingSystem": "darwin",
+        "osRelease": "23.2.0",
+        "architecture": "arm64",
+        "cpu": "Apple M3 Pro",
+        "logicalCpus": 12,
+        "compilerCommand": {
+          "directory": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release",
+          "command": "/usr/bin/c++ -DBLUE_ENGINE_USE_PERFORMANCE_TRACKING=1 -DZMQ_STATIC -I/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/generated -I/Users/stevenyi/work/blue3/native/blue-engine/src -isystem /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/vcpkg_installed/blue-arm64-osx/include -O3 -DNDEBUG -std=gnu++17 -arch arm64 -ffp-contract=off -fno-associative-math -o CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o -c /Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "file": "/Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "output": "CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o"
+        }
+      },
+      "candidateCsdSha256": "448ae55075593a4763300ff0d9c0930b0d5c8070ed3359606ac271a10baed5a4",
+      "baselineCsdSha256": "7c8d90895ff86c0d42681e5233d8359cc543d6f8c714676fcd6eb35c0d74a7eb"
+    },
+    {
+      "name": "primary-64-r1",
+      "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-primary-64-r1.json",
+      "sha256": "dbe123fb7309fc3153b47f88411ffa965bc0331867c3ca7c71edc4e0ca860868",
+      "medianDeltaPct": -11.488734903768282,
+      "metricsValid": true,
+      "primaryImprovementMet": true,
+      "representativeRegressionMet": true,
+      "baselineMedianUs": 90.5604870758,
+      "candidateMedianUs": 80.1562327881,
+      "trialCount": 7,
+      "environment": {
+        "executable": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/benchmark_engine",
+        "executableSha256": "b182ed30936a0f6c8e0633e18a6549a7db17c0103da7dc2f5d291441db004a90",
+        "operatingSystem": "darwin",
+        "osRelease": "23.2.0",
+        "architecture": "arm64",
+        "cpu": "Apple M3 Pro",
+        "logicalCpus": 12,
+        "compilerCommand": {
+          "directory": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release",
+          "command": "/usr/bin/c++ -DBLUE_ENGINE_USE_PERFORMANCE_TRACKING=1 -DZMQ_STATIC -I/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/generated -I/Users/stevenyi/work/blue3/native/blue-engine/src -isystem /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/vcpkg_installed/blue-arm64-osx/include -O3 -DNDEBUG -std=gnu++17 -arch arm64 -ffp-contract=off -fno-associative-math -o CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o -c /Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "file": "/Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "output": "CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o"
+        }
+      },
+      "candidateCsdSha256": "6d38cc73f78e46efdfed6a07c53249806e4893f61dd273a3cde39d46b7cc37ec",
+      "baselineCsdSha256": "5399d792c75b0350769ed5eb3ebe647a2ab15cb21a1c20b3ffd30d9dc67ceb50"
+    },
+    {
+      "name": "clear-only-32",
+      "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-clear-only-32.json",
+      "sha256": "b8e48df0a56c8b543a6c8a2d8aa61376c5e94911371146463eaa40de6a37b607",
+      "medianDeltaPct": -2.3669073978222417,
+      "metricsValid": true,
+      "primaryImprovementMet": false,
+      "representativeRegressionMet": true,
+      "baselineMedianUs": 64.9386091156,
+      "candidateMedianUs": 63.4015723724,
+      "trialCount": 7,
+      "environment": {
+        "executable": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/benchmark_engine",
+        "executableSha256": "b182ed30936a0f6c8e0633e18a6549a7db17c0103da7dc2f5d291441db004a90",
+        "operatingSystem": "darwin",
+        "osRelease": "23.2.0",
+        "architecture": "arm64",
+        "cpu": "Apple M3 Pro",
+        "logicalCpus": 12,
+        "compilerCommand": {
+          "directory": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release",
+          "command": "/usr/bin/c++ -DBLUE_ENGINE_USE_PERFORMANCE_TRACKING=1 -DZMQ_STATIC -I/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/generated -I/Users/stevenyi/work/blue3/native/blue-engine/src -isystem /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/vcpkg_installed/blue-arm64-osx/include -O3 -DNDEBUG -std=gnu++17 -arch arm64 -ffp-contract=off -fno-associative-math -o CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o -c /Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "file": "/Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "output": "CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o"
+        }
+      },
+      "candidateCsdSha256": "7a982ae96a31e54dae053855b63df01a2e72224e7269ff345b6687ec36addb12",
+      "baselineCsdSha256": "7c8d90895ff86c0d42681e5233d8359cc543d6f8c714676fcd6eb35c0d74a7eb"
+    },
+    {
+      "name": "gain-only-32",
+      "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-gain-only-32.json",
+      "sha256": "f2af76e420e578f3c1d27fc897995c7e4b599315e89d55403e09aa77db0efda8",
+      "medianDeltaPct": -9.635334225101058,
+      "metricsValid": true,
+      "primaryImprovementMet": false,
+      "representativeRegressionMet": true,
+      "baselineMedianUs": 65.1882265167,
+      "candidateMedianUs": 58.9071230164,
+      "trialCount": 7,
+      "environment": {
+        "executable": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/benchmark_engine",
+        "executableSha256": "b182ed30936a0f6c8e0633e18a6549a7db17c0103da7dc2f5d291441db004a90",
+        "operatingSystem": "darwin",
+        "osRelease": "23.2.0",
+        "architecture": "arm64",
+        "cpu": "Apple M3 Pro",
+        "logicalCpus": 12,
+        "compilerCommand": {
+          "directory": "/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release",
+          "command": "/usr/bin/c++ -DBLUE_ENGINE_USE_PERFORMANCE_TRACKING=1 -DZMQ_STATIC -I/Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/generated -I/Users/stevenyi/work/blue3/native/blue-engine/src -isystem /Users/stevenyi/work/blue3/native/blue-engine/build-darwin-arm64-release/vcpkg_installed/blue-arm64-osx/include -O3 -DNDEBUG -std=gnu++17 -arch arm64 -ffp-contract=off -fno-associative-math -o CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o -c /Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "file": "/Users/stevenyi/work/blue3/native/blue-engine/src/benchmark_main.cpp",
+          "output": "CMakeFiles/benchmark_engine.dir/src/benchmark_main.cpp.o"
+        }
+      },
+      "candidateCsdSha256": "a61e923163ab8756f208336828c811946daee755deac32ceab045d82989557a3",
+      "baselineCsdSha256": "7c8d90895ff86c0d42681e5233d8359cc543d6f8c714676fcd6eb35c0d74a7eb"
+    }
+  ],
+  "ablationAudio": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-ablation-audio-results.json",
+    "sha256": "191a3281f1841ff997617431a36b9b9978e9afd927d639898d6d4dceb5ba837f"
+  },
+  "vincrPrototype": {
+    "status": "DEFERRED; prototype never applied to active candidate source",
+    "singleThreadCorrectnessCases": 119,
+    "concurrency": "Four-thread run fails the pinned baseline independent amplitude bound on small-single before supported-concurrency equivalence can be established. Not an accepted concurrency proof.",
+    "counterexampleWav": {
+      "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-vincr-correctness/baseline.wav",
+      "sha256": "6d2202b4853f818e7ce67fbe83a77509a33602107e807846366dcbc3fee0adde"
+    },
+    "sourceReference": "https://github.com/csound/csound/blob/19b39531b26d87347c640f53ef55317aa74967c2/Opcodes/fout.c",
+    "license": "LGPL-2.1-or-later; behavioral inspection only, no source incorporated",
+    "temporaryBaseline": "Source and compiled package restored after each temporary generator prototype."
+  }
+}

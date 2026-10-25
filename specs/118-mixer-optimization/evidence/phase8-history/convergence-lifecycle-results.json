@@ -1,0 +1,233 @@
+{
+  "accepted": true,
+  "artifact": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/convergence-candidate/comparison-results.json",
+  "sha256": "02e426a5264ad8308f44bcc518f8f15d1f7ec900f9bae0d3686a6a89eed564e2",
+  "fixtureCount": 74,
+  "worstResidual": 0,
+  "lifecycleCases": [
+    {
+      "id": "sound-then-silence",
+      "rate": 44100,
+      "ksmps": 64,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 44100,
+      "ksmps": 64,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 44100,
+      "ksmps": 64,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 44100,
+      "ksmps": 64,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 44100,
+      "ksmps": 1,
+      "frames": 132301,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 44100,
+      "ksmps": 1,
+      "frames": 132301,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 44100,
+      "ksmps": 1,
+      "frames": 132301,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 44100,
+      "ksmps": 1,
+      "frames": 132301,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 44100,
+      "ksmps": 32,
+      "frames": 132320,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 44100,
+      "ksmps": 32,
+      "frames": 132320,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 44100,
+      "ksmps": 32,
+      "frames": 132320,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 44100,
+      "ksmps": 32,
+      "frames": 132320,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 44100,
+      "ksmps": 128,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 44100,
+      "ksmps": 128,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 44100,
+      "ksmps": 128,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 44100,
+      "ksmps": 128,
+      "frames": 132352,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 48000,
+      "ksmps": 1,
+      "frames": 144001,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 48000,
+      "ksmps": 1,
+      "frames": 144001,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 48000,
+      "ksmps": 1,
+      "frames": 144001,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 48000,
+      "ksmps": 1,
+      "frames": 144001,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 48000,
+      "ksmps": 32,
+      "frames": 144032,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 48000,
+      "ksmps": 32,
+      "frames": 144032,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 48000,
+      "ksmps": 32,
+      "frames": 144032,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 48000,
+      "ksmps": 32,
+      "frames": 144032,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 48000,
+      "ksmps": 64,
+      "frames": 144064,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 48000,
+      "ksmps": 64,
+      "frames": 144064,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 48000,
+      "ksmps": 64,
+      "frames": 144064,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 48000,
+      "ksmps": 64,
+      "frames": 144064,
+      "peakResidual": 0
+    },
+    {
+      "id": "sound-then-silence",
+      "rate": 48000,
+      "ksmps": 128,
+      "frames": 144128,
+      "peakResidual": 0
+    },
+    {
+      "id": "partial-first-final",
+      "rate": 48000,
+      "ksmps": 128,
+      "frames": 144128,
+      "peakResidual": 0
+    },
+    {
+      "id": "impulse-effect-tail",
+      "rate": 48000,
+      "ksmps": 128,
+      "frames": 144128,
+      "peakResidual": 0
+    },
+    {
+      "id": "effect-from-silence",
+      "rate": 48000,
+      "ksmps": 128,
+      "frames": 144128,
+      "peakResidual": 0
+    }
+  ]
+}

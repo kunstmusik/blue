@@ -1,0 +1,30 @@
+{
+  "status": "Historical claims retained verbatim; overwritten raw artifact is not claimed to restore missing earlier versions.",
+  "availableOverwrittenReport": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8-history/overwritten-comparison-results.json",
+    "sha256": "89fefb7d427f5773057baee388899213b4a6961a6ddb5c2e8eda51796766a8d8"
+  },
+  "summaries": [
+    {
+      "path": "/Users/stevenyi/work/blue3/specs/118-mixer-optimization/evidence/phase8-history/convergence-binding-results.json",
+      "sha256": "65b92449f716f6cfc0eb8554a0103c5d1523a969402c3bb334e4fa9d983077c6",
+      "claimedRawSha256": "0ae467e0afd3f6e6cde05e11e9770dffd3e701d0f1d91ebb90ad91ea1dd1a92a",
+      "availableRawSha256": "89fefb7d427f5773057baee388899213b4a6961a6ddb5c2e8eda51796766a8d8",
+      "originalClaimVerifiable": false
+    },
+    {
+      "path": "/Users/stevenyi/work/blue3/specs/118-mixer-optimization/evidence/phase8-history/convergence-lifecycle-results.json",
+      "sha256": "14cd40800619f1233225450d85e4a7f14bf86e27b8d0fba9a88735945204dfb3",
+      "claimedRawSha256": "02e426a5264ad8308f44bcc518f8f15d1f7ec900f9bae0d3686a6a89eed564e2",
+      "availableRawSha256": "89fefb7d427f5773057baee388899213b4a6961a6ddb5c2e8eda51796766a8d8",
+      "originalClaimVerifiable": false
+    },
+    {
+      "path": "/Users/stevenyi/work/blue3/specs/118-mixer-optimization/evidence/phase8-history/convergence-routing-results.json",
+      "sha256": "ce1b26eb01b0cc7a9e46f29093f1f1da282614e9bff519554d477916e718dfe8",
+      "claimedRawSha256": "b8f61a760ff902add31db00721b638ef8cf20f2ae9995951e29d859c7edf541f",
+      "availableRawSha256": "89fefb7d427f5773057baee388899213b4a6961a6ddb5c2e8eda51796766a8d8",
+      "originalClaimVerifiable": false
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T00:05:07.989142+00:00",
+  "task": "Spec 118 T021-T027 US3 compatibility verification against the pre-change baseline",
+  "baseline": "worktree capture at 6d884110241e55b779210eb93dee5071c0068c02",
+  "suites": {
+    "T021 determinism/blue-live": "blue-data-csd-determinism (12 new optimized-path cases pass; sync/async byte-identical; disabled-mixer unchanged); blue-live-csd (combined gains + one batched clear in BlueLive; gate ordinals sequential)",
+    "T022 copy-safety/parity": "blue-data-csd-copy-safety (project XML, authored text, runtime identities, parameter state unchanged by realtime/disk/BlueLive generation); blue-data-csd-parity (legacy Java XML project: send-free routing text unchanged, batched clear covers the same legacy accumulator set, XML byte-identical across generation); blue-data-csd-disk unchanged",
+    "T023 binding manifests": "runtime-parameter-sync 17 passed: repeated timeline compilation identical structural manifests (csdText, gate ordinals/banks/initials/routes, panner channels, meter keys, parameter names); BlueLive gate catalog structure equals timeline; parameter ordinals stable across recompilation",
+    "T024 panning": "mono-clip-panning 16 passed including 3 new whole-buffer float64 equivalence cases (balance/stereoPan/dualPan with gated sends; peak residual 0; correlated input retains both channels)",
+    "T025 compatibility": "mixer-optimization.integration routing cases: empty-source mixer, direct blueMixerOut sub+Master, blueMixerIn replacement (Master fallback), self-route drop, cyclic subchannels (existing behavior), unresolved send target, Java XML load + no-mutation",
+    "T026 history/preview/reconciliation": "project-history-mute-solo, project-history-roundtrip, mixer-gain-preview, project-runtime-reconciliation: 219 tests passed (no new writer; commit->undo->redo and preview-cancel behavior unchanged)"
+  },
+  "fullMatrixComparison": {
+    "fixtures": 49,
+    "audioAccepted": true,
+    "worstPeakResidual": 0,
+    "residualLimits": {
+      "linear": 1e-12,
+      "stateful": 1e-06
+    },
+    "structural": "identical ordered reset sets and structural binding manifests per fixture",
+    "unrelatedDefects": "Pre-existing (also on baseline revision behavior, independent of the 118 emitter edits): with BLUE_RUN_REAL_ENGINE=1 the Spec 111 acceptance cases T045/T080 fail at generation with AudioLayoutCompileError MISSING_AUDIO_LAYOUT for AudioClip projects with panning enabled and no audio-layout manifest. Reported separately; not repaired under this feature."
+  },
+  "verdict": "US3 PASS on the reference host: all compatibility surfaces green; optimized paths affect only the documented send-gain and clear statements.",
+  "convergencePanning": {
+    "status": "PASS",
+    "evidence": "convergence-panning-results.json",
+    "cases": 38,
+    "description": "37 pinned pre-change/candidate whole-buffer float64 law/boost/mode/mono/channel cases, plus block-scheduled live mode/law/boost/position/width/dual switching; finite, residual <=1e-12, independent gain/isolation/cancellation expectations."
+  }
+}

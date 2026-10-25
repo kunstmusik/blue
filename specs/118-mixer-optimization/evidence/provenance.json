@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-24",
+  "baselineBlueRevision": "6d884110241e55b779210eb93dee5071c0068c02",
+  "agentSurvey": {
+    "title": "Comprehensive Review: Fused Math Opcodes in Csound",
+    "attachmentName": "Pasted text.txt",
+    "sha256": "f48d3d5f0f7d9d5a66f26c6197be4eae8b80b2ac41511bd9b98b6fb140c0f39a",
+    "use": "User-supplied background survey, summarized in research.md; source excerpts not incorporated"
+  },
+  "originalMicrobenchmark": {
+    "script": "microbenchmark.py",
+    "results": "microbenchmark-results.json",
+    "origin": "Earlier review in this chat; original synthetic mathematical workloads",
+    "limitations": [
+      "macOS-only process CPU including compilation/startup",
+      "Three timed runs",
+      "Short float32 audio comparisons",
+      "Not generated BlueMixer or application acceptance evidence"
+    ]
+  },
+  "implementationScope": {
+    "date": "2026-10-24",
+    "statement": "Original code only. Production emitter edits stay in the MIT packages/blue-data scope; host-only test capture/decode helpers stay in the GPL-3.0-or-later packages/blue-app scope; the supplied-CSD benchmark mode stays in the MIT native/blue-engine scope. No third-party source, dependency, asset, or bundled table is incorporated; Java Blue (GPL-2.0 reference tree at 3ca3f40579c48a023299a68130d8ab6b9e950974) and Csound sources (LGPL-2.1-or-later, efbcabb4d56e6237e2cabc9949cfadadda946cf9) remain behavioral references only. No license inventory change is required."
+  },
+  "localHostIdentities": {
+    "referenceHost": "macOS 14.2.1 arm64",
+    "csoundRuntime": "Csound 7.0 double samples, build Oct 19 2026 [commit: efbcabb4d56e6237e2cabc9949cfadadda946cf9]",
+    "stagedEngineSha256": "09e3d70bfed717fa203140dd32670a417073779f4a76a0e85d532794801fe698"
+  },
+  "finalRecheck": {
+    "date": "2026-10-25",
+    "statement": "Final recheck after implementation: all shipped changes are original code within their existing license scopes (MIT @blue/data emitter edits and fixtures, GPL-3.0-or-later @blue/app host test harness, MIT native/blue-engine benchmark mode). No new dependencies, assets, bundled tables, or third-party snippets were introduced; no license inventory update is required. Synthetic US2 candidate CSDs under evidence/us2-raw/ are original test workloads generated for this feature. Java Blue (GPL-2.0, pinned 3ca3f40579c48a023299a68130d8ab6b9e950974) and Csound sources (LGPL-2.1-or-later, efbcabb4d56e6237e2cabc9949cfadadda946cf9) were consulted as behavioral references only."
+  },
+  "convergenceRecheck": {
+    "date": "2026-10-25",
+    "scope": "Original MIT native developer benchmark/data tests and GPL-3.0-or-later app test harness only. No new dependencies, assets, bundled tables or third-party implementation incorporated; no license inventory change required.",
+    "additionalBehavioralReferences": [
+      {
+        "url": "https://github.com/csound/csound/blob/19b39531b26d87347c640f53ef55317aa74967c2/Opcodes/fout.c",
+        "license": "LGPL-2.1-or-later",
+        "use": "Temporary vincr eligibility investigation only; no source incorporated and no active-candidate vincr implementation."
+      },
+      {
+        "url": "https://github.com/csound/csound/blob/19b39531b26d87347c640f53ef55317aa74967c2/include/interlocks.h",
+        "license": "LGPL-2.1-or-later",
+        "use": "WI writes-input flag semantics; behavioral reference only."
+      }
+    ],
+    "baselineSourceRestored": true
+  },
+  "phase8Recheck": {
+    "code": "Original host-only test/evidence code in GPL-3.0-or-later app/document scope. Production MIT emitter unchanged; no new dependencies or third-party code incorporated.",
+    "behavioralReferences": [
+      {
+        "url": "https://csound.com/docs/manual/diskin2.html",
+        "purpose": "Default cubic interpolation and automatic sample-rate conversion."
+      },
+      {
+        "url": "https://github.com/csound/csound/blob/19b39531b26d87347c640f53ef55317aa74967c2/OOps/diskin2.c",
+        "license": "LGPL-2.1-or-later; behavior inspected only, no code copied",
+        "purpose": "Four-point cubic Lagrange interpolation, absolute weight sum 1+t(1-t) <= 1.25. Independently derived mathematical bound for resampled PCM fixture metadata; original audio and residual limits unchanged."
+      }
+    ]
+  }
+}

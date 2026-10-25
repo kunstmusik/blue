@@ -1,0 +1,210 @@
+{
+  "parameters": {
+    "duration": 60.0,
+    "repeats": 3,
+    "ksmps": [32, 64],
+    "strips": 64,
+    "names": null
+  },
+  "timings": {
+    "32": {
+      "pan_expr": {
+        "median_cpu_seconds": 0.7494929999999974,
+        "runs": [0.7494929999999974, 0.7444640000000056, 0.7511050000000004]
+      },
+      "pan_mac": {
+        "median_cpu_seconds": 0.7850239999999975,
+        "runs": [0.7850239999999975, 0.8033760000000012, 0.7799399999999992]
+      },
+      "pan_maca": {
+        "median_cpu_seconds": 1.1480459999999986,
+        "runs": [1.1363750000000008, 1.1480459999999986, 1.1491050000000036]
+      },
+      "send_expr": {
+        "median_cpu_seconds": 0.5632660000000005,
+        "runs": [0.5632660000000005, 0.5623230000000012, 0.5799620000000067]
+      },
+      "send_kcombined": {
+        "median_cpu_seconds": 0.4458310000000053,
+        "runs": [0.4458310000000053, 0.4480099999999998, 0.44381799999999927]
+      },
+      "send_mac": {
+        "median_cpu_seconds": 0.740495999999996,
+        "runs": [0.740495999999996, 0.7467119999999958, 0.7372159999999865]
+      },
+      "sum_adds": {
+        "median_cpu_seconds": 2.3626590000000043,
+        "runs": [2.3571610000000005, 2.3626590000000043, 2.4253439999999946]
+      },
+      "sum_op": {
+        "median_cpu_seconds": 1.0374720000000006,
+        "runs": [1.0374720000000006, 1.0195459999999996, 1.0616719999999957]
+      },
+      "clear_assign": {
+        "median_cpu_seconds": 0.22266299999999467,
+        "runs": [0.2228770000000001, 0.22266299999999467, 0.22262000000000126]
+      },
+      "clear_op": {
+        "median_cpu_seconds": 0.21171799999999774,
+        "runs": [0.21159899999999943, 0.22575600000000406, 0.21171799999999774]
+      },
+      "add_expr": {
+        "median_cpu_seconds": 0.37272800000000966,
+        "runs": [0.39643700000000237, 0.37272800000000966, 0.36580600000000485]
+      },
+      "add_vincr": {
+        "median_cpu_seconds": 0.25414699999999907,
+        "runs": [0.25414699999999907, 0.25733599999999673, 0.2524220000000039]
+      },
+      "fade_expr": {
+        "median_cpu_seconds": 0.7321059999999944,
+        "runs": [0.7257719999999988, 0.7321059999999944, 0.7812759999999993]
+      },
+      "fade_maca": {
+        "median_cpu_seconds": 0.7261730000000001,
+        "runs": [0.7261730000000001, 0.7222669999999969, 0.7437729999999949]
+      },
+      "weighted_adds": {
+        "median_cpu_seconds": 4.445314000000008,
+        "runs": [4.569536999999997, 4.445314000000008, 4.442924999999994]
+      },
+      "weighted_mac": {
+        "median_cpu_seconds": 3.271557999999995,
+        "runs": [3.2564630000000037, 3.291156999999999, 3.271557999999995]
+      }
+    },
+    "64": {
+      "pan_expr": {
+        "median_cpu_seconds": 0.6168790000000133,
+        "runs": [0.6724870000000147, 0.6147600000000013, 0.6168790000000133]
+      },
+      "pan_mac": {
+        "median_cpu_seconds": 0.7624470000000048,
+        "runs": [0.7949599999999932, 0.7549550000000105, 0.7624470000000048]
+      },
+      "pan_maca": {
+        "median_cpu_seconds": 0.9786070000000024,
+        "runs": [0.9607669999999917, 0.9895009999999999, 0.9786070000000024]
+      },
+      "send_expr": {
+        "median_cpu_seconds": 0.48510800000000165,
+        "runs": [0.480404999999998, 0.48622600000001115, 0.48510800000000165]
+      },
+      "send_kcombined": {
+        "median_cpu_seconds": 0.4003540000000163,
+        "runs": [0.39356000000000635, 0.4003540000000163, 0.4022389999999769]
+      },
+      "send_mac": {
+        "median_cpu_seconds": 0.7232569999999907,
+        "runs": [0.7296130000000167, 0.7070440000000029, 0.7232569999999907]
+      },
+      "sum_adds": {
+        "median_cpu_seconds": 1.981195999999988,
+        "runs": [1.9917619999999996, 1.981195999999988, 1.9688450000000195]
+      },
+      "sum_op": {
+        "median_cpu_seconds": 1.0204619999999966,
+        "runs": [1.0319919999999967, 1.0125220000000026, 1.0204619999999966]
+      },
+      "clear_assign": {
+        "median_cpu_seconds": 0.2044789999999952,
+        "runs": [0.2044789999999952, 0.2023979999999893, 0.2056339999999952]
+      },
+      "clear_op": {
+        "median_cpu_seconds": 0.19430500000001194,
+        "runs": [0.1904129999999944, 0.19673099999999688, 0.19430500000001194]
+      },
+      "add_expr": {
+        "median_cpu_seconds": 0.23947199999999969,
+        "runs": [0.23947199999999969, 0.23303799999998753, 0.23986799999999842]
+      },
+      "add_vincr": {
+        "median_cpu_seconds": 0.23298599999998892,
+        "runs": [0.223905000000009, 0.23298599999998892, 0.23662499999998876]
+      },
+      "fade_expr": {
+        "median_cpu_seconds": 0.655493000000008,
+        "runs": [0.655493000000008, 0.6569229999999974, 0.6279930000000069]
+      },
+      "fade_maca": {
+        "median_cpu_seconds": 0.671540999999994,
+        "runs": [0.6690910000000001, 0.671540999999994, 0.6868809999999863]
+      },
+      "weighted_adds": {
+        "median_cpu_seconds": 3.6989639999999935,
+        "runs": [3.726001999999997, 3.6663080000000123, 3.6989639999999935]
+      },
+      "weighted_mac": {
+        "median_cpu_seconds": 3.1975899999999973,
+        "runs": [3.1975899999999973, 3.1906299999999903, 3.2018740000000108]
+      }
+    }
+  },
+  "audio_checks": {
+    "32": {
+      "pan_mac": {
+        "max_float32_error": 0.0
+      },
+      "pan_maca": {
+        "max_float32_error": 0.0
+      },
+      "send_kcombined": {
+        "max_float32_error": 0.0
+      },
+      "send_mac": {
+        "max_float32_error": 0.0
+      },
+      "sum_op": {
+        "max_float32_error": 0.0
+      },
+      "clear_op": {
+        "max_float32_error": 0.0
+      },
+      "add_vincr": {
+        "max_float32_error": 0.0
+      },
+      "fade_maca": {
+        "max_float32_error": 0.0
+      },
+      "weighted_mac": {
+        "max_float32_error": 0.0
+      }
+    },
+    "64": {
+      "pan_mac": {
+        "max_float32_error": 0.0
+      },
+      "pan_maca": {
+        "max_float32_error": 0.0
+      },
+      "send_kcombined": {
+        "max_float32_error": 0.0
+      },
+      "send_mac": {
+        "max_float32_error": 0.0
+      },
+      "sum_op": {
+        "max_float32_error": 0.0
+      },
+      "clear_op": {
+        "max_float32_error": 0.0
+      },
+      "add_vincr": {
+        "max_float32_error": 0.0
+      },
+      "fade_maca": {
+        "max_float32_error": 0.0
+      },
+      "weighted_mac": {
+        "max_float32_error": 0.0
+      }
+    }
+  },
+  "environment": {
+    "architecture": "macOS arm64",
+    "csound_version": "7.0 double samples, Oct 19 2026",
+    "csound_commit": "efbcabb4d56e6237e2cabc9949cfadadda946cf9",
+    "blue_commit": null,
+    "note": "Synthetic operation workloads, not complete application or generated-project benchmarks; CPU includes compiler and process startup. Each workload has one excluded warmup and three shuffled timed runs."
+  }
+}

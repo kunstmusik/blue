@@ -1,4 +1,6 @@
-import { existsSync, statSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -10,6 +12,8 @@ import {
   Channel,
   Effect,
   Send,
+  GenericInstrument,
+  GenericScore,
   ScoreTrack,
   TimeDuration,
   TimePosition,
@@ -33,6 +37,13 @@ import { MixerGatePublisher, type MixerGateEngineIO } from './mixer-mute-solo-ru
 import { EngineSession } from './engine-session';
 import { allocateTcpEndpointPair } from './engine-endpoints';
 import { developmentEnginePath } from './engine-runtime';
+import {
+  decodeFloatWavBuffer,
+  assertAllFinite,
+  assertMatchingRenderFormat,
+  assertWholeBufferResidual,
+} from './mixer-optimization-render-support';
+import { buildLiveTraceFixtures, pinnedFixtureCsd } from './mixer-optimization-test-support';
 
 // Spec 111 real-engine acceptance: (T045) optimized (pruned) versus
 // unoptimized disk renders of one certified project produce identical
@@ -362,6 +373,7 @@ async function renderCsdToWav(
   outputDirectory: string,
   tag: string,
   csdText: string,
+  repeat = false,
 ): Promise<DecodedWav> {
   const instrumentsMatch = csdText.match(/<CsInstruments>([\s\S]*?)<\/CsInstruments>/);
   const scoreMatch = csdText.match(/<CsScore>([\s\S]*?)<\/CsScore>/);
@@ -389,41 +401,63 @@ async function renderCsdToWav(
     const client = session.getClient();
     if (!client) throw new Error('render engine client unavailable');
 
-    const setOption = await client.setOption(`-o${wavPath}`);
-    // T072: float WAV output so quantization never fakes or masks a residual.
-    const wavContainer = await client.setOption('-W');
-    if (!wavContainer.ok) throw new Error(`-W failed: ${wavContainer.message}`);
-    const wavFloat = await client.setOption('-f');
-    if (!wavFloat.ok) throw new Error(`-f failed: ${wavFloat.message}`);
-    const compiled = await client.compileOrc(instrumentsMatch![1]);
-    const score = await client.readScore(scoreMatch![1]);
-    const started = await client.start();
-    for (const [label, result] of [
-      ['setOption', setOption],
-      ['compileOrc', compiled],
-      ['readScore', score],
-      ['start', started],
-    ] as const) {
-      if (!result.ok) throw new Error(`${label} failed: ${result.message}`);
-    }
+    let first: ReturnType<typeof decodeFloatWavBuffer> | undefined;
+    for (let performance = 0; performance < (repeat ? 2 : 1); performance++) {
+      const performancePath =
+        performance === 0 ? wavPath : path.join(outputDirectory, `${tag}-repeat.wav`);
+      const outputOptionPath = performancePath.replaceAll('\\', '/').replaceAll('"', '\\"');
+      const setOption = await client.setOption(`-o"${outputOptionPath}"`);
+      // T072: float WAV output so quantization never fakes or masks a residual.
+      const wavContainer = await client.setOption('-W');
+      if (!wavContainer.ok) throw new Error(`-W failed: ${wavContainer.message}`);
+      const wavFloat = await client.setOption('-f');
+      if (!wavFloat.ok) throw new Error(`-f failed: ${wavFloat.message}`);
+      const compiled = await client.compileOrc(instrumentsMatch![1]);
+      const score = await client.readScore(scoreMatch![1]);
+      const started = await client.start();
+      for (const [label, result] of [
+        ['setOption', setOption],
+        ['compileOrc', compiled],
+        ['readScore', score],
+        ['start', started],
+      ] as const) {
+        if (!result.ok) throw new Error(`${label} failed: ${result.message}`);
+      }
 
-    // The engine performs in real time; wait for the output file to appear
-    // and then stay byte-stable before decoding it.
-    const deadline = Date.now() + 60_000;
-    let lastSize = -1;
-    let stableSince = 0;
-    while (Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      if (!existsSync(wavPath)) continue;
-      const size = statSync(wavPath).size;
-      if (size === lastSize) {
-        if (Date.now() - stableSince > 1500 && size > 44) break;
-      } else {
-        lastSize = size;
-        stableSince = Date.now();
+      // The engine performs in real time; wait for the output file to appear
+      // and then stay byte-stable before decoding it.
+      const deadline = Date.now() + 60_000;
+      let lastSize = -1;
+      let stableSince = 0;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (!existsSync(performancePath)) continue;
+        const size = statSync(performancePath).size;
+        if (size === lastSize) {
+          if (Date.now() - stableSince > 1500 && size > 44) break;
+        } else {
+          lastSize = size;
+          stableSince = Date.now();
+        }
+      }
+      expect(existsSync(wavPath)).toBe(true);
+      const audio = decodeFloatWavBuffer(readFileSync(performancePath));
+      assertAllFinite(audio.samples, `${tag} performance ${performance}`);
+      if (first) {
+        assertMatchingRenderFormat(first, audio);
+        assertWholeBufferResidual(
+          first.samples,
+          audio.samples,
+          1e-6,
+          `${tag} repeated managed performance`,
+        );
+      } else first = audio;
+      if (repeat && performance === 0) {
+        for (const result of [await client.destroyEngine(), await client.createEngine()]) {
+          if (!result.ok) throw new Error(`engine recreation failed: ${result.message}`);
+        }
       }
     }
-    expect(existsSync(wavPath)).toBe(true);
     return decodeWavFile(wavPath);
   } finally {
     await session.shutdown('t111-render-complete');
@@ -859,6 +893,162 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
         );
       } finally {
         await rm(outputDirectory, { recursive: true, force: true });
+      }
+    }, 180_000);
+
+    it('compares block-synchronized baseline/candidate timeline and BlueLive traces (Spec 118 T019)', async () => {
+      const enginePath = resolveAcceptanceEnginePath();
+      const baselineDir = process.env.BLUE_MIXER_BASELINE_DIR;
+      if (!enginePath || !baselineDir)
+        throw new Error('Spec 118 live acceptance requires engine and BLUE_MIXER_BASELINE_DIR');
+      const retained = process.env.BLUE_MIXER_EVIDENCE_DIR;
+      const directory = retained
+        ? path.join(retained, 'live-traces')
+        : await mkdtemp(path.join(tmpdir(), 'blue 118 live trace '));
+      mkdirSync(directory, { recursive: true });
+      const outcomes: unknown[] = [];
+      try {
+        for (const fixture of buildLiveTraceFixtures()) {
+          const project = fixture.build();
+          const render =
+            fixture.profile === 'blueLive'
+              ? project.toBlueLiveCSD(undefined, true)
+              : buildStandardCSD(project, 'realtime', undefined, true);
+          const catalog = render.mixerGateBindings!;
+          const sends = catalog.gates.filter((gate) => gate.locator.route === 'send');
+          expect(sends).toHaveLength(2);
+          expect(sends.map((gate) => gate.initial)).toEqual([1, 0]);
+          const amount = render
+            .parameters!.find((parameter) => parameter.getName() === 'Send Amount')!
+            .getCompilationVarName()!;
+          const events = [
+            { block: 16, token: 1, a: 0, b: 1, amount: 0.5 },
+            { block: 32, token: 2, a: 1, b: 1, amount: 0.25 },
+            { block: 48, token: 3, a: 0, b: 0, amount: 0.75 },
+            { block: 49, token: 4, a: 1, b: 0, amount: 0.5 },
+            { block: 64, token: 6, a: 0, b: 1, amount: 0.75 },
+            { block: 80, token: 7, a: 1, b: 1, amount: 0.5 },
+          ];
+          const captures = [];
+          const baselineCsd = pinnedFixtureCsd(fixture, baselineDir);
+          for (const [side, original] of [
+            ['baseline', baselineCsd],
+            ['candidate', render.csdText],
+          ] as const) {
+            const wav = path.join(directory, `${fixture.profile}-${side}-trace.wav`);
+            const embedded = wav.replaceAll('\\', '/').replaceAll('"', '\\"');
+            const trace = [
+              'instr T118Trace',
+              'kBlock timeinstk',
+              ...events.flatMap((event) => [
+                `if kBlock == ${event.block} then`,
+                ...catalog.gates.map(
+                  (gate) =>
+                    ` ${gate.bankSymbols[event.token % 2]} = ${gate === sends[0] ? event.a : gate === sends[1] ? event.b : gate.initial}`,
+                ),
+                // Two tokens in one block: only the final complete bank is sampled.
+                ...(event.token === 6 ? [` ${catalog.commitChannel} = 5`] : []),
+                ` ${catalog.commitChannel} = ${event.token}`,
+                ` ${amount} = ${event.amount}`,
+                'endif',
+              ]),
+              'aL, aR monitor',
+              `aCommit upsamp ${catalog.commitChannel}`,
+              `aApplied upsamp ${catalog.appliedChannel}`,
+              'kPeakL chnget "bm_meter_peak_sub_Master_0"',
+              'kPeakR chnget "bm_meter_peak_sub_Master_1"',
+              'aPeakL upsamp kPeakL',
+              'aPeakR upsamp kPeakR',
+              `fout "${embedded}", 16, aL, aR, aCommit, aApplied, aPeakL, aPeakR`,
+              'endin',
+            ].join('\n');
+            const csd = original.replace('</CsInstruments>', `${trace}\n</CsInstruments>`).replace(
+              /<CsScore>([\s\S]*?)<\/CsScore>/,
+              (_all, score: string) =>
+                `<CsScore>\n${score
+                  .split('\n')
+                  .filter((line) => !/^\s*(?:e(?:\s|$)|f\s*0(?:\s|$))/.test(line))
+                  .map((line) => line.replace(/^(\s*i\s*"[^"]+"\s+0\s+)(?:36000|-1)\b/, '$1' + '2'))
+                  .join('\n')}\ni"T118Trace" 0 ${(128 * 64) / 44100}\ne 2\n</CsScore>`,
+            );
+            writeFileSync(path.join(directory, `${fixture.profile}-${side}.csd`), csd);
+            await renderCsdToWav(enginePath, directory, `${fixture.profile}-${side}`, csd, true);
+            const capture = decodeFloatWavBuffer(readFileSync(wav));
+            assertAllFinite(capture.samples, `${fixture.profile}/${side}`);
+            expect(capture.format).toBe('float32');
+            expect(capture.channels).toBe(6);
+            expect(capture.frames).toBe(128 * 64);
+            captures.push(capture);
+          }
+          assertMatchingRenderFormat(captures[0]!, captures[1]!);
+          const peakResidual = assertWholeBufferResidual(
+            captures[0]!.samples,
+            captures[1]!.samples,
+            1e-6,
+            fixture.profile,
+          );
+          const hash = (text: string | Buffer) => createHash('sha256').update(text).digest('hex');
+          outcomes.push({
+            fixtureId: fixture.id,
+            profile: fixture.profile,
+            inputIdentity: fixture.identity,
+            baselineCsdSha256: hash(baselineCsd),
+            candidateCsdSha256: hash(render.csdText),
+            baselineManifestSha256: hash(
+              readFileSync(path.join(baselineDir, 'baseline-manifest.json')),
+            ),
+            engineSha256: hash(readFileSync(enginePath)),
+            performances: 2,
+            sameManagedSession: true,
+            frames: captures[0]!.frames,
+            format: captures[0]!.format,
+            sampleRate: captures[0]!.sampleRate,
+            channels: 6,
+            finite: true,
+            peakResidual,
+            residualLimit: 1e-6,
+            events,
+          });
+          const actual = captures[1]!;
+          expect(actual.samples[4]).toBe(0);
+          expect(actual.samples[22 * 64 * 6 + 4]).toBeCloseTo(0.05, 6);
+          expect(actual.samples[5]).toBe(0);
+          expect(actual.samples[(actual.frames - 1) * 6 + 5]).toBeCloseTo(0.1, 6);
+          let a = 1,
+            b = 0,
+            amountValue = 0.5,
+            applied = 0;
+          const step = 64 / (0.005 * 44100);
+          for (let block = 1; block <= 128; block++) {
+            const prior = events.filter((event) => event.block < block).at(-1);
+            const targetA = prior?.a ?? 1,
+              targetB = prior?.b ?? 0;
+            a += Math.max(-step, Math.min(step, targetA - a));
+            b += Math.max(-step, Math.min(step, targetB - b));
+            applied = prior?.token ?? 0;
+            amountValue = prior?.amount ?? 0.5;
+            const committed = events.filter((event) => event.block <= block).at(-1)?.token ?? 0;
+            for (let frame = (block - 1) * 64; frame < block * 64; frame++) {
+              expect(actual.samples[frame * 6], `${fixture.profile} A block ${block}`).toBeCloseTo(
+                0.1 * amountValue * a,
+                6,
+              );
+              expect(
+                actual.samples[frame * 6 + 1],
+                `${fixture.profile} B block ${block}`,
+              ).toBeCloseTo(0.2 * 0.5 * b, 6);
+              expect(actual.samples[frame * 6 + 2]).toBe(committed);
+              expect(actual.samples[frame * 6 + 3]).toBe(applied);
+            }
+          }
+        }
+      } finally {
+        if (retained)
+          writeFileSync(
+            path.join(directory, 'trace-outcomes.json'),
+            JSON.stringify({ accepted: outcomes.length === 2, outcomes }, null, 2),
+          );
+        else await rm(directory, { recursive: true, force: true });
       }
     }, 180_000);
 

@@ -79,8 +79,11 @@ describe('mixer mute/solo CSD gates (Spec 111)', () => {
     const data = createProjectWithMixer();
     const result = data.toRealtimePlaybackCSD();
 
-    // Send tap is gated (gate ordinal 0 = first edge of the walk).
-    expect(result.csdText).toMatch(/ga_bluesub_Reverb_0\t\+=\t.*kMixGateState_0/);
+    // Send tap is gated (gate ordinal 0 = first edge of the walk); Spec 118
+    // combines the amount and gate at k-rate at the tap.
+    expect(result.csdText).toMatch(
+      /kMixSendGain = gk_blue_auto\d+ \* kMixGateState_0\nga_bluesub_Reverb_0\t\+=\tga_bluemix_0_0 \* kMixSendGain/,
+    );
     // Source final output gate comes after effects and before routing.
     expect(result.csdText).toMatch(
       /ga_bluemix_0_0 = ga_bluemix_0_0 \* kMixGateState_1\n\s*ga_bluemix_0_1 = ga_bluemix_0_1 \* kMixGateState_1\n\s*ga_bluesub_Master_0\t\+=\tga_bluemix_0_0/,
@@ -108,8 +111,11 @@ describe('mixer mute/solo CSD gates (Spec 111)', () => {
     expect(outputGate.initial).toBe(0);
     expect(result.csdText).toContain(`${sendGate.bankSymbols[0]} init 0`);
     expect(result.csdText).toContain(`${sendGate.bankSymbols[1]} init 0`);
-    // The muted contribution's tap remains gate-controlled.
-    expect(result.csdText).toMatch(/ga_bluesub_Reverb_0\t\+=\t.*kMixGateState_0/);
+    // The muted contribution's tap remains gate-controlled through the
+    // combined k-rate product.
+    expect(result.csdText).toMatch(
+      /kMixSendGain = gk_blue_auto\d+ \* kMixGateState_0\nga_bluesub_Reverb_0\t\+=\tga_bluemix_0_0 \* kMixSendGain/,
+    );
   });
 
   it('keeps solo routing-aware initial targets: soloed source keeps its return audible', () => {
@@ -203,11 +209,12 @@ describe('pan/balance stage interaction with gates (Spec 112 T072)', () => {
     const { data, manifest } = createGatedPanningProject();
     const result = data.toRealtimePlaybackCSD(undefined, false, manifest);
 
-    // Send tap (gate 0) is tapped from the pre-pan bus, the position stage
-    // follows, and only then is the channel output gated (gate 1).
+    // Send tap (gate 0) is tapped from the pre-pan bus via the combined
+    // k-rate product, the position stage follows, and only then is the
+    // channel output gated (gate 1).
     expect(result.csdText).toMatch(
       new RegExp(
-        'ga_bluesub_Reverb_0\\t\\+=\\t\\(ga_bluemix_0_0 \\* gk_blue_auto\\d+\\) \\* kMixGateState_0' +
+        'kMixSendGain = gk_blue_auto\\d+ \\* kMixGateState_0' +
           "[\\s\\S]*\\$BLUE_MIXER_CALC_PAN_GAINS\\([^\\n]*'k_pan_l'k_pan_r'" +
           '[\\s\\S]*ga_bluemix_0_0 \\*= 1\\.4142135623730951 \\* k_pan_l' +
           '[\\s\\S]*ga_bluemix_0_0 = ga_bluemix_0_0 \\* kMixGateState_1',

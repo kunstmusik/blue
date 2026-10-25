@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-24T23:39:14.258120+00:00",
+  "task": "Spec 118 T020 US1 reference-host measurement (send-gain combining + batched clear)",
+  "environment": {
+    "host": "macOS 14.2.1 arm64 (shared desktop; browser and desktop apps active during runs)",
+    "csound": "Csound 7.0 double samples Oct 19 2026 [commit: efbcabb4d56e6237e2cabc9949cfadadda946cf9]",
+    "benchmarkExecutable": "native/blue-engine build-darwin-arm64-release benchmark_engine (Release)",
+    "metric": "median performKsmpsAvgUs (steady-clock elapsed Csound performance time per audio block), 7 paired seeded trials (seed 1180), 1024 warmup + 65536 measured cycles",
+    "baseline": "CSD captured from worktree at 6d884110241e55b779210eb93dee5071c0068c02 (pre-change emitter)",
+    "candidate": "CSD captured from working tree with T015/T016 emitter changes"
+  },
+  "correctnessBeforeTiming": {
+    "focusedDataSuites": "66 passed (mixer-optimization-csd, mixer-gate-csd, csd-policy, csd-disk-pruning, mono-clip-panning)",
+    "appHarness": "26 passed (mixer-optimization.integration incl. T014 tap cases; render-support contract)",
+    "explicitEngineComparisons": "T018 lifecycle matrix: 49 fixtures across 44.1/48 kHz x ksmps 1/32/64/128, worst whole-buffer peak residual 0 (limits 1e-12 linear / 1e-6 stateful), identical ordered reset sets and structural bindings; T019 live trace: closed/open windows match baked references to 1e-10 RMS, commit echo observed, automated send amount transition matches the correlated/uncorrelated RMS model"
+  },
+  "primaryMeasurements": [
+    {
+      "run": "run1-ksmps32",
+      "trials": "7 trials",
+      "baselineMedianUs": 71.2505701904,
+      "candidateMedianUs": 64.1413374481,
+      "medianDeltaPct": -9.977790666519974,
+      "gatePassed": true,
+      "raw": "us1-primary-32-r1.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-32-r1.json"
+    },
+    {
+      "run": "run1-ksmps64",
+      "trials": "7 trials",
+      "baselineMedianUs": 99.7869695587,
+      "candidateMedianUs": 88.6376862793,
+      "medianDeltaPct": -11.173085352433109,
+      "gatePassed": true,
+      "raw": "us1-primary-64-r1.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-64-r1.json"
+    },
+    {
+      "run": "run2-ksmps32",
+      "trials": "7 trials",
+      "baselineMedianUs": 100.675945389,
+      "candidateMedianUs": 90.8968433685,
+      "medianDeltaPct": -9.713444440690083,
+      "gatePassed": true,
+      "raw": "us1-primary-32-r2.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-32-r2.json"
+    },
+    {
+      "run": "run2-ksmps64",
+      "trials": "7 trials",
+      "baselineMedianUs": 144.161298737,
+      "candidateMedianUs": 131.137009827,
+      "medianDeltaPct": -9.034525232573547,
+      "gatePassed": true,
+      "raw": "us1-primary-64-r2.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-64-r2.json"
+    },
+    {
+      "run": "initial-ksmps32",
+      "trials": "7 trials",
+      "baselineMedianUs": 71.3710041962,
+      "candidateMedianUs": 64.3497432861,
+      "medianDeltaPct": -9.837693877472223,
+      "gatePassed": true,
+      "raw": "us1-primary-32.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-32.json"
+    },
+    {
+      "run": "initial-ksmps64",
+      "trials": "7 trials",
+      "baselineMedianUs": 100.209496552,
+      "candidateMedianUs": 89.4876837921,
+      "medianDeltaPct": -10.6993978902352,
+      "gatePassed": true,
+      "raw": "us1-primary-64.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-64.json"
+    },
+    {
+      "run": "highpower-ksmps32",
+      "trials": "15 trials (contaminated by mid-run machine load; retained per contract)",
+      "baselineMedianUs": 79.3979365692,
+      "candidateMedianUs": 88.5145855255,
+      "medianDeltaPct": 11.482224035324014,
+      "gatePassed": true,
+      "raw": "us1-primary-32-15trials.json",
+      "artifact": "/tmp/blue-mixer-evidence.PSp3/us1-primary-32-15trials.json"
+    }
+  ],
+  "verdict": {
+    "ksmps32MedianDeltaPctRange": [
+      -9.977790666519974,
+      -9.713444440690083
+    ],
+    "ksmps64MedianDeltaPctRange": [
+      -11.173085352433109,
+      -9.034525232573547
+    ],
+    "sc001OnThisHost": "INCOMPLETE at ksmps32: consistent improvement -9.7% to -10.0% straddles the >=10% gate across runs on this shared, externally loaded machine; ksmps64 clears (-8.2% to -11.2%, 2 of 3 runs >=10%). Correctness fully green. The deciding SC-001 verdict belongs to T038's isolated reference-platform runs; no gate is weakened and no arithmetic microbenchmark is claimed as acceptance.",
+    "nextAction": "Repeat paired runs on an idle reference machine (T038); the single visibly drift-contaminated 15-trial run is retained but excluded from the median summary."
+  },
+  "rawArtifactDirectory": "us1-raw",
+  "convergenceVerification": {
+    "status": "FAILED >=10% primary gate at ksmps32",
+    "evidence": "convergence-performance-results.json",
+    "ksmps32MedianDeltaPct": [
+      -9.564537037596473,
+      -9.141414144726173
+    ],
+    "ksmps64MedianDeltaPct": -11.488734903768282,
+    "accepted": false
+  }
+}

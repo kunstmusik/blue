@@ -1,0 +1,10 @@
+{
+  "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final candidate/baseline-manifest.json",
+  "sha256": "e9d2abae13af9098df778310155169f53023e060cbfc9b7ade7d9c329a6e57d9",
+  "blueRevision": "6d884110241e55b779210eb93dee5071c0068c02",
+  "dirtyDiffHash": "416410a645dcb184402de92f1bd01ff8bb22ba6f193d9fc585f39d6a10697d3e",
+  "exporterHash": "e3290128f653669f85e909b78b4ecce4aa601b9c5bf8ca774e36a0b46ad58592",
+  "entries": 379,
+  "sourceSnapshot": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final exporter sources",
+  "verified": true
+}

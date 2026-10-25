@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-25",
+  "status": "PASS",
+  "scope": "Current paired SHA-256 + artifact/path/log/output references in active top-level evidence JSON. Historical snapshots, including archived previous temporary-log verdicts, are excluded from current acceptance.",
+  "verifiedReferences": 130,
+  "missing": [],
+  "mismatches": [],
+  "phase8VerifiedReferences": 133,
+  "closureRechecked": "2026-10-25"
+}

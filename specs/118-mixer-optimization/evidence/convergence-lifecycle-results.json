@@ -1,0 +1,18 @@
+{
+  "accepted": true,
+  "artifact": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final comparison/lifecycle-results.json",
+  "sha256": "fe794287a97cb498a58230becd29ac2f7008fb625c7dfdf3654ff1f95dbb0a6b",
+  "fixtureCount": 32,
+  "worstResidual": 0,
+  "exporterHash": "e3290128f653669f85e909b78b4ecce4aa601b9c5bf8ca774e36a0b46ad58592",
+  "baseline": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final baseline/baseline-manifest.json",
+    "sha256": "3bb0b0f721c85db69dd792ee116c6ac4dcb0fcd39b9fc29cd7f2a49d39a6f9f2"
+  },
+  "candidate": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final candidate/baseline-manifest.json",
+    "sha256": "e9d2abae13af9098df778310155169f53023e060cbfc9b7ade7d9c329a6e57d9"
+  },
+  "verification": "Every original input, CSD, full binding and exporter identity checked against current immutable captures; per-outcome manifest hashes recomputed.",
+  "historicalSummary": "phase8-history/convergence-lifecycle-results.json"
+}

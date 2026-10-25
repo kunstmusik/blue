@@ -2266,21 +2266,24 @@ function generateBlueMixer(
     lines.push(`${MIXER_GATE_APPLIED_CHANNEL} = ${GATE_COMMIT_VAR}`);
   }
 
-  // Clear all audio variables
+  // Clear all audio variables: one batched clear over the exact ordered set
+  // the per-variable loops previously reset (Spec 118). Includes sources
+  // skipped by disk pruning; an empty collection emits no statement; lists
+  // beyond the supported-runtime argument limit split into deterministic
+  // bounded groups preserving order.
+  const clearVars: string[] = [];
   for (const channel of sourceChannels) {
     const channelId = channelIdAssignments.get(channel);
     if (channelId === undefined) continue;
-    for (const signalVar of getSourceSignalVars(blueData, channelId, nchnls)) {
-      lines.push(`${signalVar} = 0`);
-    }
+    clearVars.push(...getSourceSignalVars(blueData, channelId, nchnls));
   }
   for (const subChannel of subChannels) {
-    for (const signalVar of getSubChannelSignalVars(blueData, subChannel.getName(), nchnls)) {
-      lines.push(`${signalVar} = 0`);
-    }
+    clearVars.push(...getSubChannelSignalVars(blueData, subChannel.getName(), nchnls));
   }
-  for (const signalVar of masterVars) {
-    lines.push(`${signalVar} = 0`);
+  clearVars.push(...masterVars);
+  const CLEAR_MAX_ARGS = 1999;
+  for (let start = 0; start < clearVars.length; start += CLEAR_MAX_ARGS) {
+    lines.push(`clear ${clearVars.slice(start, start + CLEAR_MAX_ARGS).join(', ')}`);
   }
 
   if (lines.some((line) => line.includes('$BLUE_MIXER_CALC_PAN_GAINS('))) {
@@ -2351,6 +2354,25 @@ function applyEffectsChain(
     const gateExpr = gateContext
       ? gateMultiplierExpr(gateContext, gateContext.sendGateOrdinals.get(item) ?? -1)
       : '';
+
+    if (
+      gateContext?.mode === 'live' &&
+      gateExpr !== '' &&
+      amountExpr !== '1' &&
+      amountExpr !== '1.0'
+    ) {
+      // Spec 118: compute the amount × live-gate product once at k-rate at the
+      // send tap and share it across the send's channels. The product is
+      // emitted immediately before its accumulations, so it expires before any
+      // later authored execution or the next send's reuse of the symbol.
+      // Fixed (disk) gates keep their original baked text.
+      lines.push(`kMixSendGain = ${amountExpr}${gateExpr}`);
+      for (let i = 0; i < signalVars.length; i++) {
+        const targetVar = getSubChannelVar(blueData, targetName, i);
+        lines.push(`${targetVar}\t+=\t${signalVars[i]} * kMixSendGain`);
+      }
+      continue;
+    }
 
     for (let i = 0; i < signalVars.length; i++) {
       const targetVar = getSubChannelVar(blueData, targetName, i);

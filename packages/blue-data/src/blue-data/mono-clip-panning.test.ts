@@ -197,12 +197,11 @@ describe('mono clip panning mixer stage CSD (Spec 112 T072)', () => {
 
     // The send tap scales the raw channel bus with the send amount and its
     // route gate only — no k_pan_/k_bal_ gain appears in the tap expression.
+    // Spec 118 combines amount × gate once at k-rate at the tap.
     expect(mixerText).toMatch(
-      /ga_bluesub_Reverb_0\t\+=\t\(ga_bluemix_0_0 \* gk_blue_auto\d+\) \* kMixGateState_0/,
+      /kMixSendGain = gk_blue_auto\d+ \* kMixGateState_0\nga_bluesub_Reverb_0\t\+=\tga_bluemix_0_0 \* kMixSendGain/,
     );
-    expect(mixerText).toMatch(
-      /ga_bluesub_Reverb_1\t\+=\t\(ga_bluemix_0_1 \* gk_blue_auto\d+\) \* kMixGateState_0/,
-    );
+    expect(mixerText).toMatch(/ga_bluesub_Reverb_1\t\+=\tga_bluemix_0_1 \* kMixSendGain/);
 
     // The return is positioned exactly once, by the Reverb stage itself, and
     // the panned return is what reaches Master.

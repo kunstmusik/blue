@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T00:26:53.154711+00:00",
+  "task": "Spec 118 T038 native platform acceptance matrix",
+  "status": "INCOMPLETE \u2014 macOS reference evidence recorded; native Windows and Linux runs unavailable on this host. This task intentionally remains unchecked until every required platform result exists.",
+  "macOS": {
+    "host": "macOS 14.2.1 arm64 (shared desktop; external load documented in us1-results.json)",
+    "csound": "CLI efbcabb4d56e6237e2cabc9949cfadadda946cf9 (double); engine-loaded Csound 19b39531b26d87347c640f53ef55317aa74967c2 reported by benchmark metadata",
+    "correctness": "compare mode: 49 fixtures (incl. full rate/block lifecycle matrix) worst residual 0; structural reset/binding equality; live gate/automation trace green; paths with spaces exercised by native argument tests (benchmark.test.mjs synthetic Windows path cases)",
+    "performance": {
+      "primarySendHeavyKsmps32MedianDeltaPct": [
+        -9.977790666519974,
+        -9.713444440690083
+      ],
+      "primarySendHeavyKsmps64MedianDeltaPctRange": [
+        -11.173085352433109,
+        -9.034525232573547
+      ],
+      "sc001VerdictOnThisHost": "INCOMPLETE: ksmps32 straddles the >=10% gate under external machine load; ksmps64 clears in 2 of 3 runs. Deciding runs must be repeated on an isolated reference machine."
+    },
+    "representativeRegressionCheck": "fan-in/barrier/panning/metering/disabled fixtures compared in the same paired runs (residual 0); representative workload timing not separately gated on this host"
+  },
+  "windows": {
+    "status": "UNAVAILABLE on this host",
+    "required": "native correctness runs, Release benchmark matrix, path-with-space and native Windows artifact handling"
+  },
+  "linux": {
+    "status": "UNAVAILABLE on this host",
+    "required": "native correctness runs and Release benchmark matrix"
+  },
+  "rules": [
+    "Unit-test skips never count as platform evidence.",
+    "A missing runtime/fixture is a failed/incomplete run, not a pass.",
+    "No competing validation jobs during measurements."
+  ],
+  "convergence": {
+    "date": "2026-10-25",
+    "status": "INCOMPLETE / NOT ACCEPTED",
+    "primaryReferenceGate": "FAIL: 32 samples 9.56% and 9.14%; 64 samples 11.49%.",
+    "representativeMatrix": "T053 not completed after failed T052 checkpoint. Native Windows/Linux unavailable.",
+    "evidence": "convergence-performance-results.json",
+    "correctness": "Final single-thread pinned matrix and panning/managed-live tests pass; four-thread baseline amplitude defect remains outside feature repair scope."
+  }
+}

@@ -1,3 +1,4 @@
+import { serializeMixerBindings } from './mixer-optimization-test-support';
 import { describe, expect, it } from 'vitest';
 import {
   TrackLayer,
@@ -12,6 +13,7 @@ import {
   BSBXYController,
   Channel,
   GenericInstrument,
+  Send,
 } from '@blue/data';
 import { getMixerChannelSnapshotId } from '../shared/project-editor/identity';
 import { createProjectEditorSnapshot } from '../shared/project-editor';
@@ -462,4 +464,148 @@ describe('compiled panner binding ownership', () => {
       expect([...registry.keys()].some((key) => key.endsWith('::stereoPanMode'))).toBe(false);
     },
   );
+});
+
+// ─── Spec 118 T023: optimized mixer generation keeps binding manifests identical ───
+
+describe('mixer optimization binding parity (Spec 118 T023)', () => {
+  function createGatedSendProject() {
+    const data = new BlueData();
+    const mixer = data.getMixer();
+    mixer.setEnabled(true);
+    const bus = new Channel();
+    bus.setName('Bus');
+    bus.setOutChannel('Master');
+    mixer.getSubChannels().push(bus);
+    const source = new Channel();
+    source.setName('Track 1');
+    source.setAssociation('track-1');
+    source.setOutChannel('Master');
+    for (const [chain, level] of [
+      [source.getPreEffects(), 0.3],
+      [source.getPostEffects(), 0.5],
+    ] as const) {
+      const send = new Send();
+      send.setSendChannel('Bus');
+      send.setLevel(level);
+      chain.push(send);
+    }
+    mixer.getChannels().push(source);
+    const instrument = new GenericInstrument();
+    instrument.setName('Sine');
+    instrument.setText('aL oscili 0.2, 440\naR oscili 0.2, 441\nblueMixerOut aL, aR');
+    data.getArrangement().addInstrument(instrument, 'Track 1');
+    return { data, source };
+  }
+
+  /**
+   * Binding manifests compare structure: runtime identities are disposable
+   * per compilation (copied/reused, never replaced), so gate ordinals, bank
+   * symbols, initial values, routes, meter keys, and parameter names are the
+   * comparable surfaces. CSD text itself must be byte-identical.
+   */
+  function structuralManifest(
+    result: ReturnType<BlueData['toRealtimePlaybackCSD']>,
+    data: BlueData,
+  ) {
+    return JSON.stringify(serializeMixerBindings(result, data));
+  }
+
+  it('repeated timeline compilation yields identical structural parameter/gate/panner/meter manifests', () => {
+    const { data } = createGatedSendProject();
+    const first = data.toRealtimePlaybackCSD(undefined, true);
+    const second = data.toRealtimePlaybackCSD(undefined, true);
+    expect(structuralManifest(second, data)).toBe(structuralManifest(first, data));
+    // The combined-gain statements exist; gate ordinals are consumed in order.
+    expect((first.csdText.match(/^kMixSendGain = /gm) ?? []).length).toBe(2);
+    // 2 sends + source/sub/master outputs consume ordinals in walk order.
+    expect(first.mixerGateBindings?.gates.map((gate) => gate.ordinal)).toEqual([0, 1, 2, 3, 4]);
+    expect(first.meterBindingMap?.entries.map((entry) => entry.csdKey)).toEqual(
+      second.meterBindingMap?.entries.map((entry) => entry.csdKey),
+    );
+  });
+
+  it('BlueLive compilation yields the same gate catalog structure as timeline', () => {
+    const { data } = createGatedSendProject();
+    const timeline = data.toRealtimePlaybackCSD();
+    const live = data.toBlueLiveCSD();
+    expect(serializeMixerBindings(live, data).gates).toEqual(
+      serializeMixerBindings(timeline, data).gates,
+    );
+    expect(serializeMixerBindings(live, data).panners).toEqual(
+      serializeMixerBindings(timeline, data).panners,
+    );
+    expect(live.pannerBindings?.channels.map((channel) => channel.channelIdentity)).toEqual(
+      timeline.pannerBindings?.channels.map((channel) => channel.channelIdentity),
+    );
+  });
+
+  it('detects mapping, exported-control, panner, gate and meter changes that counts miss', () => {
+    const { data, source } = createGatedSendProject();
+    const identities = {
+      source: source.getRuntimeIdentity(),
+      sends: [...source.getPreEffects(), ...source.getPostEffects()]
+        .filter((entry) => entry instanceof Send)
+        .map((entry) => entry.getRuntimeIdentity()),
+    };
+    const result = data.toRealtimePlaybackCSD(undefined, true);
+    const before = structuralManifest(result, data);
+    const parameter = result.parameters![0]!,
+      name = parameter.getCompilationVarName()!;
+    parameter.setCompilationVarName('gk_wrong_mapping');
+    expect(structuralManifest(result, data)).not.toBe(before);
+    parameter.setCompilationVarName(name);
+    for (const altered of [
+      {
+        ...result,
+        mixerGateBindings: { ...result.mixerGateBindings!, commitChannel: 'wrong_commit' },
+      },
+      { ...result, pannerBindings: { ...result.pannerBindings!, scoreLawChannel: 'wrong_law' } },
+      {
+        ...result,
+        meterBindingMap: {
+          ...result.meterBindingMap!,
+          entries: [...result.meterBindingMap!.entries].reverse(),
+        },
+      },
+      {
+        ...result,
+        csdText: result.csdText.replace(/chnexport "[^"]+"/, 'chnexport "wrong_export"'),
+      },
+    ])
+      expect(structuralManifest(altered, data)).not.toBe(before);
+    const again = data.toRealtimePlaybackCSD(undefined, true);
+    expect(structuralManifest(again, data)).toBe(before);
+    expect(source.getRuntimeIdentity()).toBe(identities.source);
+    expect(
+      [...source.getPreEffects(), ...source.getPostEffects()]
+        .filter((entry) => entry instanceof Send)
+        .map((entry) => entry.getRuntimeIdentity()),
+    ).toEqual(identities.sends);
+    expect(again.mixerGateBindings?.gates.map((gate) => gate.locator)).toEqual(
+      result.mixerGateBindings?.gates.map((gate) => gate.locator),
+    );
+  });
+
+  it('sync assigns identical parameter ordinals across repeated optimized compilations', () => {
+    const { data } = createGatedSendProject();
+    const firstRender = data.toRealtimePlaybackCSD();
+    const first = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      firstRender.parameters,
+      data.getScore(),
+    );
+    expect(first.liveCount).toBe(first.compiledCount);
+    const names = firstRender.parameters?.map((parameter) => parameter.getName());
+    const rebuilt = data.toRealtimePlaybackCSD();
+    expect(rebuilt.parameters?.map((parameter) => parameter.getName())).toEqual(names);
+    const second = syncCompiledRuntimeParameterNames(
+      data.getArrangement(),
+      data.getMixer(),
+      rebuilt.parameters,
+      data.getScore(),
+    );
+    expect(second.liveCount).toBe(first.liveCount);
+  });
 });

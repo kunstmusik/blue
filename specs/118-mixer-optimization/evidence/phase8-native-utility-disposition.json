@@ -1,0 +1,59 @@
+{
+  "status": "SCOPED VALIDATION EXCEPTION; native integration remains 4/5, not green",
+  "task": "T057",
+  "cause": "With the same installed Csound 7 double library, csoundListUtilities on a fresh instance returns no utilities. The unchanged CsoundRuntimeServices precheck returns 65 before calling csoundRunUtility. A standalone direct csoundRunUtility sndinfo call succeeds (0) and prints the file information. No Blue emitter, benchmark, loader or runtime-service code is loaded by the standalone probe.",
+  "scope": "Utility enumeration/execution on a fresh instance of this runtime; mixer DSP/rendering and native gate/meter/lifecycle tests remain separately required.",
+  "fallback": "For validation/file information only, invoke sndinfo directly through the public Csound API with the exact native path. This is not a production wrapper fix or a new app execution path.",
+  "reproScript": {
+    "path": "/Users/stevenyi/work/blue3/specs/118-mixer-optimization/evidence/native-utility-repro.py",
+    "sha256": "3d5c7bfb864f300943aba7353de409093b2728fa0bae8a4ab08ce3507989c6dd"
+  },
+  "runtimeProbe": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 native utility/direct-spaced-runtime.json",
+    "sha256": "8bf1a4b0f77af857518c817070306719ec59c64787af3610731eb36dfa6dfb55"
+  },
+  "runtimeStderr": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 native utility/direct-spaced-runtime.stderr",
+    "sha256": "2163731dff8bc1829fc73b94fdf1fa5d36ab123ae9eb1a576586cf170047909d"
+  },
+  "nativeFailureStdout": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 native utility/native-test.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "nativeFailureStderr": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 native utility/native-test.stderr",
+    "sha256": "8efc814e26d032e6e03c9b48f792339a2b9871646da676f5a4b2550e3c433eb9"
+  },
+  "unchangedFromPinnedBaseline": [
+    {
+      "path": "/Users/stevenyi/work/blue3/native/blue-engine/src/csound/CsoundRuntimeServices.cpp",
+      "sha256": "da2e01ec4ffa1a02d4b54f2aabab1e36426811580aa97a627e7ffb1ec7a832cf"
+    },
+    {
+      "path": "/Users/stevenyi/work/blue3/native/blue-engine/src/csound/CsoundLoader.cpp",
+      "sha256": "ed5cfbe0b98393480cd61cf2c915f0f4928598bdd470e53abe24649eddfb7e16"
+    },
+    {
+      "path": "/Users/stevenyi/work/blue3/native/blue-engine/src/csound/CsoundTypes.h",
+      "sha256": "95f5ea11c123bf166240e06396dae7056979ae1cfce2b0813ffae596117e57d7"
+    },
+    {
+      "path": "/Users/stevenyi/work/blue3/native/blue-engine/tests/cpp/test_csound_integration.cpp",
+      "sha256": "06b44e63ca6209d90a74643331f7f63c1e9569f8a810d82205ee236f071ada67"
+    },
+    {
+      "path": "/Users/stevenyi/work/blue3/native/blue-engine/CMakeLists.txt",
+      "sha256": "fa1ab67143d943d2b3527a91d5fd1e1ba509c6606aa2b28536795e8adf4e27e4"
+    }
+  ],
+  "originalFailureRetained": "convergence-final-validation.json checks.nativeIntegration; phase8-history/convergence-final-validation.json",
+  "applicableChecks": [
+    "full baseline/candidate double renders",
+    "managed timeline and BlueLive traces",
+    "ChannelBridgeTests",
+    "CsoundLifecycleStress",
+    "MeterSamplingTests",
+    "MeteringBenchmarkSoak"
+  ],
+  "noAssertionOrProductionCodeChanged": true
+}

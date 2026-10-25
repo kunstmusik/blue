@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-25T00:24:31.340298+00:00",
+  "task": "Spec 118 T030/T034 US2 preliminary matched fan-in evaluation and decision",
+  "environment": "macOS 14.2.1 arm64; native benchmark_engine Release, --csd mode, 7 paired seeded trials, 1024 warmup + 4096 measured cycles, 44.1 kHz/ksmps32, 128 sources into 8 buses",
+  "syntheticWorkloads": {
+    "note": "Test-only candidate CSDs isolating pure fan-in accumulation (immediate += baseline vs sum/mac/vincr forms); NOT generated BlueMixer CSD and NOT acceptance evidence. Sources live inside the benchmark instrument; mac uses the fresh-assignment form (even argument count) with per-contribution k-rate gains.",
+    "medianDeltaPctNegativeIsFaster": {
+      "sum-g2": {
+        "baselineMedianUs": 19.9228044434,
+        "candidateMedianUs": 17.5923972168,
+        "medianDeltaPct": -11.69718466705131
+      },
+      "sum-g4": {
+        "baselineMedianUs": 19.9268078613,
+        "candidateMedianUs": 17.1410598145,
+        "medianDeltaPct": -13.97990117729905
+      },
+      "sum-g8": {
+        "baselineMedianUs": 20.1041123047,
+        "candidateMedianUs": 16.9763859863,
+        "medianDeltaPct": -15.557644480869676
+      },
+      "sum-g16": {
+        "baselineMedianUs": 19.9539824219,
+        "candidateMedianUs": 17.105932373,
+        "medianDeltaPct": -14.273090898256942
+      },
+      "sum-g32": {
+        "baselineMedianUs": 19.7964248047,
+        "candidateMedianUs": 16.7933234863,
+        "medianDeltaPct": -15.169917538276975
+      },
+      "mac-g2": {
+        "baselineMedianUs": 24.3680852051,
+        "candidateMedianUs": 20.6647402344,
+        "medianDeltaPct": -15.197521428252916
+      },
+      "mac-g4": {
+        "baselineMedianUs": 24.8508869629,
+        "candidateMedianUs": 20.6001416016,
+        "medianDeltaPct": -17.10500461269634
+      },
+      "mac-g8": {
+        "baselineMedianUs": 24.4768779297,
+        "candidateMedianUs": 20.3607653809,
+        "medianDeltaPct": -16.816329928277128
+      },
+      "mac-g16": {
+        "baselineMedianUs": 24.8937485352,
+        "candidateMedianUs": 20.5068125,
+        "medianDeltaPct": -17.622641399292803
+      },
+      "mac-g32": {
+        "baselineMedianUs": 24.9628876953,
+        "candidateMedianUs": 20.3676760254,
+        "medianDeltaPct": -18.408173469310537
+      },
+      "vincr-g2": {
+        "baselineMedianUs": 19.6853273926,
+        "candidateMedianUs": 19.1690202637,
+        "medianDeltaPct": -2.622801839171292
+      },
+      "vincr-g4": {
+        "baselineMedianUs": 19.7811853027,
+        "candidateMedianUs": 19.3077683105,
+        "medianDeltaPct": -2.3932690835032138
+      },
+      "vincr-g8": {
+        "baselineMedianUs": 19.8016254883,
+        "candidateMedianUs": 19.2375144043,
+        "medianDeltaPct": -2.84881200451605
+      },
+      "vincr-g16": {
+        "baselineMedianUs": 19.9485649414,
+        "candidateMedianUs": 19.1630981445,
+        "medianDeltaPct": -3.937460159201182
+      },
+      "vincr-g32": {
+        "baselineMedianUs": 21.220564209,
+        "candidateMedianUs": 20.8357043457,
+        "medianDeltaPct": -1.8136174868374697
+      }
+    }
+  },
+  "decision": "DEFER all three candidates. No production emitter change (T031/T032/T033 each resolved as documented deferral per their task text).",
+  "rationale": [
+    "sum/mac upside exists only in fan-in-dominated regions with no interleaved observers (synthetic pure workloads: -11.7..-18.4%). In generated mixers, contributions to one bus interleave with every other strip's processing; any enabled effect anywhere is an opaque observer/writer requiring a full flush (eligibility contract), which eliminates the group in realistic bus-heavy projects (see barrier-rich fixture).",
+    "Weighted batching (mac) additionally requires stable per-contribution k-rate gain values; the emitter's gain scratch (kMixSendGain, ktempdb) is shared and reused per send/fader, and the contract forbids expression-name snapshots and per-host selection. Per-send scratch allocation plus replacement-output seeding (prior direct bus content counted once) plus barrier bookkeeping is the disproportionate complexity the plan rejected in favor of deferral.",
+    "No cross-platform/cross-block threshold evidence: measurements are macOS/ksmps32-only preliminary numbers; the contract requires matched small/large fan-ins across supported blocks and platforms before any static threshold. Such evidence collection cannot justify adoption while the safe regions themselves are empty in realistic projects.",
+    "vincr: -1.8..-3.9% even on pure synthetic fan-in, below realistic-mix noise, with native flag/locking semantics to verify for concurrency; fails FR-011 measured-benefit on its own.",
+    "US1 already captured the send-path savings with strictly local, barrier-free transformations."
+  ],
+  "contractQuote": "If aliases/lifetimes cannot be established from generator-owned operations, emit the original accumulation immediately",
+  "affectedTests": "T028 eligibility tests (16 pass, immediate path pinned); T029 observer case (23 pass); US1/US3 suites unchanged and green \u2014 no production change to re-verify."
+}

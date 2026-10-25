@@ -5,6 +5,8 @@ import { GenericInstrument } from './instruments/generic-instrument';
 import { Tables } from './tables';
 import { BlueX7 } from './instruments/blue-x7';
 import { TrackLayerGroup } from './score/track/track-layer-group';
+import { Channel } from './mixer/channel';
+import { Send } from './mixer/send';
 
 class DeterministicTableInstrument extends GenericInstrument {
   override generateFTables(tables: unknown): void {
@@ -137,5 +139,74 @@ describe('BlueData deterministic render parity', () => {
         channels: [...binding.parameterChannels.entries()],
       })),
     );
+  });
+});
+
+// ─── Spec 118 T021: optimized mixer paths stay deterministic ───
+
+describe('mixer optimization determinism (Spec 118 T021)', () => {
+  function createSendHeavyProject(): BlueData {
+    const data = new BlueData();
+    const mixer = data.getMixer();
+    mixer.setEnabled(true);
+    const returnChannel = new Channel();
+    returnChannel.setName('Reverb');
+    returnChannel.setOutChannel('Master');
+    mixer.getSubChannels().push(returnChannel);
+    for (let index = 0; index < 4; index++) {
+      const source = new Channel();
+      source.setName(`Track ${index}`);
+      source.setAssociation(`track-${index}`);
+      source.setOutChannel('Master');
+      for (const [chain, level] of [
+        [source.getPreEffects(), 0.3],
+        [source.getPostEffects(), 0.45],
+      ] as const) {
+        const send = new Send();
+        send.setSendChannel('Reverb');
+        send.setLevel(level);
+        chain.push(send);
+      }
+      mixer.getChannels().push(source);
+      const instrument = new GenericInstrument();
+      instrument.setName(`Src${index}`);
+      instrument.setText('aL oscili 0.2, 440\naR oscili 0.2, 442\nblueMixerOut aL, aR');
+      data.getArrangement().addInstrument(instrument, `Track ${index}`);
+    }
+    return data;
+  }
+
+  it('generates identical realtime CSD with combined send gains across repeated builds', () => {
+    const data = createSendHeavyProject();
+    const first = data.toRealtimePlaybackCSD();
+    const second = data.toRealtimePlaybackCSD();
+    expect(second.csdText).toBe(first.csdText);
+    // Every gated non-unity send uses exactly one shared k-rate product.
+    expect((first.csdText.match(/^kMixSendGain = /gm) ?? []).length).toBe(8);
+    // Scratch symbol allocation does not consume automation ordinals: the
+    // automation channel count is unchanged by the combined statements.
+    expect((first.csdText.match(/^gk_blue_auto\d+ chnexport/gm) ?? []).length).toBe(
+      second.parameters?.length,
+    );
+  });
+
+  it('keeps async generation byte-identical to sync for optimized mixer paths', async () => {
+    const data = createSendHeavyProject();
+    const sync = data.toRealtimePlaybackCSD();
+    const async = await data.toRealtimePlaybackCSDAsync();
+    expect(async.csdText).toBe(sync.csdText);
+    const diskSync = data.toDiskCSD();
+    const diskAsync = await data.toDiskCSDAsync();
+    expect(diskAsync).toBe(diskSync);
+  });
+
+  it('keeps the mixer-disabled route on the unchanged generation path', () => {
+    const data = createSendHeavyProject();
+    data.getMixer().setEnabled(false);
+    const first = data.toRealtimePlaybackCSD();
+    const second = data.toRealtimePlaybackCSD();
+    expect(second.csdText).toBe(first.csdText);
+    expect(first.csdText).not.toContain('BlueMixer');
+    expect(first.csdText).not.toContain('kMixSendGain');
   });
 });

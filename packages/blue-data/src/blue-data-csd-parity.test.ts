@@ -420,3 +420,59 @@ describe('legacy mono/stereo audio playback and mixer CSD parity with Java Blue 
     }
   });
 });
+
+// ─── Spec 118 T022: Java fixture parity unaffected by mixer optimization ───
+
+describe('mixer optimization Java parity (Spec 118 T022)', () => {
+  const legacyProjectXml = [
+    '<blueData version="2.8.0">',
+    '  <projectProperties>',
+    '    <title>Java Parity Legacy</title>',
+    '    <sampleRate>44100</sampleRate>',
+    '    <ksmps>100</ksmps>',
+    '    <channels>2</channels>',
+    '  </projectProperties>',
+    '  <mixer>',
+    '    <enabled>true</enabled>',
+    '    <channelList list="channels">',
+    '      <channel association="1">',
+    '        <name>Ch1</name>',
+    '        <outChannel>Master</outChannel>',
+    '        <level>0.0</level>',
+    '      </channel>',
+    '    </channelList>',
+    '    <channelList list="subChannels"/>',
+    '    <channel><name>Master</name><level>0.0</level></channel>',
+    '  </mixer>',
+    '  <score>',
+    '      <soundObject type="blue.soundObject.PolyObject">',
+    '        <soundLayer/>',
+    '      </soundObject>',
+    '  </score>',
+    '</blueData>',
+  ].join('\n');
+
+  it('keeps send-free legacy Java projects on the unchanged routing text', () => {
+    const data = BlueData.loadFromString(legacyProjectXml);
+    const first = data.toCSD();
+    const second = data.toCSD();
+    expect(second).toBe(first);
+    expect(first).not.toContain('kMixSendGain');
+    // The optimized batched clear covers the same legacy accumulator set.
+    const clearLine = first
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => line.startsWith('clear '));
+    expect(clearLine).toBe(
+      'clear ga_bluemix_0_0, ga_bluemix_0_1, ga_bluesub_Master_0, ga_bluesub_Master_1',
+    );
+  });
+
+  it('preserves legacy XML byte-for-byte across optimized generation', () => {
+    const data = BlueData.loadFromString(legacyProjectXml);
+    const before = data.saveToString();
+    data.toCSD();
+    data.toDiskCSD();
+    expect(data.saveToString()).toBe(before);
+  });
+});

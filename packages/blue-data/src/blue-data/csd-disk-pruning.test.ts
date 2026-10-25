@@ -90,7 +90,12 @@ describe('disk pruning eligibility and route survival (Spec 111 US3)', () => {
         .filter((line) => line.includes(`ga_bluemix_${sourceId}_`));
     };
 
-    expect(sourceLines('disk')).toEqual(['ga_bluemix_0_0 = 0', 'ga_bluemix_0_1 = 0']);
+    // Spec 118 batches the resets: the pruned source contributes no processing
+    // lines, and its accumulators are still cleared in the ordered batch.
+    const prunedLines = sourceLines('disk');
+    expect(prunedLines).toHaveLength(1);
+    expect(prunedLines[0]).toMatch(/^clear ga_bluemix_0_0, ga_bluemix_0_1, /);
+    expect(prunedLines[0]).toContain('ga_bluesub_Master_0');
     expect(sourceLines('disk', 1).length).toBeGreaterThan(2);
     expect(sourceLines('realtime').length).toBeGreaterThan(2);
 

@@ -1,0 +1,15 @@
+{
+  "accepted": true,
+  "artifact": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final live/live-traces/trace-outcomes.json",
+  "sha256": "816b2f2a2f6bc054de5bfab02a15f3c73312f6670721a3dea9ae6f1b18edab90",
+  "fixtureCount": 2,
+  "baseline": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final baseline/baseline-manifest.json",
+    "sha256": "3bb0b0f721c85db69dd792ee116c6ac4dcb0fcd39b9fc29cd7f2a49d39a6f9f2"
+  },
+  "candidate": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final candidate/baseline-manifest.json",
+    "sha256": "e9d2abae13af9098df778310155169f53023e060cbfc9b7ade7d9c329a6e57d9"
+  },
+  "exporterHash": "e3290128f653669f85e909b78b4ecce4aa601b9c5bf8ca774e36a0b46ad58592"
+}

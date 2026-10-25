@@ -1,0 +1,31 @@
+{
+  "accepted": true,
+  "exporterHash": "e3290128f653669f85e909b78b4ecce4aa601b9c5bf8ca774e36a0b46ad58592",
+  "manifestEntries": 379,
+  "verifiedComparisons": 197,
+  "baseline": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final baseline/baseline-manifest.json",
+    "sha256": "3bb0b0f721c85db69dd792ee116c6ac4dcb0fcd39b9fc29cd7f2a49d39a6f9f2"
+  },
+  "candidate": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final candidate/baseline-manifest.json",
+    "sha256": "e9d2abae13af9098df778310155169f53023e060cbfc9b7ade7d9c329a6e57d9"
+  },
+  "comparison": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final comparison/comparison-results.json",
+    "sha256": "6d39f509040097a46c8ca67bf6bea76208341ff12a88294806750b4a33929847"
+  },
+  "live": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final live/live-traces/trace-outcomes.json",
+    "sha256": "816b2f2a2f6bc054de5bfab02a15f3c73312f6670721a3dea9ae6f1b18edab90"
+  },
+  "panning": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final panning/panning-results.json",
+    "sha256": "c5021a4e1cd664c73754ec1fe11f16c73611feb979734749878be7655e334375"
+  },
+  "verifier": {
+    "path": "/Users/stevenyi/work/blue3/.worktrees/118-evidence/phase8 final comparison/verify-evidence.mjs",
+    "sha256": "ca40b1ef0e169bb273f160c6b994fac470f324cb99dc1c6ccafca033f7cd671d"
+  },
+  "candidateAudioLocation": "Six pruning render CSDs reference the immutable baseline WAV rather than the byte-identical candidate capture WAV. Exact rendered-CSD bytes reconstructed solely by that known embedded asset location substitution, verified against each originally recorded render hash, and frozen beside the report. Baseline CSD is never reconstructed."
+}

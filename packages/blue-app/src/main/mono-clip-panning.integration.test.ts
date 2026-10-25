@@ -4,6 +4,19 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  buildPanningFixtures,
+  expectedFixtureRender,
+  PANNING_INPUTS,
+  pinnedFixtureCsd,
+} from './mixer-optimization-test-support';
+import {
+  decodeFloatWavBuffer,
+  assertExpectedRender,
+  assertAllFinite,
+  assertMatchingRenderFormat,
+  assertWholeBufferResidual,
+} from './mixer-optimization-render-support';
+import {
   AudioClip,
   BlueData,
   Channel,
@@ -13,10 +26,12 @@ import {
   TimePosition,
   TrackLayerGroup,
   getDualPanGains,
+  buildStandardCSD,
   getMonoPanGains,
   getStereoBalanceGains,
   getStereoPanGains,
   parseAudioFileMetadata,
+  Send,
 } from '@blue/data';
 import { preflightAudioLayout } from './audio-layout-preflight';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
@@ -654,3 +669,178 @@ endin
     expect(right).toBeCloseTo(1.0, 2);
   }, 180_000);
 });
+
+// Spec 118: pre-change/candidate complete-buffer comparison plus independent
+// channel/gain expectations. Reuse the original clip/pan fixtures across laws.
+describe.skipIf(process.env.BLUE_RUN_REAL_ENGINE !== '1')(
+  'mixer optimization pinned panning equivalence (Spec 118 T024)',
+  () => {
+    it('preserves every law/boost pair, mono adaptation, stereo modes and edge shapes', () => {
+      const baselineDir = process.env.BLUE_MIXER_BASELINE_DIR;
+      if (!baselineDir) throw new Error('panning acceptance requires BLUE_MIXER_BASELINE_DIR');
+      const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-118-pinned-pan-'));
+      try {
+        const fixtures = buildPanningFixtures(baselineDir);
+        const outcomes: unknown[] = [];
+        const candidates = process.env.BLUE_CSOUND_PATH
+          ? [process.env.BLUE_CSOUND_PATH]
+          : ['csound', '/usr/local/bin/csound', '/opt/homebrew/bin/csound'];
+        const cli = candidates.find((file) => {
+          try {
+            execFileSync(file, ['--version'], { stdio: 'ignore' });
+            return true;
+          } catch {
+            return false;
+          }
+        });
+        if (!cli) throw new Error('panning acceptance requires the Csound CLI');
+        const render = (csd: string, name: string) => {
+          const file = path.join(scratch, `${name}.csd`),
+            wav = path.join(scratch, `${name}.wav`);
+          fs.writeFileSync(file, csd);
+          execFileSync(cli, ['-nd', '-W', '--0dbfs=1', '--format=double', '-o', wav, file], {
+            stdio: 'pipe',
+          });
+          return decodeFloatWavBuffer(fs.readFileSync(wav));
+        };
+        for (const fixture of fixtures) {
+          const data = fixture.build();
+          const layout = preflightAudioLayout(data, { projectDirectory: baselineDir });
+          expect(layout.success).toBe(true);
+          const candidate = buildStandardCSD(data, 'realtime', undefined, false, layout.manifest);
+          const baseline = pinnedFixtureCsd(fixture, baselineDir);
+          const a = render(baseline, 'baseline'),
+            b = render(candidate.csdText, 'candidate');
+          assertExpectedRender(a, expectedFixtureRender(fixture), 'panning baseline');
+          assertExpectedRender(b, expectedFixtureRender(fixture), 'panning candidate');
+          assertMatchingRenderFormat(a, b);
+          assertAllFinite(a.samples, fixture.id);
+          assertAllFinite(b.samples, fixture.id);
+          const peakResidual = assertWholeBufferResidual(a.samples, b.samples, 1e-12, fixture.id);
+          const spec = fixture.panCase,
+            input = PANNING_INPUTS[spec.input];
+          let left: number = input[0],
+            right: number = input.length === 1 ? input[0] : input[1];
+          if (input.length === 1) {
+            left /= Math.SQRT2;
+            right /= Math.SQRT2;
+          }
+          let expected: [number, number];
+          if (input.length === 1) {
+            const [l, r] = getMonoPanGains(spec.pan, spec.law, spec.boost);
+            expected = [left * l + left * 0.4, right * r + right * 0.4];
+            expect(candidate.csdText).toContain('1.4142135623730951');
+          } else if (spec.mode === 'balance') {
+            expected = [
+              left * Math.min(1, 2 * (1 - spec.pan)) + left * 0.4,
+              right * Math.min(1, 2 * spec.pan) + right * 0.4,
+            ];
+          } else {
+            const [aL, bL, aR, bR] =
+              spec.mode === 'stereoPan'
+                ? getStereoPanGains(spec.pan, spec.width, spec.law, spec.boost)
+                : getDualPanGains(spec.left, spec.right, spec.law, spec.boost);
+            expected = [aL * left + aR * right + left * 0.4, bL * left + bR * right + right * 0.4];
+          }
+          // Independent gain/isolation/cancellation checks on the steady source;
+          // residual comparison above includes every attack, release and block.
+          const frame = Math.floor(a.sampleRate * 0.5);
+          expect(b.samples[frame * 2], `${fixture.id} left`).toBeCloseTo(expected[0], 8);
+          expect(b.samples[frame * 2 + 1], `${fixture.id} right`).toBeCloseTo(expected[1], 8);
+          expect(candidate.csdText).toMatch(/^kMixSendGain = /m);
+          if (
+            spec.input === 'right' &&
+            spec.mode === 'stereoPan' &&
+            spec.width === 1 &&
+            spec.law === -3 &&
+            !spec.boost
+          ) {
+            const bindings = candidate.pannerBindings!,
+              source = bindings.channels.find((entry) => entry.channelKind === 'source')!;
+            const variable = (name: string) =>
+              candidate
+                .parameters!.find((parameter) => parameter.getName() === name)!
+                .getCompilationVarName()!;
+            const pan = variable('Pan');
+            const driver = [
+              'instr T118PanSwitch',
+              'kBlock timeinstk',
+              'if kBlock == 100 then',
+              `${source.modeChannel} = 1`,
+              `${variable('Width')} = 0`,
+              `${pan} = 0.5`,
+              `${bindings.scoreLawChannel} = 0`,
+              `${bindings.scoreBoostChannel} = 0`,
+              'elseif kBlock == 200 then',
+              `${source.modeChannel} = 2`,
+              `${variable('Dual Right')} = 0`,
+              `${variable('Dual Left')} = 1`,
+              'elseif kBlock == 300 then',
+              `${bindings.scoreLawChannel} = -6`,
+              `${bindings.scoreBoostChannel} = 1`,
+              'endif',
+              'endin',
+            ].join('\n');
+            const withDriver = (text: string) =>
+              text
+                .replace('</CsInstruments>', `${driver}\n</CsInstruments>`)
+                .replace(
+                  /<CsScore>([\s\S]*?)<\/CsScore>/,
+                  (_all, score: string) =>
+                    `<CsScore>${score.replace(/\n\s*e(?:\s+[^\n]*)?\s*$/, '')}\ni"T118PanSwitch" 0 2\ne\n</CsScore>`,
+                );
+            const liveA = render(withDriver(baseline), 'switch-baseline'),
+              liveB = render(withDriver(candidate.csdText), 'switch-candidate');
+            assertExpectedRender(liveA, expectedFixtureRender(fixture), 'switch baseline');
+            assertExpectedRender(liveB, expectedFixtureRender(fixture), 'switch candidate');
+            assertMatchingRenderFormat(liveA, liveB);
+            assertAllFinite(liveA.samples, 'baseline switches');
+            assertAllFinite(liveB.samples, 'candidate switches');
+            const liveResidual = assertWholeBufferResidual(
+              liveA.samples,
+              liveB.samples,
+              1e-12,
+              'live panning switches',
+            );
+            for (const [block, l, r] of [
+              [150, 0.25, 0.35],
+              [250, 0.25, 0.1],
+              [350, 0.25 * Math.pow(10, 6 / 20), 0.1],
+            ]) {
+              expect(liveB.samples[block! * 64 * 2]).toBeCloseTo(l!, 8);
+              expect(liveB.samples[block! * 64 * 2 + 1]).toBeCloseTo(r!, 8);
+            }
+            outcomes.push({
+              id: 'live-pan-mode-law-boost-switches',
+              frames: liveA.frames,
+              finite: true,
+              peakResidual: liveResidual,
+            });
+          }
+          outcomes.push({
+            id: fixture.id,
+            inputIdentity: fixture.identity,
+            ...spec,
+            frames: a.frames,
+            finite: true,
+            peakResidual,
+            expected,
+          });
+        }
+        if (process.env.BLUE_MIXER_EVIDENCE_DIR) {
+          fs.mkdirSync(process.env.BLUE_MIXER_EVIDENCE_DIR, { recursive: true });
+          fs.writeFileSync(
+            path.join(process.env.BLUE_MIXER_EVIDENCE_DIR, 'panning-results.json'),
+            JSON.stringify(
+              { accepted: outcomes.length === fixtures.length + 1, outcomes },
+              null,
+              2,
+            ),
+          );
+        }
+      } finally {
+        fs.rmSync(scratch, { recursive: true, force: true });
+      }
+    }, 180_000);
+  },
+);

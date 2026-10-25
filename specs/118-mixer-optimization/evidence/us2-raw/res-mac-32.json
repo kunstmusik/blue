@@ -1,0 +1,278 @@
+{
+  "benchmarkKind": "mixer-generated-csd",
+  "schemaVersion": 1,
+  "timestamp": "2026-10-25T00:18:20.168Z",
+  "fixtureId": "sha256:42514e528351631c901431bf8d5e68b0f9f8a9ef6f53fadca429c3b361fdf39e",
+  "fixtureIdDerivation": "candidate CSD content sha256 (no binding-manifest identity is supplied to the wrapper)",
+  "metric": {
+    "name": "performKsmpsAvgUs",
+    "clock": "steady_clock",
+    "units": "microseconds per ksmps block",
+    "summary": "median across paired trials; elapsed time, not CPU time"
+  },
+  "seed": 1180,
+  "order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "candidate": {
+    "csdPath": "/tmp/us2-candidates/mac-g32.csd",
+    "csdSha256": "42514e528351631c901431bf8d5e68b0f9f8a9ef6f53fadca429c3b361fdf39e",
+    "metadata": {
+      "buildType": "Release",
+      "compiler": "clang 15.0.0",
+      "targetArch": "arm64",
+      "operatingSystem": "macos",
+      "csoundVersion": 7000,
+      "gitCommit": "dirty:6d884110241e55b779210eb93dee5071c0068c02",
+      "sampleRate": 44100,
+      "ksmps": 32,
+      "nchnls": 2,
+      "zeroDbFs": 1,
+      "headerDerivation": "sr/ksmps/nchnls/0dbfs parsed from CsInstruments header assignments and cross-checked against the compiled engine",
+      "csoundOptions": [
+        "-n",
+        "-d",
+        "-m0"
+      ],
+      "csdCsOptionsIgnored": true,
+      "warmupCycles": 1024,
+      "measuredCycles": 4096,
+      "trials": 1
+    },
+    "trials": [
+      {
+        "performKsmpsAvgUs": 20.46921875,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 20.3676760254,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 20.0924084473,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 20.1596186523,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 19.9618642578,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 21.113605957,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 20.518154541,
+        "measuredCycles": 4096
+      }
+    ],
+    "medianPerformKsmpsAvgUs": 20.3676760254,
+    "spread": {
+      "minUs": 19.9618642578,
+      "maxUs": 21.113605957,
+      "medianAbsoluteDeviationUs": 0.20805737310000083
+    }
+  },
+  "baseline": {
+    "csdPath": "/tmp/us2-candidates/imm-g32-w.csd",
+    "csdSha256": "195b53965fe3440b8b16ee7bd4d362a682821441a8ce9619a2d73a28cd9ac85f",
+    "metadata": {
+      "buildType": "Release",
+      "compiler": "clang 15.0.0",
+      "targetArch": "arm64",
+      "operatingSystem": "macos",
+      "csoundVersion": 7000,
+      "gitCommit": "dirty:6d884110241e55b779210eb93dee5071c0068c02",
+      "sampleRate": 44100,
+      "ksmps": 32,
+      "nchnls": 2,
+      "zeroDbFs": 1,
+      "headerDerivation": "sr/ksmps/nchnls/0dbfs parsed from CsInstruments header assignments and cross-checked against the compiled engine",
+      "csoundOptions": [
+        "-n",
+        "-d",
+        "-m0"
+      ],
+      "csdCsOptionsIgnored": true,
+      "warmupCycles": 1024,
+      "measuredCycles": 4096,
+      "trials": 1
+    },
+    "trials": [
+      {
+        "performKsmpsAvgUs": 25.1151606445,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 24.2009106445,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 26.3368198242,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 24.9628876953,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 24.4167565918,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 24.9287336426,
+        "measuredCycles": 4096
+      },
+      {
+        "performKsmpsAvgUs": 26.4668569336,
+        "measuredCycles": 4096
+      }
+    ],
+    "medianPerformKsmpsAvgUs": 24.9628876953,
+    "spread": {
+      "minUs": 24.2009106445,
+      "maxUs": 26.4668569336,
+      "medianAbsoluteDeviationUs": 0.5461311035000023
+    }
+  },
+  "pairedTrials": [
+    {
+      "trial": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 20.46921875,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 25.1151606445,
+        "measuredCycles": 4096
+      }
+    },
+    {
+      "trial": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 20.3676760254,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 24.2009106445,
+        "measuredCycles": 4096
+      }
+    },
+    {
+      "trial": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 20.0924084473,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 26.3368198242,
+        "measuredCycles": 4096
+      }
+    },
+    {
+      "trial": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 20.1596186523,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 24.9628876953,
+        "measuredCycles": 4096
+      }
+    },
+    {
+      "trial": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 19.9618642578,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 24.4167565918,
+        "measuredCycles": 4096
+      }
+    },
+    {
+      "trial": 6,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 21.113605957,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 24.9287336426,
+        "measuredCycles": 4096
+      }
+    },
+    {
+      "trial": 7,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "candidate": {
+        "performKsmpsAvgUs": 20.518154541,
+        "measuredCycles": 4096
+      },
+      "baseline": {
+        "performKsmpsAvgUs": 26.4668569336,
+        "measuredCycles": 4096
+      }
+    }
+  ],
+  "medianDeltaPct": -18.408173469310537,
+  "candidateFasterPct10": true,
+  "gatePassed": true
+}
