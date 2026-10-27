@@ -128,8 +128,9 @@ test('validates executable architecture reports and glibc symbol floors', () => 
     /BLUE_ENGINE_ARCHITECTURE_MISMATCH/,
   );
   assert.equal(inspectGlibcVersionReport('Name: GLIBC_2.17\nName: GLIBC_2.34'), '2.34');
+  assert.equal(inspectGlibcVersionReport('Name: GLIBC_2.36'), '2.36');
   assert.throws(
-    () => inspectGlibcVersionReport('Name: GLIBC_2.36'),
+    () => inspectGlibcVersionReport('Name: GLIBC_2.36', '2.35'),
     /BLUE_ENGINE_GLIBC_FLOOR_EXCEEDED/,
   );
 });

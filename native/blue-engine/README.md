@@ -34,7 +34,8 @@ into the ignored `native/blue-engine/.vcpkg/` directory. Set `VCPKG_ROOT` only
 when you want to use an already-bootstrapped checkout, such as a CI cache.
 
 Linux release artifacts are built on Ubuntu 22.04 with a maximum required
-glibc symbol version of 2.35. The verifier reports and rejects a higher floor.
+glibc symbol version of 2.35. The verifier reports the floor and rejects a
+higher version in CI; local builds may require a newer version.
 This baseline targets contemporary Debian/Ubuntu, Arch/Manjaro, and
 Fedora/RHEL-family distributions; the AppImage does not require FUSE 2 and can
 also run through its extract-and-run path.
