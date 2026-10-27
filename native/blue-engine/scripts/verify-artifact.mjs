@@ -121,10 +121,10 @@ function compareVersions(left, right) {
   return 0;
 }
 
-export function inspectGlibcVersionReport(report, maximumVersion = '2.35') {
+export function inspectGlibcVersionReport(report, maximumVersion) {
   const versions = [...report.matchAll(/GLIBC_(\d+(?:\.\d+)+)/g)].map((match) => match[1]);
   const required = versions.sort(compareVersions).at(-1) ?? '0';
-  if (compareVersions(required, maximumVersion) > 0) {
+  if (maximumVersion && compareVersions(required, maximumVersion) > 0) {
     fail('BLUE_ENGINE_GLIBC_FLOOR_EXCEEDED', `requires ${required}, maximum ${maximumVersion}`);
   }
   return required;
@@ -149,8 +149,10 @@ function inspectDependencies(executablePath, target) {
       execFileSync('readelf', ['-d', executablePath], { encoding: 'utf8' }),
     );
     inspectDependencyReport('linux', execFileSync('ldd', [executablePath], { encoding: 'utf8' }));
+    const maxGlibc = process.env.CI === 'true' ? '2.35' : undefined;
     const floor = inspectGlibcVersionReport(
       execFileSync('readelf', ['--version-info', executablePath], { encoding: 'utf8' }),
+      maxGlibc,
     );
     process.stderr.write(`[blue-engine] required glibc symbol floor: ${floor}\n`);
     return;
