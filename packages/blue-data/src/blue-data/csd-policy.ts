@@ -1,6 +1,6 @@
 import type { BlueData } from '../blue-data';
 import { BLUE_VERSION } from '../blue-constants';
-import { Arrangement } from '../arrangement';
+import { Arrangement, parseBlueMixerOut } from '../arrangement';
 import { ProjectProperties } from '../project-properties';
 import { GlobalOrcSco } from '../global-orc-sco';
 import { Tables } from '../tables';
@@ -317,6 +317,7 @@ export function buildStandardCSD(
       channelIdAssignments,
       parameterMap,
       compileData,
+      nchnls,
     );
 
     for (const instrument of alwaysOnInstruments) {
@@ -618,6 +619,7 @@ export async function buildStandardCSDAsync(
       channelIdAssignments,
       parameterMap,
       compileData,
+      nchnls,
     );
 
     for (const instrument of alwaysOnInstruments) {
@@ -858,6 +860,7 @@ export function toBlueLiveCSD(
       channelIdAssignments,
       parameterMap,
       compileData,
+      nchnls,
     );
 
     let blueLiveSco = `${globalSco}\n`;
@@ -1262,6 +1265,7 @@ function collectAlwaysOnInstruments(
   channelIdAssignments: Map<Channel, number>,
   parameterMap: Map<Instrument, Parameter[]>,
   compileData: CompileData,
+  nchnls: number,
 ): GenericInstrument[] {
   const alwaysOnInstruments: GenericInstrument[] = [];
 
@@ -1305,10 +1309,19 @@ function collectAlwaysOnInstruments(
         /(\w+),\s*(\w+)\s+blueMixerIn/g,
         `$1 = ga_bluemix_${channelId}_0\n $2 = ga_bluemix_${channelId}_1`,
       );
-      compiled = compiled.replace(
-        /blueMixerOut(\s+\w+),(\s*\w+)/g,
-        `ga_bluemix_${channelId}_0 = $1\nga_bluemix_${channelId}_1 = $2`,
-      );
+      compiled = compiled
+        .split('\n')
+        .map((line: string) => {
+          if (!line.trim().startsWith('blueMixerOut')) return line;
+          const call = parseBlueMixerOut(line);
+          if (/^".*"$/.test(call.args[0]?.trim() ?? '')) return line;
+          const outputs = call.args
+            .slice(0, nchnls)
+            .map((arg, index) => `ga_bluemix_${channelId}_${index} = ${arg}`);
+          if (call.comment) outputs.push(call.comment);
+          return outputs.join('\n');
+        })
+        .join('\n');
     }
 
     const alwaysOnInstrument = new GenericInstrument();

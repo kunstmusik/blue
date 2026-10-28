@@ -22,6 +22,55 @@ function extractScoreEvents(csd: string): string[] {
 }
 
 describe('BlueData scheduling parity', () => {
+  it.each(['blueMixerOut limit(aL, -1, 1), aR, aC', 'blueMixerOut(limit(aL, -1, 1), aR, aC)'])(
+    'routes multichannel always-on expressions: %s',
+    (output) => {
+      const data = new BlueData();
+      data.getProjectProperties().channels = '3';
+      data.getMixer().setPanningEnabled(false);
+      const instrument = new BlueSynthBuilder();
+      instrument.setInstrumentText('aout init 0\nblueMixerOut aout, aout, aout');
+      instrument.setAlwaysOnInstrumentText(output);
+      data.getArrangement().addInstrument(instrument, '1');
+      const channel = new Channel();
+      channel.setName('1');
+      data.getMixer().getChannels().push(channel);
+
+      const alwaysOn = data.toCSD().match(/\tinstr 2\s*;[^\n]*\n([\s\S]*?)\tendin/)?.[1];
+      expect(alwaysOn).toMatch(/ga_bluemix_0_0\s*=\s*limit\(aL, -1, 1\)/);
+      expect(alwaysOn).toMatch(/ga_bluemix_0_1\s*=\s*aR\s*\n/);
+      expect(alwaysOn).toMatch(/ga_bluemix_0_2\s*=\s*aC\s*\n/);
+    },
+  );
+
+  it.each([
+    ['blueMixerOut aL, aR', true],
+    ['blueMixerOut(aL, aR)', true],
+    ['blueMixerOut aL, aR', false],
+    ['blueMixerOut(aL, aR)', false],
+  ])('routes always-on output to its source channel: %s (input: %s)', (output, hasInput) => {
+    const data = new BlueData();
+    const instrument = new BlueSynthBuilder();
+    instrument.setInstrumentText('aout oscili 0.1, 440\nblueMixerOut aout, aout');
+    instrument.setAlwaysOnInstrumentText(
+      `${hasInput ? 'aL, aR blueMixerIn' : 'aL init 0\naR init 0'}\n${output}`,
+    );
+    data.getArrangement().addInstrument(instrument, '1');
+    const channel = new Channel();
+    channel.setName('1');
+    data.getMixer().getChannels().push(channel);
+
+    const csd = data.toCSD();
+    const alwaysOn = csd.match(/\tinstr 2\s*;[^\n]*\n([\s\S]*?)\tendin/)?.[1];
+    expect(alwaysOn).toBeDefined();
+    if (hasInput) {
+      expect(alwaysOn).toMatch(/aL\s*=\s*ga_bluemix_0_0/);
+      expect(alwaysOn).toMatch(/aR\s*=\s*ga_bluemix_0_1/);
+    }
+    expect(alwaysOn).toMatch(/ga_bluemix_0_0\s*=\s*aL/);
+    expect(alwaysOn).toMatch(/ga_bluemix_0_1\s*=\s*aR/);
+  });
+
   it('schedules always-on instruments using source arrangement ids', () => {
     const data = new BlueData();
 

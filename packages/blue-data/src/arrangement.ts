@@ -390,13 +390,13 @@ export class Arrangement {
       }
 
       if (line.trim().startsWith('blueMixerOut')) {
-        const argText = line.trim().substring(12);
-        const args = argText.split(',');
+        const call = parseBlueMixerOut(line);
+        const args = call.args;
         const firstArg = args[0]?.trim() ?? '';
 
         if (/^".*"$/.test(firstArg)) {
           if (!mixer?.isEnabled()) {
-            buffer.push(`outc ${args.slice(1).join(',')}`);
+            buffer.push(`outc ${args.slice(1).join(',')}${call.comment}`);
             continue;
           }
 
@@ -418,11 +418,13 @@ export class Arrangement {
             buffer.push(`${variable} ${operator} ${arg}`);
           }
 
+          if (call.comment) buffer.push(call.comment);
+
           continue;
         }
 
         if (!mixer?.isEnabled()) {
-          buffer.push(line.replaceAll('blueMixerOut', 'outc'));
+          buffer.push(`outc ${args.join(',')}${call.comment}`);
           continue;
         }
 
@@ -433,6 +435,8 @@ export class Arrangement {
           const operator = blueMixerInFound ? '=' : '+=';
           buffer.push(`${variable} ${operator} ${arg}`);
         }
+
+        if (call.comment) buffer.push(call.comment);
 
         continue;
       }
@@ -504,6 +508,64 @@ export class Arrangement {
   static loadFromXMLWithLibrary(data: Element, _iLibrary: unknown): Arrangement {
     return Arrangement.loadFromXML(data);
   }
+}
+
+// Split only at the call's top level; arguments can contain Csound expressions
+// and quoted bus names with commas or comment characters.
+export function parseBlueMixerOut(line: string): {
+  args: string[];
+  comment: string;
+} {
+  const text = line.trim().substring(12);
+  let quoted = false;
+  let escaped = false;
+  let depth = 0;
+  let outerEnd = -1;
+  let commentStart = text.length;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') quoted = false;
+    } else if (char === '"') quoted = true;
+    else if (char === ';' || (char === '/' && text[i + 1] === '/')) {
+      commentStart = i;
+      break;
+    } else if (char === '(') depth++;
+    else if (char === ')') {
+      depth--;
+      if (depth === 0 && outerEnd < 0) outerEnd = i;
+    }
+  }
+
+  let argsText = text.slice(0, commentStart);
+  const trimmed = argsText.trim();
+  const leading = argsText.indexOf('(');
+  const parenthesized = trimmed.startsWith('(') && outerEnd === leading + trimmed.length - 1;
+  if (parenthesized) argsText = trimmed.slice(1, -1);
+
+  const args: string[] = [];
+  quoted = false;
+  escaped = false;
+  depth = 0;
+  let start = 0;
+  for (let i = 0; i < argsText.length; i++) {
+    const char = argsText[i];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') quoted = false;
+    } else if (char === '"') quoted = true;
+    else if (char === '(' || char === '[' || char === '{') depth++;
+    else if (char === ')' || char === ']' || char === '}') depth--;
+    else if (char === ',' && depth === 0) {
+      args.push(argsText.slice(start, i));
+      start = i + 1;
+    }
+  }
+  args.push(argsText.slice(start));
+  return { args, comment: text.slice(commentStart) };
 }
 
 function parseNumericArrangementId(arrangementId: string): number | null {

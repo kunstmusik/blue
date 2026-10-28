@@ -8,6 +8,8 @@ import { CompileData } from './compile-data';
 import { Score } from './score/score';
 import { TrackLayerGroup } from './score/track/track-layer-group';
 import { Track } from './score/track/track';
+import { Mixer } from './mixer/mixer';
+import { Channel } from './mixer/channel';
 
 class FtableInstrument extends GenericInstrument {
   override generateFTables(tables: unknown): void {
@@ -132,6 +134,65 @@ describe('Arrangement', () => {
     arrangement.generateFTables(tables);
 
     expect(tables.getCompilationVariable('called')).toBe(true);
+  });
+});
+
+describe('blueMixerOut conversion', () => {
+  function orchestra(call: string, mixer: Mixer): string {
+    const arrangement = new Arrangement();
+    const instrument = new GenericInstrument();
+    instrument.setText(call);
+    arrangement.addInstrument(instrument, '1');
+    return arrangement.generateOrchestra(new CompileData(arrangement, new Tables()), mixer);
+  }
+
+  it.each([
+    'blueMixerOut asig, asig',
+    'blueMixerOut(asig, asig)',
+    'blueMixerOut (asig, asig) ; stereo output',
+  ])('routes both call forms through the mixer: %s', (call) => {
+    const result = orchestra(call, new Mixer());
+    expect(result).toMatch(/ga_bluesub_Master_0\s*\+=\s*asig(?:\s|$)/);
+    expect(result).toMatch(/ga_bluesub_Master_1\s*\+=\s*asig(?:\s|$)/);
+  });
+
+  it.each([
+    ['blueMixerOut limit(asig, -1, 1), (asig * 0.5)', 'limit(asig, -1, 1)', '(asig * 0.5)'],
+    ['blueMixerOut(limit(asig, -1, 1), (asig * 0.5))', 'limit(asig, -1, 1)', '(asig * 0.5)'],
+    ['blueMixerOut (asig * 0.5), limit(asig, -1, 1)', '(asig * 0.5)', 'limit(asig, -1, 1)'],
+    ['blueMixerOut(chnget:a("left,main;bus"), aR) // output', 'chnget:a("left,main;bus")', 'aR'],
+  ])('keeps nested commas and parentheses within each output: %s', (call, first, second) => {
+    const result = orchestra(call, new Mixer());
+    const assignments = result.split('\n').map((line) => line.replace(/\s*\+=\s*/, ' += '));
+    expect(assignments).toContain(`ga_bluesub_Master_0 += ${first}`);
+    expect(assignments).toContain(`ga_bluesub_Master_1 += ${second}`);
+  });
+
+  it.each(['blueMixerOut "Reverb", aL, aR', 'blueMixerOut("Reverb", aL, aR)'])(
+    'routes either form to a named bus: %s',
+    (call) => {
+      const mixer = new Mixer();
+      const bus = new Channel();
+      bus.setName('Reverb');
+      mixer.getSubChannels().push(bus);
+      const result = orchestra(call, mixer);
+      expect(result).toMatch(/ga_bluesub_Reverb_0\s*\+=\s*aL/);
+      expect(result).toMatch(/ga_bluesub_Reverb_1\s*\+=\s*aR/);
+      expect(mixer.hasSubChannelDependencies()).toBe(true);
+    },
+  );
+
+  it.each([
+    'blueMixerOut aL, aR',
+    'blueMixerOut(aL, aR)',
+    'blueMixerOut "Reverb", aL, aR',
+    'blueMixerOut("Reverb", aL, aR)',
+  ])('emits direct Csound output when the mixer is disabled: %s', (call) => {
+    const mixer = new Mixer();
+    mixer.setEnabled(false);
+    const result = orchestra(call, mixer);
+    expect(result).toMatch(/outc\s+aL\s*,\s*aR/);
+    expect(result).not.toContain('Reverb');
   });
 });
 

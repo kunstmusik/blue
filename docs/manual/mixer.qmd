@@ -27,12 +27,19 @@ associated channel's audio Mute/Solo state or filter events, according to
 **Score settings → Track Layer M/S Mode**; see [Score](score.qmd).
 
 An orchestra instrument that uses `blueMixerOut` sends its audio through its
-instrument-ID channel when the mixer is enabled. To send directly to a named
-subchannel, use the form below in Csound code, replacing the name with an
-existing subchannel:
+instrument-ID channel when the mixer is enabled. Both of these forms are
+supported:
+
+```csound-orc
+blueMixerOut aleft, aright
+blueMixerOut(aleft, aright)
+```
+
+To send directly to a named subchannel, provide its name as the first argument:
 
 ```csound-orc
 blueMixerOut "Reverb Bus", aleft, aright
+blueMixerOut("Reverb Bus", aleft, aright)
 ```
 
 With the mixer disabled, Blue converts `blueMixerOut` to Csound `outc`. A
