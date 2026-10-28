@@ -277,6 +277,9 @@
     z-index: 120;
     overflow-y: auto;
     overflow-x: hidden;
+    color-scheme: dark;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-app-text-muted) var(--color-app-menu);
   }
 
   .editor-context-menu__item {
