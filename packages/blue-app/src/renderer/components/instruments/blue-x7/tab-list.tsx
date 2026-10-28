@@ -100,7 +100,7 @@ export function BlueX7TabList<T extends string = string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'flex flex-row flex-nowrap items-center gap-1 overflow-x-auto min-w-0 scrollbar-thin',
+        'flex flex-row flex-nowrap items-center gap-1 overflow-x-auto min-w-0',
         className,
       )}
     >

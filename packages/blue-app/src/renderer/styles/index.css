@@ -85,6 +85,15 @@
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-app-text-muted) var(--color-app-clear);
+  }
+
   body {
     @apply bg-app-bg text-app-text antialiased;
     font-family:
@@ -277,8 +286,6 @@
     z-index: 120;
     overflow-y: auto;
     overflow-x: hidden;
-    color-scheme: dark;
-    scrollbar-width: thin;
     scrollbar-color: var(--color-app-text-muted) var(--color-app-menu);
   }
 
@@ -1089,6 +1096,12 @@
     0 0 0 1px var(--color-app-accent-muted);
 }
 
+/* Keep the tree's existing WebKit scrollbar styling instead of the base defaults. */
+.effects-library-tree > div {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
 .effects-library-tree > div::-webkit-scrollbar {
   width: 6px;
 }
@@ -1425,7 +1438,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--color-app-canvas);
-  scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-app-text-strong) 12%, var(--color-app-clear))
     var(--color-app-clear);
   outline: none;
@@ -1438,46 +1450,9 @@
   background: color-mix(in srgb, var(--color-app-focus) 4%, var(--color-app-clear));
 }
 
-.mixer-chain-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.mixer-chain-list::-webkit-scrollbar-track {
-  background: var(--color-app-clear);
-}
-
-.mixer-chain-list::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--color-app-text-strong) 12%, var(--color-app-clear));
-  border-radius: 3px;
-}
-
-.mixer-chain-list::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--color-app-text-strong) 25%, var(--color-app-clear));
-}
-
 .score-timeline-scroll {
-  scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--color-app-focus) 32%, var(--color-app-clear))
     color-mix(in srgb, var(--color-app-input) 92%, var(--color-app-clear));
-}
-
-.score-timeline-scroll::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.score-timeline-scroll::-webkit-scrollbar-track {
-  background: color-mix(in srgb, var(--color-app-input) 92%, var(--color-app-clear));
-}
-
-.score-timeline-scroll::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--color-app-focus) 32%, var(--color-app-clear));
-  border: 2px solid color-mix(in srgb, var(--color-app-input) 92%, var(--color-app-clear));
-  border-radius: 999px;
-}
-
-.score-timeline-scroll::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--color-app-focus) 48%, var(--color-app-clear));
 }
 
 .mixer-chain-empty {
