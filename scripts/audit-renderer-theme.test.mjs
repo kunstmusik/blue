@@ -170,6 +170,46 @@ test('fill and on-fill directionality requires dedicated on-fill token', async (
   }
 });
 
+test('reports light text on opaque accent fills, including hover states', async () => {
+  const ws = await createFixtureWorkspace();
+  try {
+    await writeFile(
+      path.join(ws.rendererDir, 'Accent.tsx'),
+      `export function Accent() {
+  return <>
+    <button className="bg-app-accent text-white">Unsafe</button>
+    <button className="hover:bg-blue-accent hover:text-app-text-strong">Unsafe hover</button>
+    <button className="text-white hover:bg-app-accent hover:text-role-body">Inherited hover</button>
+    <button className="bg-app-accent text-app-accent-foreground">Safe</button>
+    <button className="bg-app-accent/20 text-white">Translucent</button>
+    <button className="text-white hover:bg-app-accent hover:text-app-accent-foreground">Safe hover</button>
+  </>;
+}
+`,
+      'utf8',
+    );
+    const result = auditRendererTheme({
+      repoRoot: ws.root,
+      rendererRoot: ws.rendererDir,
+      themePath: ws.themePath,
+      exceptionsPath: ws.exceptionsPath,
+      governedPairs: [],
+    });
+    const findings = result.report.findings.filter(
+      (finding) => finding.category === 'incompatible-accent-foreground',
+    );
+    assert.equal(result.report.summary.incompatibleAccentForegrounds, 3);
+    assert.deepEqual(
+      findings.map((finding) => finding.line),
+      [3, 4, 5],
+    );
+    assert.ok(findings.every((finding) => finding.suggestedRole === 'app-accent-foreground'));
+    assert.equal(result.hasFailures, true);
+  } finally {
+    await ws.cleanup();
+  }
+});
+
 test('reports undefined theme aliases with file path and line number', async () => {
   const ws = await createFixtureWorkspace();
   try {

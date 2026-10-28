@@ -111,7 +111,7 @@ export function BlueX7TabList<T extends string = string>({
         const panelId = `${instanceId}-panel-${tab.key}`;
 
         const defaultClasses = isActive
-          ? 'bg-blue-accent text-white font-medium shadow-sm'
+          ? 'bg-blue-accent text-app-accent-foreground font-medium shadow-sm'
           : 'bg-blue-surface/60 text-blue-muted hover:bg-blue-surface hover:text-gray-100';
 
         const customClasses = tabClassName ? tabClassName(tab, isActive) : defaultClasses;

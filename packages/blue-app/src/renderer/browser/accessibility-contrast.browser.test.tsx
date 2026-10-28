@@ -1,6 +1,10 @@
+import '../styles/index.css';
+
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import WelcomeScreen from '../components/welcome/WelcomeScreen';
+import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -102,6 +106,31 @@ describe('Accessibility Contrast Browser Spot Checks (T012)', () => {
 
     const ratio = contrastRatio(fg, bg);
     expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('renders welcome actions and the selected BlueX7 tab with accessible accent contrast', () => {
+    act(() => {
+      root.render(
+        <>
+          <WelcomeScreen />
+          <BlueX7TabList
+            ariaLabel="Instrument tabs"
+            tabs={[{ key: 'common', label: 'Common' }]}
+            activeTab="common"
+            onSelectTab={() => {}}
+          />
+        </>,
+      );
+    });
+
+    const controls = container.querySelectorAll('button');
+    expect(controls.length).toBe(3);
+    for (const control of controls) {
+      const style = window.getComputedStyle(control);
+      expect(
+        contrastRatio(parseRgb(style.color), parseRgb(style.backgroundColor)),
+      ).toBeGreaterThanOrEqual(4.75);
+    }
   });
 
   it('renders Mute and Solo badges with passing contrast for active states', () => {

@@ -97,14 +97,14 @@ export function MixerSettingsDialog({
               />
               <span>Enable Panning</span>
             </label>
-            <p className="-mt-2 text-role-caption text-blue-muted">
+            <p className="-mt-2 text-role-callout text-blue-muted">
               Show Pan/Balance controls and enable panning-aware audio routing. When disabled, the
               controls are hidden and legacy routing is preserved.
             </p>
 
             <div className="space-y-2 pt-2">
               <label className="text-role-body font-medium text-blue-text">Pan Law</label>
-              <p className="text-role-caption text-blue-muted">
+              <p className="text-role-callout text-blue-muted">
                 Governs center attenuation for Mono Pan and true-stereo (Stereo Pan and Dual Pan)
                 source-side panners. Balance channels are unaffected. -3 dB is the default
                 equal-power law.
@@ -166,12 +166,12 @@ export function MixerSettingsDialog({
                 />
                 <span>Off-center boost</span>
               </label>
-              <p className="text-role-caption text-blue-muted">
+              <p className="text-role-callout text-blue-muted">
                 Boosts endpoints by the center depth magnitude while leaving center attenuation
                 unchanged.
               </p>
               {mixer.panOffCenterBoost && mixer.panLawDb !== 0 && (
-                <p className="text-role-caption text-app-warning" role="status">
+                <p className="text-role-callout text-app-warning" role="status">
                   Warning: Off-center boost raises endpoint gains up to {Math.abs(mixer.panLawDb)}{' '}
                   dB above unity; boosted signals may clip.
                 </p>
@@ -179,7 +179,7 @@ export function MixerSettingsDialog({
             </div>
 
             {!mixer.panningEnabled && (
-              <p className="text-role-caption text-blue-muted italic pt-1" role="note">
+              <p className="text-role-callout text-blue-muted italic pt-1" role="note">
                 Panning is currently disabled. Pan law and boost settings reflect future intent and
                 will apply once Enable Panning is turned on.
               </p>

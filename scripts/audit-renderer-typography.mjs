@@ -69,6 +69,7 @@ const APPROVED_ROLES = [
 ];
 
 const legacyUtilityRegex = /\b(?:[A-Za-z0-9_-]+:)*text-(nano|micro|tiny|ui|body|content)\b/g;
+const roleUtilityRegex = /(?<![-\w])text-role-[a-z0-9-]+/g;
 const legacyVariableRegex = /--text-(nano|micro|tiny|ui|body|content)(?:--line-height)?\b/g;
 const defaultScaleUtilityRegex =
   /\b(?:[A-Za-z0-9_-]+:)*text-(xs|sm|base|lg|xl|[2-9]xl)(?:\/(?:\[[^\]]+\]|[0-9]{1,3}))?\b/g;
@@ -245,6 +246,7 @@ export function runTypographyAudit(options = {}) {
     approvedNonTextExceptions: 0,
     approvedLineHeightExceptions: 0,
     unapprovedLegacyRoles: 0,
+    unapprovedUnknownRoles: 0,
     unapprovedDefaultScaleUtilities: 0,
     unapprovedArbitrarySizes: 0,
     applicationTextBelowFloor: 0,
@@ -409,6 +411,21 @@ export function runTypographyAudit(options = {}) {
           });
           counts.approvedRoleAssignments += 1;
         }
+      }
+
+      for (const match of line.matchAll(roleUtilityRegex)) {
+        if (APPROVED_ROLES.some((role) => role.utility === match[0])) continue;
+        counts.unapprovedUnknownRoles += 1;
+        findings.push({
+          path: relPath,
+          line: lineNumber,
+          column: (match.index ?? 0) + 1,
+          category: 'unknown-role',
+          value: match[0],
+          suggestedRole: null,
+          classification: 'rejected',
+          exceptionId: null,
+        });
       }
 
       if (!isThemeFile && !line.includes('font-bold')) {
@@ -1014,6 +1031,7 @@ export function runTypographyAudit(options = {}) {
     counts.catalogErrors === 0 &&
     counts.staleExceptions === 0 &&
     counts.unapprovedLegacyRoles === 0 &&
+    counts.unapprovedUnknownRoles === 0 &&
     counts.unapprovedDefaultScaleUtilities === 0 &&
     counts.unapprovedArbitrarySizes === 0 &&
     counts.applicationTextBelowFloor === 0 &&

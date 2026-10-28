@@ -892,7 +892,7 @@ function DropdownItemsEditor({
           Dropdown Items
         </span>
         <button
-          className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-text-strong hover:bg-app-accent-hover"
+          className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-accent-foreground hover:bg-app-accent-hover"
           onClick={() =>
             onUpdate([
               ...normalizedItems,
@@ -1023,7 +1023,7 @@ function LineObjectEditor({
           Lines
         </span>
         <button
-          className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-text-strong hover:bg-app-accent-hover"
+          className="rounded bg-app-accent px-2 py-0.5 text-role-callout text-app-accent-foreground hover:bg-app-accent-hover"
           onClick={() => onUpdate([...normalizedLines, createLineItem(normalizedLines)])}
         >
           + Add

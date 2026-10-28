@@ -85,7 +85,7 @@ export function FileManagerRootRenameDialog({
             </button>
             <button
               type="submit"
-              className="rounded bg-app-accent px-3 py-1.5 text-role-body font-medium text-app-text-bright hover:bg-app-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+              className="rounded bg-app-accent px-3 py-1.5 text-role-body font-medium text-app-accent-foreground hover:bg-app-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             >
               OK
             </button>

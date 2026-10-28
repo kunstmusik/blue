@@ -4,6 +4,7 @@ import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AlgorithmTopology } from './algorithm-topology';
 import { AppSelect } from '../../AppSelect';
 import { LiveNumberInput } from '../../CommitNumberInput';
+import { BLUE_X7_FIELD_CLASS } from './field-styles';
 import { blueX7WidgetDomain } from './catalog-domains';
 import { cn } from '../../../lib/cn';
 
@@ -149,7 +150,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                       label: `Algorithm ${ALGORITHM_DOMAIN.min + index}`,
                     }),
                   )}
-                  className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                  className={BLUE_X7_FIELD_CLASS}
                 />
                 {onOpenAlgorithmModal && (
                   <button
@@ -187,7 +188,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                     Math.min(TRANSPOSE_SEMITONE_MAX, semitones),
                   );
                 }}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
                 containerClassName="w-full"
               />
             </div>
@@ -210,7 +211,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                   if (Number.isNaN(val)) return null;
                   return Math.max(FEEDBACK_DOMAIN.min, Math.min(FEEDBACK_DOMAIN.max, val));
                 }}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
                 containerClassName="w-full"
               />
             </div>
@@ -287,7 +288,7 @@ export const CommonPanel: React.FC<CommonPanelProps> = ({
                 className={cn(
                   'rounded px-3 py-1 text-role-body font-medium transition-colors',
                   isEnabled
-                    ? 'bg-blue-accent text-white hover:bg-blue-accent/80'
+                    ? 'bg-blue-accent text-app-accent-foreground hover:bg-blue-accent/80'
                     : 'border border-blue-border bg-blue-bg text-gray-400 hover:bg-blue-surface',
                 )}
               >

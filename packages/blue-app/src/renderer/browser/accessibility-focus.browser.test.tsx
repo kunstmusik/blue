@@ -187,15 +187,14 @@ describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
     act(() => {
       root.render(
         <div className="flex items-center gap-4 p-4">
-          <select
-            id="mixer-profile-select"
-            aria-label="Meter profile"
-            className="mixer-toolbar__select"
-            defaultValue="peak-rms-mixing-plus-6"
-          >
-            <option value="peak-rms-mixing-plus-6">Peak/RMS (+6 dBFS)</option>
-            <option value="k14-rms-peak">K14 (RMS + Peak)</option>
-          </select>
+          <AppSelect
+            id="mixer-output-select"
+            aria-label="Output for master"
+            className="mixer-output-select"
+            value="Master"
+            onValueChange={() => {}}
+            options={[{ value: 'Master', label: 'Master' }]}
+          />
           <PeakReadout stripId="master" />
           <MeterCanvas
             stripId="master"
@@ -216,7 +215,7 @@ describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
       );
     });
 
-    const select = container.querySelector('#mixer-profile-select') as HTMLSelectElement;
+    const select = container.querySelector('#mixer-output-select') as HTMLButtonElement;
     const peakReadout = container.querySelector('.mixer-peak-readout') as HTMLButtonElement;
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
     const scaleRuler = container.querySelector('.mixer-scale-ruler') as HTMLElement;
@@ -228,10 +227,10 @@ describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
     expect(scaleRuler).not.toBeNull();
     expect(gearBtn).not.toBeNull();
 
-    // Focus profile selector via keyboard
+    // Focus the mixer output selector via keyboard
     select.focus();
     expect(document.activeElement).toBe(select);
-    expect(select.getAttribute('aria-label')).toBe('Meter profile');
+    expect(select.getAttribute('aria-label')).toBe('Output for master');
 
     // Focus peak readout button via keyboard
     peakReadout.focus();

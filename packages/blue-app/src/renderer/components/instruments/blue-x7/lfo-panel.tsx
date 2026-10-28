@@ -3,6 +3,7 @@ import type { BlueX7Lfo } from '@blue/data';
 import type { BlueX7Patch } from '../../../../shared/project-editor';
 import { AppSelect } from '../../AppSelect';
 import { LiveNumberInput } from '../../CommitNumberInput';
+import { BLUE_X7_FIELD_CLASS } from './field-styles';
 import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
 
 const LFO_FIELD_DOMAINS = {
@@ -92,7 +93,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
             value={effective('lfo.speed', lfo.speed)}
             onChange={handleFieldChange('speed', 'Speed', LFO_FIELD_DOMAINS.speed)}
             resolveValue={integerDomainResolver(LFO_FIELD_DOMAINS.speed)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+            className={BLUE_X7_FIELD_CLASS}
             containerClassName="w-full"
           />
         </div>
@@ -111,7 +112,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
             value={effective('lfo.delay', lfo.delay)}
             onChange={handleFieldChange('delay', 'Delay', LFO_FIELD_DOMAINS.delay)}
             resolveValue={integerDomainResolver(LFO_FIELD_DOMAINS.delay)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+            className={BLUE_X7_FIELD_CLASS}
             containerClassName="w-full"
           />
         </div>
@@ -135,7 +136,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
               LFO_FIELD_DOMAINS.pitchModulationDepth,
             )}
             resolveValue={integerDomainResolver(LFO_FIELD_DOMAINS.pitchModulationDepth)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+            className={BLUE_X7_FIELD_CLASS}
             containerClassName="w-full"
           />
         </div>
@@ -159,7 +160,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
               LFO_FIELD_DOMAINS.amplitudeModulationDepth,
             )}
             resolveValue={integerDomainResolver(LFO_FIELD_DOMAINS.amplitudeModulationDepth)}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+            className={BLUE_X7_FIELD_CLASS}
             containerClassName="w-full"
           />
         </div>
@@ -175,7 +176,7 @@ export const LfoPanel: React.FC<LfoPanelProps> = ({ lfo, effectiveValues, onAppl
             value={effective('lfo.wave', lfo.wave)}
             onValueChange={handleWaveChange}
             options={LFO_WAVEFORMS}
-            className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+            className={BLUE_X7_FIELD_CLASS}
           />
         </div>
 

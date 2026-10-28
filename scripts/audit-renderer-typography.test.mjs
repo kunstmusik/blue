@@ -154,6 +154,30 @@ test('passes when all files use valid typography catalog and body baseline', asy
   }
 });
 
+test('rejects unknown role utilities without mistaking CSS variables for utilities', async () => {
+  const workspace = await createFixtureWorkspace({
+    files: {
+      'packages/blue-app/src/renderer/components/UnknownRole.tsx': `
+        export function UnknownRole() {
+          return <p className="text-role-caption">Copy</p>;
+        }
+      `,
+    },
+  });
+
+  try {
+    const { exitCode, result } = await runAudit(workspace);
+    assert.equal(exitCode, 1);
+    assert.equal(result.counts.unapprovedUnknownRoles, 1);
+    assert.equal(
+      result.findings.find((finding) => finding.category === 'unknown-role')?.value,
+      'text-role-caption',
+    );
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test('requires Headline role assignments to opt into bold weight', async () => {
   const workspace = await createFixtureWorkspace({
     files: {

@@ -458,7 +458,7 @@ export const MixerPanSlider = React.memo(function MixerPanSlider({
       >
         {isMonoOnly || !onModeChange ? (
           <>
-            <div className="flex w-full items-center justify-center text-role-caption text-app-text-muted px-0.5">
+            <div className="flex w-full items-center justify-center text-role-subheadline text-app-text-muted px-0.5">
               <span className="font-semibold">Pan</span>
             </div>
             {sliderConfigs.map(renderSlider)}

@@ -24,7 +24,7 @@ export default function UserDefinedOpcodePanel(): React.ReactElement {
     return (
       <div className="workbench-panel-shell">
         <div className="workbench-panel-shell__content">
-          <div className="flex h-full items-center justify-center text-role-body text-gray-500">
+          <div className="flex h-full items-center justify-center text-role-body text-app-text-muted">
             No project loaded
           </div>
         </div>

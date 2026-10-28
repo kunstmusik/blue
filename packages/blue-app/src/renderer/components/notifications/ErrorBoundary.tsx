@@ -51,7 +51,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <button
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-4 py-1.5 text-role-body font-medium text-white transition-colors hover:bg-app-accent-hover"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-app-accent bg-app-accent px-4 py-1.5 text-role-body font-medium text-app-accent-foreground transition-colors hover:bg-app-accent-hover"
               onClick={this.handleReset}
             >
               Try Again

@@ -108,7 +108,7 @@ export default function NoteProcessorChainDialog({
             Cancel
           </button>
           <button
-            className="px-3 py-1.5 text-role-body rounded bg-blue-accent text-white hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+            className="px-3 py-1.5 text-role-body rounded bg-blue-accent text-app-accent-foreground hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleSave}
           >
             Save

@@ -382,6 +382,41 @@ describe('MeterCanvas', () => {
   });
 
   describe('Meter Profiles Registry (T011, T012)', () => {
+    it('preserves the signal colors and stop positions for every profile', () => {
+      const green = '#22c55e';
+      const yellow = '#eab308';
+      const orange = '#f97316';
+      const red = '#ef4444';
+      const colors = (key: keyof typeof METER_PROFILES) => METER_PROFILES[key].colorStops;
+
+      expect(colors('peak-rms-mixing-plus-6')).toEqual([
+        { fraction: 0, color: green },
+        { fraction: 55 / 115, color: green },
+        { fraction: 92.5 / 115, color: yellow },
+        { fraction: 100 / 115, color: orange },
+        { fraction: 1, color: red },
+      ]);
+      expect(colors('peak-rms-linear-plus-6')).toEqual([
+        { fraction: 0, color: green },
+        { fraction: 48 / 66, color: green },
+        { fraction: 57 / 66, color: yellow },
+        { fraction: 60 / 66, color: orange },
+        { fraction: 1, color: red },
+      ]);
+      for (const [key, lowEnd, midEnd] of [
+        ['k20-rms-peak', 40, 44],
+        ['k14-rms-peak', 46, 50],
+        ['k12-rms-peak', 48, 52],
+      ] as const) {
+        expect(colors(key)).toEqual([
+          { fraction: 0, color: green },
+          { fraction: lowEnd / 60, color: green },
+          { fraction: midEnd / 60, color: yellow },
+          { fraction: 1, color: red },
+        ]);
+      }
+    });
+
     it('defines exactly the five supported profile keys with required metadata', () => {
       expect(Object.keys(METER_PROFILES).sort()).toEqual([...METER_PROFILE_KEYS].sort());
 

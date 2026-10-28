@@ -86,7 +86,7 @@ export const SysexImportDialog: React.FC<SysexImportDialogProps> = ({
                 onImportVoice(state.voice, state.name);
                 onClose();
               }}
-              className="rounded bg-blue-accent px-4 py-1.5 text-role-body font-semibold text-white hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+              className="rounded bg-blue-accent px-4 py-1.5 text-role-body font-semibold text-app-accent-foreground hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             >
               Import Voice
             </button>

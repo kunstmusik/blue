@@ -96,7 +96,7 @@ Assign typography roles based on **semantic purpose**, never container dimension
 
 ### Font Families
 
-- **Proportional**: Roboto (`'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`).
+- **Proportional**: Roboto (`'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`). The `--font-app` token owns the application stack, including Dockview and inline BlueX7 diagrams. Each renderer entry point, including Settings, loads the bundled Roboto weights. Standalone BlueX7 SVG files retain their own fallback stack because styles are not inherited into image documents.
 - **Monospaced**: Established monospaced font stack for code editors, REPL, output console, tracker, and code annotations.
 - Monospaced text uses the same semantic role sizes (e.g. Body 13 px for code editor and REPL, Callout 12 px for compact code hints).
 

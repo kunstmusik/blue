@@ -143,7 +143,7 @@ export default function UdoEditor({
           <button
             type="button"
             onClick={onTestOpcode}
-            className="flex items-center gap-1 rounded bg-app-accent px-3 py-1 text-role-body font-medium text-app-text-strong hover:bg-app-accent-hover"
+            className="flex items-center gap-1 rounded bg-app-accent px-3 py-1 text-role-body font-medium text-app-accent-foreground hover:bg-app-accent-hover"
           >
             <Play size={12} />
             Test Opcode

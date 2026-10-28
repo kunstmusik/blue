@@ -323,7 +323,7 @@ export default function FontChooserDialog({
               Cancel
             </button>
             <button
-              className="rounded bg-app-accent px-3 py-1 text-role-body text-app-text-strong hover:bg-app-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+              className="rounded bg-app-accent px-3 py-1 text-role-body text-app-accent-foreground hover:bg-app-accent-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={handleConfirm}
             >
               OK

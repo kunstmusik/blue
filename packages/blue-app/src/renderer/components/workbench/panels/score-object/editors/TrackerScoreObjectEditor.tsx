@@ -95,7 +95,7 @@ const TRACKER_MODAL_CLOSE_BUTTON_CLASS =
 const TRACKER_MODAL_FOOTER_CLASS =
   'flex justify-end gap-2 border-t border-app-border px-4 py-3 bg-app-bg';
 const TRACKER_PRIMARY_BUTTON_CLASS =
-  'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-text-strong hover:bg-app-accent-hover';
+  'rounded bg-app-accent px-4 py-1.5 text-role-body text-app-accent-foreground hover:bg-app-accent-hover';
 const TRACKER_SECONDARY_BUTTON_CLASS =
   'rounded border border-app-border bg-app-surface px-4 py-1.5 text-role-body text-app-text transition-colors hover:bg-app-hover';
 const TRACKER_SECTION_LABEL_CLASS =

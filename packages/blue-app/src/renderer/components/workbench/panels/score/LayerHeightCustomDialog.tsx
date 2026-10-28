@@ -6,7 +6,7 @@ const SECONDARY_BUTTON_CLASS =
   'rounded border border-app-border/40 bg-app-surface px-3 py-1 text-role-body text-app-text transition-colors hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus cursor-pointer';
 
 const PRIMARY_BUTTON_CLASS =
-  'rounded border border-app-accent/60 bg-app-accent px-3 py-1 text-role-body text-white transition-colors hover:bg-app-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus cursor-pointer';
+  'rounded border border-app-accent/60 bg-app-accent px-3 py-1 text-role-body text-app-accent-foreground transition-colors hover:bg-app-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus cursor-pointer';
 
 export interface LayerHeightCustomDialogProps {
   initialHeight?: number;

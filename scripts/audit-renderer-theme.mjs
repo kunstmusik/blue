@@ -47,6 +47,25 @@ const themeAliasRegex = new RegExp(
   'g',
 );
 
+// The token-pair audit cannot infer which utilities occur together on an element.
+// Flag directly paired light text on opaque accent fills in static class strings.
+const quotedClassStringRegex = /(?<quote>['"`])(?<classes>[^'"`\n]*)\k<quote>/g;
+const lightAccentForegrounds = new Set([
+  'text-white',
+  'text-gray-100',
+  'text-gray-200',
+  'text-gray-300',
+  'text-gray-400',
+  'text-gray-500',
+  'text-app-text',
+  'text-app-text-strong',
+  'text-app-text-bright',
+  'text-app-text-soft',
+  'text-app-text-muted',
+  'text-blue-text',
+  'text-blue-muted',
+]);
+
 const themeVariableRegex = /--color-([a-z0-9-]+)\s*:\s*([^;]+);/g;
 
 const suggestedRoles = [
@@ -272,7 +291,10 @@ export function auditRendererTheme(options = {}) {
       line,
       value,
       category,
-      suggestedRole: findSuggestedRole(value),
+      suggestedRole:
+        category === 'incompatible-accent-foreground'
+          ? 'app-accent-foreground'
+          : findSuggestedRole(value),
       approvedException: Boolean(exception),
       reason: exception?.reason ?? '',
     });
@@ -325,6 +347,41 @@ export function auditRendererTheme(options = {}) {
           continue;
         }
         pushFinding(relativePath, lineNumber, alias, 'undefined-theme-alias');
+      }
+
+      if (!isCssFile) {
+        for (const match of line.matchAll(quotedClassStringRegex)) {
+          const classes = match.groups.classes.split(/\s+/);
+          for (const background of classes) {
+            const accent = background.match(/^((?:[\w-]+:)*)bg-(?:app|blue)-accent$/);
+            if (!accent) continue;
+            const variant = accent[1];
+            const isKnownForeground = (name) =>
+              lightAccentForegrounds.has(name) ||
+              name === 'text-app-accent-foreground' ||
+              name === 'text-black';
+            const variantForegrounds = classes.filter(
+              (name) => name.startsWith(variant) && isKnownForeground(name.slice(variant.length)),
+            );
+            const foregrounds =
+              variantForegrounds.length || !variant
+                ? variantForegrounds
+                : classes.filter(isKnownForeground);
+            const foreground = foregrounds.find((name) =>
+              lightAccentForegrounds.has(
+                name.slice(variantForegrounds.length ? variant.length : 0),
+              ),
+            );
+            if (foreground) {
+              pushFinding(
+                relativePath,
+                lineNumber,
+                `${background} ${foreground}`,
+                'incompatible-accent-foreground',
+              );
+            }
+          }
+        }
       }
 
       if (!isCssFile) {
@@ -439,6 +496,10 @@ export function auditRendererTheme(options = {}) {
     ).length,
     undefinedThemeAliases: findings.filter(
       (finding) => finding.category === 'undefined-theme-alias' && !finding.approvedException,
+    ).length,
+    incompatibleAccentForegrounds: findings.filter(
+      (finding) =>
+        finding.category === 'incompatible-accent-foreground' && !finding.approvedException,
     ).length,
     prohibitedFocusSuppression: findings.filter(
       (finding) =>

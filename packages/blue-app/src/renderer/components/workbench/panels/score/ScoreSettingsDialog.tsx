@@ -50,7 +50,7 @@ export default function ScoreSettingsDialog({
             <h2 id="score-settings-dialog-title" className="text-role-title-2 font-semibold">
               Score Settings
             </h2>
-            <p className="mt-1 text-role-caption text-app-text-muted">
+            <p className="mt-1 text-role-callout text-app-text-muted">
               Settings for the current score view and its track headers.
             </p>
           </div>
@@ -100,16 +100,16 @@ export default function ScoreSettingsDialog({
                 );
               })}
             </div>
-            <p className="text-role-caption text-app-text-muted">
+            <p className="text-role-callout text-app-text-muted">
               Effective behavior: {effectiveMode === 'audio' ? 'Audio' : 'Event'}
               {!mixerEnabled && ' (mixer is disabled)'}.
             </p>
-            <p className="text-role-caption text-app-text-muted">
+            <p className="text-role-callout text-app-text-muted">
               Audio and Event keep independent saved states. Audio edits the track’s mixer channel;
               Event omits and soloes events as before.
             </p>
             {legacyNotice && (
-              <p className="text-role-caption text-app-warning" role="status">
+              <p className="text-role-callout text-app-warning" role="status">
                 Compatibility notice: this project has active channel Mute or Solo flags in its
                 mixer. With this version those flags are audible during playback.
               </p>

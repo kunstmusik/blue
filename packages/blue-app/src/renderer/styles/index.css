@@ -59,6 +59,8 @@
   --color-app-pattern-cell: rgba(165, 195, 235, 0.5);
   --color-app-pattern-cell-preview: rgba(165, 195, 235, 0.35);
 
+  --font-app: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
   --color-blue-bg: var(--color-app-bg);
   --color-blue-surface: var(--color-app-surface);
   --color-blue-border: var(--color-app-border);
@@ -96,12 +98,7 @@
 
   body {
     @apply bg-app-bg text-app-text antialiased;
-    font-family:
-      'Roboto',
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      sans-serif;
+    font-family: var(--font-app);
     font-size: var(--text-role-body);
     line-height: var(--text-role-body--line-height);
   }
@@ -171,11 +168,6 @@
     @apply font-mono text-role-callout text-app-text leading-tight;
   }
 
-  .toolbar-display-main--playhead,
-  .toolbar-display-secondary--playhead {
-    @apply text-role-body text-app-text-strong;
-  }
-
   .toolbar-displays {
     @apply min-w-0;
   }
@@ -204,6 +196,8 @@
     @apply min-w-0 truncate text-right;
   }
 
+  .toolbar-display-main--playhead,
+  .toolbar-display-secondary--playhead,
   .toolbar-display-secondary--selection {
     @apply text-role-body text-app-text-strong;
   }
@@ -222,7 +216,8 @@
     overflow: hidden;
   }
 
-  .toolbar-context-menu__item {
+  .toolbar-context-menu__item,
+  .editor-context-menu__item {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -237,31 +232,30 @@
     background: var(--color-app-clear);
   }
 
-  .toolbar-context-menu__item[data-highlighted] {
+  .toolbar-context-menu__item[data-highlighted],
+  .editor-context-menu__item[data-highlighted] {
     background: var(--color-app-highlight);
     color: var(--color-app-text-strong);
   }
 
-  .toolbar-context-menu__item[data-disabled] {
+  .toolbar-context-menu__item[data-disabled],
+  .editor-context-menu__item[data-disabled] {
     color: var(--color-app-text-disabled);
   }
 
-  .toolbar-context-menu__subtrigger {
+  .toolbar-context-menu__subtrigger,
+  .editor-context-menu__subtrigger {
     justify-content: space-between;
   }
 
-  .toolbar-context-menu__shortcut {
-    margin-left: auto;
-    font-size: var(--text-role-callout);
-    color: var(--color-app-text-soft);
-  }
-
-  .toolbar-context-menu__subtrigger[data-state='open'] {
+  .toolbar-context-menu__subtrigger[data-state='open'],
+  .editor-context-menu__subtrigger[data-state='open'] {
     background: var(--color-app-highlight);
     color: var(--color-app-text-strong);
   }
 
-  .toolbar-context-menu__separator {
+  .toolbar-context-menu__separator,
+  .editor-context-menu__separator {
     height: 1px;
     margin: 0;
     background: var(--color-app-border-subtle);
@@ -290,40 +284,13 @@
   }
 
   .editor-context-menu__item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    width: 100%;
-    min-height: 32px;
-    padding: 0 12px;
-    outline: none;
-    font-size: var(--text-role-body);
-    color: inherit;
-    user-select: none;
-    background: var(--color-app-clear);
     cursor: pointer;
-  }
-
-  .editor-context-menu__item[data-highlighted] {
-    background: var(--color-app-highlight);
-    color: var(--color-app-text-strong);
-  }
-
-  .editor-context-menu__item[data-disabled] {
-    color: var(--color-app-text-disabled);
   }
 
   .editor-context-menu__shortcut {
     margin-left: auto;
     font-size: var(--text-role-callout);
     color: var(--color-app-text-soft);
-  }
-
-  .editor-context-menu__separator {
-    height: 1px;
-    margin: 0;
-    background: var(--color-app-border-subtle);
   }
 
   .editor-context-menu__label {
@@ -336,15 +303,6 @@
     color: var(--color-app-text-soft);
     font-weight: 500;
     user-select: none;
-  }
-
-  .editor-context-menu__subtrigger {
-    justify-content: space-between;
-  }
-
-  .editor-context-menu__subtrigger[data-state='open'] {
-    background: var(--color-app-highlight);
-    color: var(--color-app-text-strong);
   }
 
   .editor-context-menu__arrow {
@@ -401,7 +359,7 @@
 
   @keyframes blueLiveTriggerButtonFlashA {
     0% {
-      color: #fff;
+      color: var(--color-app-text-strong);
     }
     100% {
       color: var(--color-app-text-muted);
@@ -410,7 +368,7 @@
 
   @keyframes blueLiveTriggerButtonFlashB {
     0% {
-      color: #fff;
+      color: var(--color-app-text-strong);
     }
     100% {
       color: var(--color-app-text-muted);
@@ -455,7 +413,7 @@
 
 /* Dockview theme overrides for Blue dark theme */
 :root {
-  --dv-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --dv-font-family: var(--font-app);
   --dv-font-size: var(--text-role-body);
   --dv-paneview-active-border-color: var(--color-app-border);
   --dv-tabs-and-actions-container-font-size: var(--text-role-body);
@@ -1156,10 +1114,6 @@
   color: var(--color-app-text-muted);
 }
 
-.output-panel__tab:hover {
-  color: var(--color-app-text);
-}
-
 .output-panel__tab--active {
   background: var(--color-app-bg);
   color: var(--color-app-text-soft);
@@ -1175,6 +1129,7 @@
   transition: color 140ms ease;
 }
 
+.output-panel__tab:hover,
 .output-panel__toolbar-btn:hover {
   color: var(--color-app-text);
 }
@@ -1257,21 +1212,6 @@
   border-color: var(--color-app-focus);
 }
 
-.mixer-toolbar__select {
-  padding: 2px 6px;
-  border: 1px solid var(--color-app-border);
-  border-radius: 3px;
-  background: var(--color-app-input);
-  color: var(--color-app-text-soft);
-  font-size: var(--text-role-body);
-  line-height: var(--text-role-body--line-height);
-  outline: none;
-}
-
-.mixer-toolbar__select:focus {
-  border-color: var(--color-app-focus);
-}
-
 .mixer-main {
   display: flex;
   flex: 1;
@@ -1300,7 +1240,7 @@
   padding: 4px 8px;
   font-size: var(--text-role-headline);
   line-height: var(--text-role-headline--line-height);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-app-text-soft);
   background: var(--color-app-surface-strong);
   border-bottom: 1px solid color-mix(in srgb, var(--color-app-border) 50%, var(--color-app-clear));
@@ -1329,7 +1269,7 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--color-app-accent) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-app-accent) 20%, var(--color-app-clear));
   border-radius: 6px;
   background: var(--color-app-border);
   color: var(--color-app-text-strong);
@@ -1342,8 +1282,8 @@
 
 .mixer-settings-button:hover {
   color: var(--color-app-text-strong);
-  background: color-mix(in srgb, var(--color-app-accent) 20%, transparent);
-  border-color: color-mix(in srgb, var(--color-app-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--color-app-accent) 20%, var(--color-app-clear));
+  border-color: color-mix(in srgb, var(--color-app-accent) 40%, var(--color-app-clear));
 }
 
 .mixer-settings-button:focus-visible {
@@ -1371,7 +1311,7 @@
   text-align: center;
   font-size: var(--text-role-headline);
   line-height: var(--text-role-headline--line-height);
-  font-weight: 600;
+  font-weight: 700;
   padding: 4px 2px;
   background: var(--color-app-surface);
   border-bottom: 1px solid color-mix(in srgb, var(--color-app-border) 50%, var(--color-app-clear));
@@ -1404,7 +1344,7 @@
   color: var(--color-app-text-soft);
   font-size: var(--text-role-headline);
   line-height: var(--text-role-headline--line-height);
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   outline: none;
 }
@@ -1453,18 +1393,6 @@
 .score-timeline-scroll {
   scrollbar-color: color-mix(in srgb, var(--color-app-focus) 32%, var(--color-app-clear))
     color-mix(in srgb, var(--color-app-input) 92%, var(--color-app-clear));
-}
-
-.mixer-chain-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 48px;
-  color: var(--color-app-text-subtle);
-  font-size: var(--text-role-body);
-  line-height: var(--text-role-body--line-height);
-  user-select: none;
 }
 
 .mixer-chain-entry-wrapper {

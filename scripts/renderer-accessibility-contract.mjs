@@ -461,7 +461,14 @@ export const GOVERNED_CONTRAST_PAIRS = Object.freeze([
 
 export const EXCEPTION_SCHEMA = Object.freeze({
   requiredFields: ['path', 'value', 'kind', 'reason', 'ownerSurface', 'reviewBy'],
-  validKinds: ['syntax-palette', 'project-authored', 'decorative', 'inactive', 'platform-native'],
+  validKinds: [
+    'syntax-palette',
+    'signal-palette',
+    'project-authored',
+    'decorative',
+    'inactive',
+    'platform-native',
+  ],
 });
 
 /**

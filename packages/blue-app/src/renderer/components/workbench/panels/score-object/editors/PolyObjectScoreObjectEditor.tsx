@@ -115,7 +115,7 @@ export default function PolyObjectScoreObjectEditor({
                 <td className="px-2 py-1 text-right text-gray-400 font-mono">
                   {child.durationBeats.toFixed(2)}
                 </td>
-                <td className="px-2 py-1 text-gray-500">{child.layerLabel}</td>
+                <td className="px-2 py-1 text-app-text-muted">{child.layerLabel}</td>
               </tr>
             ))}
           </tbody>

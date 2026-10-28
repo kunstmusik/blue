@@ -30,7 +30,7 @@ export default function GlobalOrchestraPanel(): React.ReactElement {
 
   if (!loaded) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-500 text-role-body">
+      <div className="flex h-full items-center justify-center text-app-text-muted text-role-body">
         No project loaded
       </div>
     );

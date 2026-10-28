@@ -274,7 +274,7 @@ function ArrangementPanel({
           <HostSurfacePortal
             session={addMenuSurface}
             role="menu"
-            className="z-20 min-w-45 rounded border border-app-border bg-app-menu py-1 shadow-lg"
+            className="z-20 flex w-max min-w-45 flex-col rounded border border-app-border bg-app-menu py-1 shadow-lg"
           >
             {INSTRUMENT_TYPES.map(({ type, label }) => (
               <button

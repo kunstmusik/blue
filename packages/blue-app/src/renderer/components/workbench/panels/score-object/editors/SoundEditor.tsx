@@ -555,7 +555,7 @@ function SoundAutomationPanel({
               </button>
               <button
                 type="button"
-                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-headline font-bold text-app-text-strong hover:bg-app-accent-hover"
+                className="rounded border border-app-accent bg-app-accent px-4 py-1.5 text-role-headline font-bold text-app-accent-foreground hover:bg-app-accent-hover"
                 onClick={applyEditDialogChanges}
               >
                 OK

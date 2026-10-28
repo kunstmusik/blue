@@ -34,6 +34,38 @@ The audit script reads the JSON array between the markers below. Keep entries ex
 ```json
 [
 	{
+		"path": "packages/blue-app/src/renderer/components/workbench/panels/mixer/meter-profiles.ts",
+		"value": "#22c55e",
+		"kind": "signal-palette",
+		"reason": "The low-level stop encodes meter signal level and is drawn into a canvas gradient, not application status chrome.",
+		"ownerSurface": "Mixer meter signal palette",
+		"reviewBy": "permanent"
+	},
+	{
+		"path": "packages/blue-app/src/renderer/components/workbench/panels/mixer/meter-profiles.ts",
+		"value": "#eab308",
+		"kind": "signal-palette",
+		"reason": "The middle stop encodes meter signal level and is drawn into a canvas gradient, not application status chrome.",
+		"ownerSurface": "Mixer meter signal palette",
+		"reviewBy": "permanent"
+	},
+	{
+		"path": "packages/blue-app/src/renderer/components/workbench/panels/mixer/meter-profiles.ts",
+		"value": "#f97316",
+		"kind": "signal-palette",
+		"reason": "The high-level stop encodes meter signal level and is drawn into a canvas gradient, not application status chrome.",
+		"ownerSurface": "Mixer meter signal palette",
+		"reviewBy": "permanent"
+	},
+	{
+		"path": "packages/blue-app/src/renderer/components/workbench/panels/mixer/meter-profiles.ts",
+		"value": "#ef4444",
+		"kind": "signal-palette",
+		"reason": "The upper stop encodes meter signal level and is drawn into a canvas gradient, not application status chrome.",
+		"ownerSurface": "Mixer meter signal palette",
+		"reviewBy": "permanent"
+	},
+	{
 		"path": "packages/blue-app/src/renderer/components/workbench/panels/editors/SelectedCodeEditor.tsx",
 		"value": "#89ddff",
 		"kind": "syntax-palette",
@@ -112,6 +144,7 @@ The audit script reads the JSON array between the markers below. Keep entries ex
 ## Expected Long-Lived Exception Classes
 
 - CodeMirror syntax token colors remain language-syntax semantics rather than app chrome; only surrounding editor chrome should be token-backed.
+- Meter gradient stops encode signal levels and are consumed by canvas; they are not application status chrome.
 - BSB widget colors that represent saved project data or Java Blue parity should remain documented exceptions instead of being remapped to app theme roles.
 - Score, piano-roll, waveform, and other renderer canvases may keep data-driven colors when the values come from project state or parity logic rather than shared chrome.
 - Dockview overrides, scrollbars, pseudo-elements, data-URI hooks, and similar selector-driven third-party integration points should stay in `index.css`, but any retained values there must still flow through theme variables or documented exceptions.

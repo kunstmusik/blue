@@ -227,7 +227,7 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
               ref={okButtonRef}
               type="button"
               data-testid="render-dialog-ok"
-              className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+              className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-app-accent-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
               onClick={close}
               disabled={!terminal}
             >

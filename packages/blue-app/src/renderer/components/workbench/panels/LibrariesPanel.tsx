@@ -404,7 +404,7 @@ export default function LibrariesPanel(): React.ReactElement {
               </button>
               <button
                 type="submit"
-                className="rounded bg-app-accent px-3 py-1 text-role-callout text-white disabled:opacity-50"
+                className="rounded bg-app-accent px-3 py-1 text-role-callout text-app-accent-foreground disabled:opacity-50"
                 disabled={folderCreating}
               >
                 {folderCreating ? 'Creating…' : 'Create'}

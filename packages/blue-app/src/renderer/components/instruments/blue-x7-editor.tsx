@@ -298,7 +298,7 @@ export const BlueX7Editor: React.FC<BlueX7EditorProps> = ({
               value={instrument.comment ?? ''}
               onChange={handleCommentChange}
               placeholder="Optional comment..."
-              className="w-48 rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body text-gray-200 placeholder:text-gray-500 focus:border-blue-accent focus:outline-none"
+              className="w-48 rounded border border-blue-border bg-blue-surface px-2 py-1 text-role-body text-gray-200 placeholder:text-app-text-muted focus:border-blue-accent focus:outline-none"
             />
           </div>
         </div>

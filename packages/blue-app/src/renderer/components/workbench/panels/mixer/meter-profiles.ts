@@ -28,6 +28,14 @@ export interface MeterProfileDefinition {
   readonly colorStops: readonly MeterColorStop[];
 }
 
+// Keep color properties visible to the theme audit; these are signal levels, not status chrome.
+const METER_COLORS = {
+  green: { color: '#22c55e' },
+  yellow: { color: '#eab308' },
+  orange: { color: '#f97316' },
+  red: { color: '#ef4444' },
+} as const;
+
 export const K_REFERENCE_DISCLAIMER =
   'Visual reference only; does not calibrate monitor SPL, room gain, or acoustic listening level.';
 
@@ -101,11 +109,11 @@ export const METER_PROFILES: Readonly<Record<MeterProfileKey, MeterProfileDefini
       { db: -16, isMajor: false },
     ],
     colorStops: [
-      { fraction: 0.0, color: '#22c55e' },
-      { fraction: 55 / 115, color: '#22c55e' },
-      { fraction: 92.5 / 115, color: '#eab308' },
-      { fraction: 100 / 115, color: '#f97316' },
-      { fraction: 1.0, color: '#ef4444' },
+      { fraction: 0.0, ...METER_COLORS.green },
+      { fraction: 55 / 115, ...METER_COLORS.green },
+      { fraction: 92.5 / 115, ...METER_COLORS.yellow },
+      { fraction: 100 / 115, ...METER_COLORS.orange },
+      { fraction: 1.0, ...METER_COLORS.red },
     ],
   },
 
@@ -141,11 +149,11 @@ export const METER_PROFILES: Readonly<Record<MeterProfileKey, MeterProfileDefini
       { db: -45, isMajor: false },
     ],
     colorStops: [
-      { fraction: 0.0, color: '#22c55e' },
-      { fraction: 48 / 66, color: '#22c55e' },
-      { fraction: 57 / 66, color: '#eab308' },
-      { fraction: 60 / 66, color: '#f97316' },
-      { fraction: 1.0, color: '#ef4444' },
+      { fraction: 0.0, ...METER_COLORS.green },
+      { fraction: 48 / 66, ...METER_COLORS.green },
+      { fraction: 57 / 66, ...METER_COLORS.yellow },
+      { fraction: 60 / 66, ...METER_COLORS.orange },
+      { fraction: 1.0, ...METER_COLORS.red },
     ],
   },
 
@@ -177,10 +185,10 @@ export const METER_PROFILES: Readonly<Record<MeterProfileKey, MeterProfileDefini
       { db: -22, isMajor: false },
     ],
     colorStops: [
-      { fraction: 0.0, color: '#22c55e' },
-      { fraction: 40 / 60, color: '#22c55e' },
-      { fraction: 44 / 60, color: '#eab308' },
-      { fraction: 1.0, color: '#ef4444' },
+      { fraction: 0.0, ...METER_COLORS.green },
+      { fraction: 40 / 60, ...METER_COLORS.green },
+      { fraction: 44 / 60, ...METER_COLORS.yellow },
+      { fraction: 1.0, ...METER_COLORS.red },
     ],
   },
 
@@ -211,10 +219,10 @@ export const METER_PROFILES: Readonly<Record<MeterProfileKey, MeterProfileDefini
       { db: -16, isMajor: false },
     ],
     colorStops: [
-      { fraction: 0.0, color: '#22c55e' },
-      { fraction: 46 / 60, color: '#22c55e' },
-      { fraction: 50 / 60, color: '#eab308' },
-      { fraction: 1.0, color: '#ef4444' },
+      { fraction: 0.0, ...METER_COLORS.green },
+      { fraction: 46 / 60, ...METER_COLORS.green },
+      { fraction: 50 / 60, ...METER_COLORS.yellow },
+      { fraction: 1.0, ...METER_COLORS.red },
     ],
   },
 
@@ -246,10 +254,10 @@ export const METER_PROFILES: Readonly<Record<MeterProfileKey, MeterProfileDefini
       { db: -14, isMajor: false },
     ],
     colorStops: [
-      { fraction: 0.0, color: '#22c55e' },
-      { fraction: 48 / 60, color: '#22c55e' },
-      { fraction: 52 / 60, color: '#eab308' },
-      { fraction: 1.0, color: '#ef4444' },
+      { fraction: 0.0, ...METER_COLORS.green },
+      { fraction: 48 / 60, ...METER_COLORS.green },
+      { fraction: 52 / 60, ...METER_COLORS.yellow },
+      { fraction: 1.0, ...METER_COLORS.red },
     ],
   },
 };

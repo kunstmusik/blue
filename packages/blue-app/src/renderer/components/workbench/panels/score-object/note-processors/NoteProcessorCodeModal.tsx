@@ -83,7 +83,7 @@ export default function NoteProcessorCodeModal({
           </button>
           <button
             type="button"
-            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-white hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+            className="rounded bg-blue-accent px-3 py-1.5 text-role-body text-app-accent-foreground hover:bg-blue-accent/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
             onClick={handleSave}
           >
             Save

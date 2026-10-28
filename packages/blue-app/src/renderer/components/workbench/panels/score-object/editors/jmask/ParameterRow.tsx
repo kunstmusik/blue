@@ -286,20 +286,20 @@ export default function ParameterRow({
           {...portalEventIsolationProps}
         >
           <ContextMenu.Item
-            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
             onSelect={() => setGeneratorPickerMode('changeType')}
           >
             Change Type
           </ContextMenu.Item>
           <ContextMenu.Item
-            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
             onSelect={handleRename}
           >
             Rename
           </ContextMenu.Item>
           {isCustom && (
             <ContextMenu.Item
-              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
               onSelect={removeParameter}
             >
               Delete
@@ -307,13 +307,13 @@ export default function ParameterRow({
           )}
           <ContextMenu.Separator className="my-1 h-px bg-app-border" />
           <ContextMenu.Item
-            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
             onSelect={() => setGeneratorPickerMode('addBefore')}
           >
             Add Before
           </ContextMenu.Item>
           <ContextMenu.Item
-            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+            className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
             onSelect={() => setGeneratorPickerMode('addAfter')}
           >
             Add After
@@ -323,7 +323,7 @@ export default function ParameterRow({
           )}
           {canMask && (
             <ContextMenu.CheckboxItem
-              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
               checked={maskEnabled}
               onCheckedChange={toggleMask}
             >
@@ -332,7 +332,7 @@ export default function ParameterRow({
           )}
           {canQuantize && (
             <ContextMenu.CheckboxItem
-              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
               checked={quantizerEnabled}
               onCheckedChange={toggleQuantizer}
             >
@@ -341,7 +341,7 @@ export default function ParameterRow({
           )}
           {canAccumulate && (
             <ContextMenu.CheckboxItem
-              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-text-strong"
+              className="cursor-pointer px-2 py-1 outline-none hover:bg-app-accent hover:text-app-accent-foreground"
               checked={accumulatorEnabled}
               onCheckedChange={toggleAccumulator}
             >

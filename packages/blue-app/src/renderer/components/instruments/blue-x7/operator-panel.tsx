@@ -5,6 +5,7 @@ import { EnvelopeEditor } from './envelope-editor';
 import { BlueX7TabList, type BlueX7TabItem } from './tab-list';
 import { AppSelect } from '../../AppSelect';
 import { LiveNumberInput } from '../../CommitNumberInput';
+import { BLUE_X7_FIELD_CLASS } from './field-styles';
 import { blueX7WidgetDomain, type BlueX7WidgetDomain } from './catalog-domains';
 
 export interface OperatorPanelProps {
@@ -288,7 +289,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 { value: 0, label: 'Ratio (Freq)' },
                 { value: 1, label: 'Fixed (Hz)' },
               ]}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
             />
           </div>
 
@@ -305,7 +306,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               value={effectiveOperator('frequencyCoarse', currentOp.freqCoarse)}
               onChange={handleFieldChange('freqCoarse', 'Freq Coarse', domainOf('frequencyCoarse'))}
               resolveValue={integerDomainResolver(domainOf('frequencyCoarse'))}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -323,7 +324,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               value={effectiveOperator('frequencyFine', currentOp.freqFine)}
               onChange={handleFieldChange('freqFine', 'Freq Fine', domainOf('frequencyFine'))}
               resolveValue={integerDomainResolver(domainOf('frequencyFine'))}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -341,7 +342,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               value={effectiveOperator('detune', currentOp.detune)}
               onChange={handleFieldChange('detune', 'Detune', domainOf('detune'))}
               resolveValue={integerDomainResolver(domainOf('detune'))}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -381,7 +382,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
               value={effectiveOperator('outputLevel', currentOp.outputLevel)}
               onChange={handleFieldChange('outputLevel', 'Output Level', domainOf('outputLevel'))}
               resolveValue={integerDomainResolver(domainOf('outputLevel'))}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -404,7 +405,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 domainOf('velocitySensitivity'),
               )}
               resolveValue={integerDomainResolver(domainOf('velocitySensitivity'))}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -430,7 +431,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 domainOf('amplitudeModulationSensitivity'),
               )}
               resolveValue={integerDomainResolver(domainOf('amplitudeModulationSensitivity'))}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -462,7 +463,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 if (Number.isNaN(val)) return null;
                 return Math.max(SHARED_PMS_DOMAIN.min, Math.min(SHARED_PMS_DOMAIN.max, val));
               }}
-              className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+              className={BLUE_X7_FIELD_CLASS}
               containerClassName="w-full"
             />
           </div>
@@ -487,7 +488,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 value={effectiveOperator('breakpoint', currentOp.breakpoint)}
                 onChange={handleFieldChange('breakpoint', 'Breakpoint', domainOf('breakpoint'))}
                 resolveValue={integerDomainResolver(domainOf('breakpoint'))}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
                 containerClassName="w-full"
               />
             </div>
@@ -502,7 +503,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 value={effectiveOperator('curveLeft', currentOp.curveLeft)}
                 onValueChange={handleSelectFieldChange('curveLeft', 'Curve Left')}
                 options={CURVE_TYPES}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
               />
             </div>
 
@@ -519,7 +520,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 value={effectiveOperator('depthLeft', currentOp.depthLeft)}
                 onChange={handleFieldChange('depthLeft', 'Depth Left', domainOf('depthLeft'))}
                 resolveValue={integerDomainResolver(domainOf('depthLeft'))}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
                 containerClassName="w-full"
               />
             </div>
@@ -534,7 +535,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 value={effectiveOperator('curveRight', currentOp.curveRight)}
                 onValueChange={handleSelectFieldChange('curveRight', 'Curve Right')}
                 options={CURVE_TYPES}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
               />
             </div>
 
@@ -551,7 +552,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                 value={effectiveOperator('depthRight', currentOp.depthRight)}
                 onChange={handleFieldChange('depthRight', 'Depth Right', domainOf('depthRight'))}
                 resolveValue={integerDomainResolver(domainOf('depthRight'))}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
                 containerClassName="w-full"
               />
             </div>
@@ -574,7 +575,7 @@ export const OperatorPanel: React.FC<OperatorPanelProps> = ({
                   domainOf('keyboardRateScaling'),
                 )}
                 resolveValue={integerDomainResolver(domainOf('keyboardRateScaling'))}
-                className="w-full rounded border border-blue-border bg-blue-bg px-2 py-1 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
+                className={BLUE_X7_FIELD_CLASS}
                 containerClassName="w-full"
               />
             </div>

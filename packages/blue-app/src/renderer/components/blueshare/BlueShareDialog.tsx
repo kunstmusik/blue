@@ -774,7 +774,7 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
               </p>
               <button
                 type="button"
-                className="rounded bg-app-accent px-4 py-2 text-role-body font-medium text-app-accent-contrast hover:bg-app-accent/90"
+                className="rounded bg-app-accent px-4 py-2 text-role-body font-medium text-app-accent-foreground hover:bg-app-accent/90"
                 onClick={() => setTab('manage')}
               >
                 Go to Sign In
@@ -863,7 +863,7 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
                     </button>
                     <button
                       type="button"
-                      className="rounded bg-app-accent px-3 py-1.5 text-role-callout font-medium text-app-accent-contrast hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                      className="rounded bg-app-accent px-3 py-1.5 text-role-callout font-medium text-app-accent-foreground hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
                       onClick={() => {
                         clearPublishReceipt();
                         setTab('manage');
@@ -1067,7 +1067,7 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
                       isPreparingPublish ||
                       (publishUncertain && !canRetryPublish)
                     }
-                    className="flex items-center gap-2 rounded bg-app-accent px-5 py-2.5 text-role-body font-medium text-app-accent-contrast transition-colors hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex items-center gap-2 rounded bg-app-accent px-5 py-2.5 text-role-body font-medium text-app-accent-foreground transition-colors hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => void publishExport()}
                   >
                     {isPublishing ? (
@@ -1180,7 +1180,7 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
                 <button
                   type="submit"
                   disabled={isSigningIn || !loginEmail || !loginPassword}
-                  className="flex w-full items-center justify-center gap-2 rounded bg-app-accent px-4 py-2 font-medium text-app-text-bright transition-colors hover:bg-app-accent/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:opacity-40"
+                  className="flex w-full items-center justify-center gap-2 rounded bg-app-accent px-4 py-2 font-medium text-app-accent-foreground transition-colors hover:bg-app-accent/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:opacity-40"
                 >
                   {isSigningIn ? (
                     <>

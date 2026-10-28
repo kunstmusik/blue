@@ -1,11 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
+import tailwindcss from '@tailwindcss/vite';
 import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
+  plugins: [tailwindcss()],
   test: {
     include: ['src/renderer/browser/**/*.browser.test.tsx'],
     globals: true,
+    deps: {
+      optimizer: { client: { include: ['@tanstack/react-table'] } },
+    },
     browser: {
       enabled: true,
       provider: playwright({

@@ -81,7 +81,7 @@ Each entry must specify:
 
 - `path`: Exact POSIX relative path to the file.
 - `value`: The literal color or style value.
-- `kind`: Category of exception (`syntax-palette`, `project-authored`, `decorative`, `inactive`, or `platform-native`).
+- `kind`: Category of exception (`syntax-palette`, `signal-palette`, `project-authored`, `decorative`, `inactive`, or `platform-native`). Signal palettes encode data in meters and similar graphics, and remain subject to applicable non-text contrast requirements.
 - `reason`: Technical rationale explaining why the value cannot use an existing semantic token.
 - `ownerSurface`: The specific UI surface or component owning this exception.
 - `reviewBy`: `permanent` for structural exceptions (e.g. syntax tokens) or a milestone/date for temporary exceptions.

@@ -10,7 +10,7 @@ export default function TablesPanel(): React.ReactElement {
     <div className="workbench-panel-shell">
       <div className="workbench-panel-shell__content">
         {!loaded ? (
-          <div className="flex items-center justify-center h-full text-gray-500 text-role-body">
+          <div className="flex items-center justify-center h-full text-app-text-muted text-role-body">
             No project loaded
           </div>
         ) : (
