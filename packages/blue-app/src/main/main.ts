@@ -1980,6 +1980,13 @@ function sendHistoryCommandToFocusedWindow(command: { type: 'undo' | 'redo' }): 
   sendNativeMenuCommandToFocusedWindow(command);
 }
 
+function applyWindowMenuBarVisibility(window: BrowserWindow): void {
+  if (process.platform === 'darwin') return;
+  // Keep native menu shortcuts available in secondary windows without showing a menu bar.
+  window.setAutoHideMenuBar(false);
+  window.setMenuBarVisibility(window === mainWindow);
+}
+
 function rebuildApplicationMenu(): void {
   const historyState = projectHistory.read();
   const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -2228,6 +2235,7 @@ function rebuildApplicationMenu(): void {
   );
 
   Menu.setApplicationMenu(menu);
+  BrowserWindow.getAllWindows().forEach(applyWindowMenuBarVisibility);
 }
 
 function getAppIcon(): Electron.NativeImage | undefined {
@@ -7134,7 +7142,8 @@ function unregisterDomainIpcStage(): void {
   unregisterDomainIpc = null;
 }
 
-function handleZoomBrowserWindowCreated(_event: Electron.Event, window: BrowserWindow): void {
+function handleBrowserWindowCreated(_event: Electron.Event, window: BrowserWindow): void {
+  applyWindowMenuBarVisibility(window);
   const applyCurrentZoom = (): void => {
     appZoomController.applyToWindow(window);
   };
@@ -7144,7 +7153,7 @@ function handleZoomBrowserWindowCreated(_event: Electron.Event, window: BrowserW
 }
 
 async function rollbackApplicationShellStage(): Promise<void> {
-  app.removeListener('browser-window-created', handleZoomBrowserWindowCreated);
+  app.removeListener('browser-window-created', handleBrowserWindowCreated);
 
   await midiInputCoordinator?.requestShutdown();
   midiInputCoordinator?.disposeIpcHandlers();
@@ -7186,9 +7195,9 @@ async function startApplicationShellStage(): Promise<void> {
       }
     }
 
-    // SPEC 061: install the zoom listener before the first BrowserWindow.
+    // Install window defaults, including SPEC 061 zoom, before the first BrowserWindow.
     appZoomController.initialize();
-    app.on('browser-window-created', handleZoomBrowserWindowCreated);
+    app.on('browser-window-created', handleBrowserWindowCreated);
 
     const initialSettings = loadProgramSettings();
     currentFollowPlaybackEnabled = initialSettings.playback.followPlayback;
