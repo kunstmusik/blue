@@ -106,7 +106,7 @@ disk workloads, and platform variability before selecting tight blocking gates.
 
 `.github/workflows/performance.yml` runs on PRs to develop/main, develop pushes, and
 manual dispatch. It runs serial Node/browser measurements on Windows, macOS, and
-Linux, correctness for the three migrated browser files on Linux, and real-engine measurements on Linux with
+Linux, the full browser correctness suite on Linux, and real-engine measurements on Linux with
 Csound 7.0.0. It uploads observations and writes job summaries. Measurements run in
 separate jobs from the installer workflow, so a failed speed budget does not prevent
 installer generation. Node failure does not suppress browser observations.
@@ -117,13 +117,6 @@ until repeatability and runner suitability have been established. This change do
 not modify GitHub branch protection. Shared hosted runners can remain noisy despite
 serial execution; keep the existing product requirements and use controlled runners
 where tight realtime acceptance needs them.
-
-The broader 20-file browser suite is not made required by this change. A local cold
-Chromium run exposed eight failures in three existing, unrelated files: one fader
-layout/drag expectation and seven hook errors associated with dependency optimizer
-reloads in arrangement and tree movement. These need a separate browser-harness
-investigation. The scoped CI check covers the migrated functional cases without
-skipping or changing those unrelated assertions.
 
 ## License and provenance
 

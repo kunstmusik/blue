@@ -468,7 +468,7 @@ describe('ChannelStrip Browser Native Geometry Tests (T010, T023, T032)', () => 
           }),
         );
 
-        // Gesture 2: Second drag on the same channel
+        // Gesture 2: Drag down so the first drag's upper limit cannot mask a change.
         act(() => {
           slider.dispatchEvent(
             new PointerEvent('pointerdown', {
@@ -482,15 +482,16 @@ describe('ChannelStrip Browser Native Geometry Tests (T010, T023, T032)', () => 
 
         act(() => {
           slider.dispatchEvent(
-            new PointerEvent('pointermove', { bubbles: true, clientY: 60, pointerId: 1 }),
+            new PointerEvent('pointermove', { bubbles: true, clientY: 120, pointerId: 1 }),
           );
         });
 
         expect(levelValue.textContent).not.toBe(previewText1);
+        expect(applyPatchSpy).toHaveBeenCalledTimes(1);
 
         await act(async () => {
           slider.dispatchEvent(
-            new PointerEvent('pointerup', { bubbles: true, clientY: 60, pointerId: 1 }),
+            new PointerEvent('pointerup', { bubbles: true, clientY: 120, pointerId: 1 }),
           );
           await Promise.resolve();
           await Promise.resolve();

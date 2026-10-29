@@ -6,14 +6,12 @@ import { testTags } from './test-tags';
 
 export default defineConfig({
   plugins: [tailwindcss()],
+  optimizeDeps: { include: ['dockview', '@tanstack/react-table'] },
   test: {
     tags: testTags,
     tagsFilter: ['!performance'],
     include: ['src/renderer/browser/**/*.browser.test.tsx'],
     globals: true,
-    deps: {
-      optimizer: { client: { include: ['@tanstack/react-table'] } },
-    },
     browser: {
       enabled: true,
       provider: playwright({

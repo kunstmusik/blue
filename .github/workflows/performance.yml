@@ -63,7 +63,7 @@ jobs:
         run: exit 1
 
   browser-correctness:
-    name: Migrated browser correctness (Chromium)
+    name: Browser correctness (Chromium)
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
@@ -82,11 +82,7 @@ jobs:
       - name: Browser correctness
         env:
           BLUE_TEST_BROWSER_CHANNEL: chromium
-        run: >-
-          pnpm --filter @blue/app test:browser
-          src/renderer/browser/mixer-metering.browser.test.tsx
-          src/renderer/browser/global-project-history.browser.test.tsx
-          src/renderer/browser/patterns-layer-group-canvas.browser.test.tsx
+        run: pnpm --filter @blue/app test:browser
 
   engine-measurements:
     name: Engine measurements (Csound 7.0.0, Linux)
