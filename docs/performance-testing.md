@@ -7,6 +7,15 @@ dedicated configurations select it and run one file/worker at a time, without re
 The `real-engine` tag further separates engine measurements from Node measurements.
 See [Vitest test tags](https://vitest.dev/guide/test-tags).
 
+Run performance measurements on a known desktop/reference machine when changing
+performance-sensitive code, investigating a regression, or gathering release
+acceptance evidence. They are opt-in and do not run on ordinary CI pushes or PRs.
+Keep the machine, OS, runtime/browser versions, power mode, display configuration,
+and workload consistent when comparing revisions. Run without competing builds or
+other heavy applications, and retain each revision's reports before the next run
+overwrites them. Recorded environment metadata aids diagnosis but does not make
+uncontrolled machines comparable.
+
 Mixed workloads use one local scenario function with two test entries: functional
 and performance. Both exercise the same state changes and correctness assertions;
 the performance command evaluates speed observations. This preserves large-fixture, pagination,
@@ -31,7 +40,7 @@ The performance commands run **three fresh Vitest processes**, in sequence, even
 when an earlier round fails. Test, setup, and collection errors fail the command.
 The meter comparison is evaluated once across all fixed pairs, while the other
 performance cases retain their existing assertion semantics. Set
-`BLUE_PERFORMANCE_ROUNDS=1` for a local diagnostic run; CI uses the default three.
+`BLUE_PERFORMANCE_ROUNDS=1` for a local diagnostic run; manual CI uses the default three.
 This is fixed repetition, not retry-until-pass. Do not run other builds or test
 commands concurrently with measurements.
 
@@ -148,20 +157,26 @@ alone is insufficient for release performance sign-off.
 
 ## CI policy
 
-`.github/workflows/performance.yml` runs on PRs to develop/main, develop pushes, and
-manual dispatch. It runs serial Node/browser measurements on Windows, macOS, and
-Linux, the full browser correctness suite on Linux, and real-engine measurements on Linux with
-Csound 7.0.0. It uploads observations and writes job summaries. Measurements run in
-separate jobs from the installer workflow, so a failed speed budget does not prevent
-installer generation. Node failure does not suppress browser observations.
+Ordinary PR validation continues to run workspace correctness tests, lint, builds,
+packaging, and smoke checks across Windows, macOS, and Linux. The separate
+`.github/workflows/browser-correctness.yml` runs the full browser correctness suite
+on Linux for PRs to develop/main and develop pushes. Both normal test configurations
+exclude the tagged performance cases; deterministic tests of the measurement and
+verdict helpers remain part of ordinary correctness testing.
 
-The measurement statuses are advisory while collecting baselines. Collection errors
-and measured failures remain visible; inconclusive comparisons receive explicit
-warnings and verdicts rather than performance pass claims. Do not configure them as required branch checks
-until repeatability and runner suitability have been established. This change does
-not modify GitHub branch protection. Shared hosted runners can remain noisy despite
-serial execution; keep the existing product requirements and use controlled runners
-where tight realtime acceptance needs them.
+`.github/workflows/performance.yml` supports **manual dispatch only**. Use it for
+targeted cross-platform investigation when useful. It collects serial Node/browser
+measurements on Windows, macOS, and Linux, plus real-engine measurements on Linux
+with Csound 7.0.0, and uploads observations and job summaries. Node failure does not
+suppress browser observations. There is no scheduled performance collection.
+
+Hosted-runner measurements are diagnostic evidence, not the reference for release
+performance acceptance. Shared hosted runners can remain noisy despite serial
+execution. Collection errors and measured failures remain visible; inconclusive
+comparisons receive explicit warnings and verdicts. A green collection status does
+not replace a passing measurement on controlled reference hardware. Performance
+collection is not a required branch check; this change does not modify GitHub
+branch protection or product performance budgets.
 
 ## License and provenance
 

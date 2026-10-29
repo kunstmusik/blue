@@ -1,14 +1,10 @@
 name: Performance measurements
 
 on:
-  pull_request:
-    branches: [develop, main]
-  push:
-    branches: [develop]
   workflow_dispatch:
 
 concurrency:
-  group: performance-${{ github.event.pull_request.number || github.ref }}
+  group: performance-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -61,28 +57,6 @@ jobs:
         if: steps.node.outcome == 'failure' || steps.browser.outcome == 'failure'
         shell: bash
         run: exit 1
-
-  browser-correctness:
-    name: Browser correctness (Chromium)
-    runs-on: ubuntu-22.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v5
-      - uses: ./.github/actions/setup-blue-build
-        with:
-          build-java-runtime: 'false'
-          build-workspace: 'false'
-          rebuild-native: 'false'
-      - name: Build test dependencies
-        run: |
-          pnpm --filter @blue/data build
-          pnpm --filter @blue/engine-client build
-      - name: Install pinned Chromium
-        run: pnpm --filter @blue/app exec playwright install --with-deps chromium
-      - name: Browser correctness
-        env:
-          BLUE_TEST_BROWSER_CHANNEL: chromium
-        run: pnpm --filter @blue/app test:browser
 
   engine-measurements:
     name: Engine measurements (Csound 7.0.0, Linux)

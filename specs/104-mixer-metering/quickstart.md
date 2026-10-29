@@ -308,7 +308,11 @@ suite (T047), and a strict production browser frame-rate gate (T045).
 ### SC-003 — Paired frame-throughput acceptance procedure
 
 Run `pnpm --filter @blue/app test:performance:browser` alone, without concurrent
-builds/tests. It collects three fresh processes, each containing four fixed
+builds/tests, on a known desktop/reference machine with consistent OS, browser,
+power, and display settings. Performance runs are opt-in; ordinary CI checks
+correctness, and manual hosted-CI measurements are diagnostic evidence. See
+[the performance testing guide](../../docs/performance-testing.md) for setup and
+report retention. The command collects three fresh processes, each containing four fixed
 baseline/metered pairs in AB, BA, AB, BA order. Each phase uses the same fresh
 64-strip fixture, a 250 ms settle, interaction warmup, three skipped initial rAF
 callbacks, a ≥1,500 ms frame window, and five interaction batches.
@@ -328,7 +332,7 @@ samples, incorrect pair ordering, setup failures, and functional failures are ER
 A healthy baseline with a missed aggregate budget is FAILED. Only PASSED establishes
 acceptance under this procedure; a successful collection job marked INCONCLUSIVE
 does not. All raw phases, pair ratios, health reasons, and the verdict are retained
-in `performance-results/browser/measurements.json` and reported in CI.
+in `performance-results/browser/measurements.json` and reported in manual CI runs.
 
 The default `pnpm test` and `test:browser` check deterministic behavior and exclude
 performance cases. Direct Vitest execution of the tagged meter case only collects
