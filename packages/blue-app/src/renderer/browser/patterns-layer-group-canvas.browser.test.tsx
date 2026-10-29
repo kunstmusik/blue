@@ -1,3 +1,4 @@
+import { reportPerformance } from '../../test-support/performance';
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -211,7 +212,7 @@ describe('Patterns Layer-Group canvas (Chromium)', () => {
     expect(pointer).toBeDefined();
   });
 
-  it('renders a dense representative group without occurrence nodes', () => {
+  function runGridWorkload(measure: boolean) {
     const layers = Array.from({ length: 64 }, (_, row) =>
       makeLayer(
         `pl-${row}`,
@@ -224,6 +225,16 @@ describe('Patterns Layer-Group canvas (Chromium)', () => {
     const elapsed = performance.now() - start;
     expect(canvas().querySelectorAll('[data-pattern-cell]')).toHaveLength(64 * 256);
     expect(canvas().querySelectorAll('[data-pattern-occurrence-id]')).toHaveLength(0);
-    expect(elapsed).toBeLessThan(5000);
-  });
+    if (measure) {
+      reportPerformance('pattern grid React commit (64 x 256 cells; excludes paint)', [elapsed]);
+      expect(elapsed).toBeLessThan(5000);
+    }
+  }
+
+  it('renders a dense representative group without occurrence nodes', () => runGridWorkload(false));
+  it(
+    'renders a dense representative group without occurrence nodes',
+    { tags: ['performance'] },
+    () => runGridWorkload(true),
+  );
 });

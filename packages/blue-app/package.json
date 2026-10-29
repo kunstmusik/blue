@@ -40,7 +40,10 @@
     "package:linux-x64": "pnpm manual:build && pnpm engine:stage -- --target linux-x64 && pnpm release:metadata && pnpm verify:package-inputs -- --target linux-x64 && electron-builder --linux --x64 --publish never",
     "verify:release-version": "node scripts/verify-release-version.mjs",
     "release:manifest": "node ../../scripts/release-artifact-manifest.mjs generate --out release/release-manifest.json --release-dir release",
-    "typecheck:renderer": "tsc -p tsconfig.renderer.json"
+    "typecheck:renderer": "tsc -p tsconfig.renderer.json",
+    "test:performance": "node scripts/run-performance-tests.mjs node",
+    "test:performance:browser": "node scripts/run-performance-tests.mjs browser",
+    "test:performance:engine": "node scripts/run-performance-tests.mjs engine"
   },
   "dependencies": {
     "@blue/data": "workspace:*",

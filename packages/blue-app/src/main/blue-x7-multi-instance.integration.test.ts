@@ -1,3 +1,4 @@
+import { reportPerformance } from '../test-support/performance';
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -39,14 +40,11 @@ describe.skipIf(!hasCsound)('BlueX7 four-owner stress integration', () => {
         .find((parameter) => parameter.getName() === 'lfo.speed')!
         .getFixedValue(),
     );
-    const latencies: number[] = [];
     for (let index = 0; index < 600; index += 1) {
       const ownerIndex = index % fixture.owners.length;
-      const started = performance.now();
       expect(fixture.owners[ownerIndex]!.instrument.applyFixedValue('lfo.speed', index % 100)).toBe(
         true,
       );
-      latencies.push(performance.now() - started);
       fixture.owners.forEach((owner, candidateIndex) => {
         if (candidateIndex === ownerIndex) return;
         const value = owner.instrument
@@ -63,8 +61,6 @@ describe.skipIf(!hasCsound)('BlueX7 four-owner stress integration', () => {
         expect(value).toBe(expected);
       });
     }
-    latencies.sort((left, right) => left - right);
-    expect(latencies[Math.floor(latencies.length * 0.95)]!).toBeLessThan(100);
 
     const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-x7-four-owner-'));
     const csdPath = path.join(scratch, 'four-owner.csd');
@@ -100,4 +96,21 @@ describe.skipIf(!hasCsound)('BlueX7 four-owner stress integration', () => {
     expect(peak).toBeLessThanOrEqual(1);
     expect(finalSecondPeak).toBeLessThan(1e-6);
   }, 180_000);
+});
+
+it('measures 600 direct BlueX7 model edits across four owners', { tags: ['performance'] }, () => {
+  const fixture = createBlueX7MultiInstanceFixture();
+  const samples: number[] = [];
+  for (let index = 0; index < 600; index += 1) {
+    const startedAt = performance.now();
+    const changed = fixture.owners[index % 4]!.instrument.applyFixedValue('lfo.speed', index % 100);
+    samples.push(performance.now() - startedAt);
+    expect(changed).toBe(true);
+  }
+  expect(
+    reportPerformance(
+      'BlueX7 direct model edit (four owners; excludes audio acknowledgement)',
+      samples,
+    ).p95,
+  ).toBeLessThan(100);
 });

@@ -1,3 +1,4 @@
+import { reportPerformance } from '../../test-support/performance';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -90,7 +91,7 @@ function setupBindingMap(channels: MixerChannelSnapshot[], nchnls = 2): void {
   meterStore.setBindingMap(bindingMap);
 }
 
-async function measureFrameRate(durationMs: number): Promise<number> {
+async function measureFrameRate(durationMs: number, metric: string): Promise<number> {
   const timestamps: number[] = [];
   await new Promise<void>((resolve) => {
     let warmupRemaining = 3;
@@ -114,6 +115,7 @@ async function measureFrameRate(durationMs: number): Promise<number> {
   for (let i = 1; i < timestamps.length; i++) {
     deltas.push(timestamps[i]! - timestamps[i - 1]!);
   }
+  reportPerformance(metric, deltas);
   deltas.sort((left, right) => left - right);
   const medianDelta = deltas[Math.floor(deltas.length / 2)]!;
   return 1000 / medianDelta;
@@ -227,112 +229,126 @@ describe('Mounted 64-strip mixer metering frame-rate gate (SC-003, FR-013)', () 
     vi.restoreAllMocks();
   });
 
-  it('keeps animation-frame rate and strip interactions within 20% of the non-metering baseline', async () => {
-    // ---- Phase A: pre-feature baseline, meter components & rAF schedulers absent ----
-    expect(document.querySelectorAll('canvas').length).toBe(0);
-    const baselineFps = await measureFrameRate(1500);
-    // A floor on the baseline keeps the gate honest: a broken environment
-    // must fail loudly rather than pass vacuously against a stalled
-    // baseline.
-    expect(baselineFps).toBeGreaterThanOrEqual(24);
-
-    measureInteractionBatch(surface, 0);
-    const baselineBatches: number[] = [];
-    for (let iteration = 1; iteration <= 5; iteration++) {
-      baselineBatches.push(measureInteractionBatch(surface, iteration));
-    }
-    const baselineInteractionMs = median(baselineBatches);
-
-    // ---- Phase B: 64 strips actively metering with MeterCanvas mounted & painting at ~33 Hz ----
-    await act(async () => {
-      root.render(
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {channels.map((channel) => (
-            <ChannelStrip
-              key={channel.id}
-              mixer={mixer}
-              channel={channel}
-              isMaster={channel.channelKind === 'master'}
-              isSubChannel={channel.channelKind === 'subChannel'}
-              onPatch={onPatch}
-              projectSessionId={1}
-              projectRevision={1}
-              onOpenEffectInterface={onOpenEffectInterface}
-              renderMeter={true}
-            />
-          ))}
-        </div>,
+  it(
+    'keeps animation-frame rate and strip interactions within 20% of the non-metering baseline',
+    { tags: ['performance'], timeout: 60000 },
+    async () => {
+      // ---- Phase A: pre-feature baseline, meter components & rAF schedulers absent ----
+      expect(document.querySelectorAll('canvas').length).toBe(0);
+      const baselineFps = await measureFrameRate(
+        1500,
+        'non-metering baseline animation-frame intervals',
       );
-    });
-    expect(document.querySelectorAll('canvas').length).toBe(64);
-    surface = {
-      sliders: [...document.querySelectorAll<HTMLElement>('[role="slider"]')],
-      effectRows: [...document.querySelectorAll<HTMLElement>('[role="option"]')],
-    };
+      // A floor on the baseline keeps the gate honest: a broken environment
+      // must fail loudly rather than pass vacuously against a stalled
+      // baseline.
+      expect(baselineFps).toBeGreaterThanOrEqual(24);
 
-    // Pre-warm initial held peak and active RMS inside act(...) so React records
-    // the initial peak readout cleanly before unbatched background telemetry feeds RMS variations.
-    act(() => {
-      meterStore.processMeterFrame({
-        sequence: 1,
-        channels: channels.map((channel) => ({
-          csdKey: channel.id,
-          rms: [0.3, 0.28],
-          peak: [0.5, 0.48],
-        })),
-      });
-    });
-
-    let feedSequence = 1;
-    const feeder = window.setInterval(() => {
-      feedSequence += 1;
-      meterStore.processMeterFrame({
-        sequence: feedSequence,
-        channels: channels.map((channel, index) => ({
-          csdKey: channel.id,
-          rms: [
-            0.3 + 0.1 * Math.sin((feedSequence + index) / 3),
-            0.28 + 0.1 * Math.cos((feedSequence + index) / 4),
-          ],
-          peak: [0.5, 0.48],
-        })),
-      });
-    }, 30);
-
-    try {
-      // Give the strips a moment to leave the silence-parked state so the
-      // measurement sees the animating (repainting) workload.
-      await new Promise((resolve) => setTimeout(resolve, 250));
-
-      const meteredFps = await measureFrameRate(1500);
       measureInteractionBatch(surface, 0);
-      const meteredBatches: number[] = [];
+      const baselineBatches: number[] = [];
       for (let iteration = 1; iteration <= 5; iteration++) {
-        meteredBatches.push(measureInteractionBatch(surface, iteration));
+        baselineBatches.push(measureInteractionBatch(surface, iteration));
       }
-      const meteredInteractionMs = median(meteredBatches);
+      const baselineInteractionMs = median(baselineBatches);
 
-      // Interactions must actually reach the strip handlers.
-      expect(onPatch).toHaveBeenCalled();
-      expect(onOpenEffectInterface).toHaveBeenCalled();
+      // ---- Phase B: 64 strips actively metering with MeterCanvas mounted & painting at ~33 Hz ----
+      await act(async () => {
+        root.render(
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {channels.map((channel) => (
+              <ChannelStrip
+                key={channel.id}
+                mixer={mixer}
+                channel={channel}
+                isMaster={channel.channelKind === 'master'}
+                isSubChannel={channel.channelKind === 'subChannel'}
+                onPatch={onPatch}
+                projectSessionId={1}
+                projectRevision={1}
+                onOpenEffectInterface={onOpenEffectInterface}
+                renderMeter={true}
+              />
+            ))}
+          </div>,
+        );
+      });
+      expect(document.querySelectorAll('canvas').length).toBe(64);
+      surface = {
+        sliders: [...document.querySelectorAll<HTMLElement>('[role="slider"]')],
+        effectRows: [...document.querySelectorAll<HTMLElement>('[role="option"]')],
+      };
 
-      // SC-003 strict gate: at most a 20% frame-rate regression with no
-      // absolute-time escape threshold.
-      expect(meteredFps).toBeGreaterThanOrEqual(baselineFps * 0.8);
-      // Interaction latency likewise stays within the 20% budget.
-      expect(meteredInteractionMs).toBeLessThanOrEqual(baselineInteractionMs * 1.2);
+      // Pre-warm initial held peak and active RMS inside act(...) so React records
+      // the initial peak readout cleanly before unbatched background telemetry feeds RMS variations.
+      act(() => {
+        meterStore.processMeterFrame({
+          sequence: 1,
+          channels: channels.map((channel) => ({
+            csdKey: channel.id,
+            rms: [0.3, 0.28],
+            peak: [0.5, 0.48],
+          })),
+        });
+      });
 
-      // Evidence for the execution record.
-      console.log(
-        `[SC-003] baselineFps=${baselineFps.toFixed(1)} meteredFps=${meteredFps.toFixed(1)} ` +
-          `baselineInteractionMs=${baselineInteractionMs.toFixed(2)} ` +
-          `meteredInteractionMs=${meteredInteractionMs.toFixed(2)} ` +
-          `fpsRatio=${(meteredFps / baselineFps).toFixed(3)}`,
-      );
-    } finally {
-      window.clearInterval(feeder);
-    }
-  }, 60000);
+      let feedSequence = 1;
+      const feeder = window.setInterval(() => {
+        feedSequence += 1;
+        meterStore.processMeterFrame({
+          sequence: feedSequence,
+          channels: channels.map((channel, index) => ({
+            csdKey: channel.id,
+            rms: [
+              0.3 + 0.1 * Math.sin((feedSequence + index) / 3),
+              0.28 + 0.1 * Math.cos((feedSequence + index) / 4),
+            ],
+            peak: [0.5, 0.48],
+          })),
+        });
+      }, 30);
+
+      try {
+        // Give the strips a moment to leave the silence-parked state so the
+        // measurement sees the animating (repainting) workload.
+        await new Promise((resolve) => setTimeout(resolve, 250));
+
+        const meteredFps = await measureFrameRate(
+          1500,
+          '64-strip metered animation-frame intervals',
+        );
+        measureInteractionBatch(surface, 0);
+        const meteredBatches: number[] = [];
+        for (let iteration = 1; iteration <= 5; iteration++) {
+          meteredBatches.push(measureInteractionBatch(surface, iteration));
+        }
+        const meteredInteractionMs = median(meteredBatches);
+
+        // Interactions must actually reach the strip handlers.
+        expect(onPatch).toHaveBeenCalled();
+        expect(onOpenEffectInterface).toHaveBeenCalled();
+
+        // SC-003 strict gate: at most a 20% frame-rate regression with no
+        // absolute-time escape threshold.
+        reportPerformance('non-metering baseline frame rate', [baselineFps], 'fps');
+        reportPerformance('64-strip metered frame rate', [meteredFps], 'fps');
+        reportPerformance('non-metering baseline interaction batches', baselineBatches);
+        reportPerformance('64-strip metered interaction batches', meteredBatches);
+        expect(meteredFps).toBeGreaterThanOrEqual(baselineFps * 0.8);
+        // Interaction latency likewise stays within the 20% budget.
+        expect(meteredInteractionMs).toBeLessThanOrEqual(baselineInteractionMs * 1.2);
+
+        // Evidence for the execution record.
+        console.log(
+          `[SC-003] baselineFps=${baselineFps.toFixed(1)} meteredFps=${meteredFps.toFixed(1)} ` +
+            `baselineInteractionMs=${baselineInteractionMs.toFixed(2)} ` +
+            `meteredInteractionMs=${meteredInteractionMs.toFixed(2)} ` +
+            `fpsRatio=${(meteredFps / baselineFps).toFixed(3)}`,
+        );
+      } finally {
+        window.clearInterval(feeder);
+      }
+    },
+  );
 
   it('stops meter rendering and cleans up canvas when meters are disabled (T029)', async () => {
     const { mixer, channels } = buildMixerSnapshot();

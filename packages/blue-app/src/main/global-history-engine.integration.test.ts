@@ -1,3 +1,4 @@
+import { reportPerformance, percentile as calculatePercentile } from '../test-support/performance';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -124,13 +125,16 @@ function isEngineWithCsoundReady(enginePath: string): boolean {
 // would exit before readiness; skip only when a binary exists yet cannot load
 // Csound. A missing binary still fails inside the test with its build hint.
 const gateVectorEnginePath = resolveAcceptanceEnginePath();
+if (
+  process.env.BLUE_REQUIRE_PERFORMANCE_ENGINE === '1' &&
+  (!gateVectorEnginePath || !isEngineWithCsoundReady(gateVectorEnginePath))
+) {
+  throw new Error(
+    'Performance setup failure: build Blue Engine and install a loadable Csound runtime (or set BLUE_ENGINE_PATH).',
+  );
+}
 const shouldSkipGateVectorTest =
   gateVectorEnginePath !== null && !isEngineWithCsoundReady(gateVectorEnginePath);
-
-function calculatePercentile(values: number[], p: number): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(Math.floor((p / 100) * sorted.length), sorted.length - 1)] ?? 0;
-}
 
 function realEngineOrchestra(channelName: string): string {
   return [
@@ -345,7 +349,6 @@ describe('global history engine integration (T040, US3)', () => {
     const session = new ProjectSession();
     session.replace(data, '/tmp/t087-runtime-failure.blue', { documentId: 'doc-t087-failure' });
     const failureMessage = 'Injected timeline acknowledgement failure';
-    let failureDeterminedAt = 0;
     const failingEngine = makeEngineClient();
     failingEngine.applyOperation = async (operation) => {
       failingEngine.applied.push(operation);
@@ -353,9 +356,6 @@ describe('global history engine integration (T040, US3)', () => {
     };
     const reconciliation = new ProjectRuntimeReconciliation({
       operationTimeoutMs: 100,
-      onOutcome: (outcome) => {
-        if (outcome.status === 'failed') failureDeterminedAt = performance.now();
-      },
     });
     reconciliation.registerPerformance('timeline', 1, failingEngine, new Map(BINDINGS));
     const history = new ProjectHistory({
@@ -375,7 +375,6 @@ describe('global history engine integration (T040, US3)', () => {
     });
     history.setSavedStateId(session.read().stateId);
 
-    const commandReceivedAt = performance.now();
     const response = await history.commit({
       documentId: 'doc-t087-failure',
       operationId: 't087-failing-commit',
@@ -396,7 +395,6 @@ describe('global history engine integration (T040, US3)', () => {
       }),
     ]);
     expect(session.read().data?.getMixer().getMaster().getLevel()).toBe(0.8);
-    expect(failureDeterminedAt - commandReceivedAt).toBeLessThanOrEqual(1000);
   });
 
   it('keeps generated timeline and Blue Live gate outcomes independent during history replay (T080)', async () => {
@@ -882,148 +880,158 @@ describe('global history engine integration (T040, US3)', () => {
     expect(blueLive.channelValues.get(sliderBinding.channel)).toBe(0.73);
   });
 
+  async function runGateWorkload(measure: boolean) {
+    const enginePath = resolveAcceptanceEnginePath();
+    if (!enginePath) {
+      throw new Error(
+        'real-engine gate publication requires a built engine; set BLUE_ENGINE_PATH or build native/blue-engine first',
+      );
+    }
+
+    const outputDirectory = await mkdtemp(path.join(tmpdir(), 'blue-history-t111-'));
+    let engine: { session: EngineSession; channelName: string } | null = null;
+    try {
+      const gateCount = 300;
+      const catalog: CompiledMixerGateBindings = createTestGateCatalog(gateCount);
+      const bankLines: string[] = [];
+      for (const gate of catalog.gates) {
+        for (const symbol of gate.bankSymbols) {
+          bankLines.push(`${symbol} init 1`);
+          bankLines.push(`${symbol} chnexport "${symbol}", 3`);
+        }
+      }
+      bankLines.push(`${catalog.commitChannel} init 0`);
+      bankLines.push(`${catalog.commitChannel} chnexport "${catalog.commitChannel}", 3`);
+      bankLines.push(`${catalog.appliedChannel} init 0`);
+      bankLines.push(`${catalog.appliedChannel} chnexport "${catalog.appliedChannel}", 3`);
+
+      const transport = process.platform === 'win32' ? 'tcp' : 'ipc';
+      const endpointPair =
+        transport === 'tcp' ? await allocateTcpEndpointPair({ basePort: 46000 }) : null;
+      const gateSession = new EngineSession({
+        kind: 'realtime',
+        enginePath,
+        transport,
+        port: endpointPair?.controlPort,
+        pubPort: endpointPair?.pubPort,
+        extraArgs: ['--disable-shared-memory', '--disable-thread-priority-elevation'],
+      });
+      engine = { session: gateSession, channelName: 't111_gates' };
+      await gateSession.spawn();
+      const ready = await gateSession.awaitReady();
+      if (ready.status !== 'ready') {
+        throw new Error(ready.errorMessage ?? 'gate engine did not become ready');
+      }
+      const client = gateSession.getClient();
+      if (!client) throw new Error('gate engine client unavailable');
+
+      const output = await client.setOption(`-o${path.join(outputDirectory, 't111-gates.wav')}`);
+      const compiled = await client.compileOrc(
+        [
+          'sr = 44100',
+          'ksmps = 64',
+          'nchnls = 2',
+          '0dbfs = 1',
+          '',
+          ...bankLines,
+          '',
+          'instr 1',
+          '  a0 init 0',
+          '  out(a0, a0)',
+          'endin',
+          '',
+          // BlueMixer's protocol tail: echo the sampled commit token so the
+          // publisher can observe audible bank selection.
+          `instr blueGateEcho`,
+          `  ${catalog.appliedChannel} = ${catalog.commitChannel}`,
+          'endin',
+          '',
+        ].join('\n'),
+      );
+      const score = await client.readScore('i1 0 60\ni"blueGateEcho" 0 60');
+      const started = await client.start();
+      if (!output.ok) throw new Error(`setOption failed: ${output.message}`);
+      if (!compiled.ok) throw new Error(`compileOrc failed: ${compiled.message}`);
+      if (!score.ok) throw new Error(`readScore failed: ${score.message}`);
+      if (!started.ok) throw new Error(`start failed: ${started.message}`);
+
+      const io: MixerGateEngineIO = {
+        setChannels: (entries) => client.setChannels(entries),
+        getChannels: (names) => client.getChannels(names),
+      };
+      const publisher = new MixerGatePublisher(io, {
+        maxBatchEntries: 256,
+        observeAttempts: 200,
+        observeDelayMs: 5,
+      });
+      publisher.setBindings('timeline', catalog);
+
+      const values = Array.from({ length: gateCount }, (_, i) => (i % 2 === 0 ? 0 : 1));
+      const startedAt = performance.now();
+      const result = await publisher.publish('timeline', TEST_GATE_SIGNATURE, values);
+      const elapsedMs = performance.now() - startedAt;
+      expect(result.ok).toBe(true);
+      expect(result.commitToken).toBe(1);
+
+      // The applied echo proves the engine selected the staged bank.
+      const applied = await client.getChannels([catalog.appliedChannel]);
+      expect(applied.ok && applied.values[0] === 1).toBe(true);
+
+      // Bank 1 (inactive at token 0) carries the full staged vector.
+      const bankRead = await client.getChannels(
+        catalog.gates.slice(0, 8).map((gate) => gate.bankSymbols[1]),
+      );
+      expect(bankRead.ok).toBe(true);
+      if (bankRead.ok) {
+        expect(bankRead.values).toEqual(values.slice(0, 8));
+      }
+
+      // A second publication alternates banks and advances the token.
+      const second = await publisher.publish(
+        'timeline',
+        TEST_GATE_SIGNATURE,
+        Array.from({ length: gateCount }, () => 1),
+      );
+      expect(second.ok).toBe(true);
+      expect(second.commitToken).toBe(2);
+
+      // Publication of a 300-gate vector (2 stage batches + commit + echo)
+      // settles well inside the 100 ms audible-response budget on the
+      // reference local engine.
+      if (measure) {
+        reportPerformance('300-gate publication through applied echo', [elapsedMs]);
+        expect(elapsedMs).toBeLessThan(100);
+      }
+
+      // Batch double: >256 gates split at the 256-entry engine bound.
+      const fake = new FakeMixerGateEngine();
+      const fakePublisher = new MixerGatePublisher(fake, { maxBatchEntries: 256 });
+      const batchCatalog = createTestGateCatalog(700);
+      fakePublisher.setBindings('blueLive', batchCatalog);
+      const batchResult = await fakePublisher.publish('blueLive', TEST_GATE_SIGNATURE, [
+        ...Array(700).fill(1),
+      ]);
+      expect(batchResult.ok).toBe(true);
+      for (const write of fake.writes) {
+        expect(write.length).toBeLessThanOrEqual(256);
+      }
+    } finally {
+      if (engine) {
+        await engine.session.shutdown('t111-complete');
+      }
+      await rm(outputDirectory, { recursive: true, force: true });
+    }
+  }
+
+  it.skipIf(shouldSkipGateVectorTest)(
+    'stages and verifies a >256-entry gate vector through the two-bank protocol',
+    { timeout: 30_000 },
+    () => runGateWorkload(false),
+  );
   it.skipIf(shouldSkipGateVectorTest)(
     'stages a >256-entry gate vector through the two-bank protocol within the latency budget (Spec 111 T016/T058)',
-    async () => {
-      const enginePath = resolveAcceptanceEnginePath();
-      if (!enginePath) {
-        throw new Error(
-          'real-engine gate publication requires a built engine; set BLUE_ENGINE_PATH or build native/blue-engine first',
-        );
-      }
-
-      const outputDirectory = await mkdtemp(path.join(tmpdir(), 'blue-history-t111-'));
-      let engine: { session: EngineSession; channelName: string } | null = null;
-      try {
-        const gateCount = 300;
-        const catalog: CompiledMixerGateBindings = createTestGateCatalog(gateCount);
-        const bankLines: string[] = [];
-        for (const gate of catalog.gates) {
-          for (const symbol of gate.bankSymbols) {
-            bankLines.push(`${symbol} init 1`);
-            bankLines.push(`${symbol} chnexport "${symbol}", 3`);
-          }
-        }
-        bankLines.push(`${catalog.commitChannel} init 0`);
-        bankLines.push(`${catalog.commitChannel} chnexport "${catalog.commitChannel}", 3`);
-        bankLines.push(`${catalog.appliedChannel} init 0`);
-        bankLines.push(`${catalog.appliedChannel} chnexport "${catalog.appliedChannel}", 3`);
-
-        const transport = process.platform === 'win32' ? 'tcp' : 'ipc';
-        const endpointPair =
-          transport === 'tcp' ? await allocateTcpEndpointPair({ basePort: 46000 }) : null;
-        const gateSession = new EngineSession({
-          kind: 'realtime',
-          enginePath,
-          transport,
-          port: endpointPair?.controlPort,
-          pubPort: endpointPair?.pubPort,
-          extraArgs: ['--disable-shared-memory', '--disable-thread-priority-elevation'],
-        });
-        engine = { session: gateSession, channelName: 't111_gates' };
-        await gateSession.spawn();
-        const ready = await gateSession.awaitReady();
-        if (ready.status !== 'ready') {
-          throw new Error(ready.errorMessage ?? 'gate engine did not become ready');
-        }
-        const client = gateSession.getClient();
-        if (!client) throw new Error('gate engine client unavailable');
-
-        const output = await client.setOption(`-o${path.join(outputDirectory, 't111-gates.wav')}`);
-        const compiled = await client.compileOrc(
-          [
-            'sr = 44100',
-            'ksmps = 64',
-            'nchnls = 2',
-            '0dbfs = 1',
-            '',
-            ...bankLines,
-            '',
-            'instr 1',
-            '  a0 init 0',
-            '  out(a0, a0)',
-            'endin',
-            '',
-            // BlueMixer's protocol tail: echo the sampled commit token so the
-            // publisher can observe audible bank selection.
-            `instr blueGateEcho`,
-            `  ${catalog.appliedChannel} = ${catalog.commitChannel}`,
-            'endin',
-            '',
-          ].join('\n'),
-        );
-        const score = await client.readScore('i1 0 60\ni"blueGateEcho" 0 60');
-        const started = await client.start();
-        if (!output.ok) throw new Error(`setOption failed: ${output.message}`);
-        if (!compiled.ok) throw new Error(`compileOrc failed: ${compiled.message}`);
-        if (!score.ok) throw new Error(`readScore failed: ${score.message}`);
-        if (!started.ok) throw new Error(`start failed: ${started.message}`);
-
-        const io: MixerGateEngineIO = {
-          setChannels: (entries) => client.setChannels(entries),
-          getChannels: (names) => client.getChannels(names),
-        };
-        const publisher = new MixerGatePublisher(io, {
-          maxBatchEntries: 256,
-          observeAttempts: 200,
-          observeDelayMs: 5,
-        });
-        publisher.setBindings('timeline', catalog);
-
-        const values = Array.from({ length: gateCount }, (_, i) => (i % 2 === 0 ? 0 : 1));
-        const startedAt = performance.now();
-        const result = await publisher.publish('timeline', TEST_GATE_SIGNATURE, values);
-        const elapsedMs = performance.now() - startedAt;
-        expect(result.ok).toBe(true);
-        expect(result.commitToken).toBe(1);
-
-        // The applied echo proves the engine selected the staged bank.
-        const applied = await client.getChannels([catalog.appliedChannel]);
-        expect(applied.ok && applied.values[0] === 1).toBe(true);
-
-        // Bank 1 (inactive at token 0) carries the full staged vector.
-        const bankRead = await client.getChannels(
-          catalog.gates.slice(0, 8).map((gate) => gate.bankSymbols[1]),
-        );
-        expect(bankRead.ok).toBe(true);
-        if (bankRead.ok) {
-          expect(bankRead.values).toEqual(values.slice(0, 8));
-        }
-
-        // A second publication alternates banks and advances the token.
-        const second = await publisher.publish(
-          'timeline',
-          TEST_GATE_SIGNATURE,
-          Array.from({ length: gateCount }, () => 1),
-        );
-        expect(second.ok).toBe(true);
-        expect(second.commitToken).toBe(2);
-
-        // Publication of a 300-gate vector (2 stage batches + commit + echo)
-        // settles well inside the 100 ms audible-response budget on the
-        // reference local engine.
-        expect(elapsedMs).toBeLessThan(100);
-
-        // Batch double: >256 gates split at the 256-entry engine bound.
-        const fake = new FakeMixerGateEngine();
-        const fakePublisher = new MixerGatePublisher(fake, { maxBatchEntries: 256 });
-        const batchCatalog = createTestGateCatalog(700);
-        fakePublisher.setBindings('blueLive', batchCatalog);
-        const batchResult = await fakePublisher.publish('blueLive', TEST_GATE_SIGNATURE, [
-          ...Array(700).fill(1),
-        ]);
-        expect(batchResult.ok).toBe(true);
-        for (const write of fake.writes) {
-          expect(write.length).toBeLessThanOrEqual(256);
-        }
-      } finally {
-        if (engine) {
-          await engine.session.shutdown('t111-complete');
-        }
-        await rm(outputDirectory, { recursive: true, force: true });
-      }
-    },
-    30_000,
+    { tags: ['performance', 'real-engine'], timeout: 30_000 },
+    () => runGateWorkload(true),
   );
 });
 
@@ -1251,7 +1259,7 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
   });
 
   describe('T116 real blue-engine acknowledgement boundary', () => {
-    it('measures 100 live reversals with positive timeline and Blue Live readback', async () => {
+    async function runLiveHistoryWorkload(measure: boolean) {
       const enginePath = resolveAcceptanceEnginePath();
       if (!enginePath) {
         throw new Error(
@@ -1428,8 +1436,18 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
 
         expect(undoLatencies).toHaveLength(100);
         expect(redoLatencies).toHaveLength(100);
-        expect(metrics.commandToPositiveRuntimeAckMs.undo.p95).toBeLessThanOrEqual(250);
-        expect(metrics.commandToPositiveRuntimeAckMs.redo.p95).toBeLessThanOrEqual(250);
+        if (measure) {
+          reportPerformance(
+            'real-engine undo through positive readback on both performances',
+            undoLatencies,
+          );
+          reportPerformance(
+            'real-engine redo through positive readback on both performances',
+            redoLatencies,
+          );
+          expect(metrics.commandToPositiveRuntimeAckMs.undo.p95).toBeLessThanOrEqual(250);
+          expect(metrics.commandToPositiveRuntimeAckMs.redo.p95).toBeLessThanOrEqual(250);
+        }
       } finally {
         await Promise.all([
           timeline?.session.shutdown('t087-complete'),
@@ -1437,6 +1455,14 @@ if (process.env.BLUE_RUN_REAL_ENGINE === '1') {
         ]);
         await rm(outputDirectory, { recursive: true, force: true });
       }
-    });
+    }
+
+    it('replays live reversals with positive timeline and Blue Live readback', () =>
+      runLiveHistoryWorkload(false));
+    it(
+      'measures 100 live reversals with positive timeline and Blue Live readback',
+      { tags: ['performance', 'real-engine'] },
+      () => runLiveHistoryWorkload(true),
+    );
   });
 }

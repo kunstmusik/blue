@@ -1,3 +1,4 @@
+import { reportPerformance, percentile } from '../../test-support/performance';
 // @vitest-environment browser
 import React from 'react';
 import { act } from 'react';
@@ -101,11 +102,6 @@ function nextPaint(): Promise<void> {
   return new Promise((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
-}
-
-function percentile(values: number[], p: number): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(Math.floor((p / 100) * sorted.length), sorted.length - 1)] ?? 0;
 }
 
 /**
@@ -329,110 +325,122 @@ describe('global project history across two views (T029, US2)', () => {
   // This intentionally remains a component-only benchmark: it uses a vi.fn
   // commit seam, empty patches, and fabricated publications. T116's
   // production boundary below is the acceptance gate.
-  it('measures the component-only canonical paint and status benchmark', async () => {
-    type CommitRequest = {
-      documentId: string;
-      expectedRevision: number;
-      contextSequence: number;
-      label: string;
-      patches: readonly unknown[];
-    };
-    type CommitResponse = { changed: boolean; revision: number; sessionId: number };
-    type BrowserHistoryApi = {
-      commitProjectDocumentPatches: (request: CommitRequest) => Promise<CommitResponse>;
-    };
+  it(
+    'measures the component-only canonical paint and status benchmark',
+    { tags: ['performance'] },
+    async () => {
+      type CommitRequest = {
+        documentId: string;
+        expectedRevision: number;
+        contextSequence: number;
+        label: string;
+        patches: readonly unknown[];
+      };
+      type CommitResponse = { changed: boolean; revision: number; sessionId: number };
+      type BrowserHistoryApi = {
+        commitProjectDocumentPatches: (request: CommitRequest) => Promise<CommitResponse>;
+      };
 
-    const api = (window as unknown as { blueAPI: BrowserHistoryApi }).blueAPI;
-    const paintLatencies: number[] = [];
-    const statusLatencies: number[] = [];
-    const heapBefore = browserHeapUsed();
-    let revision = 100;
-    let commandReceivedAt = 0;
+      const api = (window as unknown as { blueAPI: BrowserHistoryApi }).blueAPI;
+      const paintLatencies: number[] = [];
+      const statusLatencies: number[] = [];
+      const heapBefore = browserHeapUsed();
+      let revision = 100;
+      let commandReceivedAt = 0;
 
-    api.commitProjectDocumentPatches = vi.fn(async () => {
-      commandReceivedAt = performance.now();
-      const nextRevision = ++revision;
-      dispatchDocumentUpdated(
-        makeEvent({
-          revision: nextRevision,
-          isDirty: true,
-          history: {
-            ...makeEvent().history,
-            cursor: nextRevision,
-            length: nextRevision,
-          },
-          snapshot: {
-            sessionId: 7,
-            documentId: 'doc-1',
-            title: `Measured ${nextRevision}`,
-          },
-        }),
+      api.commitProjectDocumentPatches = vi.fn(async () => {
+        commandReceivedAt = performance.now();
+        const nextRevision = ++revision;
+        dispatchDocumentUpdated(
+          makeEvent({
+            revision: nextRevision,
+            isDirty: true,
+            history: {
+              ...makeEvent().history,
+              cursor: nextRevision,
+              length: nextRevision,
+            },
+            snapshot: {
+              sessionId: 7,
+              documentId: 'doc-1',
+              title: `Measured ${nextRevision}`,
+            },
+          }),
+        );
+        return { changed: true, revision: nextRevision, sessionId: 7 };
+      });
+
+      const submit = (contextSequence: number) =>
+        api.commitProjectDocumentPatches({
+          documentId: 'doc-1',
+          expectedRevision: revision,
+          contextSequence,
+          label: 'Measured canonical edit',
+          patches: [],
+        });
+
+      // Warm the browser and React scheduler before collecting samples.
+      for (let i = 0; i < 5; i++) {
+        await act(async () => {
+          await submit(i + 1);
+          await nextPaint();
+        });
+      }
+      act(() => {
+        useProjectStore.setState({ title: 'Before Edit', isDirty: false });
+      });
+
+      for (let i = 0; i < 100; i++) {
+        const expectedTitle = `Measured ${revision + 1}`;
+        await act(async () => {
+          const result = await submit(i + 6);
+          expect(result.changed).toBe(true);
+          await nextPaint();
+
+          const canonicalPaintAt = performance.now();
+          expect(titleOf(hostA)).toBe(expectedTitle);
+          expect(titleOf(hostB)).toBe(expectedTitle);
+          const statusRenderAt = performance.now();
+          expect(dirtyOf(hostA)).toBe('dirty');
+          expect(dirtyOf(hostB)).toBe('dirty');
+          expect(hostA.querySelector('[data-field="status"]')?.textContent).toBe('dirty');
+          expect(hostB.querySelector('[data-field="status"]')?.textContent).toBe('dirty');
+
+          paintLatencies.push(canonicalPaintAt - commandReceivedAt);
+          statusLatencies.push(statusRenderAt - commandReceivedAt);
+        });
+      }
+
+      const heapAfter = browserHeapUsed();
+      const metrics = {
+        samples: paintLatencies.length,
+        paintedCanonicalViewMs: {
+          p50: percentile(paintLatencies, 50),
+          p95: percentile(paintLatencies, 95),
+          max: Math.max(...paintLatencies),
+        },
+        statusRenderMs: {
+          p50: percentile(statusLatencies, 50),
+          p95: percentile(statusLatencies, 95),
+          max: Math.max(...statusLatencies),
+        },
+        heapDeltaBytes: heapBefore !== null && heapAfter !== null ? heapAfter - heapBefore : null,
+      };
+      console.log(`[T087 component browser benchmark] ${JSON.stringify(metrics)}`);
+
+      expect(paintLatencies).toHaveLength(100);
+      expect(statusLatencies).toHaveLength(100);
+      reportPerformance(
+        'component-only publication to canonical paint (mock commit)',
+        paintLatencies,
       );
-      return { changed: true, revision: nextRevision, sessionId: 7 };
-    });
-
-    const submit = (contextSequence: number) =>
-      api.commitProjectDocumentPatches({
-        documentId: 'doc-1',
-        expectedRevision: revision,
-        contextSequence,
-        label: 'Measured canonical edit',
-        patches: [],
-      });
-
-    // Warm the browser and React scheduler before collecting samples.
-    for (let i = 0; i < 5; i++) {
-      await act(async () => {
-        await submit(i + 1);
-        await nextPaint();
-      });
-    }
-    act(() => {
-      useProjectStore.setState({ title: 'Before Edit', isDirty: false });
-    });
-
-    for (let i = 0; i < 100; i++) {
-      const expectedTitle = `Measured ${revision + 1}`;
-      await act(async () => {
-        const result = await submit(i + 6);
-        expect(result.changed).toBe(true);
-        await nextPaint();
-
-        const canonicalPaintAt = performance.now();
-        expect(titleOf(hostA)).toBe(expectedTitle);
-        expect(titleOf(hostB)).toBe(expectedTitle);
-        const statusRenderAt = performance.now();
-        expect(dirtyOf(hostA)).toBe('dirty');
-        expect(dirtyOf(hostB)).toBe('dirty');
-        expect(hostA.querySelector('[data-field="status"]')?.textContent).toBe('dirty');
-        expect(hostB.querySelector('[data-field="status"]')?.textContent).toBe('dirty');
-
-        paintLatencies.push(canonicalPaintAt - commandReceivedAt);
-        statusLatencies.push(statusRenderAt - commandReceivedAt);
-      });
-    }
-
-    const heapAfter = browserHeapUsed();
-    const metrics = {
-      samples: paintLatencies.length,
-      paintedCanonicalViewMs: {
-        p50: percentile(paintLatencies, 50),
-        p95: percentile(paintLatencies, 95),
-        max: Math.max(...paintLatencies),
-      },
-      statusRenderMs: {
-        p50: percentile(statusLatencies, 50),
-        p95: percentile(statusLatencies, 95),
-        max: Math.max(...statusLatencies),
-      },
-      heapDeltaBytes: heapBefore !== null && heapAfter !== null ? heapAfter - heapBefore : null,
-    };
-    console.log(`[T087 component browser benchmark] ${JSON.stringify(metrics)}`);
-
-    expect(paintLatencies).toHaveLength(100);
-    expect(statusLatencies).toHaveLength(100);
-    expect(metrics.paintedCanonicalViewMs.p95).toBeLessThanOrEqual(200);
-  });
+      reportPerformance(
+        'component-only publication to status render (mock commit)',
+        statusLatencies,
+      );
+      expect(metrics.paintedCanonicalViewMs.p95).toBeLessThanOrEqual(200);
+    },
+  );
 });
 
 type ProductionHistoryListener = (payload: unknown) => void;
@@ -771,7 +779,8 @@ describe('global project history production boundary (T116, US2/US3)', () => {
     vi.restoreAllMocks();
   });
 
-  it('routes 100 undo/redo pairs through production listeners, boundaries, canonical replay, and painted views', async () => {
+  async function runRendererHistoryWorkload(measure: boolean) {
+    const sampleCount = measure ? 100 : 3;
     const harness = createProductionHistoryHarness();
     Object.defineProperty(window, 'blueAPI', {
       configurable: true,
@@ -820,7 +829,7 @@ describe('global project history production boundary (T116, US2/US3)', () => {
     };
 
     let currentTitle = 'Before Edit';
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < (measure ? 5 : 0); i += 1) {
       const nextTitle = `Warmup ${i}`;
       await commitTitle(nextTitle);
       await runCommand('undo', currentTitle);
@@ -831,7 +840,7 @@ describe('global project history production boundary (T116, US2/US3)', () => {
     const undoLatencies: number[] = [];
     const redoLatencies: number[] = [];
     const heapBefore = browserHeapUsed();
-    for (let i = 0; i < 100; i += 1) {
+    for (let i = 0; i < sampleCount; i += 1) {
       const nextTitle = `Measured ${i}`;
       const previousTitle = currentTitle;
       await commitTitle(nextTitle);
@@ -853,7 +862,7 @@ describe('global project history production boundary (T116, US2/US3)', () => {
 
     const heapAfter = browserHeapUsed();
     const metrics = {
-      samplesPerCommand: 100,
+      samplesPerCommand: sampleCount,
       undoMs: {
         p50: percentile(undoLatencies, 50),
         p95: percentile(undoLatencies, 95),
@@ -870,10 +879,31 @@ describe('global project history production boundary (T116, US2/US3)', () => {
     };
     console.log(`[T116 end-to-end browser boundary metrics] ${JSON.stringify(metrics)}`);
 
-    expect(undoLatencies).toHaveLength(100);
-    expect(redoLatencies).toHaveLength(100);
-    expect(metrics.undoMs.p95).toBeLessThanOrEqual(200);
-    expect(metrics.redoMs.p95).toBeLessThanOrEqual(200);
-    expect(metrics.failureToVisibleErrorMs).toBeLessThanOrEqual(1000);
-  });
+    expect(undoLatencies).toHaveLength(sampleCount);
+    expect(redoLatencies).toHaveLength(sampleCount);
+    if (measure) {
+      reportPerformance(
+        'renderer history undo through two painted views (main stand-in)',
+        undoLatencies,
+      );
+      reportPerformance(
+        'renderer history redo through two painted views (main stand-in)',
+        redoLatencies,
+      );
+      reportPerformance('injected failure to error handler (excludes toast paint)', [
+        metrics.failureToVisibleErrorMs,
+      ]);
+      expect(metrics.undoMs.p95).toBeLessThanOrEqual(200);
+      expect(metrics.redoMs.p95).toBeLessThanOrEqual(200);
+      expect(metrics.failureToVisibleErrorMs).toBeLessThanOrEqual(1000);
+    }
+  }
+
+  it('routes undo/redo through production listeners, boundaries, canonical replay, and both views', () =>
+    runRendererHistoryWorkload(false));
+  it(
+    'routes 100 undo/redo pairs through production listeners, boundaries, canonical replay, and painted views',
+    { tags: ['performance'] },
+    () => runRendererHistoryWorkload(true),
+  );
 });

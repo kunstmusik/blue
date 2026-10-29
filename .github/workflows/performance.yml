@@ -1,0 +1,128 @@
+name: Performance measurements
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: performance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  measurements:
+    name: Measurements (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-blue-build
+        with:
+          build-java-runtime: 'false'
+          build-workspace: 'false'
+          rebuild-native: 'false'
+      - name: Build test dependencies
+        shell: bash
+        run: |
+          pnpm --filter @blue/data build
+          pnpm --filter @blue/engine-client build
+      - name: Install pinned Chromium
+        shell: bash
+        run: pnpm --filter @blue/app exec playwright install --with-deps chromium
+      # Run serially. Each command records all three rounds, including failures.
+      - name: Node measurements
+        id: node
+        continue-on-error: true
+        shell: bash
+        run: pnpm --filter @blue/app test:performance
+      - name: Browser measurements
+        id: browser
+        continue-on-error: true
+        shell: bash
+        run: pnpm --filter @blue/app test:performance:browser
+      - name: Upload observations
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-${{ matrix.os }}
+          path: packages/blue-app/performance-results/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Report measurement failures
+        if: steps.node.outcome == 'failure' || steps.browser.outcome == 'failure'
+        shell: bash
+        run: exit 1
+
+  browser-correctness:
+    name: Migrated browser correctness (Chromium)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-blue-build
+        with:
+          build-java-runtime: 'false'
+          build-workspace: 'false'
+          rebuild-native: 'false'
+      - name: Build test dependencies
+        run: |
+          pnpm --filter @blue/data build
+          pnpm --filter @blue/engine-client build
+      - name: Install pinned Chromium
+        run: pnpm --filter @blue/app exec playwright install --with-deps chromium
+      - name: Browser correctness
+        env:
+          BLUE_TEST_BROWSER_CHANNEL: chromium
+        run: >-
+          pnpm --filter @blue/app test:browser
+          src/renderer/browser/mixer-metering.browser.test.tsx
+          src/renderer/browser/global-project-history.browser.test.tsx
+          src/renderer/browser/patterns-layer-group-canvas.browser.test.tsx
+
+  engine-measurements:
+    name: Engine measurements (Csound 7.0.0, Linux)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-blue-build
+        with:
+          build-java-runtime: 'false'
+          build-workspace: 'false'
+          rebuild-native: 'false'
+      - name: Build engine and test dependencies
+        run: |
+          pnpm --filter @blue/data build
+          pnpm --filter @blue/engine-client build
+          pnpm --filter @blue/engine-native build
+      - name: Install pinned Csound runtime for tests
+        shell: bash
+        run: |
+          archive="$RUNNER_TEMP/csound.zip"
+          curl --fail --location --retry 3 \
+            https://github.com/csound/csound/releases/download/7.0.0/csound-linux-minimal-x86_64-7.0.0.zip \
+            --output "$archive"
+          echo "f74e897cbd1f266d85aaa0dc9d331dfb8fe4b976d8724b44aefe7eb5f4f6a43f  $archive" | sha256sum --check
+          unzip -q "$archive" -d "$RUNNER_TEMP/csound"
+          runtime="$RUNNER_TEMP/csound/csound-linux-minimal-x86_64-7.0.0"
+          echo "LIBCSOUND_PATH=$runtime/libcsound64.so" >> "$GITHUB_ENV"
+          echo "OPCODE7DIR64=$runtime/plugins" >> "$GITHUB_ENV"
+      - name: Engine measurements
+        run: pnpm --filter @blue/app test:performance:engine
+      - name: Upload observations
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-engine-linux
+          path: packages/blue-app/performance-results/
+          if-no-files-found: error
+          retention-days: 14

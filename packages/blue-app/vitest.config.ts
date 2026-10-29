@@ -2,9 +2,12 @@ import { defineConfig } from 'vitest/config';
 import { GithubActionsReporter } from 'vitest/node';
 import { resolve } from 'path';
 import { createPackageReporterConfig } from '../../scripts/vitest-package-reporters';
+import { testTags } from './test-tags';
 
 export default defineConfig({
   test: {
+    tags: testTags,
+    tagsFilter: ['!performance'],
     include: [
       'src/main/**/*.test.ts',
       'src/preload/**/*.test.ts',
