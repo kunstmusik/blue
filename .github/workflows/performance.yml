@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   measurements:
-    name: Measurements (${{ matrix.os }})
+    name: Measurement collection (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:

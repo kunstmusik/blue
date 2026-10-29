@@ -1,3 +1,4 @@
+import { evaluateMeterComparisons, meterPolicy } from './meter-performance-verdict.mjs';
 import { spawnSync, execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
@@ -32,7 +33,10 @@ export function readPerformanceResult(report, output, suite) {
     JSON.parse(match[1]),
   );
   if (!metrics.length) throw new Error('No performance measurements were recorded');
-  return { tests, metrics };
+  const comparisons = [...output.matchAll(/BLUE_PERFORMANCE_COMPARISON (\{[^\n]*\})/g)].map(
+    (match) => JSON.parse(match[1]),
+  );
+  return { tests, metrics, comparisons };
 }
 
 async function run() {
@@ -62,30 +66,36 @@ async function run() {
   // Persist setup information even if browser launch or test collection fails.
   const summaryPath = path.join(directory, 'measurements.json');
   writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
-  if (suite === 'engine') {
-    const enginePath =
-      process.env.BLUE_ENGINE_PATH ??
-      path.join(
-        appRoot,
-        '../../native/blue-engine/dist',
-        `${process.platform}-${process.arch}`,
-        process.platform === 'win32' ? 'blue-engine.exe' : 'blue-engine',
-      );
-    const probe = execFileSync(enginePath, ['--probe-csound', '--json'], {
-      encoding: 'utf8',
-      timeout: 10000,
-    });
-    environment.engine = JSON.parse(probe);
+  try {
+    if (suite === 'engine') {
+      const enginePath =
+        process.env.BLUE_ENGINE_PATH ??
+        path.join(
+          appRoot,
+          '../../native/blue-engine/dist',
+          `${process.platform}-${process.arch}`,
+          process.platform === 'win32' ? 'blue-engine.exe' : 'blue-engine',
+        );
+      const probe = execFileSync(enginePath, ['--probe-csound', '--json'], {
+        encoding: 'utf8',
+        timeout: 10000,
+      });
+      environment.engine = JSON.parse(probe);
+      writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+      if (!environment.engine.ready)
+        throw new Error('Performance setup failure: Blue Engine cannot load Csound 7');
+    }
+    if (suite === 'browser') {
+      const { chromium } = await import('playwright');
+      const browser = await chromium.launch({ headless: true });
+      environment.browser = browser.version();
+      await browser.close();
+      writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+    }
+  } catch (error) {
+    summary.verdict = { status: 'error', reason: error.message };
     writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
-    if (!environment.engine.ready)
-      throw new Error('Performance setup failure: Blue Engine cannot load Csound 7');
-  }
-  if (suite === 'browser') {
-    const { chromium } = await import('playwright');
-    const browser = await chromium.launch({ headless: true });
-    environment.browser = browser.version();
-    await browser.close();
-    writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+    throw error;
   }
   let failed = false;
   for (let round = 1; round <= rounds; round += 1) {
@@ -119,6 +129,9 @@ async function run() {
         throw new Error(
           `Expected ${expectedCases} ${suite} performance cases; selected ${parsed.tests.length}`,
         );
+      if (suite === 'browser' && parsed.comparisons.length !== meterPolicy.pairsPerRound) {
+        throw new Error('Incomplete meter comparison collection');
+      }
       if (parsed.tests.some((test) => test.status === 'failed')) failed = true;
     } catch (error) {
       entry.error = error.message;
@@ -131,20 +144,50 @@ async function run() {
       `${suite} performance round ${round}/${rounds}: ${entry.error ?? `${entry.tests?.length ?? 0} cases; exit ${result.status}`}`,
     );
   }
+  if (suite === 'browser') {
+    try {
+      summary.meterComparison = evaluateMeterComparisons(summary.rounds);
+    } catch (error) {
+      failed = true;
+      summary.comparisonError = error.message;
+    }
+  }
+  summary.verdict = failed
+    ? {
+        status: 'error',
+        reason: 'A test, setup, or collection check failed; inspect round reports',
+      }
+    : (summary.meterComparison ?? { status: 'passed' });
+  writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+  console.log(`${suite} performance verdict: ${summary.verdict.status.toUpperCase()}`);
+  if (summary.verdict.status === 'inconclusive') {
+    console.log(
+      `::warning title=Performance measurement inconclusive::${summary.verdict.reasons.join('; ')}. Collection succeeded; performance acceptance was not established.`,
+    );
+  }
   if (process.env.GITHUB_STEP_SUMMARY) {
+    const comparison = summary.meterComparison;
     appendFileSync(
       process.env.GITHUB_STEP_SUMMARY,
       `\n### ${suite} performance (${environment.platform}/${environment.architecture})\n\n` +
+        `**Verdict: ${summary.verdict.status.toUpperCase()}**\n\n` +
+        (summary.verdict.reason ? `${summary.verdict.reason}\n\n` : '') +
+        (comparison
+          ? `Meter comparison: ${comparison.pairs.length} fixed pairs; median FPS ratio ${comparison.aggregate.fpsRatio.toFixed(3)}; median interaction ratio ${comparison.aggregate.interactionRatio.toFixed(3)}.\n\n` +
+            comparison.reasons.map((reason) => `- ${reason}`).join('\n') +
+            '\n\n'
+          : '') +
         summary.rounds
           .map(
             (round) =>
-              `- Round ${round.round}: ${round.error ?? `${round.tests?.filter((test) => test.status === 'passed').length} passed, ${round.tests?.filter((test) => test.status === 'failed').length} failed`}`,
+              `- Round ${round.round}: ${round.error ?? `${round.tests?.filter((test) => test.status === 'passed').length} test cases passed, ${round.tests?.filter((test) => test.status === 'failed').length} failed`}`,
           )
           .join('\n') +
-        '\n\nRaw samples, environment, logs, and test reports are attached as performance artifacts.\n',
+        '\n\nA successful collection job with an INCONCLUSIVE verdict is not a performance acceptance pass. Raw samples, environment, logs, and test reports are attached.\n',
     );
   }
-  if (failed) process.exitCode = 1;
+
+  if (['error', 'failed'].includes(summary.verdict.status)) process.exitCode = 1;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

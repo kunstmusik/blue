@@ -280,13 +280,13 @@ suite (T047), and a strict production browser frame-rate gate (T045).
   termination (exit handling broadcasts `meter-reset`, session torn down,
   no stale meter state).
 
-### T045 — Strict production browser frame-rate gate
+### T045 — Historical median-rAF browser validation (superseded procedure)
 
 - New `src/renderer/browser/mixer-metering.browser.test.tsx` (real Chromium,
   real `requestAnimationFrame`, real canvases, real `IntersectionObserver`)
   mounts 64 real `ChannelStrip` components; a CSS scale transform keeps every
   strip inside the viewport so all 64 canvases keep painting. It gates the
-  median-rAF frame rate and interaction-batch latency (fader keyboard
+  historical median-rAF frame rate and interaction-batch latency (fader keyboard
   interaction through the slider's production handler path plus effect-chain
   select/double-click-open) at the strict SC-003 20% thresholds with **no**
   absolute-millisecond escape. A ≥ 24 fps baseline floor keeps the gate
@@ -302,10 +302,37 @@ suite (T047), and a strict production browser frame-rate gate (T045).
   project edits, stable slider elements, and 64 paints per frame. Shared-worker
   JSDOM wall time is not a latency gate. The browser test above remains the
   strict SC-003 gate, with its 20% thresholds unchanged.
-- Run the performance gate alone, without concurrent tests/builds:
-  `pnpm --filter @blue/app test:browser src/renderer/browser/mixer-metering.browser.test.tsx`.
-  The default `pnpm test` checks deterministic behavior; it does not claim a
-  real-browser performance acceptance run.
+- The observations above describe the earlier median-rAF procedure. They are
+  retained as historical evidence and are not baselines for the procedure below.
+
+### SC-003 — Paired frame-throughput acceptance procedure
+
+Run `pnpm --filter @blue/app test:performance:browser` alone, without concurrent
+builds/tests. It collects three fresh processes, each containing four fixed
+baseline/metered pairs in AB, BA, AB, BA order. Each phase uses the same fresh
+64-strip fixture, a 250 ms settle, interaction warmup, three skipped initial rAF
+callbacks, a ≥1,500 ms frame window, and five interaction batches.
+
+Calculate actual FPS as observed frame intervals divided by their elapsed seconds.
+Keep frame-time p50/p95 as diagnostics. Evaluate the median paired FPS ratio ≥0.8
+and median paired interaction-time ratio ≤1.2 over all 12 planned pairs. This
+revises the measurement statistic and sampling procedure while preserving the
+SC-003 20% product budgets. Do not discard slow pairs or retry until passing.
+
+Require visible phases, every baseline ≥24 actual FPS, baseline frame-time p95
+≤twice its median, and baseline FPS spread `(max-min)/max` ≤20% across all pairs.
+This predeclared environment-health policy determines whether the comparison can
+support a verdict; it does not relax product budgets. An unhealthy baseline is
+INCONCLUSIVE and requires a controlled reference-machine run. Missing/malformed
+samples, incorrect pair ordering, setup failures, and functional failures are ERROR.
+A healthy baseline with a missed aggregate budget is FAILED. Only PASSED establishes
+acceptance under this procedure; a successful collection job marked INCONCLUSIVE
+does not. All raw phases, pair ratios, health reasons, and the verdict are retained
+in `performance-results/browser/measurements.json` and reported in CI.
+
+The default `pnpm test` and `test:browser` check deterministic behavior and exclude
+performance cases. Direct Vitest execution of the tagged meter case only collects
+observations; use the performance command for the aggregate decision.
 
 ### Phase 9 native suite
 

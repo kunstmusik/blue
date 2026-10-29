@@ -9,7 +9,7 @@ See [Vitest test tags](https://vitest.dev/guide/test-tags).
 
 Mixed workloads use one local scenario function with two test entries: functional
 and performance. Both exercise the same state changes and correctness assertions;
-only the performance entry enforces speed. This preserves large-fixture, pagination,
+the performance command evaluates speed observations. This preserves large-fixture, pagination,
 history restoration, ownership, and lifecycle coverage without duplicating fixtures.
 Filtered cases appear as skipped in Vitest output; the dedicated runner checks the
 selected performance cases separately and rejects missing/skipped measurements.
@@ -28,7 +28,9 @@ pnpm --filter @blue/app test:performance:engine
 ```
 
 The performance commands run **three fresh Vitest processes**, in sequence, even
-when an earlier round fails. Each command fails if any round fails. Set
+when an earlier round fails. Test, setup, and collection errors fail the command.
+The meter comparison is evaluated once across all fixed pairs, while the other
+performance cases retain their existing assertion semantics. Set
 `BLUE_PERFORMANCE_ROUNDS=1` for a local diagnostic run; CI uses the default three.
 This is fixed repetition, not retry-until-pass. Do not run other builds or test
 commands concurrently with measurements.
@@ -73,7 +75,7 @@ Each command writes `packages/blue-app/performance-results/<suite>/`:
 
 - `measurements.json`: tested revision, dirty-checkout flag, OS/architecture/CPU,
   Node/Vitest versions, browser version or engine/Csound probe, selected case results,
-  raw metric samples and summaries for each round.
+  raw metric samples, paired observations, and summaries for each round, plus an explicit verdict.
 - `round-<n>.json`: Vitest's test report, including failures and filtered cases.
 - `round-<n>.log`: complete output, including measurements recorded before budget
   assertions. A failing budget retains its measurements.
@@ -92,15 +94,57 @@ These measurements do not all establish user-visible acceptance. In particular:
 - Direct BlueX7 model edits exclude engine acknowledgement and audible output.
 - Coordinator timings exclude production view painting. Browser history uses a main
   stand-in, and error timing currently ends at the handler before toast paint.
-- The metering comparison retains its existing baseline-then-candidate order, so
-  ordering bias remains a measurement limitation.
 
 The separate packaged verifier `pnpm --filter @blue/app verify:global-history`
 continues to measure native Electron menu commands through painted restoration.
 Specification acceptance on the supported reference setup remains authoritative;
 lower-level measurements aid diagnosis and do not replace it. Follow-up measurement
-work should address the boundaries above, repeated comparative rounds, representative
-disk workloads, and platform variability before selecting tight blocking gates.
+work should address the remaining boundaries above, representative disk workloads,
+and controlled platform baselines before selecting tight blocking gates.
+
+## Paired meter comparison (SC-003)
+
+Each fresh process collects four fixed pairs in AB, BA, AB, BA order, where A is
+non-metering baseline and B is the metered fixture. Both phases mount the same
+64-strip workload afresh, allow 250 ms of settling, warm the interactions, and
+skip the first three animation frames. Setup is excluded. Each phase records all
+frame intervals across at least 1,500 ms and five interaction batches, verifies
+that real handlers ran, and tracks page visibility. The feeder runs only in the
+metered phase, preserving the feature's telemetry cost.
+
+Frame throughput is `frame interval count × 1,000 / sum(frame intervals in ms)`.
+Frame-time medians and p95 values remain diagnostic data; their reciprocals are
+not used as FPS. For each pair, calculate metered/baseline FPS and interaction-time
+ratios. Evaluate the median of those ratios across all planned pairs (12 in the
+standard three-round run). A valid comparison passes only when FPS ratio ≥0.8 and
+interaction ratio ≤1.2, with no rounding or absolute-time escape. Every observation,
+including isolated slow pairs, remains in the artifact.
+
+Before applying that budget, require all planned baseline observations to satisfy
+this initial environment-health policy:
+
+- Both measured phases remained visible.
+- Every baseline sustained at least 24 actual FPS.
+- Each baseline's frame-time p95 is no greater than twice its median.
+- Baseline throughput spread, `(maximum - minimum) / maximum`, is at most 20%
+  across the planned pairs.
+
+These conservative comparability rules are declared before collecting results;
+they are not product responsiveness targets. An unhealthy baseline yields
+**INCONCLUSIVE**, not a pass or a measured regression. No pairs are discarded to
+obtain a favorable result. Candidate-only stalls do not invalidate the baseline
+or excuse a regression. Missing pairs, incorrect order, invalid samples, skipped
+performance cases, broken handlers, and setup failures remain errors. Inconclusive results
+require follow-up on stable, controlled reference hardware before acceptance.
+
+The browser test itself collects observations and asserts functional behavior;
+use `test:performance:browser` to obtain the aggregate performance verdict.
+`measurements.json` and the GitHub job summary distinguish PASSED, FAILED,
+INCONCLUSIVE, and ERROR. A failed budget or test/collection error exits nonzero.
+An inconclusive run exits successfully **as collection**, emits a warning, and
+explicitly does not establish performance acceptance. The CI job is named
+“Measurement collection” to reflect this distinction. A green collection check
+alone is insufficient for release performance sign-off.
 
 ## CI policy
 
@@ -111,8 +155,9 @@ Csound 7.0.0. It uploads observations and writes job summaries. Measurements run
 separate jobs from the installer workflow, so a failed speed budget does not prevent
 installer generation. Node failure does not suppress browser observations.
 
-The new measurement statuses are intended to be advisory while collecting baselines;
-they still report failures visibly. Do not configure them as required branch checks
+The measurement statuses are advisory while collecting baselines. Collection errors
+and measured failures remain visible; inconclusive comparisons receive explicit
+warnings and verdicts rather than performance pass claims. Do not configure them as required branch checks
 until repeatability and runner suitability have been established. This change does
 not modify GitHub branch protection. Shared hosted runners can remain noisy despite
 serial execution; keep the existing product requirements and use controlled runners
