@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readPerformanceResult } from './run-performance-tests.mjs';
-import { evaluateMeterComparisons } from './meter-performance-verdict.mjs';
+import { evaluateMeterComparisons } from '../packages/blue-app/scripts/meter-performance-verdict.mjs';
 
 const measurement =
   'BLUE_PERFORMANCE {"metric":"menu","unit":"ms","samples":[57],"p50":57,"p95":57,"max":57}';
@@ -50,6 +50,23 @@ test('engine selection cannot be satisfied by a Node measurement', () => {
     'engine',
   );
   assert.equal(parsed.tests.length, 1);
+});
+
+test('data collection requires all seven timings on success and retains incomplete failed observations', () => {
+  assert.throws(
+    () => readPerformanceResult(report(result('passed')), measurement, 'data'),
+    /Expected seven data measurements/,
+  );
+  const complete = readPerformanceResult(
+    report(result('passed'), result('skipped', [])),
+    Array(7).fill(measurement).join('\n'),
+    'data',
+  );
+  assert.equal(complete.metrics.length, 7);
+  assert.equal(complete.tests.length, 1);
+  const failed = readPerformanceResult(report(result('failed')), measurement, 'data');
+  assert.equal(failed.tests[0].status, 'failed');
+  assert.deepEqual(failed.metrics[0].samples, [57]);
 });
 
 function phase(interval = 16, interaction = 10) {

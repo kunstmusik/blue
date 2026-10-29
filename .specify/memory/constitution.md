@@ -8,8 +8,8 @@ Sync Impact Report (2026-10-29)
   on controlled reference hardware; hosted collection success is not performance acceptance.
 - Synchronized guidance: AGENTS.md; README.md; docs/performance-testing.md; developer manual;
   spec, plan, tasks, and agent-file templates; affected feature validation quickstarts
-- Remaining migration: four mixed timing/correctness tests in @blue/data, inventoried with
-  unchecked follow-up work in docs/performance-testing.md; no workspace-wide split is claimed.
+- Data migration: the four mixed timing/correctness tests now have separate default
+  correctness and opt-in measurement entries; verification is recorded in docs/performance-testing.md.
 - Historical acceptance results and product performance budgets are unchanged.
 -->
 
@@ -344,7 +344,7 @@ discarded slow samples MUST NOT be used to manufacture a pass.
 Legacy mixed suites not yet migrated MUST be inventoried with explicit follow-up work. Until
 that work is verified, documentation MUST describe the implemented scope and remaining timing
 coupling rather than claim that the whole workspace is separated. The current application
-commands, inventory, and remaining data-package migration are in `docs/performance-testing.md`.
+and data commands, inventory, and migration record are in `docs/performance-testing.md`.
 
 ### Change Discipline and Validation
 Implementation MUST preserve unrelated work, keep edits surgical, and avoid speculative

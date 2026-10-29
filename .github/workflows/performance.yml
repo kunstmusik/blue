@@ -40,6 +40,11 @@ jobs:
         continue-on-error: true
         shell: bash
         run: pnpm --filter @blue/app test:performance
+      - name: Data measurements
+        id: data
+        continue-on-error: true
+        shell: bash
+        run: pnpm --filter @blue/data test:performance
       - name: Browser measurements
         id: browser
         continue-on-error: true
@@ -50,11 +55,13 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: performance-${{ matrix.os }}
-          path: packages/blue-app/performance-results/
+          path: |
+            packages/blue-app/performance-results/
+            packages/blue-data/performance-results/
           if-no-files-found: error
           retention-days: 14
       - name: Report measurement failures
-        if: steps.node.outcome == 'failure' || steps.browser.outcome == 'failure'
+        if: steps.node.outcome == 'failure' || steps.data.outcome == 'failure' || steps.browser.outcome == 'failure'
         shell: bash
         run: exit 1
 

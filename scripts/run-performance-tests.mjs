@@ -1,15 +1,20 @@
-import { evaluateMeterComparisons, meterPolicy } from './meter-performance-verdict.mjs';
+import {
+  evaluateMeterComparisons,
+  meterPolicy,
+} from '../packages/blue-app/scripts/meter-performance-verdict.mjs';
 import { spawnSync, execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { mkdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const appRoot = fileURLToPath(new URL('../', import.meta.url));
-const configs = {
-  node: 'vitest.performance.config.ts',
-  browser: 'vitest.performance.browser.config.ts',
-  engine: 'vitest.performance.engine.config.ts',
+const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
+const suites = {
+  node: { directory: 'blue-app', config: 'vitest.performance.config.ts', cases: 8 },
+  browser: { directory: 'blue-app', config: 'vitest.performance.browser.config.ts', cases: 4 },
+  engine: { directory: 'blue-app', config: 'vitest.performance.engine.config.ts', cases: 5 },
+  data: { directory: 'blue-data', config: 'vitest.performance.config.ts', cases: 4 },
 };
 
 export function readPerformanceResult(report, output, suite) {
@@ -33,6 +38,9 @@ export function readPerformanceResult(report, output, suite) {
     JSON.parse(match[1]),
   );
   if (!metrics.length) throw new Error('No performance measurements were recorded');
+  if (suite === 'data' && tests.every((test) => test.status === 'passed') && metrics.length !== 7) {
+    throw new Error(`Expected seven data measurements; recorded ${metrics.length}`);
+  }
   const comparisons = [...output.matchAll(/BLUE_PERFORMANCE_COMPARISON (\{[^\n]*\})/g)].map(
     (match) => JSON.parse(match[1]),
   );
@@ -41,25 +49,30 @@ export function readPerformanceResult(report, output, suite) {
 
 async function run() {
   const suite = process.argv[2];
-  if (!Object.hasOwn(configs, suite)) throw new Error('Choose node, browser, or engine');
+  if (!Object.hasOwn(suites, suite)) throw new Error('Choose node, browser, engine, or data');
+  const selected = suites[suite];
+  const packageRoot = path.join(repositoryRoot, 'packages', selected.directory);
   const rounds = Number(process.env.BLUE_PERFORMANCE_ROUNDS ?? 3);
   if (!Number.isInteger(rounds) || rounds < 1 || rounds > 10)
     throw new Error('BLUE_PERFORMANCE_ROUNDS must be an integer from 1 to 10');
-  const directory = path.join(appRoot, 'performance-results', suite);
+  const directory = path.join(packageRoot, 'performance-results', suite);
   mkdirSync(directory, { recursive: true });
   const environment = {
-    revision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: appRoot, encoding: 'utf8' }).trim(),
+    package: JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')).name,
+    revision: execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: packageRoot,
+      encoding: 'utf8',
+    }).trim(),
     platform: process.platform,
     architecture: process.arch,
     osRelease: os.release(),
     cpu: os.cpus()[0]?.model,
     node: process.version,
-    vitest: JSON.parse(
-      readFileSync(new URL('../node_modules/vitest/package.json', import.meta.url)),
-    ).version,
+    vitest: JSON.parse(readFileSync(path.join(packageRoot, 'node_modules/vitest/package.json')))
+      .version,
     rounds,
     workingTreeDirty: Boolean(
-      execFileSync('git', ['status', '--porcelain'], { cwd: appRoot, encoding: 'utf8' }).trim(),
+      execFileSync('git', ['status', '--porcelain'], { cwd: packageRoot, encoding: 'utf8' }).trim(),
     ),
   };
   const summary = { suite, environment, rounds: [] };
@@ -71,7 +84,7 @@ async function run() {
       const enginePath =
         process.env.BLUE_ENGINE_PATH ??
         path.join(
-          appRoot,
+          packageRoot,
           '../../native/blue-engine/dist',
           `${process.platform}-${process.arch}`,
           process.platform === 'win32' ? 'blue-engine.exe' : 'blue-engine',
@@ -86,7 +99,7 @@ async function run() {
         throw new Error('Performance setup failure: Blue Engine cannot load Csound 7');
     }
     if (suite === 'browser') {
-      const { chromium } = await import('playwright');
+      const { chromium } = createRequire(path.join(packageRoot, 'package.json'))('playwright');
       const browser = await chromium.launch({ headless: true });
       environment.browser = browser.version();
       await browser.close();
@@ -104,15 +117,15 @@ async function run() {
     const result = spawnSync(
       process.execPath,
       [
-        path.join(appRoot, 'node_modules/vitest/vitest.mjs'),
+        path.join(packageRoot, 'node_modules/vitest/vitest.mjs'),
         'run',
         '--config',
-        configs[suite],
+        selected.config,
         '--reporter=default',
         '--reporter=json',
         `--outputFile=${resultPath}`,
       ],
-      { cwd: appRoot, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+      { cwd: packageRoot, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
     );
     const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
     writeFileSync(path.join(directory, `round-${round}.log`), output);
@@ -124,7 +137,7 @@ async function run() {
         suite,
       );
       Object.assign(entry, parsed);
-      const expectedCases = { node: 8, browser: 4, engine: 5 }[suite];
+      const expectedCases = selected.cases;
       if (parsed.tests.length !== expectedCases)
         throw new Error(
           `Expected ${expectedCases} ${suite} performance cases; selected ${parsed.tests.length}`,

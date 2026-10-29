@@ -75,3 +75,4 @@ node_modules
 .tmp-research
 .worktrees
 packages/blue-app/performance-results/
+packages/blue-data/performance-results/

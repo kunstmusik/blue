@@ -1,6 +1,7 @@
 /**
- * Performance benchmark for BlueData loading and CSD generation.
- * Run with: npx vitest run packages/blue-data/tests/integration/performance-benchmark.test.ts
+ * Shared large-project correctness workloads and opt-in timing measurements.
+ * Correctness: pnpm --filter @blue/data test tests/integration/performance-benchmark.test.ts
+ * Measurements: pnpm --filter @blue/data test:performance
  */
 import { describe, it, expect } from 'vitest';
 import { BlueData } from '../../src/blue-data';
@@ -11,8 +12,17 @@ import { TimeDuration } from '../../src/time/time-duration';
 import { Score } from '../../src/score/score';
 import { buildDeterministicPerformanceProject } from '../../src/test-support/performance-fixtures';
 
-describe('Performance', () => {
-  it('loads a project with 100 audio clips in under 500ms', async () => {
+function recordTiming(metric: string, start: number | undefined, budgetMs: number): void {
+  if (start === undefined) return;
+  const elapsedMs = performance.now() - start;
+  console.log(
+    `BLUE_PERFORMANCE ${JSON.stringify({ metric, unit: 'ms', samples: [elapsedMs], budgetMs })}`,
+  );
+  expect(elapsedMs, metric).toBeLessThan(budgetMs);
+}
+
+function defineProjectCases(measured: boolean): void {
+  it('loads a project with 100 audio clips', async () => {
     // Build a large XML string
     const clips = [];
     for (let i = 0; i < 100; i++) {
@@ -54,17 +64,15 @@ describe('Performance', () => {
   </score>
 </blueData>`;
 
-    const start = performance.now();
+    const start = measured ? performance.now() : undefined;
     const data = await BlueData.loadFromString(xml);
-    const loadTime = performance.now() - start;
-
-    expect(loadTime).toBeLessThan(500);
+    recordTiming('data.load-100-clips', start, 500);
     expect(data.getScore()[0]).toBeInstanceOf(TrackLayerGroup);
     const ag = data.getScore()[0] as TrackLayerGroup;
     expect(ag[0].length).toBe(100);
   });
 
-  it('generates CSD for 100 clips in under 200ms', () => {
+  it('generates CSD for 100 clips', () => {
     const data = new BlueData();
     data.getProjectProperties().sampleRate = '44100';
     data.getProjectProperties().ksmps = '64';
@@ -89,15 +97,13 @@ describe('Performance', () => {
     score.push(ag);
     data.setScore(score);
 
-    const start = performance.now();
+    const start = measured ? performance.now() : undefined;
     const csd = data.toCSD();
-    const genTime = performance.now() - start;
-
-    expect(genTime).toBeLessThan(200);
+    recordTiming('data.generate-csd-100-clips', start, 200);
     expect(csd).toContain('<CsoundSynthesizer>');
   });
 
-  it('saves a project with 100 clips in under 100ms', () => {
+  it('saves a project with 100 clips', () => {
     const data = new BlueData();
     data.setVersion('2.9.1');
     data.getProjectProperties().title = 'Large Project';
@@ -120,19 +126,16 @@ describe('Performance', () => {
     score.push(ag);
     data.setScore(score);
 
-    const start = performance.now();
+    const start = measured ? performance.now() : undefined;
     const xml = data.saveToString();
-    const saveTime = performance.now() - start;
-
-    expect(saveTime).toBeLessThan(100);
+    recordTiming('data.save-100-clips', start, 100);
     expect(xml.length).toBeGreaterThan(10000);
   });
 
   it('builds, clones, and round-trips deterministic 1,000-clip, 32-instrument, 128-parameter workload', async () => {
-    const buildStart = performance.now();
+    const buildStart = measured ? performance.now() : undefined;
     const data = buildDeterministicPerformanceProject();
-    const buildTime = performance.now() - buildStart;
-    expect(buildTime).toBeLessThan(1000);
+    recordTiming('data.build-history-fixture', buildStart, 1000);
 
     // Verify 32 instrument assignments
     const arrangements = data.getArrangement().getArrangement();
@@ -163,26 +166,25 @@ describe('Performance', () => {
     }
     expect(totalClips).toBe(1000);
 
-    // History-copy clone performance
-    const cloneStart = performance.now();
+    const cloneStart = measured ? performance.now() : undefined;
     const cloned = data.historyCopy();
-    const cloneTime = performance.now() - cloneStart;
-    expect(cloneTime).toBeLessThan(500);
+    recordTiming('data.clone-history-fixture', cloneStart, 500);
     expect(cloned.getArrangement().getArrangement()).toHaveLength(32);
     expect((cloned.getScore()[0] as TrackLayerGroup)[0].length).toBe(100);
 
-    // XML Save performance
-    const saveStart = performance.now();
+    const saveStart = measured ? performance.now() : undefined;
     const xml = data.saveToString();
-    const saveTime = performance.now() - saveStart;
-    expect(saveTime).toBeLessThan(1000);
+    recordTiming('data.save-history-fixture', saveStart, 1000);
     expect(xml.length).toBeGreaterThan(50000);
 
-    // XML Load performance
-    const loadStart = performance.now();
+    const loadStart = measured ? performance.now() : undefined;
     const reloaded = await BlueData.loadFromString(xml);
-    const loadTime = performance.now() - loadStart;
-    expect(loadTime).toBeLessThan(2000);
+    recordTiming('data.load-history-fixture', loadStart, 2000);
     expect(reloaded.getArrangement().getArrangement()).toHaveLength(32);
   });
-});
+}
+
+describe('Large-project correctness', () => defineProjectCases(false));
+describe('Data performance measurements', { tags: ['performance'] }, () =>
+  defineProjectCases(true),
+);

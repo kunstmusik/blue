@@ -29,7 +29,7 @@ Run commands from the repository root with `pnpm`.
   and `test:performance:engine` commands. Run acceptance on a controlled desktop/reference
   machine; hosted performance CI is manual diagnostic collection, not a PR/push/scheduled gate.
 - Follow [the performance testing guide](docs/performance-testing.md) for tags, evidence,
-  measured boundaries, and remaining legacy timing assertions in `@blue/data`. A green
+  measured boundaries, and `@blue/data`'s opt-in measurement command. A green
   correctness or collection job does not establish performance acceptance.
 
 ## Git worktrees

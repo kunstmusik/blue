@@ -1,6 +1,6 @@
 # Application performance testing
 
-Normal application tests verify behavior independently of host speed. Tests that
+Normal application and data tests verify behavior independently of host speed. Tests that
 enforce elapsed-time, frame-rate, or delivery-rate budgets carry Vitest's native
 `performance` tag. Normal Node and browser configurations filter that tag out;
 dedicated configurations select it and run one file/worker at a time, without retries.
@@ -44,7 +44,8 @@ sampling rules, raw evidence, and acceptance decision in the feature quickstart.
 ## Commands
 
 Run from the repository root after installing and building `@blue/data` and
-`@blue/engine-client`:
+`@blue/engine-client` for app measurements. The data suite runs directly from source
+after installing dependencies:
 
 ```sh
 pnpm --filter @blue/app test
@@ -52,6 +53,7 @@ pnpm --filter @blue/app test:browser
 pnpm --filter @blue/app test:performance
 pnpm --filter @blue/app test:performance:browser
 pnpm --filter @blue/app test:performance:engine
+pnpm --filter @blue/data test:performance
 ```
 
 The performance commands run **three fresh Vitest processes**, in sequence, even
@@ -76,8 +78,8 @@ retain their existing availability rules.
 
 ## Measurement inventory
 
-The runner checks that each round selects exactly eight Node, four browser, or five
-engine cases. Update the inventory and expected counts together when adding/removing
+The runner checks that each round selects exactly eight app Node, four browser,
+five engine, or four data cases. Update the inventory and expected counts together when adding/removing
 a case. A Node timing check must carry `performance`; an engine timing check must
 carry both `performance` and `real-engine`.
 
@@ -86,6 +88,7 @@ carry both `performance` and `real-engine`.
 | Node (8)    | Opcode menu: every warm sample <50 ms; 500-node Custom menu <1 s; 500-node Code Repository React/JSDOM commit <2 s; 1,000-target score color patch <1 s; 600-UDO completion requests p95 <100 ms; 1,000-clip history coordinator commit/undo/redo p95 ≤200 ms; 10,000-item library browse/search/preview limits; 600 direct BlueX7 model edits p95 <100 ms. |
 | Browser (4) | 64-strip meter FPS/interaction regression ≤20%; component-only history publication-to-paint p95 ≤200 ms; renderer history routing through two views p95 ≤200 ms plus injected-error handler ≤1 s; dense 64×256 pattern grid React commit <5 s.                                                                                                              |
 | Engine (5)  | 300-gate publication through applied echo <100 ms; real undo/redo with positive timeline and Blue Live readback p95 ≤250 ms; meter delivery ≥30 Hz with no gap ≥200 ms; stop request to meter reset <1 s; short-score startup/playback/natural reset <5 s.                                                                                                  |
+| Data (4)    | Load 100 clips <500 ms; generate their CSD <200 ms; save 100 clips <100 ms; build/clone/save/load the 1,000-clip, 32-instrument, 128-parameter fixture <1,000 / <500 / <1,000 / <2,000 ms respectively.                                                                                                                                                     |
 
 All these budgets remain separate from ordinary test timeouts, which prevent hangs.
 Deterministic work-count/render-count guards, fake-clock debounce/grouping tests,
@@ -98,9 +101,11 @@ commit preservation remain asserted, and the browser reporting budget remains.
 
 ## Results and interpretation
 
-Each command writes `packages/blue-app/performance-results/<suite>/`:
+The workspace runner is `scripts/run-performance-tests.mjs`, shared by both packages.
+App commands write `packages/blue-app/performance-results/<suite>/` (`node`, `browser`,
+or `engine`); data measurements write `packages/blue-data/performance-results/data/`:
 
-- `measurements.json`: tested revision, dirty-checkout flag, OS/architecture/CPU,
+- `measurements.json`: package, tested revision, dirty-checkout flag, OS/architecture/CPU,
   Node/Vitest versions, browser version or engine/Csound probe, selected case results,
   raw metric samples, paired observations, and summaries for each round, plus an explicit verdict.
 - `round-<n>.json`: Vitest's test report, including failures and filtered cases.
@@ -181,9 +186,11 @@ packaging, and smoke checks across Windows, macOS, and Linux. The separate
 on Linux for PRs to develop/main and develop pushes. Both normal test configurations
 exclude the tagged performance cases; deterministic tests of the measurement and
 verdict helpers remain part of ordinary correctness testing.
+The data package's default configuration also excludes its tagged speed cases,
+including when invoked by root `pnpm test`.
 
 `.github/workflows/performance.yml` supports **manual dispatch only**. Use it for
-targeted cross-platform investigation when useful. It collects serial Node/browser
+targeted cross-platform investigation when useful. It collects serial app Node/data/browser
 measurements on Windows, macOS, and Linux, plus real-engine measurements on Linux
 with Csound 7.0.0, and uploads observations and job summaries. Node failure does not
 suppress browser observations. There is no scheduled performance collection.
@@ -196,35 +203,36 @@ not replace a passing measurement on controlled reference hardware. Performance
 collection is not a required branch check; this change does not modify GitHub
 branch protection or product performance budgets.
 
-## Known remaining workspace migration
+## Data separation verification
 
-The completed separation covers `@blue/app`'s Node, browser, and real-engine
-measurements. The root `pnpm test` still runs four mixed correctness/timing cases
-in `packages/blue-data/tests/integration/performance-benchmark.test.ts`:
+`packages/blue-data/tests/integration/performance-benchmark.test.ts` now defines
+four shared workloads, each registered as correctness and tagged measurement cases.
+The normal suite exercises loading, CSD generation, cloning, saving, and reloading
+without reading the measurement clock or enforcing elapsed-time budgets. The opt-in
+suite records the same seven operation boundaries and preserves their budgets.
 
-| Workload                                                                          | Existing wall-clock budgets                     |
-| --------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Load 100 clips                                                                    | <500 ms                                         |
-| Generate CSD for 100 clips                                                        | <200 ms                                         |
-| Save 100 clips                                                                    | <100 ms                                         |
-| Build, clone, save, and reload the 1,000-clip/32-instrument/128-parameter fixture | <1,000 / <500 / <1,000 / <2,000 ms respectively |
+- [x] Preserve all four workloads' model, count, CSD, clone, and XML round-trip
+      assertions in default data correctness tests.
+- [x] Select four tagged cases only with `pnpm --filter @blue/data test:performance`;
+      normal selection runs four correctness cases and filters all four speed cases.
+- [x] Collect three fresh processes, four measurement cases and seven raw timing
+      observations per successful round (21 observations total), with package/revision
+      and environment metadata. Missing timings cannot produce a passing collection;
+      failed rounds retain observations recorded before the failure.
 
-These assertions remain coupled to shared-runner speed. This PR does not claim a
-complete workspace migration, and their passing CI status is not reference-machine
-performance acceptance. Follow-up work is explicit:
-
-- [ ] Preserve all four workloads' model, count, CSD, clone, and XML round-trip
-      assertions in default `@blue/data` correctness tests without wall-clock budgets.
-- [ ] Move their speed assertions to a separate opt-in data measurement command
-      with declared reference configuration, measured boundaries, raw observations,
-      and verified exclusion from the default/root test commands.
-- [ ] Update the inventory and affected feature evidence after the split is
-      verified; retain the existing numerical budgets unless separately reviewed.
+Data operations are cold/single observations after module/fixture setup, without
+warmup or a statistical baseline comparison. Three such samples do not establish a
+tail-latency distribution. The large fixture's build/clone/save/load boundaries are
+measured independently, excluding its intervening correctness assertions. These
+component measurements do not establish painted UI, engine, or audible latency.
+Use the controlled reference configuration described above for acceptance.
 
 ## License and provenance
 
-Test/configuration changes are original work within the existing GPL-3.0-or-later
-repository/application scope. Existing Vitest and Playwright dependencies are reused;
+Application and workspace-runner changes remain in the existing GPL-3.0-or-later
+scope; the runner moved from app scripts to repository scripts within that scope.
+Data test/configuration additions are original within the data package's MIT scope.
+Existing Vitest and Playwright dependencies are reused;
 no new dependency or third-party source implementation is incorporated.
 Documentation additions are original within their existing scopes; the developer
 manual chapter retains its GFDL 1.3 license.

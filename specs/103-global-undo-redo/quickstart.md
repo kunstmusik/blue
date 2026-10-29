@@ -149,13 +149,15 @@ On the controlled reference setup, run these opt-in measurement commands separat
 pnpm --filter @blue/app test:performance
 pnpm --filter @blue/app test:performance:browser
 pnpm --filter @blue/app test:performance:engine
+pnpm --filter @blue/data test:performance
 ```
 
 They cover coordinator, browser publication/interaction, and positive engine
 readback boundaries. Component/main-stand-in timings do not replace the packaged
 painted-view acceptance procedure below. See [performance testing](../../docs/performance-testing.md)
 for prerequisites, raw reports, and current measurement limitations. Hosted CI is
-manual diagnostic collection; the data fixture's legacy timings remain listed there.
+manual diagnostic collection. The data fixture's build/clone/save/load budgets are
+now part of the separate data measurement command; its correctness remains in CI.
 
 Reference machine: the current maintainer macOS development machine running a production build with native engine; record exact hardware/OS in the result so subsequent comparisons use the same machine. Other platforms run correctness smoke tests and report timing separately.
 

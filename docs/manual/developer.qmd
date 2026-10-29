@@ -57,6 +57,7 @@ The application has separate commands for optional timing work:
 pnpm --filter @blue/app test:performance
 pnpm --filter @blue/app test:performance:browser
 pnpm --filter @blue/app test:performance:engine
+pnpm --filter @blue/data test:performance
 ```
 
 Use a quiet desktop with recorded hardware and software settings to assess speed.
@@ -64,8 +65,8 @@ Keep those settings consistent between revisions and save each run's reports bef
 starting the next. The normal application suites continue to exercise behavior in
 CI. A manually requested hosted run can help investigate platform differences;
 its collection status does not certify responsiveness. The source checkout's
-`docs/performance-testing.md` explains the workloads, reports, and data-package
-timing tests that still need separation.
+`docs/performance-testing.md` describes how to interpret the reports from both
+packages. Data correctness checks also retain their large-project scenarios in CI.
 
 ## Extension boundaries
 
