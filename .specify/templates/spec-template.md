@@ -127,6 +127,11 @@
 <!--
   ACTION REQUIRED: Define measurable success criteria.
   These must be technology-agnostic and measurable.
+  For speed criteria, name the measured boundary and its relationship to the user-visible
+  requirement, representative workload, controlled reference configuration, and acceptance
+  procedure. Preserve product budgets while keeping functional coverage in ordinary CI and
+  speed measurements explicitly opt-in.
+  A successful hosted collection or lower-level timing proxy is not user-visible acceptance.
 -->
 
 ### Measurable Outcomes

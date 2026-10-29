@@ -23,6 +23,24 @@ history restoration, ownership, and lifecycle coverage without duplicating fixtu
 Filtered cases appear as skipped in Vitest output; the dedicated runner checks the
 selected performance cases separately and rejects missing/skipped measurements.
 
+## Adding or changing tests
+
+Keep correctness coverage in the default suite, including large fixtures, positive
+acknowledgements, failure recovery, undo/redo, and exact audio/output equivalence.
+Share a local workload function when the same scenario also measures speed. Tag
+only its measurement entry `performance` (also `real-engine` when applicable), add
+it to the appropriate explicit performance configuration, and update the runner's
+expected case count and this inventory together. For a mixed behavior/speed case,
+a timing-free entry must continue to assert the functional outcomes in ordinary CI.
+
+Use fake clocks for debounce, scheduling, and timeout behavior, and deterministic
+work/render counts for bounded work. Ordinary test timeouts are hang guards, not
+responsiveness budgets. Investigate races and split oversized correctness matrices
+into independent cases; moving a slow functional test out of CI loses coverage.
+For each speed requirement, record the measured boundary and whether it is a
+component proxy or an end-to-end user action. Keep its reference configuration,
+sampling rules, raw evidence, and acceptance decision in the feature quickstart.
+
 ## Commands
 
 Run from the repository root after installing and building `@blue/data` and
@@ -178,11 +196,38 @@ not replace a passing measurement on controlled reference hardware. Performance
 collection is not a required branch check; this change does not modify GitHub
 branch protection or product performance budgets.
 
+## Known remaining workspace migration
+
+The completed separation covers `@blue/app`'s Node, browser, and real-engine
+measurements. The root `pnpm test` still runs four mixed correctness/timing cases
+in `packages/blue-data/tests/integration/performance-benchmark.test.ts`:
+
+| Workload                                                                          | Existing wall-clock budgets                     |
+| --------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Load 100 clips                                                                    | <500 ms                                         |
+| Generate CSD for 100 clips                                                        | <200 ms                                         |
+| Save 100 clips                                                                    | <100 ms                                         |
+| Build, clone, save, and reload the 1,000-clip/32-instrument/128-parameter fixture | <1,000 / <500 / <1,000 / <2,000 ms respectively |
+
+These assertions remain coupled to shared-runner speed. This PR does not claim a
+complete workspace migration, and their passing CI status is not reference-machine
+performance acceptance. Follow-up work is explicit:
+
+- [ ] Preserve all four workloads' model, count, CSD, clone, and XML round-trip
+      assertions in default `@blue/data` correctness tests without wall-clock budgets.
+- [ ] Move their speed assertions to a separate opt-in data measurement command
+      with declared reference configuration, measured boundaries, raw observations,
+      and verified exclusion from the default/root test commands.
+- [ ] Update the inventory and affected feature evidence after the split is
+      verified; retain the existing numerical budgets unless separately reviewed.
+
 ## License and provenance
 
 Test/configuration changes are original work within the existing GPL-3.0-or-later
 repository/application scope. Existing Vitest and Playwright dependencies are reused;
 no new dependency or third-party source implementation is incorporated.
+Documentation additions are original within their existing scopes; the developer
+manual chapter retains its GFDL 1.3 license.
 
 The engine CI job downloads the official
 [Csound 7.0.0 Linux minimal runtime](https://github.com/csound/csound/releases/tag/7.0.0)

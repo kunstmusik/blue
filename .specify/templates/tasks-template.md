@@ -12,6 +12,10 @@ description: "Task list template for feature implementation"
 **Verification**: Include the regression, serialization, contract, runtime, UI, cross-platform
 host-path, and quickstart tasks required by the constitution and plan. A behavior or data change
 cannot omit verification merely because the feature specification does not request TDD.
+Keep functional workloads in default correctness suites when extracting speed assertions.
+Add separate opt-in performance tasks where applicable, with reference hardware/settings,
+measured boundaries, sampling/comparison rules, raw reports, and explicit inconclusive/error
+outcomes. Do not schedule hosted speed collection or add it to ordinary PR/push validation.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -168,6 +172,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
 - [ ] TXXX Run affected package tests, type checks, lint, and builds from the repository root
+- [ ] TXXX If performance criteria apply, run opt-in measurements separately on the documented
+      reference configuration and retain raw evidence and the acceptance decision in [exact path]
 
 ---
 

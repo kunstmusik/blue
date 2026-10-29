@@ -60,6 +60,10 @@
   external-text forms; name normalization boundaries and synthetic Windows/native OS coverage]
 - **Verification evidence**: [PASS/FAIL — list focused regression tests, round-trip/contract
   coverage, quickstart validation, and affected package type/lint/build commands]
+- **Correctness/performance separation**: [PASS/FAIL/N/A — retain functional workloads in
+  ordinary CI; identify opt-in speed commands, measured boundaries, reference hardware/settings,
+  sampling/comparison procedure, raw evidence, and inconclusive/error handling. Hosted speed
+  collection is manual diagnostic work; identify any remaining legacy timing coupling]
 - **License compatibility and provenance**: [PASS/FAIL — consult `LICENSING.md` and applicable
   component/file notices; identify destination scopes, external material or cross-scope reuse
   (including Java translations), source URLs/revisions and licenses, distribution obligations,

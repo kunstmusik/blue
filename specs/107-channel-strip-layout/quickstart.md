@@ -22,6 +22,12 @@ pnpm --filter @blue/data test src/blue-data-csd-parity.test.ts src/blue-data-csd
 pnpm --filter @blue/app test:browser src/renderer/browser/channel-strip-layout.browser.test.tsx src/renderer/browser/mixer-metering.browser.test.tsx
 ```
 
+That browser command checks geometry and interaction; the metering speed case is
+filtered out. Run `pnpm --filter @blue/app test:performance:browser` separately on
+controlled reference hardware for the existing 20% meter budget. See
+[performance testing](../../docs/performance-testing.md) for the paired procedure,
+environment-health rules, and reports. Hosted measurements are manual diagnostics.
+
 Expected evidence:
 
 - Curve tests cover finite endpoints, fixed anchors, monotonicity, inverse accuracy <=1e-6 dB, >=45% working-band travel, and continuous sensitivity through unity. Preserve precise numeric and preexisting values unless deliberately changed by the user.

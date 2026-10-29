@@ -148,13 +148,17 @@ Expected outcome: all commands pass without changing `.blue` fixtures or generat
 
 ## Performance Check
 
-Run the focused completion performance test, which constructs 500 project definitions and 100 context definitions, repeats completion requests, and reports the local p95:
+On controlled reference hardware, run the opt-in Node measurements, including the
+completion case with 500 project definitions, 100 context definitions, and local p95:
 
 ```bash
-pnpm --filter @blue/app test -- udo-code-completions
+pnpm --filter @blue/app test:performance
 ```
 
 Expected outcome: p95 completion construction is below 100 ms on the supported development machine.
+The ordinary completion suite retains functional assertions and filters out the
+tagged speed case. See [performance testing](../../docs/performance-testing.md)
+for raw reports and the distinction between component timing and painted UI latency.
 
 ## Persistence and CSD Guard
 

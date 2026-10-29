@@ -49,6 +49,24 @@ to the application, the package scripts under `packages/blue-app` offer
 more focused validation. The manual can also be built directly with
 `quarto render docs/manual --to html`.
 
+## Correctness checks and speed measurements
+
+The application has separate commands for optional timing work:
+
+```bash
+pnpm --filter @blue/app test:performance
+pnpm --filter @blue/app test:performance:browser
+pnpm --filter @blue/app test:performance:engine
+```
+
+Use a quiet desktop with recorded hardware and software settings to assess speed.
+Keep those settings consistent between revisions and save each run's reports before
+starting the next. The normal application suites continue to exercise behavior in
+CI. A manually requested hosted run can help investigate platform differences;
+its collection status does not certify responsiveness. The source checkout's
+`docs/performance-testing.md` explains the workloads, reports, and data-package
+timing tests that still need separation.
+
 ## Extension boundaries
 
 Start in `packages/blue-data` for project models, XML compatibility,

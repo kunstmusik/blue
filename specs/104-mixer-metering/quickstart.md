@@ -13,6 +13,14 @@
 
 ## Automated Validation
 
+The normal app/browser commands retain functional meter coverage and exclude speed
+budgets. On controlled reference hardware, use
+`pnpm --filter @blue/app test:performance:browser` for SC-003's paired comparison
+and `pnpm --filter @blue/app test:performance:engine` for delivery/reset/startup
+measurements. See the SC-003 procedure below and
+[performance testing](../../docs/performance-testing.md); manual hosted collection
+does not replace reference-machine or native DSP benchmark acceptance.
+
 ### 1. CSD Fixture Byte-Identity (SC-005)
 
 ```bash

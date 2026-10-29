@@ -38,6 +38,11 @@ pnpm --filter @blue/app exec vitest run \
 
 The browser fixture covers empty, sparse, dense, non-default-step, zoomed, shared-playhead, row-bound painting, and 64×256 active-cell states. The repository harness currently uses deterministic DOM/geometry assertions rather than stored screenshot baselines.
 
+The dense grid's speed budget is separate from these correctness checks. Run
+`pnpm --filter @blue/app test:performance:browser` on controlled reference hardware
+to collect it. It measures React commit time, not full browser paint latency; see
+[performance testing](../../docs/performance-testing.md) for reports and limitations.
+
 ## Package verification
 
 ```bash

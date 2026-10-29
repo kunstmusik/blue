@@ -142,6 +142,21 @@ See [runtime contract](contracts/runtime-reconciliation.md) for classification a
 
 ## Performance evidence
 
+Default app/browser suites retain correctness and exclude the tagged speed cases.
+On the controlled reference setup, run these opt-in measurement commands separately:
+
+```sh
+pnpm --filter @blue/app test:performance
+pnpm --filter @blue/app test:performance:browser
+pnpm --filter @blue/app test:performance:engine
+```
+
+They cover coordinator, browser publication/interaction, and positive engine
+readback boundaries. Component/main-stand-in timings do not replace the packaged
+painted-view acceptance procedure below. See [performance testing](../../docs/performance-testing.md)
+for prerequisites, raw reports, and current measurement limitations. Hosted CI is
+manual diagnostic collection; the data fixture's legacy timings remain listed there.
+
 Reference machine: the current maintainer macOS development machine running a production build with native engine; record exact hardware/OS in the result so subsequent comparisons use the same machine. Other platforms run correctness smoke tests and report timing separately.
 
 Workloads: `fixtures/smoke-test.blue`, `fixtures/blue-x7-pop-song.blue`, and a deterministic large project produced by extending the existing `packages/blue-data/tests/integration/performance-benchmark.test.ts` 100-clip generator to 1,000 clips with fixed IDs. Add 32 instrument assignments and 128 automation parameters in that generated workload. Keep the 100-action retention scenario below its byte limit. Use a separate oversized project for retention testing.

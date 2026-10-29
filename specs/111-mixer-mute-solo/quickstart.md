@@ -112,6 +112,13 @@ Start with focused new tests before full suites. Planned locations: data mixer/m
 
 ## Engine and UI setup
 
+The ordinary app suite retains gate/history correctness. For protocol publication
+and live-history timing, run `pnpm --filter @blue/app test:performance:engine`
+separately on controlled reference hardware with a built engine and Csound 7.
+See [performance testing](../../docs/performance-testing.md) for the collected
+boundaries and reports. These timings and manual hosted collection do not satisfy
+the still-open physical UI-to-audio latency acceptance below.
+
 ```sh
 pnpm --filter @blue/app engine:prepare
 pnpm --filter @blue/app dev

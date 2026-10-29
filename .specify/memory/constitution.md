@@ -1,4 +1,19 @@
 <!--
+Sync Impact Report (2026-10-29)
+- Version change: 4.0.0 → 4.1.0
+- Modified principle: V. Evidence-Driven Parity and Regression Safety (validation policy)
+- Added section: Correctness and Performance Validation
+- Removed sections: none
+- Rationale: keep functional regression coverage automatic while measuring speed separately
+  on controlled reference hardware; hosted collection success is not performance acceptance.
+- Synchronized guidance: AGENTS.md; README.md; docs/performance-testing.md; developer manual;
+  spec, plan, tasks, and agent-file templates; affected feature validation quickstarts
+- Remaining migration: four mixed timing/correctness tests in @blue/data, inventoried with
+  unchecked follow-up work in docs/performance-testing.md; no workspace-wide split is claimed.
+- Historical acceptance results and product performance budgets are unchanged.
+-->
+
+<!--
 Sync Impact Report (2026-10-01)
 - Version change: 3.1.0 → 4.0.0
 - Modified principles:
@@ -192,7 +207,7 @@ MUST cover applicable history restoration as required by Principle III.
 Runtime and IPC changes MUST cover success and failure contracts. If automation is impractical,
 the plan MUST record why and the quickstart MUST provide deterministic manual validation. A change
 is not complete until affected tests, type checks, lint, and builds pass or a scoped exception is
-documented.
+documented. Correctness and speed evidence MUST follow the separate validation policy below.
 
 ### VI. License Boundaries and Source Provenance
 
@@ -302,6 +317,35 @@ existing scope is sufficient when applicable. Tasks MUST trace compatibility, st
 boundary contracts, verification, and applicable licensing obligations to concrete files and
 runnable validation.
 
+### Correctness and Performance Validation
+
+New or modified tests MUST separate functional correctness from elapsed-time, frame-rate,
+throughput, and comparative speed assertions. Ordinary CI MUST retain the same functional
+workloads and assertions when speed measurements move to an opt-in suite. Deterministic
+work/render counts, fake-clock scheduling tests, audio sample/output equivalence, and runtime
+failure contracts remain correctness checks. Test timeouts prevent hangs; they do not establish
+product performance acceptance. Oversized correctness cases SHOULD be split into independent
+scenarios rather than moved out of ordinary CI merely because they time out.
+
+Speed measurement suites MUST use explicit opt-in commands, separately from default correctness
+commands. Hosted performance collection MUST NOT run automatically on PRs, pushes, or schedules.
+Manually dispatched hosted-CI measurements MAY support cross-platform diagnosis. Performance
+acceptance MUST use a documented, controlled desktop/reference-machine configuration and retain
+the applicable product budgets. Ordinary CI success MUST NOT be reported as speed acceptance.
+
+Specs and plans with performance criteria MUST name the measured boundary, representative
+workload, reference configuration, sampling/warmup and comparison procedure, and retained raw
+evidence. Record revisions and relevant hardware, OS, runtime, browser, device, and power/display
+settings. Declare budgets and environment-health rules before observing results; retain failed
+observations and distinguish pass, measured failure, inconclusive conditions, and collection or
+functional errors. Successful collection alone MUST NOT establish acceptance, and retries or
+discarded slow samples MUST NOT be used to manufacture a pass.
+
+Legacy mixed suites not yet migrated MUST be inventoried with explicit follow-up work. Until
+that work is verified, documentation MUST describe the implemented scope and remaining timing
+coupling rather than claim that the whole workspace is separated. The current application
+commands, inventory, and remaining data-package migration are in `docs/performance-testing.md`.
+
 ### Change Discipline and Validation
 Implementation MUST preserve unrelated work, keep edits surgical, and avoid speculative
 infrastructure. Reviews MUST compare the result with the feature spec, plan, tasks, Java reference
@@ -326,4 +370,4 @@ Code review MUST treat an unexplained MUST violation as blocking. A necessary ex
 documented in the plan's Complexity Tracking section with the rejected compliant alternative and
 MUST receive explicit project-owner approval.
 
-**Version**: 4.0.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-10-01
+**Version**: 4.1.0 | **Ratified**: 2026-04-11 | **Last Amended**: 2026-10-29
