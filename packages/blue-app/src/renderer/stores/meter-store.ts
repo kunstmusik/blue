@@ -48,9 +48,55 @@ export class MeterStore {
   private unsubs: Array<() => void> = [];
   private bindingListeners: Array<() => void> = [];
   private stripListeners = new Map<string, Set<() => void>>();
+  private canvasWakeListeners = new Map<string, Set<() => void>>();
 
   constructor() {
     this.reset();
+  }
+
+  /**
+   * Non-React subscription used by MeterCanvas to wake a parked
+   * requestAnimationFrame loop when new telemetry arrives or meter state is
+   * cleared/reset, without triggering React component re-renders (FR-013).
+   */
+  subscribeCanvasWake(stripId: string, listener: () => void): () => void {
+    let set = this.canvasWakeListeners.get(stripId);
+    if (!set) {
+      set = new Set();
+      this.canvasWakeListeners.set(stripId, set);
+    }
+    set.add(listener);
+    return () => {
+      set!.delete(listener);
+      if (set!.size === 0) {
+        this.canvasWakeListeners.delete(stripId);
+      }
+    };
+  }
+
+  private notifyCanvasWake(stripId: string): void {
+    const set = this.canvasWakeListeners.get(stripId);
+    if (set) {
+      for (const listener of set) {
+        try {
+          listener();
+        } catch {
+          // Safe listener dispatch
+        }
+      }
+    }
+  }
+
+  private notifyAllCanvasWake(): void {
+    for (const set of this.canvasWakeListeners.values()) {
+      for (const listener of set) {
+        try {
+          listener();
+        } catch {
+          // Safe listener dispatch
+        }
+      }
+    }
   }
 
   subscribeStrip(stripId: string, listener: () => void): () => void {
@@ -231,6 +277,7 @@ export class MeterStore {
       if (stripChanged) {
         this.notifyStrip(stripId);
       }
+      this.notifyCanvasWake(stripId);
     }
   }
 
@@ -243,6 +290,9 @@ export class MeterStore {
 
     if (dt <= 0) return;
 
+    const silenceClampDb = -100.0;
+    let anyActive = false;
+
     for (const strip of this.uniqueStrips) {
       let stripChanged = false;
       for (let ch = 0; ch < strip.nchnls; ch++) {
@@ -250,10 +300,12 @@ export class MeterStore {
 
         // Decay bar level towards target RMS or -Infinity
         if (strip.barLevels[ch]! > targetRmsDb) {
-          strip.barLevels[ch] = Math.max(
+          const nextBar = Math.max(
             targetRmsDb,
             strip.barLevels[ch]! - DECAY_RATE_DB_PER_SEC * dt,
           );
+          strip.barLevels[ch] =
+            targetRmsDb === -Infinity && nextBar <= silenceClampDb ? -Infinity : nextBar;
         } else if (strip.barLevels[ch]! < targetRmsDb) {
           strip.barLevels[ch] = targetRmsDb;
         }
@@ -267,10 +319,12 @@ export class MeterStore {
         }
 
         if (remainingDt > 0 && strip.peakHoldLevels[ch]! > targetRmsDb) {
-          strip.peakHoldLevels[ch] = Math.max(
+          const nextPeakHold = Math.max(
             targetRmsDb,
             strip.peakHoldLevels[ch]! - DECAY_RATE_DB_PER_SEC * remainingDt,
           );
+          strip.peakHoldLevels[ch] =
+            targetRmsDb === -Infinity && nextPeakHold <= silenceClampDb ? -Infinity : nextPeakHold;
         }
 
         // Clip latch timer
@@ -282,10 +336,24 @@ export class MeterStore {
             stripChanged = true;
           }
         }
+
+        if (
+          strip.barLevels[ch]! > silenceClampDb ||
+          strip.peakHoldLevels[ch]! > silenceClampDb ||
+          strip.peakHoldTimers[ch]! > 0 ||
+          strip.clipTimers[ch]! > 0 ||
+          strip.clipFlags[ch]
+        ) {
+          anyActive = true;
+        }
       }
       if (stripChanged) {
         this.notifyStrip(strip.stripId);
       }
+    }
+
+    if (!anyActive) {
+      this.lastUpdateTime = 0;
     }
   }
 
@@ -325,6 +393,7 @@ export class MeterStore {
       strip.clipTimers[ch] = 0;
     }
     this.notifyStrip(stripId);
+    this.notifyCanvasWake(stripId);
   }
 
   clearAll(): void {
@@ -337,6 +406,7 @@ export class MeterStore {
         strip.clipTimers[ch] = 0;
       }
       this.notifyStrip(strip.stripId);
+      this.notifyCanvasWake(strip.stripId);
     }
   }
 
@@ -374,6 +444,7 @@ export class MeterStore {
       strip.clipFlags[channelIndex] = false;
       strip.clipTimers[channelIndex] = 0;
       this.notifyStrip(stripId);
+      this.notifyCanvasWake(stripId);
     } else {
       this.clearStrip(stripId);
     }
@@ -399,6 +470,7 @@ export class MeterStore {
       }
       this.notifyStrip(strip.stripId);
     }
+    this.notifyAllCanvasWake();
   }
 }
 

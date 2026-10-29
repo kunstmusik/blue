@@ -261,6 +261,77 @@ describe('MeterCanvas', () => {
     expect(ctx.fillRect).toHaveBeenCalled();
   });
 
+  it('parks requestAnimationFrame when silent and wakes on telemetry without notifying React strip listeners', () => {
+    act(() => {
+      root.render(<MeterCanvas stripId="track-1" width={14} height={80} />);
+    });
+
+    // Initial mount schedules 1 frame to paint the silent meter background
+    expect(rafCallbacks).toHaveLength(1);
+    const initialDraw = rafCallbacks.pop()!;
+    act(() => {
+      initialDraw(100);
+    });
+
+    // Once painted at silence, no further animation frames are scheduled
+    expect(rafCallbacks).toHaveLength(0);
+
+    // Seed a high held peak first so a subsequent quieter RMS frame does not change heldSamplePeaks or clipFlags
+    meterStore.processMeterFrame(
+      {
+        sequence: 1,
+        channels: [{ csdKey: '0', rms: [0.5, 0.5], peak: [0.9, 0.9] }],
+      },
+      200,
+    );
+    expect(rafCallbacks).toHaveLength(1);
+
+    // Reset back to silence and flush the single reset repaint so the canvas parks again
+    meterStore.reset();
+    const resetDraw = rafCallbacks.pop()!;
+    expect(rafCallbacks).toHaveLength(0);
+    act(() => {
+      resetDraw(250);
+    });
+    expect(rafCallbacks).toHaveLength(0);
+
+    // Seed held peak to 0.9, then let levels decay/park while keeping heldSamplePeaks at 0.9
+    meterStore.processMeterFrame(
+      {
+        sequence: 1,
+        channels: [{ csdKey: '0', rms: [0.0, 0.0], peak: [0.9, 0.9] }],
+      },
+      300,
+    );
+    // Advance past 1s hold + 4s decay so bar and peakHold reach -Infinity and canvas parks
+    while (rafCallbacks.length > 0) {
+      const cb = rafCallbacks.pop()!;
+      act(() => {
+        cb(6000);
+      });
+    }
+    expect(rafCallbacks).toHaveLength(0);
+
+    const reactStripListener = vi.fn();
+    const unsubReact = meterStore.subscribeStrip('track-1', reactStripListener);
+
+    // Now send an ordinary RMS frame (peak 0.4 <= held 0.9, no clip change)
+    meterStore.processMeterFrame(
+      {
+        sequence: 2,
+        channels: [{ csdKey: '0', rms: [0.3, 0.3], peak: [0.4, 0.4] }],
+      },
+      6033,
+    );
+
+    // React strip listener MUST NOT fire for ordinary RMS changes (FR-013),
+    // but the parked canvas MUST wake and schedule a frame
+    expect(reactStripListener).not.toHaveBeenCalled();
+    expect(rafCallbacks).toHaveLength(1);
+
+    unsubReact();
+  });
+
   it('renders mono, stereo, and 6-channel surround without clipping', () => {
     const testCases = [
       { nchnls: 1, expectedDerivedWidth: 10 },

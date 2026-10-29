@@ -58,6 +58,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
   const height = heightProp ?? measuredHeight;
 
   const isVisibleRef = useRef(true);
+  const wakeDrawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,7 +66,11 @@ export const MeterCanvas = React.memo(function MeterCanvas({
 
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
+        const wasVisible = isVisibleRef.current;
         isVisibleRef.current = entry.isIntersecting;
+        if (!wasVisible && entry.isIntersecting) {
+          wakeDrawRef.current?.();
+        }
       }
     });
 
@@ -116,13 +121,20 @@ export const MeterCanvas = React.memo(function MeterCanvas({
     let animFrameId: number | null = null;
     let wasParkedAtSilence = false;
 
+    const scheduleDraw = () => {
+      if (animFrameId === null && isVisibleRef.current) {
+        animFrameId = hostWindow.requestAnimationFrame(draw);
+      }
+    };
+
     const draw = (nowMs: number) => {
+      animFrameId = null;
+
       // Advance meterStore physics (guarded to run at most once per frame)
       meterStore.update(nowMs);
 
-      // Skip off-screen rendering
+      // Skip off-screen rendering and stay parked until visible again
       if (!isVisibleRef.current) {
-        animFrameId = hostWindow.requestAnimationFrame(draw);
         return;
       }
 
@@ -144,9 +156,8 @@ export const MeterCanvas = React.memo(function MeterCanvas({
         }
       }
 
-      // Optimize: If silent on previous frame and still silent, skip redundant repainting
+      // If silent on previous frame and still silent, stay parked without scheduling further frames
       if (isAllSilent && wasParkedAtSilence) {
-        animFrameId = hostWindow.requestAnimationFrame(draw);
         return;
       }
 
@@ -253,12 +264,25 @@ export const MeterCanvas = React.memo(function MeterCanvas({
       }
 
       wasParkedAtSilence = isAllSilent;
-      animFrameId = hostWindow.requestAnimationFrame(draw);
+      if (!isAllSilent) {
+        scheduleDraw();
+      }
     };
 
-    animFrameId = hostWindow.requestAnimationFrame(draw);
+    const wake = () => {
+      wasParkedAtSilence = false;
+      scheduleDraw();
+    };
+    wakeDrawRef.current = wake;
+    const unsubWake = meterStore.subscribeCanvasWake(stripId, wake);
+
+    scheduleDraw();
 
     return () => {
+      unsubWake();
+      if (wakeDrawRef.current === wake) {
+        wakeDrawRef.current = null;
+      }
       if (animFrameId !== null) {
         hostWindow.cancelAnimationFrame(animFrameId);
       }
