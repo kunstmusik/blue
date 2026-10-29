@@ -23,6 +23,7 @@ export const PROJECT_DOCUMENT_IPC_CHANNELS = [
   'blue-x7-effective-values',
   'update-project-document',
   'read-audio-file-bytes',
+  'get-audio-file-metadata',
   'read-authorized-audio-file-bytes',
   'open-audio-file',
   'authorize-audio-file',

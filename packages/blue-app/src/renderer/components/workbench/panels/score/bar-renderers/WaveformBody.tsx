@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import {
   buildWaveformCacheKey,
   buildWaveformPathData,
   getWaveformCacheEntry,
+  getWaveformCacheGeneration,
   requestWaveform,
   subscribeWaveformCacheEntry,
+  subscribeWaveformCacheReset,
   type WaveformCacheEntry,
 } from './waveform-cache';
 
@@ -32,6 +34,11 @@ export default function WaveformBody({
   looping = false,
 }: Props) {
   const cacheKey = buildWaveformCacheKey(waveformKey, pixelSecond);
+  const cacheGeneration = useSyncExternalStore(
+    subscribeWaveformCacheReset,
+    getWaveformCacheGeneration,
+    getWaveformCacheGeneration,
+  );
   const [entry, setEntry] = useState<WaveformCacheEntry | undefined>(() =>
     getWaveformCacheEntry(cacheKey),
   );
@@ -40,10 +47,8 @@ export default function WaveformBody({
     const requested = requestWaveform(waveformKey, filePath, pixelSecond);
     setEntry(requested);
 
-    return subscribeWaveformCacheEntry(cacheKey, () => {
-      setEntry(getWaveformCacheEntry(cacheKey));
-    });
-  }, [cacheKey, filePath, pixelSecond, waveformKey]);
+    return subscribeWaveformCacheEntry(cacheKey, setEntry);
+  }, [cacheKey, cacheGeneration, filePath, pixelSecond, waveformKey]);
 
   if (!entry || entry.loading || entry.channels.length === 0) {
     return null;

@@ -29,6 +29,7 @@ function fourCC(data: Uint8Array, offset: number): string {
 export function summarizeAiffPcmBytes(
   data: Uint8Array,
   pixelSecond: number,
+  maxBuckets = Infinity,
 ): WaveformCacheEntry['channels'] | null {
   if (data.length < 38 || fourCC(data, 0) !== 'FORM' || fourCC(data, 8) !== 'AIFF') {
     return null;
@@ -59,6 +60,7 @@ export function summarizeAiffPcmBytes(
   const samplesPerBucket = Math.max(
     1,
     Math.floor(metadata.sampleRate / normalizePixelSecond(pixelSecond)),
+    Math.ceil(frameCount / maxBuckets),
   );
   const bucketCount = Math.max(1, Math.ceil(frameCount / samplesPerBucket));
   const channels = Array.from({ length: metadata.channels }, () => ({
@@ -93,9 +95,27 @@ export function summarizeAiffPcmBytes(
   return channels;
 }
 
-const waveformCache = new Map<string, WaveformCacheEntry>();
-const waveformListeners = new Map<string, Set<() => void>>();
-const pendingWaveformLoads = new Map<string, Promise<void>>();
+const waveformCache = new Map<string, WeakRef<WaveformCacheEntry>>();
+const waveformFinalizer = new FinalizationRegistry<{
+  key: string;
+  reference: WeakRef<WaveformCacheEntry>;
+}>(({ key, reference }) => {
+  // An older result may be finalized after the same key has been reloaded.
+  if (waveformCache.get(key) === reference) waveformCache.delete(key);
+});
+const waveformListeners = new Map<string, Set<(entry: WaveformCacheEntry) => void>>();
+const pendingWaveformLoads = new Map<string, WaveformCacheEntry>();
+const cancelledLoads = new WeakSet<WaveformCacheEntry>();
+const cacheResetListeners = new Set<() => void>();
+export const AUDIO_PLAYER_MAX_BUCKETS = 2048;
+let cacheGeneration = 0;
+let loadQueue: Promise<void> = Promise.resolve();
+
+function deleteWaveformCacheEntry(key: string): void {
+  const reference = waveformCache.get(key);
+  if (reference) waveformFinalizer.unregister(reference);
+  waveformCache.delete(key);
+}
 
 function normalizePixelSecond(pixelSecond: number): number {
   if (!Number.isFinite(pixelSecond) || pixelSecond <= 0) {
@@ -104,13 +124,13 @@ function normalizePixelSecond(pixelSecond: number): number {
   return Math.max(1, Math.round(pixelSecond * 1000) / 1000);
 }
 
-function emitWaveformUpdate(key: string): void {
-  const listeners = waveformListeners.get(key);
+function emitWaveformUpdate(entry: WaveformCacheEntry): void {
+  const listeners = waveformListeners.get(entry.key);
   if (!listeners) {
     return;
   }
   for (const listener of listeners) {
-    listener();
+    listener(entry);
   }
 }
 
@@ -153,35 +173,60 @@ export function getWaveformCacheEntry(
   key: string,
   pixelSecond?: number,
 ): WaveformCacheEntry | undefined {
-  return waveformCache.get(
-    pixelSecond === undefined ? key : buildWaveformCacheKey(key, pixelSecond),
-  );
+  const cacheKey = pixelSecond === undefined ? key : buildWaveformCacheKey(key, pixelSecond);
+  const reference = waveformCache.get(cacheKey);
+  const entry = reference?.deref();
+  if (reference && !entry) deleteWaveformCacheEntry(cacheKey);
+  return entry;
 }
 
 export function setWaveformCacheEntry(entry: WaveformCacheEntry): void {
-  waveformCache.set(entry.key, entry);
-  emitWaveformUpdate(entry.key);
+  deleteWaveformCacheEntry(entry.key);
+  const reference = new WeakRef(entry);
+  waveformCache.set(entry.key, reference);
+  waveformFinalizer.register(entry, { key: entry.key, reference }, reference);
+  // Mounted views strongly own their current result; the reuse cache does not.
+  emitWaveformUpdate(entry);
+}
+
+export function getWaveformCacheGeneration(): number {
+  return cacheGeneration;
+}
+
+export function subscribeWaveformCacheReset(listener: () => void): () => void {
+  cacheResetListeners.add(listener);
+  return () => {
+    cacheResetListeners.delete(listener);
+  };
 }
 
 export function clearWaveformCache(): void {
+  cacheGeneration += 1;
+  for (const reference of waveformCache.values()) waveformFinalizer.unregister(reference);
   waveformCache.clear();
   waveformListeners.clear();
   pendingWaveformLoads.clear();
+  for (const listener of cacheResetListeners) listener();
 }
 
-export function subscribeWaveformCacheEntry(key: string, listener: () => void): () => void {
-  const listeners = waveformListeners.get(key) ?? new Set<() => void>();
+export function subscribeWaveformCacheEntry(
+  key: string,
+  listener: (entry: WaveformCacheEntry) => void,
+): () => void {
+  const listeners = waveformListeners.get(key) ?? new Set();
   listeners.add(listener);
   waveformListeners.set(key, listeners);
 
   return () => {
-    const current = waveformListeners.get(key);
-    if (!current) {
-      return;
-    }
-    current.delete(listener);
-    if (current.size === 0) {
+    listeners.delete(listener);
+    if (listeners.size === 0 && waveformListeners.get(key) === listeners) {
       waveformListeners.delete(key);
+      const pending = pendingWaveformLoads.get(key);
+      if (pending) {
+        cancelledLoads.add(pending);
+        pendingWaveformLoads.delete(key);
+        if (getWaveformCacheEntry(key) === pending) deleteWaveformCacheEntry(key);
+      }
     }
   };
 }
@@ -190,11 +235,16 @@ export function summarizeWaveformChannels(
   channelData: Float32Array[],
   sampleRate: number,
   pixelSecond: number,
+  maxBuckets = Infinity,
 ): WaveformCacheEntry['channels'] {
   const normalizedPixelSecond = normalizePixelSecond(pixelSecond);
 
   return channelData.map((samples) => {
-    const samplesPerBucket = Math.max(1, Math.floor(sampleRate / normalizedPixelSecond));
+    const samplesPerBucket = Math.max(
+      1,
+      Math.floor(sampleRate / normalizedPixelSecond),
+      Math.ceil(samples.length / maxBuckets),
+    );
     const bucketCount = Math.max(1, Math.ceil(samples.length / samplesPerBucket));
     const min = new Array<number>(bucketCount).fill(0);
     const max = new Array<number>(bucketCount).fill(0);
@@ -224,92 +274,85 @@ export function summarizeWaveformChannels(
   });
 }
 
-async function loadWaveform(
-  cacheKey: string,
+export interface AudioWaveformOverview {
+  channels: WaveformCacheEntry['channels'];
+  sampleRate: number;
+  numberOfChannels: number;
+}
+
+function readWaveformData(
   filePath: string,
   pixelSecond: number,
-): Promise<void> {
-  if (pendingWaveformLoads.has(cacheKey)) {
-    return pendingWaveformLoads.get(cacheKey)!;
-  }
+  isCancelled: () => boolean,
+  authorized = false,
+  maxBuckets = Infinity,
+): Promise<AudioWaveformOverview | null> {
+  // Only the running job owns file bytes/decoded PCM. Queued jobs hold paths and callbacks.
+  const result = loadQueue.then(async () => {
+    if (isCancelled()) return null;
+    const bytes = normalizeAudioBytes(
+      await (authorized
+        ? window.blueAPI.readAuthorizedAudioFileBytes(filePath)
+        : window.blueAPI.readAudioFileBytes(filePath)),
+    );
+    if (isCancelled()) return null;
+    if (!bytes) throw new Error('Unable to read audio file.');
 
-  const loadPromise = (async () => {
+    let metadata = null;
     try {
-      const bytes = normalizeAudioBytes(
-        (await window.blueAPI.readAudioFileBytes(filePath)) as unknown,
-      );
-      if (!bytes) {
-        setWaveformCacheEntry({
-          key: cacheKey,
-          filePath,
-          pixelSecond: normalizePixelSecond(pixelSecond),
-          loading: false,
-          error: 'Unable to read audio file.',
-          channels: [],
-        });
-        return;
-      }
+      metadata = parseAudioFileMetadata(new Uint8Array(bytes));
+    } catch {
+      /* Chromium handles other codecs. */
+    }
+    const aiffChannels = summarizeAiffPcmBytes(new Uint8Array(bytes), pixelSecond, maxBuckets);
+    if (aiffChannels && metadata) {
+      return {
+        channels: aiffChannels,
+        sampleRate: metadata.sampleRate,
+        numberOfChannels: metadata.channels,
+      };
+    }
 
-      const aiffChannels = summarizeAiffPcmBytes(new Uint8Array(bytes), pixelSecond);
-      if (aiffChannels) {
-        setWaveformCacheEntry({
-          key: cacheKey,
-          filePath,
-          pixelSecond: normalizePixelSecond(pixelSecond),
-          loading: false,
-          channels: aiffChannels,
-        });
-        return;
-      }
-
-      const audioContext = getAudioContext();
-      if (!audioContext) {
-        setWaveformCacheEntry({
-          key: cacheKey,
-          filePath,
-          pixelSecond: normalizePixelSecond(pixelSecond),
-          loading: false,
-          error: 'AudioContext is unavailable.',
-          channels: [],
-        });
-        return;
-      }
-
-      try {
-        const decoded = await audioContext.decodeAudioData(bytes.slice(0));
-        const channels = summarizeWaveformChannels(
+    const context = getAudioContext();
+    if (!context) throw new Error('AudioContext is unavailable.');
+    try {
+      // The IPC result belongs to this job; decodeAudioData may detach it without a copy.
+      const decoded = await context.decodeAudioData(bytes);
+      if (isCancelled()) return null;
+      return {
+        channels: summarizeWaveformChannels(
           Array.from({ length: decoded.numberOfChannels }, (_, index) =>
             decoded.getChannelData(index),
           ),
           decoded.sampleRate,
           pixelSecond,
-        );
-        setWaveformCacheEntry({
-          key: cacheKey,
-          filePath,
-          pixelSecond: normalizePixelSecond(pixelSecond),
-          loading: false,
-          channels,
-        });
-      } finally {
-        void audioContext.close().catch(() => undefined);
-      }
-    } catch (error) {
-      setWaveformCacheEntry({
-        key: cacheKey,
-        filePath,
-        pixelSecond: normalizePixelSecond(pixelSecond),
-        loading: false,
-        error: error instanceof Error ? error.message : String(error),
-        channels: [],
-      });
+          maxBuckets,
+        ),
+        sampleRate: metadata?.sampleRate ?? decoded.sampleRate,
+        numberOfChannels: decoded.numberOfChannels,
+      };
     } finally {
-      pendingWaveformLoads.delete(cacheKey);
+      await context.close().catch(() => undefined);
     }
-  })();
+  });
+  loadQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
-  pendingWaveformLoads.set(cacheKey, loadPromise);
-  return loadPromise;
+export function loadAudioPlayerWaveform(
+  filePath: string,
+  isCancelled: () => boolean,
+): Promise<AudioWaveformOverview | null> {
+  return readWaveformData(
+    filePath,
+    Number.MAX_SAFE_INTEGER,
+    isCancelled,
+    true,
+    AUDIO_PLAYER_MAX_BUCKETS,
+  );
 }
 
 export function requestWaveform(
@@ -318,7 +361,7 @@ export function requestWaveform(
   pixelSecond: number,
 ): WaveformCacheEntry {
   const cacheKey = buildWaveformCacheKey(key, pixelSecond);
-  const existing = waveformCache.get(cacheKey);
+  const existing = getWaveformCacheEntry(cacheKey) ?? pendingWaveformLoads.get(cacheKey);
   if (existing) return existing;
 
   const entry: WaveformCacheEntry = {
@@ -328,8 +371,26 @@ export function requestWaveform(
     loading: true,
     channels: [],
   };
-  waveformCache.set(cacheKey, entry);
-  void loadWaveform(cacheKey, filePath, pixelSecond);
+  const generation = cacheGeneration;
+  const isCancelled = () => generation !== cacheGeneration || cancelledLoads.has(entry);
+  pendingWaveformLoads.set(cacheKey, entry);
+  setWaveformCacheEntry(entry);
+  void readWaveformData(filePath, pixelSecond, isCancelled)
+    .then((result) => {
+      if (result && !isCancelled())
+        setWaveformCacheEntry({ ...entry, loading: false, channels: result.channels });
+    })
+    .catch((error: unknown) => {
+      if (!isCancelled())
+        setWaveformCacheEntry({
+          ...entry,
+          loading: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+    })
+    .finally(() => {
+      if (pendingWaveformLoads.get(cacheKey) === entry) pendingWaveformLoads.delete(cacheKey);
+    });
   return entry;
 }
 

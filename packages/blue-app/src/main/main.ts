@@ -1,3 +1,4 @@
+import { readAudioFileMetadataHeader } from './audio-file-metadata';
 /**
  * Electron main process — manages app window, file dialogs, and engine lifecycle.
  */
@@ -6628,6 +6629,16 @@ ipcRegistration.handle('blue-x7-effective-values', async (_event, request: unkno
     createBlueX7RuntimeEnvironment(getBlueX7EngineSyncDeps(request.performanceKind)),
     request as BlueX7EffectiveValuesRequest,
   );
+});
+
+ipcRegistration.handle('get-audio-file-metadata', async (_event, filePath: unknown) => {
+  if (typeof filePath !== 'string' || !filePath) return null;
+  try {
+    const resolved = resolveAudioFilePathForRead(filePath);
+    return resolved ? await readAudioFileMetadataHeader(resolved) : null;
+  } catch {
+    return null;
+  }
 });
 
 ipcRegistration.handle(

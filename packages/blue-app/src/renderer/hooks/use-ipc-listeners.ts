@@ -1,3 +1,5 @@
+import { clearWaveformCache } from '../components/workbench/panels/score/bar-renderers/waveform-cache';
+import { clearAudioFileDurationCache } from '../components/workbench/panels/score/layer-groups/audio-file-duration-cache';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { reconcileExternalSelectionHints } from '../stores/score-selection-store';
@@ -198,6 +200,8 @@ export function useIPCListeners(): void {
     };
 
     const unsubProjectLoaded = window.blueAPI.onProjectLoaded((info) => {
+      clearWaveformCache();
+      clearAudioFileDurationCache();
       resetPlayback();
       resetBlueLive();
       pendingRuntimeOutcomes.clear();
@@ -269,6 +273,8 @@ export function useIPCListeners(): void {
     });
 
     const unsubProjectClosed = window.blueAPI.onProjectClosed(() => {
+      clearWaveformCache();
+      clearAudioFileDurationCache();
       resetPlayback();
       resetBlueLive();
       meterStore.reset();

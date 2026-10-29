@@ -1,5 +1,4 @@
-import { parseAudioFileMetadata } from '@blue/data';
-
+let cacheGeneration = 0;
 const audioDurationCache = new Map<string, number>();
 const pendingDurationLoads = new Set<string>();
 const durationListeners = new Set<() => void>();
@@ -19,30 +18,22 @@ export function getAudioFileDuration(filePath: string): number | null {
   const cached = audioDurationCache.get(filePath);
   if (cached !== undefined) return cached;
 
-  if (!pendingDurationLoads.has(filePath) && window.blueAPI?.readAudioFileBytes) {
+  if (!pendingDurationLoads.has(filePath) && window.blueAPI?.getAudioFileMetadata) {
     pendingDurationLoads.add(filePath);
+    const generation = cacheGeneration;
     window.blueAPI
-      .readAudioFileBytes(filePath)
-      .then((bytes) => {
-        if (bytes) {
-          try {
-            const metadata = parseAudioFileMetadata(
-              bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes),
-            );
-            if (metadata.durationSeconds > 0) {
-              audioDurationCache.set(filePath, metadata.durationSeconds);
-              emitDurationUpdate();
-            }
-          } catch {
-            // Header parsing failed or unsupported; ignore and use default duration.
-          }
+      .getAudioFileMetadata(filePath)
+      .then((metadata) => {
+        if (generation !== cacheGeneration) return;
+        if (metadata && metadata.durationSeconds > 0) {
+          setCachedAudioFileDuration(filePath, metadata.durationSeconds);
         }
       })
       .catch(() => {
         // Read failed; ignore.
       })
       .finally(() => {
-        pendingDurationLoads.delete(filePath);
+        if (generation === cacheGeneration) pendingDurationLoads.delete(filePath);
       });
   }
 
@@ -63,6 +54,9 @@ export function subscribeAudioFileDuration(listener: () => void): () => void {
  * Manually sets a duration in the cache (useful for testing or pre-populating).
  */
 export function setCachedAudioFileDuration(filePath: string, durationSeconds: number): void {
+  audioDurationCache.delete(filePath);
+  if (audioDurationCache.size >= 256)
+    audioDurationCache.delete(audioDurationCache.keys().next().value!);
   audioDurationCache.set(filePath, durationSeconds);
   emitDurationUpdate();
 }
@@ -71,7 +65,7 @@ export function setCachedAudioFileDuration(filePath: string, durationSeconds: nu
  * Clears the duration cache (useful for tests).
  */
 export function clearAudioFileDurationCache(): void {
+  cacheGeneration += 1;
   audioDurationCache.clear();
   pendingDurationLoads.clear();
-  durationListeners.clear();
 }

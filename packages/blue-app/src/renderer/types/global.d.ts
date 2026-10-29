@@ -1,3 +1,4 @@
+import type { AudioFileMetadata } from '@blue/data';
 export {};
 
 import type {
@@ -636,6 +637,7 @@ declare global {
       // Audio File Player
       openAudioFile: () => Promise<string | null>;
       authorizeAudioFile: (filePath: string) => Promise<boolean>;
+      getAudioFileMetadata: (filePath: string) => Promise<AudioFileMetadata | null>;
       getAudioFileStat: (filePath: string) => Promise<{ size: number; mtime: number } | null>;
 
       // MIDI Input (SPEC 058)

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { summarizeWaveformChannels } from '../score/bar-renderers/waveform-cache';
 
 interface AudioPlayerWaveformProps {
   audioRef: RefObject<HTMLAudioElement | null>;
   filePath: string | null;
   duration: number;
+  peaks: Peaks | null;
+  status: string | null;
   onSeek: (timeSeconds: number) => void;
 }
 
@@ -17,20 +18,6 @@ export interface WaveformEnvelopePoint {
   x: number;
   yTop: number;
   yBottom: number;
-}
-
-type AudioContextCtor = typeof AudioContext;
-
-function getAudioContextCtor(): AudioContextCtor | null {
-  return (
-    globalThis.AudioContext ??
-    (
-      globalThis as typeof globalThis & {
-        webkitAudioContext?: typeof AudioContext;
-      }
-    ).webkitAudioContext ??
-    null
-  );
 }
 
 const PEAK_COLOR = 'rgb(99 140 255)';
@@ -98,12 +85,12 @@ export default function AudioPlayerWaveform({
   filePath,
   duration,
   onSeek,
+  peaks,
+  status,
 }: AudioPlayerWaveformProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const peaksRef = useRef<Peaks | null>(null);
-  const [peaks, setPeaks] = useState<Peaks | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
@@ -119,59 +106,6 @@ export default function AudioPlayerWaveform({
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (!filePath || width <= 0) {
-      setPeaks(null);
-      setStatus(null);
-      return;
-    }
-
-    let cancelled = false;
-    setStatus(null);
-    setPeaks(null);
-
-    (async () => {
-      const bytes = await window.blueAPI.readAuthorizedAudioFileBytes(filePath);
-      if (cancelled || !bytes) {
-        if (!cancelled) setStatus('Unable to read audio file.');
-        return;
-      }
-
-      const AudioContextCtor = getAudioContextCtor();
-      if (!AudioContextCtor) {
-        setStatus('Audio decoding is unavailable in this environment.');
-        return;
-      }
-
-      const ctx = new AudioContextCtor();
-      try {
-        const decoded = await ctx.decodeAudioData(bytes.slice(0));
-        if (cancelled) return;
-        const channelData = Array.from({ length: decoded.numberOfChannels }, (_, index) =>
-          decoded.getChannelData(index),
-        );
-        const sampleCount = channelData[0]?.length ?? 0;
-        const samplesPerBucket = Math.max(1, Math.ceil(sampleCount / Math.max(1, width)));
-        const pixelSecond = decoded.sampleRate / samplesPerBucket;
-        const channels = summarizeWaveformChannels(channelData, decoded.sampleRate, pixelSecond);
-        const first = channels[0];
-        if (first) {
-          setPeaks({ min: first.min, max: first.max });
-        } else {
-          setStatus('No waveform data.');
-        }
-      } catch {
-        if (!cancelled) setStatus('Could not decode this audio format for waveform display.');
-      } finally {
-        void ctx.close().catch(() => undefined);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [filePath, width]);
 
   useEffect(() => {
     if (!filePath) return;

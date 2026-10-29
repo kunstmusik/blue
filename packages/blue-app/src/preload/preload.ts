@@ -1,3 +1,4 @@
+import type { AudioFileMetadata } from '@blue/data';
 /**
  * Preload script — exposes safe IPC bridges to the renderer process.
  */
@@ -877,6 +878,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     request: BlueX7EffectiveValuesRequest,
   ): Promise<BlueX7EffectiveValuesResult> =>
     ipcRenderer.invoke('blue-x7-effective-values', request) as Promise<BlueX7EffectiveValuesResult>,
+  getAudioFileMetadata: (filePath: string) =>
+    ipcRenderer.invoke('get-audio-file-metadata', filePath) as Promise<AudioFileMetadata | null>,
   readAudioFileBytes: (filePath: string) =>
     ipcRenderer.invoke('read-audio-file-bytes', filePath) as Promise<ArrayBuffer | null>,
   readAuthorizedAudioFileBytes: (filePath: string) =>

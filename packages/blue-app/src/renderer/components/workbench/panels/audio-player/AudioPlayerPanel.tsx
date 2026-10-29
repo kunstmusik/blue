@@ -6,6 +6,10 @@ import { formatAudioTime } from './audio-time';
 import AudioPlayerWaveform from './AudioPlayerWaveform';
 import AudioPlayerMetadata from './AudioPlayerMetadata';
 import { cn } from '../../../../lib/cn';
+import {
+  loadAudioPlayerWaveform,
+  type AudioWaveformOverview,
+} from '../score/bar-renderers/waveform-cache';
 
 interface AudioMetadata {
   sampleRate: number | null;
@@ -13,24 +17,13 @@ interface AudioMetadata {
   fileSize: number | null;
 }
 
-type AudioContextCtor = typeof AudioContext;
-
-function getAudioContextCtor(): AudioContextCtor | null {
-  return (
-    globalThis.AudioContext ??
-    (
-      globalThis as typeof globalThis & {
-        webkitAudioContext?: typeof AudioContext;
-      }
-    ).webkitAudioContext ??
-    null
-  );
-}
-
 export default function AudioPlayerPanel(): React.ReactElement {
   const audioRef = useRef<HTMLAudioElement>(null);
   const autoplayRef = useRef(false);
-  const [filePath, setFilePath] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ path: string } | null>(null);
+  const filePath = selectedFile?.path ?? null;
+  const [waveform, setWaveform] = useState<AudioWaveformOverview | null>(null);
+  const [waveformError, setWaveformError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -48,7 +41,9 @@ export default function AudioPlayerPanel(): React.ReactElement {
     setCurrentTime(0);
     setDuration(0);
     setMetadata({ sampleRate: null, channels: null, fileSize: null });
-    setFilePath(path);
+    setWaveform(null);
+    setWaveformError(null);
+    setSelectedFile({ path });
   };
 
   useEffect(() => {
@@ -58,42 +53,46 @@ export default function AudioPlayerPanel(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    if (!filePath) return;
+    if (!selectedFile) return;
+    const filePath = selectedFile.path;
     let cancelled = false;
-    (async () => {
-      const stat = await window.blueAPI.getAudioFileStat(filePath);
-      const bytes = await window.blueAPI.readAuthorizedAudioFileBytes(filePath);
-      if (cancelled) return;
-
-      let sampleRate: number | null = null;
-      let channels: number | null = null;
-
-      const AudioContextCtor = getAudioContextCtor();
-      if (AudioContextCtor && bytes) {
-        const ctx = new AudioContextCtor();
-        try {
-          const decoded = await ctx.decodeAudioData(bytes.slice(0));
-          sampleRate = decoded.sampleRate;
-          channels = decoded.numberOfChannels;
-        } catch {
-          sampleRate = null;
-          channels = null;
-        }
-        void ctx.close().catch(() => undefined);
-      }
-
-      if (!cancelled) {
+    const details = Promise.all([
+      window.blueAPI.getAudioFileStat(filePath).catch(() => null),
+      window.blueAPI.getAudioFileMetadata(filePath).catch(() => null),
+    ]).then(([stat, metadata]) => {
+      if (!cancelled)
         setMetadata({
-          sampleRate,
-          channels,
+          sampleRate: metadata?.sampleRate ?? null,
+          channels: metadata?.channels ?? null,
           fileSize: stat?.size ?? null,
         });
+      return { stat, metadata };
+    });
+    void (async () => {
+      try {
+        const overview = await loadAudioPlayerWaveform(filePath, () => cancelled);
+        if (cancelled || !overview) return;
+        setWaveform(overview);
+        const { stat, metadata } = await details;
+        if (cancelled) return;
+        setMetadata({
+          sampleRate: metadata?.sampleRate ?? overview.sampleRate,
+          channels: metadata?.channels ?? overview.numberOfChannels,
+          fileSize: stat?.size ?? null,
+        });
+      } catch (error: unknown) {
+        if (cancelled) return;
+        setWaveformError(
+          error instanceof Error
+            ? error.message
+            : 'Could not decode this audio format for waveform display.',
+        );
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [filePath]);
+  }, [selectedFile]);
 
   const handleOpen = async () => {
     const selected = await window.blueAPI.openAudioFile();
@@ -167,6 +166,8 @@ export default function AudioPlayerPanel(): React.ReactElement {
         audioRef={audioRef}
         filePath={filePath}
         duration={duration}
+        peaks={waveform?.channels[0] ?? null}
+        status={waveformError}
         onSeek={handleSeek}
       />
 
