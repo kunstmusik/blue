@@ -47,7 +47,13 @@ Run from the repository root after installing and building `@blue/data` and
 `@blue/engine-client` for app measurements. The data suite runs directly from source
 after installing dependencies:
 
+`pnpm test:performance` runs each package's `test:performance` script serially,
+currently data and app Node measurements. It continues collecting other packages
+if one fails and returns a failing exit status when any package fails. Browser
+and engine measurements use the explicit commands below.
+
 ```sh
+pnpm test:performance
 pnpm --filter @blue/app test
 pnpm --filter @blue/app test:browser
 pnpm --filter @blue/app test:performance

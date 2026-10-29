@@ -181,6 +181,9 @@ Use controlled desktop hardware for performance acceptance; manual hosted CI is
 available for diagnosis. `@blue/data` also provides `test:performance` for its model
 workloads. See [performance testing](docs/performance-testing.md)
 for setup, evidence interpretation, and the data package's opt-in measurements.
+Run `pnpm test:performance` at the root to execute each package's same-named
+script serially (currently data and app Node measurements). Browser and engine
+measurements use their dedicated package commands.
 
 ## License
 
