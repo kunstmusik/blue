@@ -2,20 +2,21 @@ import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 import tailwindcss from '@tailwindcss/vite';
 import { playwright } from '@vitest/browser-playwright';
+import { testTags } from './test-tags';
 
 export default defineConfig({
   plugins: [tailwindcss()],
+  optimizeDeps: { include: ['dockview', '@tanstack/react-table'] },
   test: {
+    tags: testTags,
+    tagsFilter: ['!performance'],
     include: ['src/renderer/browser/**/*.browser.test.tsx'],
     globals: true,
-    deps: {
-      optimizer: { client: { include: ['@tanstack/react-table'] } },
-    },
     browser: {
       enabled: true,
       provider: playwright({
         launchOptions: {
-          channel: 'chrome',
+          channel: process.env.BLUE_TEST_BROWSER_CHANNEL ?? 'chrome',
         },
       }),
       instances: [

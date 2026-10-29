@@ -38,6 +38,13 @@ On Windows PowerShell use `Join-Path ([System.IO.Path]::GetTempPath()) 'blue-mix
 
 ## Existing regression commands
 
+Generation, fixture coverage, bindings, and audio equivalence remain correctness
+checks. The benchmark fixture coverage matrix uses six independent sample-rate /
+block-size cases with the existing per-case hang timeout. Release speed comparisons
+below are opt-in acceptance on a documented reference configuration, separate from
+automatic correctness CI. A passing platform build does not close the pending native
+performance evidence. See [performance testing](../../docs/performance-testing.md).
+
 These commands exist and pass with the optimized emitter:
 
 ```sh

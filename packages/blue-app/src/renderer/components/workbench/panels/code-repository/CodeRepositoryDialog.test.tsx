@@ -1,3 +1,4 @@
+import { reportPerformance } from '../../../../../test-support/performance';
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -375,7 +376,7 @@ describe('CodeRepositoryDialog', () => {
     expect(container.textContent).toContain('Your draft is preserved');
   });
 
-  it('renders the deterministic 500-node editor fixture within the responsiveness threshold', async () => {
+  async function runDialogWorkload(measure: boolean) {
     const rootNode = makeRoot();
     const fixture: CodeRepositoryNode = {
       ...rootNode,
@@ -403,6 +404,19 @@ describe('CodeRepositoryDialog', () => {
       await Promise.resolve();
     });
     expect(container.textContent).toContain('Group 1');
-    expect(elapsedMs).toBeLessThan(FIVE_HUNDRED_NODE_RENDER_GUARD_MS);
-  });
+    if (measure) {
+      reportPerformance(
+        'Code Repository React/jsdom commit (500 nodes; excludes async flush and paint)',
+        [elapsedMs],
+      );
+      expect(elapsedMs).toBeLessThan(FIVE_HUNDRED_NODE_RENDER_GUARD_MS);
+    }
+  }
+
+  it('renders the 500-node editor fixture', () => runDialogWorkload(false));
+  it(
+    'renders the deterministic 500-node editor fixture within the responsiveness threshold',
+    { tags: ['performance'] },
+    () => runDialogWorkload(true),
+  );
 });

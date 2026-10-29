@@ -1,3 +1,4 @@
+import { reportPerformance, percentile as calculatePercentile } from '../test-support/performance';
 import { describe, expect, it } from 'vitest';
 import {
   BlueData,
@@ -72,15 +73,8 @@ function buildDeterministicPerformanceProject(): BlueData {
   return data;
 }
 
-function calculatePercentile(values: number[], p: number): number {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(Math.floor((p / 100) * sorted.length), sorted.length - 1);
-  return sorted[index];
-}
-
 describe('Deterministic large project history performance benchmark (T066 / SC-003)', () => {
-  it('executes 100 actions, undos, and redos on 1,000-clip workload with p95 <= 200ms', async () => {
+  async function runHistoryWorkload(measure: boolean) {
     // 1. Build deterministic large project: 1,000 clips, 32 instruments, 128 automation parameters
     const initialData = buildDeterministicPerformanceProject();
     const session = new ProjectSession();
@@ -166,7 +160,13 @@ describe('Deterministic large project history performance benchmark (T066 / SC-0
     const commitMax = Math.max(...commitLatencies);
 
     // SC-003 requires p95 <= 200ms
-    expect(commitP95).toBeLessThanOrEqual(200);
+    if (measure) {
+      reportPerformance(
+        'history coordinator commit (1,000 clips, 32 instruments)',
+        commitLatencies,
+      );
+      expect(commitP95).toBeLessThanOrEqual(200);
+    }
 
     // Save final 100th state XML for redo verification
     const final100Xml = session.read().data!.saveToString();
@@ -195,7 +195,10 @@ describe('Deterministic large project history performance benchmark (T066 / SC-0
     const undoP95 = calculatePercentile(undoLatencies, 95);
     const undoMax = Math.max(...undoLatencies);
 
-    expect(undoP95).toBeLessThanOrEqual(200);
+    if (measure) {
+      reportPerformance('history coordinator undo (1,000 clips, 32 instruments)', undoLatencies);
+      expect(undoP95).toBeLessThanOrEqual(200);
+    }
 
     // Verify document returned to exact initial state
     const restoredInitialXml = session.read().data!.saveToString();
@@ -219,7 +222,10 @@ describe('Deterministic large project history performance benchmark (T066 / SC-0
     const redoP95 = calculatePercentile(redoLatencies, 95);
     const redoMax = Math.max(...redoLatencies);
 
-    expect(redoP95).toBeLessThanOrEqual(200);
+    if (measure) {
+      reportPerformance('history coordinator redo (1,000 clips, 32 instruments)', redoLatencies);
+      expect(redoP95).toBeLessThanOrEqual(200);
+    }
 
     // Verify document returned to exact 100th committed state
     const restoredFinalXml = session.read().data!.saveToString();
@@ -231,29 +237,39 @@ describe('Deterministic large project history performance benchmark (T066 / SC-0
     const heapDelta = finalHeap - initialHeap;
 
     // Output benchmark metrics for reporting and record in quickstart.md
-    console.log('[Performance Benchmark Results: 1000-clip deterministic workload]');
-    console.log(
-      `  Commit (100 actions): p50=${commitP50.toFixed(2)}ms, p95=${commitP95.toFixed(2)}ms, max=${commitMax.toFixed(2)}ms`,
-    );
-    console.log(
-      `  Undo (100 actions):   p50=${undoP50.toFixed(2)}ms, p95=${undoP95.toFixed(2)}ms, max=${undoMax.toFixed(2)}ms`,
-    );
-    console.log(
-      `  Redo (100 actions):   p50=${redoP50.toFixed(2)}ms, p95=${redoP95.toFixed(2)}ms, max=${redoMax.toFixed(2)}ms`,
-    );
-    console.log(
-      `  Retained Bytes:       ${(historyProjection.retainedBytes / (1024 * 1024)).toFixed(2)} MiB (${historyProjection.retainedBytes} bytes)`,
-    );
-    console.log(`  Heap Used Delta:      ${(heapDelta / (1024 * 1024)).toFixed(2)} MB`);
-    console.log(
-      `[T087 coordinator metrics] ${JSON.stringify({
-        samples: 100,
-        commitMs: { p50: commitP50, p95: commitP95, max: commitMax },
-        undoMs: { p50: undoP50, p95: undoP95, max: undoMax },
-        redoMs: { p50: redoP50, p95: redoP95, max: redoMax },
-        retainedBytes: historyProjection.retainedBytes,
-        heapDeltaBytes: heapDelta,
-      })}`,
-    );
-  });
+    if (measure) {
+      console.log('[Performance Benchmark Results: 1000-clip deterministic workload]');
+      console.log(
+        `  Commit (100 actions): p50=${commitP50.toFixed(2)}ms, p95=${commitP95.toFixed(2)}ms, max=${commitMax.toFixed(2)}ms`,
+      );
+      console.log(
+        `  Undo (100 actions):   p50=${undoP50.toFixed(2)}ms, p95=${undoP95.toFixed(2)}ms, max=${undoMax.toFixed(2)}ms`,
+      );
+      console.log(
+        `  Redo (100 actions):   p50=${redoP50.toFixed(2)}ms, p95=${redoP95.toFixed(2)}ms, max=${redoMax.toFixed(2)}ms`,
+      );
+      console.log(
+        `  Retained Bytes:       ${(historyProjection.retainedBytes / (1024 * 1024)).toFixed(2)} MiB (${historyProjection.retainedBytes} bytes)`,
+      );
+      console.log(`  Heap Used Delta:      ${(heapDelta / (1024 * 1024)).toFixed(2)} MB`);
+      console.log(
+        `[T087 coordinator metrics] ${JSON.stringify({
+          samples: 100,
+          commitMs: { p50: commitP50, p95: commitP95, max: commitMax },
+          undoMs: { p50: undoP50, p95: undoP95, max: undoMax },
+          redoMs: { p50: redoP50, p95: redoP95, max: redoMax },
+          retainedBytes: historyProjection.retainedBytes,
+          heapDeltaBytes: heapDelta,
+        })}`,
+      );
+    }
+  }
+
+  it('restores 100 edits, undo, redo, retained entries and canonical XML on a 1,000-clip project', () =>
+    runHistoryWorkload(false));
+  it(
+    'executes 100 actions, undos, and redos on 1,000-clip workload with p95 <= 200ms',
+    { tags: ['performance'] },
+    () => runHistoryWorkload(true),
+  );
 });

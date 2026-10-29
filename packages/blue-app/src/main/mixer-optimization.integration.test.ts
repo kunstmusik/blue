@@ -669,21 +669,30 @@ function lifecycleFixtures(
   }).filter((fixture) => lifecycleIds.has(fixture.id) && fixture.profile === 'realtime');
 }
 
+function representativeFixturesForConfiguration(
+  mode: 'comparison' | 'benchmark',
+  sampleRate: 44100 | 48000,
+  ksmps: 32 | 64 | 128,
+  audioFile?: string,
+): MixerFixture[] {
+  return [
+    ...buildFixtureSet({ mode, sampleRate, ksmps, audioFile }),
+    ...buildRoutingFixtures({
+      sampleRate,
+      ksmps,
+      durationSeconds: mode === 'benchmark' ? benchmarkDurationSeconds(sampleRate, ksmps) : 2,
+    }).filter((fixture) => mode === 'comparison' || fixture.id.startsWith('routing-direct-chain-')),
+  ];
+}
+
 function representativeFixtures(
   mode: 'comparison' | 'benchmark',
   audioFile?: string,
 ): MixerFixture[] {
   return ([44100, 48000] as const).flatMap((sampleRate) =>
-    ([32, 64, 128] as const).flatMap((ksmps) => [
-      ...buildFixtureSet({ mode, sampleRate, ksmps, audioFile }),
-      ...buildRoutingFixtures({
-        sampleRate,
-        ksmps,
-        durationSeconds: mode === 'benchmark' ? benchmarkDurationSeconds(sampleRate, ksmps) : 2,
-      }).filter(
-        (fixture) => mode === 'comparison' || fixture.id.startsWith('routing-direct-chain-'),
-      ),
-    ]),
+    ([32, 64, 128] as const).flatMap((ksmps) =>
+      representativeFixturesForConfiguration(mode, sampleRate, ksmps, audioFile),
+    ),
   );
 }
 
@@ -699,29 +708,26 @@ describe('mixer-optimization generation determinism (Spec 118 T007)', () => {
       expect(expectedFixtureRender(fixture).maximumAmplitude).toBeLessThan(1);
     }
   });
-  it('covers both rates and all reference blocks with full-window mono and stereo workloads', () => {
-    const fixtures = representativeFixtures('benchmark');
-    for (const sampleRate of [44100, 48000]) {
-      for (const ksmps of [32, 64, 128]) {
+  for (const sampleRate of [44100, 48000] as const) {
+    for (const ksmps of [32, 64, 128] as const) {
+      it(`covers full-window mono and stereo workloads at ${sampleRate} Hz / ksmps ${ksmps}`, () => {
+        const fixtures = representativeFixturesForConfiguration('benchmark', sampleRate, ksmps);
         for (const id of ['primary-send-heavy', 'representative', 'routing-direct-chain-1']) {
-          const fixture = fixtures.find(
-            (entry) =>
-              entry.id === id &&
-              entry.options.sampleRate === sampleRate &&
-              entry.options.ksmps === ksmps,
-          )!;
+          const fixture = fixtures.find((entry) => entry.id === id)!;
           expect(fixture).toBeDefined();
+          expect(fixture.options.sampleRate).toBe(sampleRate);
+          expect(fixture.options.ksmps).toBe(ksmps);
           expect((fixture.options.durationSeconds * sampleRate) / ksmps).toBeGreaterThan(
             1024 + 65536,
           );
         }
-      }
+        const mono = fixtures.find((entry) => entry.id === 'routing-direct-chain-1')!;
+        const text = generateFixture(mono).csdText;
+        expect(text).toContain('nchnls=1');
+        expect(text).toContain(`i"DirectWriter"\t0.0\t${mono.options.durationSeconds}`);
+      });
     }
-    const mono = fixtures.find((entry) => entry.id === 'routing-direct-chain-1')!;
-    const text = generateFixture(mono).csdText;
-    expect(text).toContain('nchnls=1');
-    expect(text).toContain(`i"DirectWriter"\t0.0\t${mono.options.durationSeconds}`);
-  });
+  }
   it('generates byte-identical CSD for every comparison fixture on repeated builds', () => {
     for (const fixture of comparisonFixtures()) {
       const first = generateFixture(fixture).csdText;

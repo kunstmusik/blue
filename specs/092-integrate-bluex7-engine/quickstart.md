@@ -136,6 +136,13 @@ Confirm those limitations, the fixed calibration factor, provenance, and the int
 
 ## 9. Realtime performance gates
 
+The application-level 600-edit BlueX7 model timing now runs with
+`pnpm --filter @blue/app test:performance`; normal app tests retain its functional
+and multi-instance isolation assertions. This component measurement excludes engine
+acknowledgement and audible output. Run speed acceptance on controlled reference
+hardware; see [performance testing](../../docs/performance-testing.md). The separate
+opt-in audio/CPU harness below retains its existing acceptance boundaries.
+
 Use `fixtures/blue-x7-pop-song.blue` and its generated live CSD as the reproducible dense case. The opt-in harness below also uses the fixture's 59-voice density with fast release rates so it is practical to run repeatedly. Record the command, machine, Csound/Blue Engine build, `ksmps`, sample rate, rendered samples, CPU time, wall time, and peak active-note count for every comparison.
 
 ```bash

@@ -1,3 +1,4 @@
+import { reportPerformance } from '../../test-support/performance';
 import { EditorState } from '@codemirror/state';
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { describe, expect, it } from 'vitest';
@@ -338,7 +339,7 @@ describe('Java Blue UDO completion adapter', () => {
   });
 
   describe('completion construction performance (US3, T024)', () => {
-    it('keeps p95 completion construction below 100 ms for 500 project and 100 context UDOs', () => {
+    function runCompletionWorkload(measure: boolean) {
       const projectUdos: JavaBlueUdoCompletionDefinition[] = Array.from({ length: 500 }, (_, i) =>
         udo(`ProjUDO${i}`, { inTypes: i % 2 === 0 ? 'a' : 'k', outTypes: 'a' }),
       );
@@ -348,26 +349,38 @@ describe('Java Blue UDO completion adapter', () => {
       const source = createJavaBlueCsoundCompletionSource({ contextUdos, projectUdos });
 
       // Warm-up pass (not measured) so JIT/cache effects do not skew p95.
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < (measure ? 5 : 0); i++) {
         const state = EditorState.create({ doc: 'Ctx' });
         const ctx = new CompletionContext(state, state.doc.length, true);
         source(ctx);
       }
 
       const samples: number[] = [];
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < (measure ? 40 : 1); i++) {
         const state = EditorState.create({ doc: 'Ctx' });
         const ctx = new CompletionContext(state, state.doc.length, true);
         const start = performance.now();
-        source(ctx);
+        const result = source(ctx);
         samples.push(performance.now() - start);
+        if (result instanceof Promise) throw new Error('Expected synchronous completion');
+        expect(result?.options.some((item) => item.label === 'CtxUDO0')).toBe(true);
       }
-      samples.sort((a, b) => a - b);
-      const p95 = samples[Math.floor(samples.length * 0.95) - 1] ?? samples[samples.length - 1]!;
+      if (measure) {
+        const metrics = reportPerformance(
+          'completion adapter request (warm, 500 project + 100 context UDOs)',
+          samples,
+        );
+        expect(metrics.p95).toBeLessThan(100);
+      }
+    }
 
-      // SC-005: p95 below 100 ms on supported development hardware.
-      expect(p95).toBeLessThan(100);
-    });
+    it('offers context UDOs with 500 project and 100 context definitions', () =>
+      runCompletionWorkload(false));
+    it(
+      'keeps p95 completion construction below 100 ms for 500 project and 100 context UDOs',
+      { tags: ['performance'] },
+      () => runCompletionWorkload(true),
+    );
   });
 
   describe('opcode completion regressions (US1, T008)', () => {

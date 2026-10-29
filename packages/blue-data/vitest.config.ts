@@ -4,6 +4,8 @@ import { createPackageReporterConfig } from '../../scripts/vitest-package-report
 
 export default defineConfig({
   test: {
+    tags: [{ name: 'performance', timeout: 60000 }],
+    tagsFilter: ['!performance'],
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     testTimeout: 30000,
     ...createPackageReporterConfig('@blue/data', GithubActionsReporter),

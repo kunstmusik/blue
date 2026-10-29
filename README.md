@@ -174,6 +174,17 @@ git diff --check
 The [developer guide](docs/manual/developer.qmd) has additional build and
 extension guidance.
 
+Application correctness tests run automatically in CI, including browser coverage.
+Speed measurements use separate opt-in `test:performance`,
+`test:performance:browser`, and `test:performance:engine` commands in `@blue/app`.
+Use controlled desktop hardware for performance acceptance; manual hosted CI is
+available for diagnosis. `@blue/data` also provides `test:performance` for its model
+workloads. See [performance testing](docs/performance-testing.md)
+for setup, evidence interpretation, and the data package's opt-in measurements.
+Run `pnpm test:performance` at the root to execute each package's same-named
+script serially (currently data and app Node measurements). Browser and engine
+measurements use their dedicated package commands.
+
 ## License
 
 Blue-authored code and documentation are **GPL-3.0-or-later** by default.

@@ -1,3 +1,4 @@
+import { sampleSynchronous, reportPerformance } from '../../../../../test-support/performance';
 import { describe, expect, it } from 'vitest';
 import type { CodeRepositoryNode } from '@blue/data';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
@@ -153,13 +154,15 @@ describe('createOpcodesSubmenu', () => {
     expect(new Set(insertionIds).size).toBe(insertionIds.length);
   });
 
-  it('builds the entire 1,300+ opcode menu hierarchy within 50ms', () => {
-    const start = performance.now();
-    const menu = createOpcodesSubmenu();
-    const elapsedMs = performance.now() - start;
-    expect(menu.items.length).toBeGreaterThan(15);
-    expect(elapsedMs).toBeLessThan(50);
-  });
+  it(
+    'builds the entire 1,300+ opcode menu hierarchy within 50ms',
+    { tags: ['performance'] },
+    () => {
+      const samples = sampleSynchronous(() => createOpcodesSubmenu());
+      const metrics = reportPerformance('opcode menu construction (warm, 1,300+ opcodes)', samples);
+      expect(metrics.max).toBeLessThan(50);
+    },
+  );
 });
 
 describe('createCodeRepositorySubmenu', () => {
@@ -313,7 +316,7 @@ describe('createJavaBlueCsoundEditorMenuItems', () => {
     expect((add as { disabled?: boolean }).disabled).toBeFalsy();
   });
 
-  it('builds the deterministic 500-node Custom menu fixture within the responsiveness threshold', () => {
+  function runCustomMenuWorkload(measure: boolean) {
     const root = makeRoot(
       Array.from({ length: 500 }, (_, index) => ({
         id: `snippet-${index}`,
@@ -330,6 +333,16 @@ describe('createJavaBlueCsoundEditorMenuItems', () => {
     expect(menu.kind).toBe('submenu');
     if (menu.kind !== 'submenu') throw new Error('expected Custom submenu');
     expect(menu.items).toHaveLength(500);
-    expect(elapsedMs).toBeLessThan(1_000);
-  });
+    if (measure) {
+      reportPerformance('Custom menu construction (500 nodes)', [elapsedMs]);
+      expect(elapsedMs).toBeLessThan(1_000);
+    }
+  }
+
+  it('builds all 500 Custom menu entries', () => runCustomMenuWorkload(false));
+  it(
+    'builds the deterministic 500-node Custom menu fixture within the responsiveness threshold',
+    { tags: ['performance'] },
+    () => runCustomMenuWorkload(true),
+  );
 });

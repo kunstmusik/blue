@@ -4,6 +4,15 @@
 
 Implement Unified Libraries without changing `.blue` ownership/serialization, mutating Java Blue source libraries, or allowing unsupported XML to pass through lossy editors. Work in the dependency order below; do not start by replacing UI surfaces.
 
+## Current performance commands (2026-10-29)
+
+The ordinary `@blue/app` suite retains the 10,000-item browse/search/preview
+correctness workload. Its speed budgets now run through the opt-in
+`pnpm --filter @blue/app test:performance` command on controlled reference hardware.
+See [performance testing](../../docs/performance-testing.md) for reports and measured
+boundaries. Earlier commands/results below are historical validation records;
+running the normal Vitest configuration no longer evaluates the tagged speed case.
+
 ## Baseline Checks
 
 From `/Users/stevenyi/work/blue-electron`:

@@ -1,3 +1,4 @@
+import { reportPerformance } from '../test-support/performance';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -133,6 +134,11 @@ function isEngineWithCsoundReady(candidatePath: string | null): boolean {
 
 const enginePath = resolveAcceptanceEnginePath();
 const isMeteringEngineReady = isEngineWithCsoundReady(enginePath);
+if (process.env.BLUE_REQUIRE_PERFORMANCE_ENGINE === '1' && !isMeteringEngineReady) {
+  throw new Error(
+    'Performance setup failure: Blue Engine must load Csound with mixer-metering-v1 support.',
+  );
+}
 
 // Intentional realtime-capable null audio backend options (T053, Constitution V).
 // -+rtaudio=null activates Csound's dummy rtaudio driver which paces playback in
@@ -495,7 +501,7 @@ describe.skipIf(!isMeteringEngineReady)(
       expect(masterState.peakHoldLevels[0]).toBe(-Infinity);
     }, 20000);
 
-    it('instruments real engine-to-renderer meter path: verifies sustained delivery >= 30 Hz with no stall > 200 ms (FR-006, SC-002)', async () => {
+    async function runMeterDelivery(measure: boolean) {
       const { data, synthId } = createProjectWithAudio({
         durationBeats: 10,
         amplitude: 0.5,
@@ -555,10 +561,14 @@ describe.skipIf(!isMeteringEngineReady)(
       const deliveryRateHz = (records.length - 1) / elapsedSeconds;
 
       // SC-002: Sustained >= 30 Hz delivery rate
-      expect(deliveryRateHz).toBeGreaterThanOrEqual(30.0);
+      if (measure) {
+        reportPerformance('engine meter arrival intervals at renderer-store boundary', intervalsMs);
+        reportPerformance('engine meter sustained delivery', [deliveryRateHz], 'Hz');
+        expect(deliveryRateHz).toBeGreaterThanOrEqual(30.0);
+      }
 
       // SC-002: No stall longer than 200 ms while audio is streaming
-      expect(maxIntervalMs).toBeLessThan(200.0);
+      if (measure) expect(maxIntervalMs).toBeLessThan(200.0);
 
       // Verify meterStore processed state accurately
       meterStore.update(performance.now());
@@ -568,7 +578,18 @@ describe.skipIf(!isMeteringEngineReady)(
 
       meterStore.reset();
       expect(meterStore.getStripState(synthId)!.barLevels[0]).toBe(-Infinity);
-    }, 15000);
+    }
+
+    it(
+      'delivers ordered meter frames through the real engine-to-renderer path',
+      { timeout: 15000 },
+      () => runMeterDelivery(false),
+    );
+    it(
+      'instruments real engine-to-renderer meter path: verifies sustained delivery >= 30 Hz with no stall > 200 ms (FR-006, SC-002)',
+      { tags: ['performance', 'real-engine'], timeout: 15000 },
+      () => runMeterDelivery(true),
+    );
 
     it('compares playback soak with metering enabled versus disabled, verifying 0 dropouts/errors and unaffected audio lifecycle (FR-014, SC-004)', async () => {
       // 1. Run playback soak with metering ENABLED
@@ -791,7 +812,7 @@ describe.skipIf(!isMeteringEngineReady)(
       };
     }
 
-    it('broadcasts meter-reset on normal stop and clears subscribed meter state and clip holds promptly (FR-012)', async () => {
+    async function runStopReset(measure: boolean) {
       const bridge = createBridge();
       const { store, resetTimestamps, frameCount } = connectRendererStore();
       const { sourceStripId, sourceCsdKey } = await playBridgeProject(bridge, {
@@ -818,7 +839,11 @@ describe.skipIf(!isMeteringEngineReady)(
       await waitFor(() => expect(resetTimestamps.length).toBeGreaterThan(0), 5000);
       // FR-012: driven by the playback lifecycle signal, within about one
       // second of the stop request.
-      expect(resetTimestamps[0]! - stopStartedAt).toBeLessThan(1000);
+      if (measure) {
+        const elapsed = resetTimestamps[0]! - stopStartedAt;
+        reportPerformance('playback stop request to meter reset', [elapsed]);
+        expect(elapsed).toBeLessThan(1000);
+      }
 
       const resetBroadcast = meterBroadcastCapture.calls.find(
         (call) => call.channel === 'meter-reset',
@@ -831,9 +856,18 @@ describe.skipIf(!isMeteringEngineReady)(
       expect(state.barLevels[0]).toBe(-Infinity);
       expect(state.peakHoldLevels[0]).toBe(-Infinity);
       expect(state.clipFlags[0]).toBe(false);
-    }, 30000);
+    }
 
-    it('broadcasts meter-reset when the score ends naturally and clears subscribed state (FR-012)', async () => {
+    it('clears subscribed meter state and clip holds on normal stop', { timeout: 30000 }, () =>
+      runStopReset(false),
+    );
+    it(
+      'broadcasts meter-reset on normal stop and clears subscribed meter state and clip holds promptly (FR-012)',
+      { tags: ['performance', 'real-engine'], timeout: 30000 },
+      () => runStopReset(true),
+    );
+
+    async function runNaturalReset(measure: boolean) {
       const bridge = createBridge();
       const { store, resetTimestamps, frameCount } = connectRendererStore();
       const playbackStartedAt = performance.now();
@@ -843,14 +877,27 @@ describe.skipIf(!isMeteringEngineReady)(
 
       // The 0.3s score finishes on its own; the lifecycle signal must reset.
       await waitFor(() => expect(resetTimestamps.length).toBeGreaterThan(0), 8000);
-      expect(resetTimestamps[0]! - playbackStartedAt).toBeLessThan(5000);
+      if (measure) {
+        const elapsed = resetTimestamps[0]! - playbackStartedAt;
+        reportPerformance('short score startup + playback + natural meter reset', [elapsed]);
+        expect(elapsed).toBeLessThan(5000);
+      }
       expect(frameCount()).toBeGreaterThan(0);
 
       const state = store.getStripState(sourceStripId)!;
       expect(state.barLevels[0]).toBe(-Infinity);
       expect(state.peakHoldLevels[0]).toBe(-Infinity);
       expect(state.clipFlags.every((clipped) => !clipped)).toBe(true);
-    }, 30000);
+    }
+
+    it('clears subscribed meter state when the score ends naturally', { timeout: 30000 }, () =>
+      runNaturalReset(false),
+    );
+    it(
+      'broadcasts meter-reset when the score ends naturally and clears subscribed state (FR-012)',
+      { tags: ['performance', 'real-engine'], timeout: 30000 },
+      () => runNaturalReset(true),
+    );
 
     it('broadcasts meter-reset after forced engine termination and clears subscribed state (FR-012)', async () => {
       const bridge = createBridge();

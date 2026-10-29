@@ -22,6 +22,15 @@ Run commands from the repository root with `pnpm`.
 - For main-process changes, run `pnpm --filter @blue/app build:main`.
 - Before handoff, run `pnpm test` and `pnpm lint` when the change spans packages or shared behavior.
 - Run `git diff --check` for whitespace errors.
+- Keep functional workloads in ordinary CI when separating speed assertions. Use fake clocks
+  and work/render counts for deterministic behavior; split oversized correctness cases into
+  independent scenarios instead of moving them to performance-only execution.
+- Application speed measurements use the opt-in `test:performance`, `test:performance:browser`,
+  and `test:performance:engine` commands. Run acceptance on a controlled desktop/reference
+  machine; hosted performance CI is manual diagnostic collection, not a PR/push/scheduled gate.
+- Follow [the performance testing guide](docs/performance-testing.md) for tags, evidence,
+  measured boundaries, and `@blue/data`'s opt-in measurement command. A green
+  correctness or collection job does not establish performance acceptance.
 
 ## Git worktrees
 

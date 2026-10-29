@@ -1,3 +1,4 @@
+import { reportPerformance } from '../test-support/performance';
 import { describe, expect, it } from 'vitest';
 import {
   BlueData,
@@ -299,7 +300,7 @@ describe('Project Editor Score Color Application (US3)', () => {
     expect(patternSrcItem.getBackgroundColor()).toBe((0x778899 & 0x00ffffff) | 0xff000000 | 0);
   });
 
-  it('atomically updates 1,000 targets on a single layer in one operation', () => {
+  function runColorWorkload(measure: boolean) {
     const data = new BlueData();
     data.getScore().length = 0;
     const poly = new PolyObject();
@@ -343,8 +344,19 @@ describe('Project Editor Score Color Application (US3)', () => {
     const duration = performance.now() - startTime;
 
     expect(changed).toBe(true);
-    expect(duration).toBeLessThan(1000); // Fast execution
+    if (measure) {
+      reportPerformance('score color patch (1,000 targets)', [duration]);
+      expect(duration).toBeLessThan(1000);
+    }
     expect(layer[0].getBackgroundColor()).toBe((0x223344 & 0x00ffffff) | 0xff000000 | 0);
     expect(layer[999].getBackgroundColor()).toBe((0x223344 & 0x00ffffff) | 0xff000000 | 0);
-  });
+  }
+
+  it('atomically updates 1,000 targets on a single layer in one operation', () =>
+    runColorWorkload(false));
+  it(
+    'atomically updates 1,000 targets on a single layer in one operation',
+    { tags: ['performance'] },
+    () => runColorWorkload(true),
+  );
 });

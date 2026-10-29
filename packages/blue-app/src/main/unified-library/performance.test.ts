@@ -1,10 +1,11 @@
+import { reportPerformance } from '../../test-support/performance';
 import { describe, expect, it, vi } from 'vitest';
 import type { LegacyLibraryDocumentPlan } from '@blue/data';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryService } from './service';
 
 describe('10,000-item library performance', () => {
-  it('keeps browse, indexed search, preview lookup, and pagination bounded', async () => {
+  async function runLibraryWorkload(measure: boolean) {
     const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
     try {
       const items = Array.from({ length: 10_000 }, (_, index) => {
@@ -127,14 +128,36 @@ describe('10,000-item library performance', () => {
       expect(preview).toMatchObject({ ok: true, value: { displayName: 'Item 09999' } });
       expect(payloadSpy).toHaveBeenCalledTimes(1);
       expect(editorSpy).not.toHaveBeenCalled();
-      expect(browsePageDurations[0]).toBeLessThan(2_000);
-      expect(browsePageDurations.filter((duration) => duration < 1_000)).toHaveLength(20);
-      expect(searchDurations.filter((duration) => duration < 1_000).length).toBeGreaterThanOrEqual(
-        19,
-      );
-      expect(previewMs).toBeLessThan(250);
+      if (measure) {
+        reportPerformance(
+          'library service browse (in-memory, first and paginated 500-item pages)',
+          browsePageDurations,
+        );
+        reportPerformance(
+          'library service indexed search (in-memory, 10,000 items)',
+          searchDurations,
+        );
+        reportPerformance('library service preview lookup (in-memory)', [previewMs]);
+        expect(browsePageDurations[0]).toBeLessThan(2_000);
+        expect(browsePageDurations.filter((duration) => duration < 1_000)).toHaveLength(20);
+        expect(
+          searchDurations.filter((duration) => duration < 1_000).length,
+        ).toBeGreaterThanOrEqual(19);
+        expect(previewMs).toBeLessThan(250);
+      }
     } finally {
       await client.close();
     }
-  }, 20_000);
+  }
+
+  it(
+    'browses all 10,000 items and searches/previews without eager payload loading',
+    { timeout: 20_000 },
+    () => runLibraryWorkload(false),
+  );
+  it(
+    'keeps browse, indexed search, preview lookup, and pagination bounded',
+    { tags: ['performance'], timeout: 20_000 },
+    () => runLibraryWorkload(true),
+  );
 });
