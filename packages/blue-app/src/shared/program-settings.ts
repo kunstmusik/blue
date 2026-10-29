@@ -470,7 +470,7 @@ export function createDefaultProjectDefaultsSettings(): ProjectDefaultsSettingsS
 
 export function createDefaultPlaybackSettings(): PlaybackSettingsSnapshot {
   return {
-    playbackFps: 24,
+    playbackFps: 30,
     playbackLatencyCorrection: 0,
     followPlayback: true,
     followPlaybackOnStart: true,

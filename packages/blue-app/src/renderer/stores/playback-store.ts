@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { create } from 'zustand';
 import type {
   PlaybackClockSnapshot,
@@ -37,6 +38,7 @@ interface PlaybackState {
   /** Hydrated durable preference; restores active state when a session ends. */
   savedFollowPlayback: boolean;
   followPlaybackOnStart: boolean;
+  playbackFps: number;
   latencyCorrection: number;
   clock: PlaybackClockState | null;
   display: PlaybackDisplayState;
@@ -84,7 +86,63 @@ interface PlaybackActions {
   reset: () => void;
 }
 
-export const PLAYBACK_DISPLAY_TICK_MS = 33;
+export const DEFAULT_PLAYBACK_FPS = 30;
+export const PLAYBACK_DISPLAY_TICK_MS = Math.round(1000 / DEFAULT_PLAYBACK_FPS);
+
+export function normalizePlaybackFps(fps: unknown): number {
+  return typeof fps === 'number' && Number.isFinite(fps) && fps >= 1 && fps <= 120
+    ? Math.round(fps)
+    : DEFAULT_PLAYBACK_FPS;
+}
+
+export function getPlaybackDisplayTickMs(playbackFps: number): number {
+  const normalized = normalizePlaybackFps(playbackFps);
+  return Math.max(8, Math.round(1000 / normalized));
+}
+
+let activeDisplayTickerConsumers = 0;
+let sharedDisplayTimerId: ReturnType<typeof setInterval> | null = null;
+let sharedDisplayTimerIntervalMs = 0;
+
+function syncSharedDisplayTimer(intervalMs: number): void {
+  if (activeDisplayTickerConsumers <= 0) {
+    if (sharedDisplayTimerId !== null) {
+      clearInterval(sharedDisplayTimerId);
+      sharedDisplayTimerId = null;
+      sharedDisplayTimerIntervalMs = 0;
+    }
+    return;
+  }
+  if (sharedDisplayTimerId !== null && sharedDisplayTimerIntervalMs === intervalMs) {
+    return;
+  }
+  if (sharedDisplayTimerId !== null) {
+    clearInterval(sharedDisplayTimerId);
+  }
+  sharedDisplayTimerIntervalMs = intervalMs;
+  sharedDisplayTimerId = setInterval(() => {
+    usePlaybackStore.getState().tickDisplay();
+  }, intervalMs);
+}
+
+/**
+ * Ref-counted display clock hook shared by ScorePanel and ToolbarDisplays so
+ * active playback runs at most one interval timer paced by `playbackFps`.
+ */
+export function usePlaybackDisplayTicker(active: boolean): void {
+  const playbackFps = usePlaybackStore((s) => s.playbackFps);
+  const intervalMs = getPlaybackDisplayTickMs(playbackFps);
+
+  useEffect(() => {
+    if (!active) return;
+    activeDisplayTickerConsumers += 1;
+    syncSharedDisplayTimer(intervalMs);
+    return () => {
+      activeDisplayTickerConsumers = Math.max(0, activeDisplayTickerConsumers - 1);
+      syncSharedDisplayTimer(intervalMs);
+    };
+  }, [active, intervalMs]);
+}
 
 export function createIdlePlaybackDisplayState(): PlaybackDisplayState {
   return {
@@ -171,6 +229,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
   followPlayback: true,
   savedFollowPlayback: true,
   followPlaybackOnStart: true,
+  playbackFps: DEFAULT_PLAYBACK_FPS,
   latencyCorrection: 0,
   clock: null,
   display: createIdlePlaybackDisplayState(),
@@ -495,16 +554,19 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
   hydrateFromProgramSettings: (settings) => {
     const savedFollowPlayback = settings.playback.followPlayback;
+    const playbackFps = normalizePlaybackFps(settings.playback.playbackFps);
     set({
       followPlayback: savedFollowPlayback,
       savedFollowPlayback,
       followPlaybackOnStart: settings.playback.followPlaybackOnStart,
+      playbackFps,
       latencyCorrection: settings.playback.playbackLatencyCorrection,
     });
   },
 
   tickDisplay: () => {
-    const { clock, latencyCorrection } = get();
+    const state = get();
+    const { clock, latencyCorrection } = state;
     if (!clock) return;
     const raw = derivePlaybackDisplayState(clock, Date.now());
     if (latencyCorrection !== 0 && raw.source !== 'idle-anchor') {
@@ -515,13 +577,21 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         raw.elapsedSeconds = correctedFrames / sampleRate;
       }
     }
+    const prev = state.display;
+    if (
+      prev.source === raw.source &&
+      Math.abs(prev.sampleFrames - raw.sampleFrames) < 1 &&
+      Math.abs(prev.elapsedSeconds - raw.elapsedSeconds) < 0.001
+    ) {
+      return;
+    }
     set({ display: raw });
   },
 
   reset: () => {
     // Runtime reset preserves the hydrated follow preferences and restores the
     // active follow state from the saved preference (FR-013).
-    const { savedFollowPlayback, followPlayback, followPlaybackOnStart } = get();
+    const { savedFollowPlayback, followPlayback, followPlaybackOnStart, playbackFps } = get();
     set({
       isPlaying: false,
       isAuditioning: false,
@@ -530,6 +600,7 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
       followPlayback: savedFollowPlayback,
       savedFollowPlayback,
       followPlaybackOnStart,
+      playbackFps,
       latencyCorrection: 0,
       clock: null,
       display: createIdlePlaybackDisplayState(),

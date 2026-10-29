@@ -1,9 +1,7 @@
 import React, {
   forwardRef,
   memo,
-  useEffect,
   useMemo,
-  useRef,
   useState,
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -11,12 +9,9 @@ import React, {
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Check, ChevronRight } from 'lucide-react';
 import {
-  PLAYBACK_DISPLAY_TICK_MS,
   createIdlePlaybackDisplayState,
-  derivePlaybackDisplayState,
+  usePlaybackDisplayTicker,
   usePlaybackStore,
-  type PlaybackClockState,
-  type PlaybackDisplayState,
   type PlaybackStatus,
 } from '../../stores/playback-store';
 import { useProjectStore } from '../../stores/project-store';
@@ -52,61 +47,6 @@ function isLivePlaybackStatus(status: PlaybackStatus): boolean {
   return status === 'playing' || status === 'stopping';
 }
 
-function useInterpolatedPlaybackDisplay(
-  status: PlaybackStatus,
-  clock: PlaybackClockState | null,
-  authoritativeDisplay: PlaybackDisplayState,
-): PlaybackDisplayState {
-  const [display, setDisplay] = useState<PlaybackDisplayState>(() =>
-    clock && isLivePlaybackStatus(status) ? authoritativeDisplay : createIdlePlaybackDisplayState(),
-  );
-  const clockRef = useRef<PlaybackClockState | null>(clock);
-
-  useEffect(() => {
-    clockRef.current = clock;
-  }, [clock]);
-
-  useEffect(() => {
-    if (!clock || !isLivePlaybackStatus(status)) {
-      setDisplay(createIdlePlaybackDisplayState());
-      return;
-    }
-
-    setDisplay(authoritativeDisplay);
-  }, [authoritativeDisplay, clock, status]);
-
-  useEffect(() => {
-    if (!isLivePlaybackStatus(status)) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      const currentClock = clockRef.current;
-      if (!currentClock) {
-        return;
-      }
-
-      setDisplay((previous) => {
-        const next = derivePlaybackDisplayState(currentClock, Date.now());
-        if (
-          previous.source === next.source &&
-          Math.abs(previous.sampleFrames - next.sampleFrames) < 1 &&
-          Math.abs(previous.elapsedSeconds - next.elapsedSeconds) < 0.001
-        ) {
-          return previous;
-        }
-        return next;
-      });
-    }, PLAYBACK_DISPLAY_TICK_MS);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [status]);
-
-  return display;
-}
-
 const PlayheadDisplayCard = memo(
   forwardRef<
     HTMLElement,
@@ -128,9 +68,11 @@ const PlayheadDisplayCard = memo(
     const sampleRate = useProjectStore((state) => state.transport.sampleRate);
     const status = usePlaybackStore((state) => state.status);
     const clock = usePlaybackStore((state) => state.clock);
-    const authoritativeDisplay = usePlaybackStore((state) => state.display);
+    const storeDisplay = usePlaybackStore((state) => state.display);
     const transportAnchor = usePlaybackStore((state) => state.transportAnchor);
-    const display = useInterpolatedPlaybackDisplay(status, clock, authoritativeDisplay);
+    const isLive = isLivePlaybackStatus(status);
+    usePlaybackDisplayTicker(isLive);
+    const display = clock && isLive ? storeDisplay : createIdlePlaybackDisplayState();
 
     const playhead = useMemo(() => {
       const playheadTransport = {

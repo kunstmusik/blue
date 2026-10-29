@@ -144,7 +144,8 @@ describe('Toolbar display render isolation', () => {
       '.toolbar-display-main--playhead',
     )?.textContent;
     expect(initialText).toBe('8.00');
-    expect(updatedText).toBe('10.00');
+    // 30 fps shared ticker fires every 33 ms; 30th tick inside 1000 ms lands at 990 ms (8 + 0.99 * 2 = 9.98 beats)
+    expect(updatedText).toBe('9.98');
 
     tree.unmount();
   });

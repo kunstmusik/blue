@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { derivePlaybackDisplayState, usePlaybackStore } from '../stores/playback-store';
+import {
+  DEFAULT_PLAYBACK_FPS,
+  derivePlaybackDisplayState,
+  getPlaybackDisplayTickMs,
+  PLAYBACK_DISPLAY_TICK_MS,
+  usePlaybackStore,
+} from '../stores/playback-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import { useProjectStore } from '../stores/project-store';
 
@@ -48,6 +54,7 @@ beforeEach(() => {
     followPlayback: true,
     savedFollowPlayback: true,
     followPlaybackOnStart: true,
+    playbackFps: DEFAULT_PLAYBACK_FPS,
   });
   useProjectStore.getState().clearProject();
   (window as unknown as { blueAPI?: unknown }).blueAPI = {
@@ -505,5 +512,32 @@ describe('playback store follow lifecycle (SPEC 079)', () => {
     await Promise.resolve();
 
     expect(playbackApi().commitProjectDocumentPatches).not.toHaveBeenCalled();
+  });
+
+  it('defaults playbackFps to 30 and hydrates playbackFps from program settings', () => {
+    expect(DEFAULT_PLAYBACK_FPS).toBe(30);
+    expect(PLAYBACK_DISPLAY_TICK_MS).toBe(33);
+    expect(usePlaybackStore.getState().playbackFps).toBe(30);
+    expect(getPlaybackDisplayTickMs(30)).toBe(33);
+    expect(getPlaybackDisplayTickMs(24)).toBe(42);
+    expect(getPlaybackDisplayTickMs(60)).toBe(17);
+
+    usePlaybackStore.getState().hydrateFromProgramSettings({
+      schemaVersion: 1,
+      general: {} as never,
+      playback: {
+        followPlayback: true,
+        followPlaybackOnStart: true,
+        playbackFps: 20,
+        playbackLatencyCorrection: 0,
+      },
+    } as never);
+
+    expect(usePlaybackStore.getState().playbackFps).toBe(20);
+    expect(getPlaybackDisplayTickMs(usePlaybackStore.getState().playbackFps)).toBe(50);
+
+    // Preserved across runtime reset
+    usePlaybackStore.getState().reset();
+    expect(usePlaybackStore.getState().playbackFps).toBe(20);
   });
 });

@@ -279,7 +279,7 @@ export function buildUsageMatrix(): UsageParityMatrixEntry[] {
       'playback',
       'playback.playbackFps',
       'Time Pointer Animation FPS',
-      '24',
+      '30',
       'Playhead update frequency',
       'used-by-workflow',
       { consumerPath: 'playback-store.ts' },

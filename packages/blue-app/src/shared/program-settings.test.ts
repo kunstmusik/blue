@@ -48,7 +48,7 @@ describe('program-settings defaults', () => {
     expect(s.projectDefaults.defaultLayerGroupType).toBe('TRACK');
     expect(s.projectDefaults.defaultUdoStyle).toBe('MODERN');
     expect(s.projectDefaults.defaultSmpteFrameRate).toBe(24);
-    expect(s.playback.playbackFps).toBe(24);
+    expect(s.playback.playbackFps).toBe(30);
     expect(s.playback.followPlayback).toBe(true);
     expect(s.utility.csoundExecutable).toBe('/usr/local/bin/csound');
     expect(s.utility.freezeFlags).toBe('-Ado');

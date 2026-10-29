@@ -47,7 +47,7 @@ import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
 import { useLayerSelectionStore } from '../../../stores/layer-selection-store';
 import { useScoreRulerSelection } from './score/useScoreRulerSelection';
 import { ScorePlaybackAutoFollow } from './score/use-live-time-pointer-beats';
-import { usePlaybackStore } from '../../../stores/playback-store';
+import { usePlaybackDisplayTicker, usePlaybackStore } from '../../../stores/playback-store';
 import ScoreOverlayLines from './score/ScoreOverlayLines';
 import NoteProcessorChainDialog from './score-object/note-processors/NoteProcessorChainDialog';
 import TrackInstrumentControl from './score/TrackInstrumentControl';
@@ -501,13 +501,7 @@ export default function ScorePanel() {
   const scrollToBeatTarget = useProjectStore((s) => s.scrollToBeatTarget);
   const clearScrollTarget = useProjectStore((s) => s.setScrollToBeatTarget);
 
-  useEffect(() => {
-    if (!isPlaying) return;
-    const timer = window.setInterval(() => {
-      usePlaybackStore.getState().tickDisplay();
-    }, 33);
-    return () => window.clearInterval(timer);
-  }, [isPlaying]);
+  usePlaybackDisplayTicker(isPlaying);
 
   useEffect(() => {
     if (scrollToBeatTarget == null || !scrollContainerRef.current) return;
