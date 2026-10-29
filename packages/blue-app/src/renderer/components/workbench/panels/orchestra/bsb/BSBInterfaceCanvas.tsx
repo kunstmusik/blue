@@ -196,8 +196,8 @@ function BSBInterfaceCanvas({
   }, [requestedGroupStack, groupStack]);
   const canvasSize = getCanvasDisplaySize(
     currentChildren,
-    viewportSize.width,
-    viewportSize.height,
+    editEnabled ? viewportSize.width : 0,
+    editEnabled ? viewportSize.height : 0,
     editEnabled ? undefined : 10,
   );
 
@@ -264,6 +264,7 @@ function BSBInterfaceCanvas({
   );
 
   useEffect(() => {
+    if (!editEnabled) return;
     const element = canvasRef.current;
     if (!element) return;
 
@@ -285,7 +286,7 @@ function BSBInterfaceCanvas({
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [editEnabled]);
 
   const handleWidgetAction = useCallback(
     (action: string) => {
@@ -813,8 +814,9 @@ function BSBInterfaceCanvas({
         style={{
           minHeight: editEnabled ? 400 : canvasSize.height,
           minWidth: editEnabled ? 600 : canvasSize.width,
-          width: canvasSize.width,
-          height: canvasSize.height,
+          // Let CSS fit runtime interfaces without feeding scrollbar gutters back into sizing.
+          width: editEnabled ? canvasSize.width : '100%',
+          height: editEnabled ? canvasSize.height : '100%',
         }}
         onMouseDown={onCanvasMouseDown}
         onMouseMove={onCanvasMouseMove}
