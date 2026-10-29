@@ -1,5 +1,5 @@
 import { formatSMPTE } from '../../../../time/time-unit-logic';
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import type { RefObject } from 'react';
 import type {
   ScoreTimeStateSnapshot,
@@ -24,6 +24,7 @@ import TempoRegionBar from './TempoRegionBar';
 import TempoLineView from './TempoLineView';
 import TempoPointDialog from './TempoPointDialog';
 import MeterEntryDialog from './MeterEntryDialog';
+import { useLiveTimePointerBeats } from './use-live-time-pointer-beats';
 import { cn } from '../../../../lib/cn';
 
 interface Props {
@@ -39,7 +40,7 @@ interface Props {
   renderEndTime: number;
   snapEnabled: boolean;
   snapValue: SnapValueName;
-  timePointerBeats: number | null;
+  timePointerBeats?: number | null;
   scrollContainerRef: RefObject<HTMLDivElement | null>;
   rootTimelineOnly: boolean;
   tempo: number;
@@ -48,7 +49,7 @@ interface Props {
   onMeterPatch: (patch: MeterMapPatch) => void;
 }
 
-export default function ColumnHeader({
+export default memo(function ColumnHeader({
   timeState,
   markers,
   meters,
@@ -202,7 +203,7 @@ export default function ColumnHeader({
       )}
     </div>
   );
-}
+});
 
 interface Mark {
   x: number;
@@ -224,6 +225,25 @@ interface MeterTimelineEntry {
 }
 
 const tempoMapAdapterCache = new WeakMap<TempoMapSnapshot, TempoMapAdapter>();
+
+function TimeBarPlayhead({
+  pixelsPerBeat,
+  timePointerBeats,
+}: {
+  pixelsPerBeat: number;
+  timePointerBeats?: number | null;
+}) {
+  const resolvedBeats = useLiveTimePointerBeats(timePointerBeats);
+  if (resolvedBeats == null || resolvedBeats < 0) {
+    return null;
+  }
+  return (
+    <div
+      className="absolute top-0 bottom-0 w-0.5 bg-orange-500 z-20"
+      style={{ left: resolvedBeats * pixelsPerBeat }}
+    />
+  );
+}
 
 function TimeBar({
   timeDisplay,
@@ -254,15 +274,28 @@ function TimeBar({
   timePointerBeats?: number | null;
   onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
-  const marks = computeMarks(
-    timeDisplay,
-    totalBeats,
-    pixelsPerBeat,
-    tempoMap,
-    meters,
-    smpteFrameRate,
-    sampleRate,
-    smpteDropFrame,
+  const marks = useMemo(
+    () =>
+      computeMarks(
+        timeDisplay,
+        totalBeats,
+        pixelsPerBeat,
+        tempoMap,
+        meters,
+        smpteFrameRate,
+        sampleRate,
+        smpteDropFrame,
+      ),
+    [
+      timeDisplay,
+      totalBeats,
+      pixelsPerBeat,
+      tempoMap,
+      meters,
+      smpteFrameRate,
+      sampleRate,
+      smpteDropFrame,
+    ],
   );
   const ROW_HEIGHT = 20;
   const hasRenderEnd =
@@ -321,11 +354,8 @@ function TimeBar({
           style={{ left: endPixel }}
         />
       )}
-      {timePointerBeats != null && timePointerBeats >= 0 && (
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-orange-500 z-20"
-          style={{ left: timePointerBeats * pixelsPerBeat }}
-        />
+      {!secondary && (
+        <TimeBarPlayhead pixelsPerBeat={pixelsPerBeat} timePointerBeats={timePointerBeats} />
       )}
     </div>
   );

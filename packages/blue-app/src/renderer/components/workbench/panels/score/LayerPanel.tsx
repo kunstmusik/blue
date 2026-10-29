@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { GROUP_SPACER } from './types';
 import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from './types';
 import type { SnapValueName } from '@blue/data';
@@ -34,7 +35,7 @@ interface Props {
   meterMap: MeterMapSnapshot;
 }
 
-export default function LayerPanel({
+export default memo(function LayerPanel({
   layerGroups,
   onOpenNested,
   projectSessionId,
@@ -198,4 +199,4 @@ export default function LayerPanel({
       )}
     </div>
   );
-}
+});

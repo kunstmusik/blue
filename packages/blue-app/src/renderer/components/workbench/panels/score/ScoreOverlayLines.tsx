@@ -1,16 +1,18 @@
+import { memo } from 'react';
 import { useScoreSelectionStore } from '../../../../stores/score-selection-store';
+import { useLiveTimePointerBeats } from './use-live-time-pointer-beats';
 
 interface Props {
   renderStartTime: number;
   renderEndTime: number;
-  timePointerBeats: number | null;
+  timePointerBeats?: number | null;
   pixelsPerBeat: number;
   totalBeats: number;
   scrollLeft: number;
   audioDropGuideBeat?: number | null;
 }
 
-export default function ScoreOverlayLines({
+export default memo(function ScoreOverlayLines({
   renderStartTime,
   renderEndTime,
   timePointerBeats,
@@ -21,12 +23,15 @@ export default function ScoreOverlayLines({
 }: Props) {
   const storeGuideBeat = useScoreSelectionStore((s) => s.audioDropGuideBeat);
   const activeGuideBeat = propGuideBeat !== undefined ? propGuideBeat : storeGuideBeat;
+  const resolvedTimePointerBeats = useLiveTimePointerBeats(timePointerBeats);
 
   const hasRenderEnd = renderEndTime > 0 && renderEndTime > renderStartTime;
   const startPixel = renderStartTime >= 0 ? renderStartTime * pixelsPerBeat : -1;
   const endPixel = hasRenderEnd ? renderEndTime * pixelsPerBeat : -1;
   const pointerPixel =
-    timePointerBeats != null && timePointerBeats >= 0 ? timePointerBeats * pixelsPerBeat : -1;
+    resolvedTimePointerBeats != null && resolvedTimePointerBeats >= 0
+      ? resolvedTimePointerBeats * pixelsPerBeat
+      : -1;
   const guidePixel =
     activeGuideBeat != null && activeGuideBeat >= 0 ? activeGuideBeat * pixelsPerBeat : -1;
   const contentWidth = Math.max(
@@ -85,4 +90,4 @@ export default function ScoreOverlayLines({
       </div>
     </div>
   );
-}
+});

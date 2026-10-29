@@ -46,7 +46,7 @@ import { useScoreSelectionStore } from '../../../stores/score-selection-store';
 import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
 import { useLayerSelectionStore } from '../../../stores/layer-selection-store';
 import { useScoreRulerSelection } from './score/useScoreRulerSelection';
-import { getFollowScrollTarget } from './score/follow-playback';
+import { ScorePlaybackAutoFollow } from './score/use-live-time-pointer-beats';
 import { usePlaybackStore } from '../../../stores/playback-store';
 import ScoreOverlayLines from './score/ScoreOverlayLines';
 import NoteProcessorChainDialog from './score-object/note-processors/NoteProcessorChainDialog';
@@ -55,7 +55,6 @@ import ColorPickerButton from '../../ColorPicker';
 import PatternLayerHeader from './score/PatternLayerHeader';
 import LayerRemovalConfirmationDialog from './score/LayerRemovalConfirmationDialog';
 import { buildApplyLayerColorToAllClipsPatch } from './score/score-color-actions';
-import { secondsToBeats as tempoMapSecondsToBeats } from './score/tempo-map-utils';
 import {
   buildLayerRemovalPlan,
   buildSelectionKey,
@@ -498,11 +497,6 @@ export default function ScorePanel() {
   });
 
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
-  const playbackStatus = usePlaybackStore((s) => s.status);
-  const playbackClock = usePlaybackStore((s) => s.clock);
-  const clockElapsed = usePlaybackStore((s) => s.display.elapsedSeconds);
-  const followPlayback = usePlaybackStore((s) => s.followPlayback);
-  const transportAnchor = usePlaybackStore((s) => s.transportAnchor);
   const stopAuditioning = usePlaybackStore((s) => s.stopAuditioning);
   const scrollToBeatTarget = useProjectStore((s) => s.scrollToBeatTarget);
   const clearScrollTarget = useProjectStore((s) => s.setScrollToBeatTarget);
@@ -514,56 +508,6 @@ export default function ScorePanel() {
     }, 33);
     return () => window.clearInterval(timer);
   }, [isPlaying]);
-
-  const livePlayheadTransport = transportAnchor ?? transport;
-  const hasLivePlaybackClock =
-    playbackClock !== null && (playbackStatus === 'playing' || playbackStatus === 'stopping');
-
-  const timePointerBeats =
-    hasLivePlaybackClock && clockElapsed >= 0
-      ? livePlayheadTransport.renderStartTime +
-        tempoMapSecondsToBeats(clockElapsed, livePlayheadTransport.tempoMap)
-      : null;
-
-  // Follow playback (Java ScoreTopComponent parity): keep the viewport
-  // stationary while the playhead is visible; when it reaches or passes the
-  // right edge — or lands outside the viewport after a seek/wrap — jump so
-  // the playhead becomes the left edge, clamped to the scroll range. Only
-  // writes on a boundary/catch-up event, never per display tick.
-  useEffect(() => {
-    if (!isRootTimeline || timePointerBeats == null) {
-      return;
-    }
-
-    const timeline = scrollContainerRef.current;
-    if (!timeline) {
-      return;
-    }
-
-    const pointerPixel = timePointerBeats * pixelsPerBeat;
-    const targetScrollLeft = getFollowScrollTarget({
-      isPlaybackActive: isPlaying,
-      isFollowEnabled: followPlayback,
-      pointerPixel,
-      scrollLeft: timeline.scrollLeft,
-      clientWidth: timeline.clientWidth,
-      scrollWidth: timeline.scrollWidth,
-    });
-
-    if (targetScrollLeft === null || targetScrollLeft === timeline.scrollLeft) {
-      return;
-    }
-
-    applyProgrammaticHorizontalScroll(targetScrollLeft);
-  }, [
-    followPlayback,
-    isPlaying,
-    isRootTimeline,
-    timePointerBeats,
-    pixelsPerBeat,
-    scrollContainerRef,
-    applyProgrammaticHorizontalScroll,
-  ]);
 
   useEffect(() => {
     if (scrollToBeatTarget == null || !scrollContainerRef.current) return;
@@ -883,6 +827,12 @@ export default function ScorePanel() {
           }
           second={
             <div className="h-full w-full flex flex-col">
+              <ScorePlaybackAutoFollow
+                isRootTimeline={isRootTimeline}
+                pixelsPerBeat={pixelsPerBeat}
+                scrollContainerRef={scrollContainerRef}
+                applyProgrammaticHorizontalScroll={applyProgrammaticHorizontalScroll}
+              />
               <div
                 ref={timelineHeaderRef}
                 data-score-timeline-header
@@ -902,7 +852,6 @@ export default function ScorePanel() {
                   renderEndTime={transport.renderEndTime}
                   snapEnabled={snapEnabled}
                   snapValue={snapValue}
-                  timePointerBeats={timePointerBeats}
                   scrollContainerRef={scrollContainerRef}
                   rootTimelineOnly={isRootTimeline}
                   tempo={initialTempo}
@@ -956,7 +905,6 @@ export default function ScorePanel() {
                 <ScoreOverlayLines
                   renderStartTime={transport.renderStartTime}
                   renderEndTime={transport.renderEndTime}
-                  timePointerBeats={timePointerBeats}
                   pixelsPerBeat={pixelsPerBeat}
                   totalBeats={totalBeats}
                   scrollLeft={scrollOverlayLeft}

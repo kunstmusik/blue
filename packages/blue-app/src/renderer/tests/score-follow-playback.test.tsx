@@ -29,29 +29,60 @@ class MockResizeObserver {
 
 // ─── ScorePanel harness (T002) ────────────────────────────────────────────────
 
-const { mockResetSession, mockScorePathState } = vi.hoisted(() => {
-  const mockResetSession = vi.fn();
+const { mockResetSession, mockScorePathState, mockLayerPanelRender, mockColumnHeaderRender } =
+  vi.hoisted(() => {
+    const mockResetSession = vi.fn();
 
-  return {
-    mockResetSession,
-    mockScorePathState: {
-      session: {
-        activeGroupId: null,
-        segments: [{ groupId: null, label: 'Root' }],
-        scrollByGroupId: {},
-      } as any,
-      scrollContainerRef: { current: null },
-      navigateToGroup: vi.fn(),
-      navigateToRoot: vi.fn(),
-      navigateToSegment: vi.fn(),
-      resetSession: mockResetSession,
-    },
-  };
-});
+    return {
+      mockResetSession,
+      mockLayerPanelRender: vi.fn(),
+      mockColumnHeaderRender: vi.fn(),
+      mockScorePathState: {
+        session: {
+          activeGroupId: null,
+          segments: [{ groupId: null, label: 'Root' }],
+          scrollByGroupId: {},
+        } as any,
+        scrollContainerRef: { current: null },
+        navigateToGroup: vi.fn(),
+        navigateToRoot: vi.fn(),
+        navigateToSegment: vi.fn(),
+        resetSession: mockResetSession,
+      },
+    };
+  });
 
 vi.mock('../components/workbench/panels/score/useScorePathState', () => ({
   useScorePathState: () => mockScorePathState,
 }));
+
+vi.mock('../components/workbench/panels/score/LayerPanel', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../components/workbench/panels/score/LayerPanel')>();
+  const Inner =
+    (actual.default as unknown as { type?: React.ComponentType<any> }).type ?? actual.default;
+  return {
+    ...actual,
+    default: React.memo(function CountedLayerPanel(props: any) {
+      mockLayerPanelRender();
+      return React.createElement(Inner, props);
+    }),
+  };
+});
+
+vi.mock('../components/workbench/panels/score/ColumnHeader', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../components/workbench/panels/score/ColumnHeader')>();
+  const Inner =
+    (actual.default as unknown as { type?: React.ComponentType<any> }).type ?? actual.default;
+  return {
+    ...actual,
+    default: React.memo(function CountedColumnHeader(props: any) {
+      mockColumnHeaderRender();
+      return React.createElement(Inner, props);
+    }),
+  };
+});
 
 function seedLoadedProject(): void {
   const snapshot = createEmptyProjectEditorSnapshot();
@@ -458,6 +489,36 @@ describe('ScorePanel follow playback page scrolling', () => {
     act(() => seedPlayingClock(2));
     act(() => advancePlayhead(20));
     expect(body.scrollLeft).toBe(0);
+
+    cleanupPanel(rendered);
+  });
+  it('isolates playhead display ticks from LayerPanel and ColumnHeader re-renders', () => {
+    seedLoadedProject();
+    const rendered = renderPanel();
+    getScoreSurface(rendered.container, { clientWidth: 1000, scrollWidth: 10000 });
+
+    act(() => seedPlayingClock(1));
+    mockLayerPanelRender.mockClear();
+    mockColumnHeaderRender.mockClear();
+
+    for (const sec of [2, 3, 4, 5, 6, 7, 8, 9]) {
+      act(() => advancePlayhead(sec));
+    }
+
+    expect(mockLayerPanelRender).toHaveBeenCalledTimes(0);
+    expect(mockColumnHeaderRender).toHaveBeenCalledTimes(0);
+
+    const ruler = rendered.container.querySelector('[data-score-time-ruler="primary"]');
+    const rulerPlayhead = Array.from(ruler?.querySelectorAll('div') ?? []).find((el) =>
+      el.className.includes('bg-orange-500'),
+    ) as HTMLDivElement | undefined;
+    expect(rulerPlayhead?.style.left).toBe('900px');
+
+    const overlayContent = rendered.container.querySelector('[data-score-overlay-content]');
+    const overlayPlayhead = Array.from(overlayContent?.querySelectorAll('div') ?? []).find((el) =>
+      el.className.includes('bg-orange-500'),
+    ) as HTMLDivElement | undefined;
+    expect(overlayPlayhead?.style.left).toBe('900px');
 
     cleanupPanel(rendered);
   });
