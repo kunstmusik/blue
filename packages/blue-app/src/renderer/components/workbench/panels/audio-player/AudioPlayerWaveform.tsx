@@ -55,8 +55,9 @@ export function drawWaveformEnvelope(
   peaks: Peaks,
   width: number,
   height: number,
+  cachedEnvelope?: readonly WaveformEnvelopePoint[],
 ): boolean {
-  const envelope = buildWaveformEnvelope(peaks, width, height);
+  const envelope = cachedEnvelope ?? buildWaveformEnvelope(peaks, width, height);
   const first = envelope[0];
   if (!first) return false;
 
@@ -90,12 +91,13 @@ export default function AudioPlayerWaveform({
 }: AudioPlayerWaveformProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const peaksRef = useRef<Peaks | null>(null);
+  const envelopeCacheRef = useRef<{
+    peaks: Peaks;
+    width: number;
+    height: number;
+    points: WaveformEnvelopePoint[];
+  } | null>(null);
   const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    peaksRef.current = peaks;
-  }, [peaks]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -111,8 +113,8 @@ export default function AudioPlayerWaveform({
     if (!filePath) return;
 
     let rafId = 0;
-    const draw = () => {
-      rafId = requestAnimationFrame(draw);
+
+    const paint = () => {
       const canvas = canvasRef.current;
       if (!canvas || width <= 0) return;
       const ctx2d = canvas.getContext('2d');
@@ -129,16 +131,38 @@ export default function AudioPlayerWaveform({
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx2d.clearRect(0, 0, cssWidth, cssHeight);
 
-      const currentPeaks = peaksRef.current;
       const mid = cssHeight / 2;
-      if (currentPeaks && currentPeaks.min.length > 0) {
+      if (peaks && peaks.min.length > 0) {
         ctx2d.strokeStyle = ZERO_LINE_COLOR;
         ctx2d.lineWidth = 1;
         ctx2d.beginPath();
         ctx2d.moveTo(0, mid + 0.5);
         ctx2d.lineTo(cssWidth, mid + 0.5);
         ctx2d.stroke();
-        drawWaveformEnvelope(ctx2d, currentPeaks, cssWidth, cssHeight);
+
+        const cached = envelopeCacheRef.current;
+        const envelopePoints =
+          cached &&
+          cached.peaks === peaks &&
+          cached.width === cssWidth &&
+          cached.height === cssHeight
+            ? cached.points
+            : buildWaveformEnvelope(peaks, cssWidth, cssHeight);
+        if (
+          !cached ||
+          cached.peaks !== peaks ||
+          cached.width !== cssWidth ||
+          cached.height !== cssHeight
+        ) {
+          envelopeCacheRef.current = {
+            peaks,
+            width: cssWidth,
+            height: cssHeight,
+            points: envelopePoints,
+          };
+        }
+
+        drawWaveformEnvelope(ctx2d, peaks, cssWidth, cssHeight, envelopePoints);
       } else {
         ctx2d.fillStyle = PLACEHOLDER_COLOR;
         ctx2d.fillRect(0, mid - 1, cssWidth, 2);
@@ -158,9 +182,65 @@ export default function AudioPlayerWaveform({
         ctx2d.stroke();
       }
     };
-    rafId = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(rafId);
-  }, [filePath, width, duration, audioRef]);
+
+    const tick = () => {
+      rafId = 0;
+      paint();
+      const audio = audioRef.current;
+      if (audio && !audio.paused && !audio.ended) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    const startLoop = () => {
+      if (rafId === 0) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    const stopLoopAndPaint = () => {
+      if (rafId !== 0) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      paint();
+    };
+
+    const paintWhenPaused = () => {
+      if (rafId === 0) {
+        paint();
+      }
+    };
+
+    paint();
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.addEventListener('play', startLoop);
+      audio.addEventListener('pause', stopLoopAndPaint);
+      audio.addEventListener('ended', stopLoopAndPaint);
+      audio.addEventListener('seeked', paintWhenPaused);
+      audio.addEventListener('timeupdate', paintWhenPaused);
+      audio.addEventListener('loadedmetadata', paintWhenPaused);
+      if (!audio.paused && !audio.ended) {
+        startLoop();
+      }
+    }
+
+    return () => {
+      if (rafId !== 0) {
+        cancelAnimationFrame(rafId);
+      }
+      if (audio) {
+        audio.removeEventListener('play', startLoop);
+        audio.removeEventListener('pause', stopLoopAndPaint);
+        audio.removeEventListener('ended', stopLoopAndPaint);
+        audio.removeEventListener('seeked', paintWhenPaused);
+        audio.removeEventListener('timeupdate', paintWhenPaused);
+        audio.removeEventListener('loadedmetadata', paintWhenPaused);
+      }
+    };
+  }, [filePath, width, duration, peaks, audioRef]);
 
   const seekFromClientX = (clientX: number) => {
     const canvas = canvasRef.current;
