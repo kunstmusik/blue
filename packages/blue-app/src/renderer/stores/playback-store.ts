@@ -81,6 +81,8 @@ interface PlaybackActions {
   toggleFollowPlaybackOnStart: () => void;
   /** Main-originated resolved on-start value; does not persist again. */
   applyResolvedFollowPlaybackOnStart: (enabled: boolean) => void;
+  /** Main-originated saved display cadence; main already persisted it. */
+  applyResolvedPlaybackFps: (fps: number) => void;
   hydrateFromProgramSettings: (settings: ProgramSettingsSnapshot) => void;
   tickDisplay: () => void;
   reset: () => void;
@@ -550,6 +552,11 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
   applyResolvedFollowPlaybackOnStart: (enabled) => {
     set({ followPlaybackOnStart: enabled });
+  },
+
+  applyResolvedPlaybackFps: (fps) => {
+    const playbackFps = normalizePlaybackFps(fps);
+    if (get().playbackFps !== playbackFps) set({ playbackFps });
   },
 
   hydrateFromProgramSettings: (settings) => {

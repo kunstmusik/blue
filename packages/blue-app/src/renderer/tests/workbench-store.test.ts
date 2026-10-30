@@ -8,7 +8,7 @@ import {
 import { acquireTreeDndManager } from '../components/tree/tree-dnd-domain';
 import { hasRestoredEditorPanel, useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
-import { usePlaybackStore } from '../stores/playback-store';
+import { DEFAULT_PLAYBACK_FPS, usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createLibraryEditorSession } from './library-editor-fixtures';
@@ -622,6 +622,7 @@ afterEach(() => {
   });
   useLibraryStore.getState().reset();
   usePlaybackStore.getState().reset();
+  usePlaybackStore.setState({ playbackFps: DEFAULT_PLAYBACK_FPS });
   useProjectStore.setState({
     addMarkerAtTime: originalAddMarkerAtTime,
   });
@@ -1135,6 +1136,17 @@ describe('workbench store native menu commands', () => {
     } as never);
 
     expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+  });
+
+  it('applies a saved playback FPS without writing settings again', () => {
+    usePlaybackStore.setState({ playbackFps: 30 });
+
+    useWorkbenchStore.getState().handleNativeMenuCommand({
+      type: 'set-playback-fps',
+      fps: 15,
+    });
+
+    expect(usePlaybackStore.getState().playbackFps).toBe(15);
   });
 
   it('routes legacy follow toggle commands through the explicit persisting action (SPEC 079)', async () => {

@@ -171,23 +171,26 @@ describe('Mounted 64-strip metering and fader interactions (FR-013)', () => {
     expect(rafCallbacks.length).toBe(64);
 
     const updateSpy = vi.spyOn(meterStore, 'update');
+    const frameTimestamp = 16.67;
 
     // Feed a meter frame with audio
     act(() => {
-      meterStore.processMeterFrame({
-        sequence: 1,
-        channels: channels.map((c) => ({
-          csdKey: c.id,
-          rms: [0.5, 0.5],
-          peak: [0.7, 0.7],
-        })),
-      });
+      meterStore.processMeterFrame(
+        {
+          sequence: 1,
+          channels: channels.map((c) => ({
+            csdKey: c.id,
+            rms: [0.5, 0.5],
+            peak: [0.7, 0.7],
+          })),
+        },
+        frameTimestamp,
+      );
     });
 
     // Fire all 64 rAF callbacks with the exact same timestamp (as the browser does in a single tick)
     const currentCallbacks = [...rafCallbacks];
     rafCallbacks = [];
-    const frameTimestamp = 16.67;
 
     act(() => {
       for (const cb of currentCallbacks) {
@@ -197,7 +200,7 @@ describe('Mounted 64-strip metering and fader interactions (FR-013)', () => {
 
     // update was called 64 times (once per strip draw callback)
     expect(updateSpy).toHaveBeenCalledTimes(64);
-    // But lastUpdateTime was set on the first call, so strips 2..64 immediately returned
+    // The frame arrived at this timestamp, so all 64 draws share one clock value.
     expect(meterStore.getLastUpdateTime()).toBe(frameTimestamp);
 
     // If another frame fires with the same timestamp, it also returns immediately

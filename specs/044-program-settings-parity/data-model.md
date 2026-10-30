@@ -70,13 +70,13 @@
 **Purpose**: Program playback and playhead-scrolling behavior.
 
 **Fields**:
-- `playbackFps`: integer, default 24.
+- `playbackFps`: integer, Blue TypeScript default 30 by project-owner decision on 2026-10-29 (Java Blue defaults to 24).
 - `playbackLatencyCorrection`: number in seconds, default 0.0.
 - `followPlayback`: boolean, default true.
 - `followPlaybackOnStart`: boolean, default true.
 
 **Consumers**:
-- Renderer playback display tick cadence where applicable.
+- Renderer playback display tick cadence, including Settings Apply in an open workbench.
 - Realtime playhead interpolation/latency correction.
 - Score auto-scroll follow behavior.
 - Native menu checked states and playback store defaults.

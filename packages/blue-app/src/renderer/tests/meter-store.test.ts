@@ -63,6 +63,29 @@ describe('MeterStore', () => {
     expect(state!.peakHoldLevels[0]).toBeCloseTo(20 * Math.log10(0.7), 1);
   });
 
+  it('does not age a new peak or clip across a gap without render ticks', () => {
+    store.update(100);
+    store.processMeterFrame(
+      { sequence: 1, channels: [{ csdKey: '0', rms: [0.5, 0.5], peak: [1.2, 1.2] }] },
+      10_000,
+    );
+    store.update(10_016);
+
+    const state = store.getStripState('track-1')!;
+    expect(state.clipFlags[0]).toBe(true);
+    expect(state.peakHoldLevels[0]).toBeCloseTo(20 * Math.log10(1.2), 1);
+  });
+
+  it('does not keep peak-hold timers active for silent frames', () => {
+    store.processMeterFrame(
+      { sequence: 1, channels: [{ csdKey: '0', rms: [0, 0], peak: [0, 0] }] },
+      100,
+    );
+    store.update(100);
+    store.update(200);
+    expect(store.getLastUpdateTime()).toBe(0);
+  });
+
   it('decays bar levels over time when signal drops', () => {
     // Attack to -6 dBFS (approx amp 0.5)
     store.processMeterFrame(

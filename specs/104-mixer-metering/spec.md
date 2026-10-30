@@ -215,7 +215,8 @@ the detached window; re-dock and confirm they continue.
   addition to any final data packets.
 - **FR-013**: Meter animation MUST NOT trigger per-update re-renders of mixer UI components
   around it; meter display MUST keep the mixer panel interactive (faders, solo/mute, effects)
-  during playback with dozens of active meters.
+  during playback with dozens of active meters. A meter that has settled below its display floor
+  MUST stay parked through continuing silent telemetry and wake when a visible level or clip arrives.
 - **FR-014**: Metering MUST NOT compromise realtime audio safety: sampling and transport of
   meter values off the audio path MUST be non-blocking from the audio thread's perspective, and
   audible dropouts attributable to metering are a defect.

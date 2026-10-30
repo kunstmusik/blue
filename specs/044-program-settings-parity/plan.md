@@ -7,6 +7,8 @@
 
 Replace the current placeholder Settings surface with Java Blue program-settings parity for the active `blue-settings` panels: General, Project Defaults, Playback, Utility, Realtime Render, and Disk Render. Store program settings app-wide in a main-process-owned settings service, expose typed snapshot/update IPC to the Settings renderer, apply defaults during new project creation, consume settings in realtime playback/playhead behavior and available render workflows, and produce a usage parity matrix plus missing-feature report for unavailable Java workflows such as disk render execution or SoundObject freeze.
 
+**Playback cadence follow-up (2026-10-29):** The project owner intentionally chose a 30 fps Blue TypeScript default for Time Pointer Animation FPS; Java Blue's default remains 24 fps. This is a documented default-value divergence, not a change to the supported 1–120 fps setting range. Settings Apply sends the saved FPS to the open workbench so its shared display ticker changes cadence in the same session. The change uses original code within the existing GPL-3.0-or-later `@blue/app` scope and adds no third-party material or dependency.
+
 ## Technical Context
 
 **Language/Version**: TypeScript 5.8.x, React 19.x, Electron 35.x, strict renderer/main/preload packages, pure TypeScript `@blue/data` for project mutation helpers  

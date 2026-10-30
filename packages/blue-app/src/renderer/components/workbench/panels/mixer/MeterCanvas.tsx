@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHostDocument } from '../../../../hooks/use-host-document';
-import { meterStore, MIN_DB, MAX_DB } from '../../../../stores/meter-store';
+import { meterStore, MIN_DB, MAX_DB, type MeterDisplayState } from '../../../../stores/meter-store';
 import { cn } from '../../../../lib/cn';
 import type { MeterProfileKey } from '@blue/data';
 import { getMeterProfile } from './meter-profiles';
@@ -27,6 +27,20 @@ export function getMeterWidth(nchnls: number): number {
   if (nchnls <= 1) return 10;
   if (nchnls === 2) return 12;
   return Math.min(36, Math.max(12, 2 * PADDING + nchnls * 3 + (nchnls - 1) * BAR_GAP));
+}
+
+function isMeterSilent(state: MeterDisplayState | undefined, minimumDb: number): boolean {
+  if (!state) return true;
+  for (let ch = 0; ch < state.nchnls; ch++) {
+    if (
+      (state.barLevels[ch] ?? -Infinity) > minimumDb ||
+      (state.peakHoldLevels[ch] ?? -Infinity) > minimumDb ||
+      state.clipFlags[ch]
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export const MeterCanvas = React.memo(function MeterCanvas({
@@ -141,20 +155,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
       const stripState = meterStore.getStripState(stripId);
       const nchnls = stripState ? stripState.nchnls : storeNchnls;
 
-      // Check if all channels are at silence floor and not clipped
-      let isAllSilent = true;
-      if (stripState) {
-        for (let ch = 0; ch < nchnls; ch++) {
-          if (
-            (stripState.barLevels[ch] ?? -Infinity) > profile.minimumDb ||
-            (stripState.peakHoldLevels[ch] ?? -Infinity) > profile.minimumDb ||
-            stripState.clipFlags[ch]
-          ) {
-            isAllSilent = false;
-            break;
-          }
-        }
-      }
+      const isAllSilent = isMeterSilent(stripState, profile.minimumDb);
 
       // If silent on previous frame and still silent, stay parked without scheduling further frames
       if (isAllSilent && wasParkedAtSilence) {
@@ -270,6 +271,12 @@ export const MeterCanvas = React.memo(function MeterCanvas({
     };
 
     const wake = () => {
+      if (
+        wasParkedAtSilence &&
+        isMeterSilent(meterStore.getStripState(stripId), profile.minimumDb)
+      ) {
+        return;
+      }
       wasParkedAtSilence = false;
       scheduleDraw();
     };

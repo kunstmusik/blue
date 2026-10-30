@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import ToolbarDisplays from '../components/menu-bar/ToolbarDisplays';
-import { usePlaybackStore } from '../stores/playback-store';
+import { DEFAULT_PLAYBACK_FPS, usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
 
 const formatterCallCounts = vi.hoisted(() => ({
@@ -103,6 +103,7 @@ beforeEach(() => {
   document.body.innerHTML = '';
   useProjectStore.getState().clearProject();
   usePlaybackStore.getState().reset();
+  usePlaybackStore.setState({ playbackFps: DEFAULT_PLAYBACK_FPS });
 });
 
 afterEach(() => {
@@ -147,6 +148,31 @@ describe('Toolbar display render isolation', () => {
     // 30 fps shared ticker fires every 33 ms; 30th tick inside 1000 ms lands at 990 ms (8 + 0.99 * 2 = 9.98 beats)
     expect(updatedText).toBe('9.98');
 
+    tree.unmount();
+  });
+
+  it('restarts the running display ticker when saved playback FPS changes', () => {
+    seedProject();
+    const tree = renderRoot(<ToolbarDisplays />);
+
+    act(() => {
+      usePlaybackStore.getState().acceptPlaybackClock({
+        sessionId: 1,
+        sampleFrames: 0,
+        sequence: 0,
+        sampleRate: 44100,
+        ksmps: 64,
+      });
+      usePlaybackStore.getState().setStatus({ status: 'playing' });
+    });
+
+    act(() => usePlaybackStore.getState().applyResolvedPlaybackFps(15));
+
+    act(() => vi.advanceTimersByTime(66));
+    expect(usePlaybackStore.getState().display.elapsedSeconds).toBe(0);
+
+    act(() => vi.advanceTimersByTime(1));
+    expect(usePlaybackStore.getState().display.elapsedSeconds).toBeCloseTo(0.067, 3);
     tree.unmount();
   });
 

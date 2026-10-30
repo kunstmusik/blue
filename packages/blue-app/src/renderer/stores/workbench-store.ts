@@ -1989,6 +1989,9 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
       case 'set-follow-playback-on-render-start':
         usePlaybackStore.getState().applyResolvedFollowPlaybackOnStart(command.enabled);
         return;
+      case 'set-playback-fps':
+        usePlaybackStore.getState().applyResolvedPlaybackFps(command.fps);
+        return;
       case 'toggle-loop-rendering':
         useProjectStore
           .getState()

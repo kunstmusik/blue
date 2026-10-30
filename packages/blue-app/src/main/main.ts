@@ -92,7 +92,10 @@ import {
   type CommitAudioFileDropRequest,
 } from '../shared/file-manager';
 import type { ProgramSettingsSnapshot } from '../shared/program-settings';
-import { normalizeDefaultLayerGroupType } from '../shared/program-settings';
+import {
+  createDefaultPlaybackSettings,
+  normalizeDefaultLayerGroupType,
+} from '../shared/program-settings';
 import { createCsoundManualService } from './csound-manual-service';
 import {
   isEffectEditorPatchRequest,
@@ -767,6 +770,7 @@ let recentProjectFiles: string[] = [];
 let currentFollowPlaybackEnabled = true;
 let currentSavedFollowPlayback = true;
 let currentFollowPlaybackOnStartEnabled = true;
+let currentPlaybackFps = createDefaultPlaybackSettings().playbackFps;
 let lastProjectOnLoadState: ProjectOnLoadState | null = null;
 
 function getConfiguredWorkDirectory(): string | undefined {
@@ -5689,19 +5693,19 @@ ipcRegistration.handle(ABOUT_WINDOW_CLOSE_CHANNEL, (event) => closeAboutWindow(e
 // ─── Program Settings IPC Handlers ───
 
 /**
- * Refresh the native follow menu cache from an authoritative settings
- * snapshot (Settings-window save or playback-panel reset) and broadcast
- * explicit resolved follow values to the workbench renderer when either
- * follow field changed.
+ * Refresh the native follow menu cache and broadcast changed playback
+ * preferences from an authoritative settings snapshot.
  */
-function syncFollowPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot): void {
+function syncPlaybackPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot): void {
   // The active menu mirror can be false during a session-only suspension, so
   // compare full-settings saves against the durable preference separately.
   const followChanged = snapshot.playback.followPlayback !== currentSavedFollowPlayback;
   const onStartChanged =
     snapshot.playback.followPlaybackOnStart !== currentFollowPlaybackOnStartEnabled;
+  const fpsChanged = snapshot.playback.playbackFps !== currentPlaybackFps;
   currentSavedFollowPlayback = snapshot.playback.followPlayback;
   currentFollowPlaybackOnStartEnabled = snapshot.playback.followPlaybackOnStart;
+  currentPlaybackFps = snapshot.playback.playbackFps;
   if (followChanged) {
     currentFollowPlaybackEnabled = snapshot.playback.followPlayback;
     mainWindow?.webContents.send('native-menu-command', {
@@ -5713,6 +5717,12 @@ function syncFollowPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot): v
     mainWindow?.webContents.send('native-menu-command', {
       type: 'set-follow-playback-on-render-start',
       enabled: currentFollowPlaybackOnStartEnabled,
+    });
+  }
+  if (fpsChanged) {
+    mainWindow?.webContents.send('native-menu-command', {
+      type: 'set-playback-fps',
+      fps: currentPlaybackFps,
     });
   }
   if (followChanged || onStartChanged) {
@@ -5745,10 +5755,9 @@ ipcRegistration.handle('program-settings:save', (_event, snapshot: ProgramSettin
   ) {
     void oscControlService.restart(result.snapshot.osc);
   }
-  // Refresh follow menu cache and broadcast explicit state when follow
-  // fields changed via the full Settings window save.
+  // Broadcast changed playback preferences after the full Settings save.
   if (result.ok && result.snapshot) {
-    syncFollowPreferencesFromSnapshot(result.snapshot);
+    syncPlaybackPreferencesFromSnapshot(result.snapshot);
   }
   return result;
 });
@@ -5796,7 +5805,7 @@ ipcRegistration.handle('program-settings:reset-panel', (_event, panel: string) =
     void oscControlService.restart(snapshot.osc);
   }
   if (panel === 'playback') {
-    syncFollowPreferencesFromSnapshot(snapshot);
+    syncPlaybackPreferencesFromSnapshot(snapshot);
   }
   return snapshot;
 });
@@ -7214,6 +7223,7 @@ async function startApplicationShellStage(): Promise<void> {
     currentFollowPlaybackEnabled = initialSettings.playback.followPlayback;
     currentSavedFollowPlayback = initialSettings.playback.followPlayback;
     currentFollowPlaybackOnStartEnabled = initialSettings.playback.followPlaybackOnStart;
+    currentPlaybackFps = initialSettings.playback.playbackFps;
 
     createWindow();
   } catch (error) {

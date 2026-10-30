@@ -315,10 +315,18 @@ describe('MeterCanvas', () => {
     const reactStripListener = vi.fn();
     const unsubReact = meterStore.subscribeStrip('track-1', reactStripListener);
 
+    for (const sequence of [2, 3]) {
+      meterStore.processMeterFrame({
+        sequence,
+        channels: [{ csdKey: '0', rms: [0, 0], peak: [0, 0] }],
+      });
+      expect(rafCallbacks).toHaveLength(0);
+    }
+
     // Now send an ordinary RMS frame (peak 0.4 <= held 0.9, no clip change)
     meterStore.processMeterFrame(
       {
-        sequence: 2,
+        sequence: 4,
         channels: [{ csdKey: '0', rms: [0.3, 0.3], peak: [0.4, 0.4] }],
       },
       6033,
@@ -330,6 +338,41 @@ describe('MeterCanvas', () => {
     expect(rafCallbacks).toHaveLength(1);
 
     unsubReact();
+  });
+
+  it('keeps a silent meter parked through repeated inaudible telemetry', () => {
+    const canvasWake = vi.fn();
+    const unsubWake = meterStore.subscribeCanvasWake('track-1', canvasWake);
+    act(() => {
+      root.render(<MeterCanvas stripId="track-1" width={14} height={80} />);
+    });
+
+    act(() => {
+      rafCallbacks.pop()!(100);
+    });
+    expect(rafCallbacks).toHaveLength(0);
+
+    for (let sequence = 1; sequence <= 3; sequence++) {
+      meterStore.processMeterFrame({
+        sequence,
+        channels: [{ csdKey: '0', rms: [0, 0], peak: [0, 0] }],
+      });
+      expect(rafCallbacks).toHaveLength(0);
+    }
+    expect(canvasWake).not.toHaveBeenCalled();
+
+    meterStore.processMeterFrame({
+      sequence: 4,
+      channels: [{ csdKey: '0', rms: [0.0001, 0.0001], peak: [0.0001, 0.0001] }],
+    });
+    expect(rafCallbacks).toHaveLength(0);
+
+    meterStore.processMeterFrame({
+      sequence: 5,
+      channels: [{ csdKey: '0', rms: [0.3, 0.3], peak: [0.4, 0.4] }],
+    });
+    expect(rafCallbacks).toHaveLength(1);
+    unsubWake();
   });
 
   it('renders mono, stereo, and 6-channel surround without clipping', () => {

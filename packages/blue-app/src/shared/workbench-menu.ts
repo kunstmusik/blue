@@ -224,6 +224,7 @@ export type NativeMenuCommand =
   | { type: 'toggle-follow-playback-on-render-start' }
   | { type: 'set-follow-playback'; enabled: boolean }
   | { type: 'set-follow-playback-on-render-start'; enabled: boolean }
+  | { type: 'set-playback-fps'; fps: number }
   | { type: 'toggle-loop-rendering' }
   | { type: 'add-marker' }
   | { type: 'navigate-next-marker' }

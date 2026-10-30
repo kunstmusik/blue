@@ -231,7 +231,10 @@ export class MeterStore {
       return;
     }
     this.lastSequence = payload.sequence;
+    // Settle old ballistics before applying this frame's fresh hold timers.
+    if (this.lastUpdateTime > 0) this.update(nowMs);
 
+    let hasAnySignal = false;
     for (const channelReading of payload.channels) {
       const stripId = this.csdKeyToStripId.get(channelReading.csdKey);
       if (!stripId) continue;
@@ -240,6 +243,7 @@ export class MeterStore {
       if (!strip) continue;
 
       let stripChanged = false;
+      let hasCanvasSignal = false;
       for (let ch = 0; ch < strip.nchnls; ch++) {
         let rawRms = channelReading.rms[ch] ?? 0;
         let rawPeak = channelReading.peak[ch] ?? 0;
@@ -253,12 +257,14 @@ export class MeterStore {
 
         // Instantaneous attack
         const rmsDb = ampToDb(rawRms);
+        if (rmsDb > -Infinity) hasCanvasSignal = true;
         if (rmsDb > strip.barLevels[ch]!) {
           strip.barLevels[ch] = rmsDb;
         }
 
         const peakDb = ampToDb(rawPeak);
-        if (peakDb >= strip.peakHoldLevels[ch]!) {
+        if (peakDb > -Infinity) hasCanvasSignal = true;
+        if (peakDb > -Infinity && peakDb >= strip.peakHoldLevels[ch]!) {
           strip.peakHoldLevels[ch] = peakDb;
           strip.peakHoldTimers[ch] = PEAK_HOLD_DURATION_SEC;
         }
@@ -277,8 +283,12 @@ export class MeterStore {
       if (stripChanged) {
         this.notifyStrip(stripId);
       }
-      this.notifyCanvasWake(stripId);
+      if (hasCanvasSignal) {
+        hasAnySignal = true;
+        this.notifyCanvasWake(stripId);
+      }
     }
+    if (hasAnySignal && this.lastUpdateTime === 0) this.lastUpdateTime = nowMs;
   }
 
   update(nowMs = performance.now()): void {
@@ -300,10 +310,7 @@ export class MeterStore {
 
         // Decay bar level towards target RMS or -Infinity
         if (strip.barLevels[ch]! > targetRmsDb) {
-          const nextBar = Math.max(
-            targetRmsDb,
-            strip.barLevels[ch]! - DECAY_RATE_DB_PER_SEC * dt,
-          );
+          const nextBar = Math.max(targetRmsDb, strip.barLevels[ch]! - DECAY_RATE_DB_PER_SEC * dt);
           strip.barLevels[ch] =
             targetRmsDb === -Infinity && nextBar <= silenceClampDb ? -Infinity : nextBar;
         } else if (strip.barLevels[ch]! < targetRmsDb) {

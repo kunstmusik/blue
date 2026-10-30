@@ -1032,7 +1032,7 @@ describe('useIPCListeners', () => {
     expect(usePlaybackStore.getState().followPlayback).toBe(false);
   });
 
-  it('applies resolved follow commands delivered on the native-menu channel (SPEC 079)', async () => {
+  it('applies resolved playback commands delivered on the native-menu channel', async () => {
     await act(async () => {
       root.render(<Harness />);
     });
@@ -1053,6 +1053,12 @@ describe('useIPCListeners', () => {
     });
 
     expect(usePlaybackStore.getState().followPlaybackOnStart).toBe(false);
+
+    act(() => {
+      nativeMenuHandler({ type: 'set-playback-fps', fps: 15 });
+    });
+
+    expect(usePlaybackStore.getState().playbackFps).toBe(15);
   });
 
   it('handles project runtime outcomes and updates project store status', async () => {
