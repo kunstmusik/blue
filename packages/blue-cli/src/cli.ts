@@ -105,7 +105,7 @@ async function compileProjectNow(
     await project.processOnLoadAsync(session);
     csd =
       request.mode === 'bluelive'
-        ? project.toBlueLiveCSD(session, false, layout).csdText
+        ? (await project.toBlueLiveCSDAsync(session, undefined, false, layout)).csdText
         : request.mode === 'realtime'
           ? await project.toCSDAsync(session, undefined, layout)
           : await project.toDiskCSDAsync(session, undefined, layout);

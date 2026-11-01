@@ -37,7 +37,7 @@ describe('blue-cli binary smoke test', () => {
             projectPath,
             '-o',
             outputPath,
-            ...(mode === 'realtime' ? ['--realtime'] : []),
+            ...(mode === 'realtime' ? ['--realtime'] : mode === 'bluelive' ? ['--bluelive'] : []),
           ]),
         ).rejects.toMatchObject({
           code: 1,
@@ -62,12 +62,22 @@ describe('blue-cli binary smoke test', () => {
       expect(fs.readFileSync(outputPath, 'utf8')).toContain('<CsoundSynthesizer>');
       data.getArrangement().addInstrument(new PythonInstrument(), '1');
       fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
-      await expect(
-        execFileAsync('node', [distBinaryPath, 'compile', '-p', projectPath, '-o', outputPath]),
-      ).rejects.toMatchObject({
-        code: 1,
-        stderr: expect.stringMatching(/PythonInstrument.*Blue desktop app.*Java runtime/),
-      });
+      for (const mode of [[], ['--bluelive']]) {
+        await expect(
+          execFileAsync('node', [
+            distBinaryPath,
+            'compile',
+            '-p',
+            projectPath,
+            '-o',
+            outputPath,
+            ...mode,
+          ]),
+        ).rejects.toMatchObject({
+          code: 1,
+          stderr: expect.stringMatching(/PythonInstrument.*Blue desktop app.*Java runtime/),
+        });
+      }
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

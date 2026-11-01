@@ -4867,6 +4867,7 @@ async function blueLiveToggle(): Promise<
       getCurrentProjectRevision(),
       getCurrentProjectDirectory(),
       javaScriptSession ?? undefined,
+      await runProjectOnLoad(liveProjectData),
     );
     if (startSnapshot.status === 'error') {
       const message = startSnapshot.message || 'Blue Live engine start failed';
@@ -4926,6 +4927,7 @@ async function blueLiveRecompile(): Promise<void> {
     getCurrentProjectRevision(),
     getCurrentProjectDirectory(),
     javaScriptSession ?? undefined,
+    await runProjectOnLoad(getCurrentData()),
   );
   if (blueLiveSession.isRunning()) {
     registerBlueLivePerformance();

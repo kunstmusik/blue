@@ -763,13 +763,48 @@ export function toBlueLiveCSD(
   emitMetering = false,
   layoutManifest?: AudioLayoutManifest | null,
 ): RenderCsdResult {
+  return buildBlueLiveCSD(blueData, session, emitMetering, layoutManifest) as RenderCsdResult;
+}
+
+export async function toBlueLiveCSDAsync(
+  blueData: BlueData,
+  session?: JavaScriptSession,
+  runtimeClient?: JavaRuntimeClientContract | null,
+  emitMetering = false,
+  layoutManifest?: AudioLayoutManifest | null,
+): Promise<RenderCsdResult> {
+  return buildBlueLiveCSD(blueData, session, emitMetering, layoutManifest, runtimeClient, true);
+}
+
+function buildBlueLiveCSD(
+  blueData: BlueData,
+  session?: JavaScriptSession,
+  emitMetering = false,
+  layoutManifest?: AudioLayoutManifest | null,
+  runtimeClient?: JavaRuntimeClientContract | null,
+  asynchronous = false,
+): RenderCsdResult | Promise<RenderCsdResult> {
   const {
     arrangement: clonedArrangement,
     tables: clonedTables,
     mixer: clonedMixer,
     compileData,
-  } = createRenderSnapshot(blueData, session, undefined, layoutManifest);
+  } = createRenderSnapshot(blueData, session, runtimeClient, layoutManifest);
   let generationError: unknown = null;
+  let pending = false;
+  const cleanup = () => {
+    try {
+      disposeJavaScriptCompileState(compileData);
+    } catch (cleanupError) {
+      if (generationError === null) {
+        throw cleanupError;
+      }
+      console.warn(
+        '[BlueData.toBlueLiveCSD] Failed to dispose JavaScript runtime state:',
+        cleanupError,
+      );
+    }
+  };
 
   try {
     const channelIdAssignments = assignChannelIds(blueData, clonedMixer);
@@ -908,69 +943,73 @@ export function toBlueLiveCSD(
     }
     const udoText = allUDOText.length > 0 ? `${allUDOText.join('\n')}\n` : '';
 
-    const orc = clonedArrangement.generateOrchestra(compileData, clonedMixer, nchnls, parameterMap);
+    const finish = (orc: string): RenderCsdResult => {
+      let blueLiveOrc = orc + mixerInstruments;
+      blueLiveOrc += '\n\n' + createAllNotesOffInstrument(blueData, baseInstrIds);
 
-    let blueLiveOrc = orc + mixerInstruments;
-    blueLiveOrc += '\n\n' + createAllNotesOffInstrument(blueData, baseInstrIds);
+      if (clonedMixer.isEnabled()) {
+        blueLiveSco += `i "BlueMixer" 0 ${totalDur}\n`;
+      }
 
-    if (clonedMixer.isEnabled()) {
-      blueLiveSco += `i "BlueMixer" 0 ${totalDur}\n`;
-    }
+      const projectInfo = buildProjectInfo(blueData);
 
-    const projectInfo = buildProjectInfo(blueData);
+      const csdText =
+        projectInfo +
+        '<CsoundSynthesizer>\n\n' +
+        '<CsInstruments>\n' +
+        orchestraHeader +
+        '\n\n' +
+        globalOrc +
+        '\n\n' +
+        arrangementGlobalOrc +
+        '\n\n' +
+        udoText +
+        '\n\n' +
+        blueLiveOrc +
+        '\n\n</CsInstruments>\n\n' +
+        '<CsScore>\n\n' +
+        ftables +
+        '\n\n' +
+        blueLiveSco +
+        'e ' +
+        totalDur +
+        '\n\n' +
+        '</CsScore>\n\n' +
+        '</CsoundSynthesizer>';
 
-    const csdText =
-      projectInfo +
-      '<CsoundSynthesizer>\n\n' +
-      '<CsInstruments>\n' +
-      orchestraHeader +
-      '\n\n' +
-      globalOrc +
-      '\n\n' +
-      arrangementGlobalOrc +
-      '\n\n' +
-      udoText +
-      '\n\n' +
-      blueLiveOrc +
-      '\n\n</CsInstruments>\n\n' +
-      '<CsScore>\n\n' +
-      ftables +
-      '\n\n' +
-      blueLiveSco +
-      'e ' +
-      totalDur +
-      '\n\n' +
-      '</CsScore>\n\n' +
-      '</CsoundSynthesizer>';
-
-    return {
-      csdText,
-      parameters: compileData.getOriginalParameters(),
-      stringChannels: compileData.getStringChannels(),
-      midiInstrumentTargets,
-      blueX7Bindings: compileData.getBlueX7Bindings(),
-      meterBindingMap:
-        emitMetering && clonedMixer.isEnabled()
-          ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
-          : undefined,
-      mixerGateBindings: gateBindings ?? undefined,
-      pannerBindings,
+      return {
+        csdText,
+        parameters: compileData.getOriginalParameters(),
+        stringChannels: compileData.getStringChannels(),
+        midiInstrumentTargets,
+        blueX7Bindings: compileData.getBlueX7Bindings(),
+        meterBindingMap:
+          emitMetering && clonedMixer.isEnabled()
+            ? buildMeterBindingMap(clonedMixer, channelIdAssignments, nchnls)
+            : undefined,
+        mixerGateBindings: gateBindings ?? undefined,
+        pannerBindings,
+      };
     };
+    if (asynchronous) {
+      pending = true;
+      return clonedArrangement
+        .generateOrchestraAsync(compileData, clonedMixer, nchnls, parameterMap)
+        .then(finish)
+        .catch((error) => {
+          generationError = error;
+          throw error;
+        })
+        .finally(cleanup);
+    }
+    return finish(
+      clonedArrangement.generateOrchestra(compileData, clonedMixer, nchnls, parameterMap),
+    );
   } catch (error) {
     generationError = error;
     throw error;
   } finally {
-    try {
-      disposeJavaScriptCompileState(compileData);
-    } catch (cleanupError) {
-      if (generationError === null) {
-        throw cleanupError;
-      }
-      console.warn(
-        '[BlueData.toBlueLiveCSD] Failed to dispose JavaScript runtime state:',
-        cleanupError,
-      );
-    }
+    if (!pending) cleanup();
   }
 }
 

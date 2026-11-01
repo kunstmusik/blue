@@ -84,12 +84,18 @@ import './sound-objects/register-sound-object-types';
 
 import { loadFromString, saveAsXML, saveToString } from './blue-data/xml-policy';
 import type { XmlDiagnosticSink } from './serialization/xml-load';
-export { buildStandardCSD, buildStandardCSDAsync, toBlueLiveCSD } from './blue-data/csd-policy';
+export {
+  buildStandardCSD,
+  buildStandardCSDAsync,
+  toBlueLiveCSD,
+  toBlueLiveCSDAsync,
+} from './blue-data/csd-policy';
 import {
   buildStandardCSD,
   buildStandardCSDAsync,
   buildScoreText,
   toBlueLiveCSD,
+  toBlueLiveCSDAsync,
 } from './blue-data/csd-policy';
 import type { RenderCsdResult } from './blue-data/csd-policy';
 export type { RenderCsdResult };
@@ -360,6 +366,15 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     layoutManifest?: AudioLayoutManifest | null,
   ): RenderCsdResult {
     return toBlueLiveCSD(this, session, emitMetering, layoutManifest);
+  }
+
+  async toBlueLiveCSDAsync(
+    session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
+    emitMetering = false,
+    layoutManifest?: AudioLayoutManifest | null,
+  ): Promise<RenderCsdResult> {
+    return toBlueLiveCSDAsync(this, session, runtimeClient, emitMetering, layoutManifest);
   }
 
   processOnLoad(session?: JavaScriptSession): void {

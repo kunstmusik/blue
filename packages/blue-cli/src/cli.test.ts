@@ -55,7 +55,7 @@ describe('compileProject', () => {
   it('uses toDiskCSDAsync for the default compile mode', async () => {
     const toDiskCSDAsync = vi.fn(() => 'disk-csd');
     const toCSDAsync = vi.fn(() => 'realtime-csd');
-    const toBlueLiveCSD = vi.fn(() => ({ csdText: 'bluelive-csd' }));
+    const toBlueLiveCSDAsync = vi.fn(() => ({ csdText: 'bluelive-csd' }));
 
     fsMock.readFile.mockResolvedValue('project xml');
     fsMock.mkdir.mockResolvedValue(undefined);
@@ -68,7 +68,7 @@ describe('compileProject', () => {
         processOnLoadAsync: vi.fn(),
         toDiskCSDAsync,
         toCSDAsync,
-        toBlueLiveCSD,
+        toBlueLiveCSDAsync,
       },
     });
 
@@ -85,15 +85,15 @@ describe('compileProject', () => {
     });
     expect(toDiskCSDAsync).toHaveBeenCalledTimes(1);
     expect(toCSDAsync).not.toHaveBeenCalled();
-    expect(toBlueLiveCSD).not.toHaveBeenCalled();
+    expect(toBlueLiveCSDAsync).not.toHaveBeenCalled();
     expect(fsMock.writeFile).toHaveBeenCalledWith(resolve('/tmp/project.csd'), 'disk-csd', 'utf8');
     expect(result.bytesWritten).toBe(Buffer.byteLength('disk-csd', 'utf8'));
   });
 
-  it('uses toCSDAsync for realtime mode and toBlueLiveCSD for Blue Live mode', async () => {
+  it('uses toCSDAsync for realtime mode and toBlueLiveCSDAsync for Blue Live mode', async () => {
     const toDiskCSDAsync = vi.fn(() => 'disk-csd');
     const toCSDAsync = vi.fn(() => 'realtime-csd');
-    const toBlueLiveCSD = vi.fn(() => ({ csdText: 'bluelive-csd' }));
+    const toBlueLiveCSDAsync = vi.fn(() => ({ csdText: 'bluelive-csd' }));
 
     fsMock.readFile.mockResolvedValue('project xml');
     fsMock.mkdir.mockResolvedValue(undefined);
@@ -106,7 +106,7 @@ describe('compileProject', () => {
         processOnLoadAsync: vi.fn(),
         toDiskCSDAsync,
         toCSDAsync,
-        toBlueLiveCSD,
+        toBlueLiveCSDAsync,
       },
     });
 
@@ -123,7 +123,7 @@ describe('compileProject', () => {
     });
 
     expect(toCSDAsync).toHaveBeenCalledTimes(1);
-    expect(toBlueLiveCSD).toHaveBeenCalledTimes(1);
+    expect(toBlueLiveCSDAsync).toHaveBeenCalledTimes(1);
     expect(toDiskCSDAsync).not.toHaveBeenCalled();
   });
 

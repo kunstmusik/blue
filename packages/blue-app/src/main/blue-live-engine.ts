@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { EngineBridge, EngineOutputCallback } from './engine-bridge';
-import type { BlueData, JavaScriptSession, Parameter } from '@blue/data';
+import type { BlueData, JavaRuntimeClientContract, JavaScriptSession, Parameter } from '@blue/data';
 import type {
   CompiledBlueX7Binding,
   CompiledMidiInstrumentTarget,
@@ -340,6 +340,7 @@ export class BlueLiveEngineSession {
     revision: number,
     projectDirectory?: string | null,
     session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<BlueLiveStatusSnapshot> {
     if (this.status === 'starting' || this.status === 'running' || this.status === 'stopping') {
       return this.getSnapshot();
@@ -374,7 +375,13 @@ export class BlueLiveEngineSession {
 
       const liveData = data.getLiveData();
       const compileData = prepareProjectTuningDependencies(data);
-      const csd = compileData.toBlueLiveCSD(session, false, preflightResult.manifest);
+      const csd = await compileData.toBlueLiveCSDAsync(
+        session,
+        runtimeClient,
+        false,
+        preflightResult.manifest,
+      );
+      if (await this.stopCancelledStart(lifecycleGeneration)) return this.getSnapshot();
       const runtimeParameterSync = syncCompiledRuntimeParameterNames(
         data.getArrangement(),
         data.getMixer(),
@@ -565,9 +572,16 @@ export class BlueLiveEngineSession {
     revision: number,
     projectDirectory?: string | null,
     session?: JavaScriptSession,
+    runtimeClient?: JavaRuntimeClientContract | null,
   ): Promise<BlueLiveStatusSnapshot> {
     await this.stop();
-    return this.start(data, revision, projectDirectory ?? this.projectDirectory, session);
+    return this.start(
+      data,
+      revision,
+      projectDirectory ?? this.projectDirectory,
+      session,
+      runtimeClient,
+    );
   }
 
   async sendAllNotesOff(): Promise<{ ok: boolean; message?: string }> {

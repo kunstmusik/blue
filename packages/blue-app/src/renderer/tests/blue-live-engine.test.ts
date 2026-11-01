@@ -897,7 +897,7 @@ describe('BlueLiveEngineSession catalog lifecycle (Spec 067 US4)', () => {
   it('fails startup when the compiled target catalog contains duplicate identities', async () => {
     const data = new BlueData();
     const render = data.toBlueLiveCSD();
-    vi.spyOn(data, 'toBlueLiveCSD').mockReturnValue({
+    vi.spyOn(data, 'toBlueLiveCSDAsync').mockResolvedValue({
       ...render,
       midiInstrumentTargets: [
         { kind: 'orchestra', assignmentId: 'duplicate', runtimeInstrumentId: 1 },

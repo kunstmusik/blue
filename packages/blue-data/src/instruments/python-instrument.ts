@@ -91,7 +91,9 @@ export class PythonInstrument extends Instrument {
   }
 
   override generateInstrument(): string {
-    return '';
+    throw new Error(
+      'PythonInstrument requires asynchronous compilation with a Java runtime session',
+    );
   }
 
   override async generateInstrumentAsync(
