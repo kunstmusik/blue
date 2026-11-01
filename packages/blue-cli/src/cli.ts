@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { statSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { Command } from 'commander';
@@ -37,11 +38,26 @@ export function resolveCompileMode(
   return 'disk';
 }
 
+function isSameFile(source: string, destination: string): boolean {
+  try {
+    const input = statSync(source);
+    const output = statSync(destination);
+    return input.dev === output.dev && input.ino === output.ino;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
 export async function compileProject(
   request: CompileProjectRequest,
 ): Promise<{ bytesWritten: number }> {
   const projectPath = path.resolve(request.projectPath);
   const outputPath = path.resolve(request.outputPath);
+
+  if (projectPath === outputPath || isSameFile(projectPath, outputPath)) {
+    throw new Error('Output must be a different file from the source project.');
+  }
 
   const source = await fs.readFile(projectPath, 'utf8');
   const report = readProjectXml(source, {
