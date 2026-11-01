@@ -25,6 +25,8 @@ export interface ScoreGenerationOptions {
   readonly beatOrigin?: number;
   /** A parent PolyObject will rebase selected-range notes after child placement. */
   readonly deferRenderStartRebase?: boolean;
+  /** A Sound-containing transformed source is generated whole; seek files after placement. */
+  readonly deferFileSeek?: boolean;
   /** Pre-range minimum collected once by a linked source's owner PolyObject. */
   readonly normalizationOrigin?: ScoreNormalizationOrigin;
   readonly processWithSolo?: boolean;

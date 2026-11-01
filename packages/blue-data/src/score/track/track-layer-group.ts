@@ -1,3 +1,7 @@
+import {
+  withSoundOccurrences,
+  withSoundOccurrencesAsync,
+} from '../../sound-objects/sound-occurrences';
 import { Track } from './track';
 import { LayerGroup } from '../layers/layer-group';
 import type { CopyMode } from '../../deep-copyable';
@@ -119,30 +123,32 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     endTime: number,
     options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
-    const generationOptions = normalizeScoreGenerationOptions(options);
-    const notes = new NoteList();
-    // Audio header authority (Spec 111): track event flags and event solo do
-    // not filter Track groups; mixer audio mute/solo handles audibility.
-    const audioMode = generationOptions.trackLayerMuteSoloMode === 'audio';
-    for (const track of this) {
-      if (!audioMode) {
-        if (track.isMuted()) continue;
-        if (generationOptions.processWithSolo && !track.isSolo()) continue;
+    return withSoundOccurrences(compileData, startTime, startTime, endTime, () => {
+      const generationOptions = normalizeScoreGenerationOptions(options);
+      const notes = new NoteList();
+      // Audio header authority (Spec 111): track event flags and event solo do
+      // not filter Track groups; mixer audio mute/solo handles audibility.
+      const audioMode = generationOptions.trackLayerMuteSoloMode === 'audio';
+      for (const track of this) {
+        if (!audioMode) {
+          if (track.isMuted()) continue;
+          if (generationOptions.processWithSolo && !track.isSolo()) continue;
+        }
+        if (generationOptions.pruneInaudibleTracks?.has(track.getUniqueId())) {
+          reportPrunedTrackDurationBound(track, generationOptions, context, startTime, endTime);
+          continue;
+        }
+        const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
+        notes.merge(
+          track.generateForCSD(context, compileData, startTime, endTime, {
+            ...generationOptions,
+            trackId: track.getUniqueId(),
+            instrumentOverrideId: trackId,
+          }),
+        );
       }
-      if (generationOptions.pruneInaudibleTracks?.has(track.getUniqueId())) {
-        reportPrunedTrackDurationBound(track, generationOptions, context, startTime, endTime);
-        continue;
-      }
-      const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
-      notes.merge(
-        track.generateForCSD(context, compileData, startTime, endTime, {
-          ...generationOptions,
-          trackId: track.getUniqueId(),
-          instrumentOverrideId: trackId,
-        }),
-      );
-    }
-    return notes;
+      return notes;
+    });
   }
 
   async generateForCSDAsync(
@@ -152,28 +158,30 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     endTime: number,
     options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
-    const generationOptions = normalizeScoreGenerationOptions(options);
-    const notes = new NoteList();
-    const audioMode = generationOptions.trackLayerMuteSoloMode === 'audio';
-    for (const track of this) {
-      if (!audioMode) {
-        if (track.isMuted()) continue;
-        if (generationOptions.processWithSolo && !track.isSolo()) continue;
+    return withSoundOccurrencesAsync(compileData, startTime, startTime, endTime, async () => {
+      const generationOptions = normalizeScoreGenerationOptions(options);
+      const notes = new NoteList();
+      const audioMode = generationOptions.trackLayerMuteSoloMode === 'audio';
+      for (const track of this) {
+        if (!audioMode) {
+          if (track.isMuted()) continue;
+          if (generationOptions.processWithSolo && !track.isSolo()) continue;
+        }
+        if (generationOptions.pruneInaudibleTracks?.has(track.getUniqueId())) {
+          reportPrunedTrackDurationBound(track, generationOptions, context, startTime, endTime);
+          continue;
+        }
+        const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
+        notes.merge(
+          await track.generateForCSDAsync(context, compileData, startTime, endTime, {
+            ...generationOptions,
+            trackId: track.getUniqueId(),
+            instrumentOverrideId: trackId,
+          }),
+        );
       }
-      if (generationOptions.pruneInaudibleTracks?.has(track.getUniqueId())) {
-        reportPrunedTrackDurationBound(track, generationOptions, context, startTime, endTime);
-        continue;
-      }
-      const trackId = getTrackInstrumentId(compileData, track.getUniqueId());
-      notes.merge(
-        await track.generateForCSDAsync(context, compileData, startTime, endTime, {
-          ...generationOptions,
-          trackId: track.getUniqueId(),
-          instrumentOverrideId: trackId,
-        }),
-      );
-    }
-    return notes;
+      return notes;
+    });
   }
 
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {

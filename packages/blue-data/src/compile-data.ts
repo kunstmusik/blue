@@ -178,6 +178,7 @@ export class CompileData {
   private nchnls = 2;
   private nextParameterIndex = 0;
   private nextStringChannelIndex = 0;
+  private nextInstrumentNumber = 0;
 
   constructor();
   constructor(arrangement: Arrangement, tables: Tables, handleParameters?: boolean);
@@ -256,8 +257,17 @@ export class CompileData {
     this.nchnls = nchnls;
   }
 
-  addInstrument(instr: Instrument): number {
-    const instrId = this.arrangement.addInstrumentAtEnd(instr);
+  reserveInstrumentNumber(): number {
+    for (const assignment of this.arrangement.getArrangement()) {
+      if (!/^-?\d+$/.test(assignment.arrangementId)) continue;
+      const id = Number(assignment.arrangementId);
+      if (Number.isInteger(id) && id > this.nextInstrumentNumber) this.nextInstrumentNumber = id;
+    }
+    return ++this.nextInstrumentNumber;
+  }
+
+  addInstrument(instr: Instrument, instrId = this.reserveInstrumentNumber()): number {
+    this.arrangement.addInstrumentWithId(instr, String(instrId), false);
     if (this.handleParametersAndChannels) {
       this.collectStringChannels(instr);
       this.collectParameters(instr);
@@ -527,5 +537,6 @@ export class CompileData {
     this.mixerEnabled = false;
     this.nextParameterIndex = 0;
     this.nextStringChannelIndex = 0;
+    this.nextInstrumentNumber = 0;
   }
 }

@@ -1,3 +1,4 @@
+import { withSoundOccurrences, withSoundOccurrencesAsync } from './sound-occurrences';
 /**
  * SoundLayer — a layer within a PolyObject that contains SoundObjects.
  * Mirrors the Java SoundLayer class.
@@ -267,47 +268,49 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    options?: Pick<ScoreGenerationOptions, 'beatOrigin' | 'normalizationOrigin'>,
+    options?: ScoreGenerationOptions,
   ): NoteList {
-    const noteList = new NoteList();
+    return withSoundOccurrences(compileData, 0, startTime, endTime, () => {
+      const noteList = new NoteList();
 
-    // Sort sound objects by start time
-    const sorted = [...this].sort(
-      (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
-    );
+      // Sort sound objects by start time
+      const sorted = [...this].sort(
+        (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
+      );
 
-    for (const sObj of sorted) {
-      const sObjStart = sObj.getStartTime().toBeats(context);
-      const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
-      const sObjEnd = sObjStart + sObjDur;
+      for (const sObj of sorted) {
+        const sObjStart = sObj.getStartTime().toBeats(context);
+        const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
+        const sObjEnd = sObjStart + sObjDur;
 
-      // Skip objects that end before the render start
-      if (sObjEnd <= startTime) continue;
+        // Skip objects that end before the render start
+        if (sObjEnd <= startTime) continue;
 
-      let adjustedStart: number;
-      let adjustedEnd: number;
+        let adjustedStart: number;
+        let adjustedEnd: number;
 
-      if (endTime <= startTime) {
-        // No end time constraint: render from adjustedStart to end
-        adjustedStart = startTime - sObjStart;
-        if (adjustedStart < 0) adjustedStart = 0;
-        adjustedEnd = -1;
-      } else if (sObjStart < endTime) {
-        // Both start and end constraints
-        adjustedStart = startTime - sObjStart;
-        adjustedEnd = endTime - sObjStart;
-        if (adjustedStart < 0) adjustedStart = 0;
-        if (adjustedEnd >= sObjDur) adjustedEnd = -1;
-      } else {
-        // Object starts after render end — skip
-        continue;
+        if (endTime <= startTime) {
+          // No end time constraint: render from adjustedStart to end
+          adjustedStart = startTime - sObjStart;
+          if (adjustedStart < 0) adjustedStart = 0;
+          adjustedEnd = -1;
+        } else if (sObjStart < endTime) {
+          // Both start and end constraints
+          adjustedStart = startTime - sObjStart;
+          adjustedEnd = endTime - sObjStart;
+          if (adjustedStart < 0) adjustedStart = 0;
+          if (adjustedEnd >= sObjDur) adjustedEnd = -1;
+        } else {
+          // Object starts after render end — skip
+          continue;
+        }
+
+        const nl = sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd, options);
+        noteList.merge(nl);
       }
 
-      const nl = sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd, options);
-      noteList.merge(nl);
-    }
-
-    return applyNoteProcessorChain(noteList, this._npc);
+      return applyNoteProcessorChain(noteList, this._npc);
+    });
   }
 
   async generateForCSDAsync(
@@ -315,44 +318,52 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     compileData: CompileData,
     startTime: number,
     endTime: number,
-    options?: Pick<ScoreGenerationOptions, 'beatOrigin' | 'normalizationOrigin'>,
+    options?: ScoreGenerationOptions,
   ): Promise<NoteList> {
-    const noteList = new NoteList();
+    return withSoundOccurrencesAsync(compileData, 0, startTime, endTime, async () => {
+      const noteList = new NoteList();
 
-    const sorted = [...this].sort(
-      (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
-    );
+      const sorted = [...this].sort(
+        (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
+      );
 
-    for (const sObj of sorted) {
-      const sObjStart = sObj.getStartTime().toBeats(context);
-      const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
-      const sObjEnd = sObjStart + sObjDur;
+      for (const sObj of sorted) {
+        const sObjStart = sObj.getStartTime().toBeats(context);
+        const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
+        const sObjEnd = sObjStart + sObjDur;
 
-      if (sObjEnd <= startTime) continue;
+        if (sObjEnd <= startTime) continue;
 
-      let adjustedStart: number;
-      let adjustedEnd: number;
+        let adjustedStart: number;
+        let adjustedEnd: number;
 
-      if (endTime <= startTime) {
-        adjustedStart = startTime - sObjStart;
-        if (adjustedStart < 0) adjustedStart = 0;
-        adjustedEnd = -1;
-      } else if (sObjStart < endTime) {
-        adjustedStart = startTime - sObjStart;
-        adjustedEnd = endTime - sObjStart;
-        if (adjustedStart < 0) adjustedStart = 0;
-        if (adjustedEnd >= sObjDur) adjustedEnd = -1;
-      } else {
-        continue;
+        if (endTime <= startTime) {
+          adjustedStart = startTime - sObjStart;
+          if (adjustedStart < 0) adjustedStart = 0;
+          adjustedEnd = -1;
+        } else if (sObjStart < endTime) {
+          adjustedStart = startTime - sObjStart;
+          adjustedEnd = endTime - sObjStart;
+          if (adjustedStart < 0) adjustedStart = 0;
+          if (adjustedEnd >= sObjDur) adjustedEnd = -1;
+        } else {
+          continue;
+        }
+
+        const nl = sObj.generateForCSDAsync
+          ? await sObj.generateForCSDAsync(
+              context,
+              compileData,
+              adjustedStart,
+              adjustedEnd,
+              options,
+            )
+          : sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd, options);
+        noteList.merge(nl);
       }
 
-      const nl = sObj.generateForCSDAsync
-        ? await sObj.generateForCSDAsync(context, compileData, adjustedStart, adjustedEnd, options)
-        : sObj.generateForCSD(context, compileData, adjustedStart, adjustedEnd, options);
-      noteList.merge(nl);
-    }
-
-    return applyNoteProcessorChainAsync(noteList, this._npc, compileData);
+      return applyNoteProcessorChainAsync(noteList, this._npc, compileData);
+    });
   }
 
   deepCopy(mode: CopyMode = 'duplication'): SoundLayer {

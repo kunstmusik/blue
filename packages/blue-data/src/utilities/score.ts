@@ -38,7 +38,9 @@ export function setScoreStart(nl: NoteList, offset: number): void {
 export function rebaseScoreToRenderStart(nl: NoteList, renderStart: number): void {
   if (renderStart <= 0) return;
   setScoreStart(nl, -renderStart);
-  nl.removeIf((note) => note.getStartTime() < 0);
+  nl.removeIf(
+    (note) => note.getStartTime() < 0 && !note.getSoundOccurrence() && !note.getDeferredFileSeek(),
+  );
 }
 
 export function getTotalDuration(notes: NoteList): number {
@@ -54,8 +56,16 @@ export function getTotalDuration(notes: NoteList): number {
 function scaleScore(notes: NoteList, multiplier: number): void {
   for (let i = 0; i < notes.length; i++) {
     const n = notes.getNote(i);
+    const occurrence = n.getSoundOccurrence();
     n.setStartTime(n.getStartTime() * multiplier);
     n.setSubjectiveDuration(n.getObjectiveDuration() * multiplier);
+    if (occurrence) {
+      n.setSoundOccurrence({
+        ...occurrence,
+        envelopeStart: occurrence.envelopeStart * multiplier,
+        envelopeDuration: occurrence.envelopeDuration * multiplier,
+      });
+    }
   }
 }
 

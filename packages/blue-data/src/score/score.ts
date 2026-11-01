@@ -1,3 +1,7 @@
+import {
+  withSoundOccurrences,
+  withSoundOccurrencesAsync,
+} from '../sound-objects/sound-occurrences';
 /**
  * Score — the main score container holding layer groups.
  * Mirrors the Java Score class.
@@ -133,27 +137,29 @@ export class Score extends Array<LayerGroup<Layer>> {
     endTime: number,
     generationOptions?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
-    const options = normalizeScoreGenerationOptions(generationOptions);
-    const audioModeTracks = options.trackLayerMuteSoloMode === 'audio';
-    const noteList = new NoteList();
-    const context = this.timeContext;
-    const hasSolo = this.some((lg) => {
-      if (audioModeTracks && lg instanceof TrackLayerGroup) return false;
-      return lg.hasSoloLayers();
-    });
-
-    for (let i = 0; i < this.length; i++) {
-      const layerGroup = this[i];
-
-      const processWithSolo =
-        hasSolo && !(audioModeTracks && layerGroup instanceof TrackLayerGroup);
-      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
-        ...options,
-        processWithSolo,
+    return withSoundOccurrences(compileData, startTime, startTime, endTime, () => {
+      const options = normalizeScoreGenerationOptions(generationOptions);
+      const audioModeTracks = options.trackLayerMuteSoloMode === 'audio';
+      const noteList = new NoteList();
+      const context = this.timeContext;
+      const hasSolo = this.some((lg) => {
+        if (audioModeTracks && lg instanceof TrackLayerGroup) return false;
+        return lg.hasSoloLayers();
       });
-      noteList.merge(nl);
-    }
-    return this.npc.apply(noteList);
+
+      for (let i = 0; i < this.length; i++) {
+        const layerGroup = this[i];
+
+        const processWithSolo =
+          hasSolo && !(audioModeTracks && layerGroup instanceof TrackLayerGroup);
+        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
+          ...options,
+          processWithSolo,
+        });
+        noteList.merge(nl);
+      }
+      return this.npc.apply(noteList);
+    });
   }
 
   async generateForCSDAsync(
@@ -162,46 +168,60 @@ export class Score extends Array<LayerGroup<Layer>> {
     endTime: number,
     generationOptions?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
-    const options = normalizeScoreGenerationOptions(generationOptions);
-    const audioModeTracks = options.trackLayerMuteSoloMode === 'audio';
-    const noteList = new NoteList();
-    const context = this.timeContext;
-    const hasSolo = this.some((lg) => {
-      if (audioModeTracks && lg instanceof TrackLayerGroup) return false;
-      return lg.hasSoloLayers();
-    });
-
-    for (let i = 0; i < this.length; i++) {
-      const layerGroup = this[i];
-      const processWithSolo =
-        hasSolo && !(audioModeTracks && layerGroup instanceof TrackLayerGroup);
-
-      if (layerGroup instanceof PolyObject) {
-        const nl = await layerGroup.generateForCSDAsync(context, compileData, startTime, endTime, {
-          ...options,
-          processWithSolo,
-        });
-        noteList.merge(nl);
-        continue;
-      }
-
-      if (layerGroup instanceof TrackLayerGroup) {
-        const nl = await layerGroup.generateForCSDAsync(context, compileData, startTime, endTime, {
-          ...options,
-          processWithSolo,
-        });
-        noteList.merge(nl);
-        continue;
-      }
-
-      const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
-        ...options,
-        processWithSolo,
+    return withSoundOccurrencesAsync(compileData, startTime, startTime, endTime, async () => {
+      const options = normalizeScoreGenerationOptions(generationOptions);
+      const audioModeTracks = options.trackLayerMuteSoloMode === 'audio';
+      const noteList = new NoteList();
+      const context = this.timeContext;
+      const hasSolo = this.some((lg) => {
+        if (audioModeTracks && lg instanceof TrackLayerGroup) return false;
+        return lg.hasSoloLayers();
       });
-      noteList.merge(nl);
-    }
 
-    return applyNoteProcessorChainAsync(noteList, this.npc, compileData);
+      for (let i = 0; i < this.length; i++) {
+        const layerGroup = this[i];
+        const processWithSolo =
+          hasSolo && !(audioModeTracks && layerGroup instanceof TrackLayerGroup);
+
+        if (layerGroup instanceof PolyObject) {
+          const nl = await layerGroup.generateForCSDAsync(
+            context,
+            compileData,
+            startTime,
+            endTime,
+            {
+              ...options,
+              processWithSolo,
+            },
+          );
+          noteList.merge(nl);
+          continue;
+        }
+
+        if (layerGroup instanceof TrackLayerGroup) {
+          const nl = await layerGroup.generateForCSDAsync(
+            context,
+            compileData,
+            startTime,
+            endTime,
+            {
+              ...options,
+              processWithSolo,
+            },
+          );
+          noteList.merge(nl);
+          continue;
+        }
+
+        const nl = layerGroup.generateForCSD(context, compileData, startTime, endTime, {
+          ...options,
+          processWithSolo,
+        });
+        noteList.merge(nl);
+      }
+
+      return applyNoteProcessorChainAsync(noteList, this.npc, compileData);
+    });
   }
 
   processOnLoad(session?: JavaScriptSession): void {

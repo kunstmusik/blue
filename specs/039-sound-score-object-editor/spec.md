@@ -91,3 +91,7 @@ As a composer validating a `Sound` object, I need the Java-style test action so 
 - Spec `038-score-object-editor-tier1-parity` is already closed, so this slice can focus on the heavyweight `Sound` editor gap only.
 - The existing BSB interface work from Specs 022 and 023 is the primary reuse path for the `Sound` Interface tab.
 - The `PianoRoll` and `JMask` follow-up work will live in Specs `040-pianoroll-score-object-editor` and `041-jmask-score-object-editor`, not in this slice.
+
+### Sound automation in Instances
+
+A placed Sound's local automation follows the note through Instance and parent timing changes. Scaling stretches the curve, repetition restarts it, and a clipped repetition or selected render window plays only the corresponding part. Overlapping occurrences have independent instrument and automation state. This corrects the historical Java behavior for existing projects as well as new ones. See [the Java comparison](research.md#legacy-instance-automation-timing-characterization-2026-10-31).

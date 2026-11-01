@@ -1,3 +1,7 @@
+import {
+  withSoundOccurrences,
+  withSoundOccurrencesAsync,
+} from '../../sound-objects/sound-occurrences';
 import { Instrument } from '../../instruments/instrument';
 import { loadInstrumentFromXML } from '../../instruments/instrument-registry';
 import { ParameterIdList } from '../../automation/parameter-id-list';
@@ -269,21 +273,23 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     endTime: number,
     options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
-    const plan = this.createGenerationPlan(context, startTime, endTime, options);
-    const notes = new NoteList();
-    for (const entry of plan.entries) {
-      const generated = entry.item.generateForCSD(
-        context,
-        compileData,
-        entry.adjustedStart,
-        entry.adjustedEnd,
-        entry.options,
+    return withSoundOccurrences(compileData, startTime, startTime, endTime, () => {
+      const plan = this.createGenerationPlan(context, startTime, endTime, options);
+      const notes = new NoteList();
+      for (const entry of plan.entries) {
+        const generated = entry.item.generateForCSD(
+          context,
+          compileData,
+          entry.adjustedStart,
+          entry.adjustedEnd,
+          entry.options,
+        );
+        this.mergeGeneratedItem(notes, entry, generated);
+      }
+      return this._npc.apply(
+        this.finalizeGeneratedNotes(notes, plan, context, compileData, startTime, endTime),
       );
-      this.mergeGeneratedItem(notes, entry, generated);
-    }
-    return this._npc.apply(
-      this.finalizeGeneratedNotes(notes, plan, context, compileData, startTime, endTime),
-    );
+    });
   }
 
   async generateForCSDAsync(
@@ -293,30 +299,32 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     endTime: number,
     options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
-    const plan = this.createGenerationPlan(context, startTime, endTime, options);
-    const notes = new NoteList();
-    for (const entry of plan.entries) {
-      const generated = entry.item.generateForCSDAsync
-        ? await entry.item.generateForCSDAsync(
-            context,
-            compileData,
-            entry.adjustedStart,
-            entry.adjustedEnd,
-            entry.options,
-          )
-        : entry.item.generateForCSD(
-            context,
-            compileData,
-            entry.adjustedStart,
-            entry.adjustedEnd,
-            entry.options,
-          );
-      this.mergeGeneratedItem(notes, entry, generated);
-    }
-    return this._npc.applyAsync(
-      this.finalizeGeneratedNotes(notes, plan, context, compileData, startTime, endTime),
-      compileData,
-    );
+    return withSoundOccurrencesAsync(compileData, startTime, startTime, endTime, async () => {
+      const plan = this.createGenerationPlan(context, startTime, endTime, options);
+      const notes = new NoteList();
+      for (const entry of plan.entries) {
+        const generated = entry.item.generateForCSDAsync
+          ? await entry.item.generateForCSDAsync(
+              context,
+              compileData,
+              entry.adjustedStart,
+              entry.adjustedEnd,
+              entry.options,
+            )
+          : entry.item.generateForCSD(
+              context,
+              compileData,
+              entry.adjustedStart,
+              entry.adjustedEnd,
+              entry.options,
+            );
+        this.mergeGeneratedItem(notes, entry, generated);
+      }
+      return this._npc.applyAsync(
+        this.finalizeGeneratedNotes(notes, plan, context, compileData, startTime, endTime),
+        compileData,
+      );
+    });
   }
 
   private createGenerationPlan(

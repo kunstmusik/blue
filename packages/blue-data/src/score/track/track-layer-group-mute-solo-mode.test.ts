@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { TrackLayerGroup } from './track-layer-group';
 import type { Track } from './track';
-import type { CompileData } from '../../compile-data';
+import { CompileData } from '../../compile-data';
 import { TimeContext } from '../../time/time-context';
+import { Note } from '../../sound-objects/note';
 import { NoteList } from '../../sound-objects/note-list';
 
 /**
@@ -18,12 +19,12 @@ function createStubTrack(options: { id: string; muted?: boolean; solo?: boolean 
     getName: () => options.id,
     generateForCSD: () => {
       const out = new NoteList();
-      out.push({ toScoreText: () => `i"${options.id}" 0 1` } as never);
+      out.push(Note.createNoteFromText(`i"${options.id}" 0 1`)!);
       return out;
     },
     generateForCSDAsync: async () => {
       const out = new NoteList();
-      out.push({ toScoreText: () => `i"${options.id}" 0 1` } as never);
+      out.push(Note.createNoteFromText(`i"${options.id}" 0 1`)!);
       return out;
     },
   } as unknown as Track;
@@ -35,16 +36,10 @@ function createGroup(tracks: Track[]): TrackLayerGroup {
   return group;
 }
 
-function compileDataStub(): CompileData {
-  return {
-    getCompilationVariable: () => undefined,
-  } as unknown as CompileData;
-}
-
 function noteTexts(notes: NoteList): string[] {
   const texts: string[] = [];
   for (let i = 0; i < notes.length; i++) {
-    texts.push(notes.getNote(i).toScoreText());
+    texts.push(notes.getNote(i).getPField(1)!);
   }
   return texts;
 }
@@ -56,11 +51,11 @@ describe('TrackLayerGroup track header mode (Spec 111)', () => {
       createStubTrack({ id: 'b' }),
       createStubTrack({ id: 'c', solo: true }),
     ]);
-    const notes = group.generateForCSD(new TimeContext(), compileDataStub(), 0, 10, {
+    const notes = group.generateForCSD(new TimeContext(), new CompileData(), 0, 10, {
       trackLayerMuteSoloMode: 'event',
       processWithSolo: true,
     });
-    expect(noteTexts(notes)).toEqual(['i"c" 0 1']);
+    expect(noteTexts(notes)).toEqual(['"c"']);
   });
 
   it('Audio mode ignores track flags entirely', () => {
@@ -69,14 +64,14 @@ describe('TrackLayerGroup track header mode (Spec 111)', () => {
       createStubTrack({ id: 'b' }),
       createStubTrack({ id: 'c', solo: true }),
     ]);
-    const notes = group.generateForCSD(new TimeContext(), compileDataStub(), 0, 10, {
+    const notes = group.generateForCSD(new TimeContext(), new CompileData(), 0, 10, {
       trackLayerMuteSoloMode: 'audio',
       processWithSolo: true,
     });
     const texts = noteTexts(notes);
-    expect(texts).toContain('i"a" 0 1');
-    expect(texts).toContain('i"b" 0 1');
-    expect(texts).toContain('i"c" 0 1');
+    expect(texts).toContain('"a"');
+    expect(texts).toContain('"b"');
+    expect(texts).toContain('"c"');
   });
 
   it('async generation matches the sync mode matrix', async () => {
@@ -86,27 +81,27 @@ describe('TrackLayerGroup track header mode (Spec 111)', () => {
     ]);
     const eventNotes = await group.generateForCSDAsync(
       new TimeContext(),
-      compileDataStub(),
+      new CompileData(),
       0,
       10,
       { trackLayerMuteSoloMode: 'event' },
     );
-    expect(noteTexts(eventNotes)).toEqual(['i"b" 0 1']);
+    expect(noteTexts(eventNotes)).toEqual(['"b"']);
 
     const audioNotes = await group.generateForCSDAsync(
       new TimeContext(),
-      compileDataStub(),
+      new CompileData(),
       0,
       10,
       { trackLayerMuteSoloMode: 'audio' },
     );
-    expect(noteTexts(audioNotes).sort()).toEqual(['i"a" 0 1', 'i"b" 0 1']);
+    expect(noteTexts(audioNotes).sort()).toEqual(['"a"', '"b"']);
   });
 
   it('does not mutate track flags during generation', () => {
     const track = createStubTrack({ id: 'a', muted: true });
     const group = createGroup([track]);
-    group.generateForCSD(new TimeContext(), compileDataStub(), 0, 10, {
+    group.generateForCSD(new TimeContext(), new CompileData(), 0, 10, {
       trackLayerMuteSoloMode: 'audio',
     });
     expect(track.isMuted()).toBe(true);

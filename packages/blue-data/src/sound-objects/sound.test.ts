@@ -8,8 +8,11 @@ import { TimeContext } from '../time/time-context';
 import { PolyObject } from './poly-object';
 import { SoundLayer } from './sound-layer';
 import { Sound } from './sound';
+import { Instance } from './instance';
+import { TimeBehavior } from './time-behavior';
 import { BlueSynthBuilder } from '../instruments/blue-synth-builder';
 import { collectBsbWidgetIds } from '../instruments/blue-synth-builder/bsb-identity';
+import { getNotes } from '../utilities/score';
 
 const BSB_FOR_CSD = `<instrument type="blue.orchestra.BlueSynthBuilder" editEnabled="true">
   <name>TestSound</name>
@@ -84,6 +87,36 @@ outc aout, aout</instrumentText>
   </parameterList>
   <opcodeList/>
 </instrument>`;
+
+function instanceSoundProject(behavior: TimeBehavior) {
+  const data = new BlueData();
+  data.getMixer().setPanningEnabled(false);
+  data.getScore().length = 0;
+  const source = new Sound();
+  source.setStartTime(TimePosition.beats(2));
+  source.setSubjectiveDuration(TimeDuration.beats(4));
+  source.setBSBInstrumentText(BSB_FOR_AUTOMATED_SCORE_SOUND);
+  const instance = new Instance();
+  instance.setSoundObject(source);
+  instance.setLibraryId(data.getSoundObjectLibrary().addObject(source));
+  instance.setStartTime(TimePosition.beats(10));
+  instance.setSubjectiveDuration(TimeDuration.beats(10));
+  instance.setTimeBehavior(behavior);
+  const root = new PolyObject(true);
+  const layer = new SoundLayer();
+  layer.push(instance);
+  root.push(layer);
+  data.getScore().push(root);
+  return { data, source, instance, root };
+}
+
+function soundSpans(csd: string): number[][] {
+  const ids = new Set([...csd.matchAll(/instr (\d+)\s*;AutomatedSound/g)].map((match) => match[1]));
+  return getNotes(csd.split('<CsScore>')[1]!.split('</CsScore>')[0]!)
+    .map((note) => note)
+    .filter((note) => ids.has(note.getPField(1)!))
+    .map((note) => [note.getStartTime(), note.getSubjectiveDuration()]);
+}
 
 describe('Sound XML parity', () => {
   it('migrates legacy Sound instrumentText-only payloads into BlueSynthBuilder XML', () => {
@@ -242,6 +275,167 @@ describe('Sound XML parity', () => {
       { time: 6, value: 300 },
       { time: 10, value: 500 },
     ]);
+  });
+
+  it.each([
+    { behavior: TimeBehavior.NONE, spans: [[10, 4]], curves: [[10, 12, 14, 500]] },
+    { behavior: TimeBehavior.SCALE, spans: [[10, 10]], curves: [[10, 15, 20, 500]] },
+    {
+      behavior: TimeBehavior.REPEAT,
+      spans: [
+        [10, 4],
+        [14, 4],
+        [18, 2],
+      ],
+      curves: [
+        [10, 12, 14, 500],
+        [14, 16, 18, 500],
+        [18, 19, 20, 300],
+      ],
+    },
+    {
+      behavior: TimeBehavior.REPEAT_CLASSIC,
+      spans: [
+        [10, 4],
+        [14, 4],
+      ],
+      curves: [
+        [10, 12, 14, 500],
+        [14, 16, 18, 500],
+      ],
+    },
+  ])(
+    'places independent Sound envelopes for Instance $behavior',
+    async ({ behavior, spans, curves }) => {
+      const { data, source } = instanceSoundProject(behavior);
+      const originalXml = data.saveToString();
+      const render = data.toRealtimePlaybackCSD();
+      expect((await data.toRealtimePlaybackCSDAsync()).csdText).toBe(render.csdText);
+      const parameters = render.parameters!.filter((parameter) => parameter.getName() === 'freq');
+      expect(parameters).toHaveLength(spans.length);
+      expect(new Set(parameters.map((parameter) => parameter.getCompilationVarName())).size).toBe(
+        spans.length,
+      );
+      expect(soundSpans(render.csdText)).toEqual(spans);
+      expect(parameters.map((parameter) => parameter.getPoints())).toEqual(
+        curves.map(([start, middle, end, endValue]) =>
+          endValue === 300
+            ? [
+                { time: start, value: 100 },
+                { time: end, value: 300 },
+              ]
+            : [
+                { time: start, value: 100 },
+                { time: middle, value: 300 },
+                { time: end, value: endValue },
+              ],
+        ),
+      );
+      expect(source.getBlueSynthBuilder().getParameters()[0]!.getPoints()[0]!.time).toBe(0);
+      expect(data.saveToString()).toBe(originalXml);
+    },
+  );
+
+  it('applies final nested placement and scaling before allocating occurrence automation', () => {
+    const { data, instance, root } = instanceSoundProject(TimeBehavior.REPEAT);
+    const nested = new PolyObject();
+    nested.setStartTime(TimePosition.beats(5));
+    nested.setTimeBehavior(TimeBehavior.SCALE);
+    nested.setSubjectiveDuration(TimeDuration.beats(40));
+    const layer = new SoundLayer();
+    layer.push(instance);
+    nested.push(layer);
+    root[0].length = 0;
+    root[0].push(nested);
+    const render = data.toRealtimePlaybackCSD();
+    expect(soundSpans(render.csdText)).toEqual([
+      [25, 8],
+      [33, 8],
+      [41, 4],
+    ]);
+    expect(
+      render
+        .parameters!.filter((parameter) => parameter.getName() === 'freq')
+        .map((parameter) => parameter.getPoints()),
+    ).toEqual([
+      [
+        { time: 25, value: 100 },
+        { time: 29, value: 300 },
+        { time: 33, value: 500 },
+      ],
+      [
+        { time: 33, value: 100 },
+        { time: 37, value: 300 },
+        { time: 41, value: 500 },
+      ],
+      [
+        { time: 41, value: 100 },
+        { time: 45, value: 300 },
+      ],
+    ]);
+  });
+
+  it('seeks into a repetition at its original envelope phase and trims the selected end', async () => {
+    const { data } = instanceSoundProject(TimeBehavior.REPEAT);
+    data.setRenderStartTime(15);
+    data.setRenderEndTime(19);
+    const render = data.toRealtimePlaybackCSD();
+    expect((await data.toRealtimePlaybackCSDAsync()).csdText).toBe(render.csdText);
+    expect(soundSpans(render.csdText)).toEqual([
+      [0, 3],
+      [3, 1],
+    ]);
+    expect(
+      render
+        .parameters!.filter((parameter) => parameter.getName() === 'freq')
+        .map((parameter) => parameter.getPoints()),
+    ).toEqual([
+      [
+        { time: 15, value: 200 },
+        { time: 16, value: 300 },
+        { time: 18, value: 500 },
+      ],
+      [
+        { time: 18, value: 100 },
+        { time: 19, value: 200 },
+      ],
+    ]);
+    const disk = data.toDiskCSD();
+    expect(await data.toDiskCSDAsync()).toBe(disk);
+    expect(disk).toMatch(/i\d+\s+0(?:\.0)?\s+1\s+200\s+300/);
+  });
+
+  it('isolates overlapping classic repetitions and keeps short repeat-point envelopes at full speed', () => {
+    for (const behavior of [TimeBehavior.REPEAT_CLASSIC, TimeBehavior.REPEAT]) {
+      const { data, instance } = instanceSoundProject(behavior);
+      instance.setRepeatPoint(TimeDuration.beats(2));
+      const render = data.toRealtimePlaybackCSD();
+      const parameters = render.parameters!.filter((parameter) => parameter.getName() === 'freq');
+      const spans = soundSpans(render.csdText);
+      expect(spans).toEqual(
+        behavior === TimeBehavior.REPEAT_CLASSIC
+          ? [
+              [10, 4],
+              [12, 4],
+              [14, 4],
+              [16, 4],
+            ]
+          : [
+              [10, 2],
+              [12, 2],
+              [14, 2],
+              [16, 2],
+              [18, 2],
+            ],
+      );
+      expect(new Set(parameters.map((parameter) => parameter.getCompilationVarName())).size).toBe(
+        spans.length,
+      );
+      expect(parameters[1]!.getValue(13)).toBe(200);
+      expect(parameters[0]!.getValue(13)).toBe(
+        behavior === TimeBehavior.REPEAT_CLASSIC ? 400 : 300,
+      );
+    }
   });
 
   it('preserves embedded BSB identities during ordinary save and reload', () => {

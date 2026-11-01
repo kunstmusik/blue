@@ -18,6 +18,9 @@ const JAVA_TYPE = 'blue.noteProcessor.PythonProcessor';
 interface NoteRenderMetadata {
   fileSeekProvenance: FileSeekProvenance | undefined;
   trackInstrumentTarget: ReturnType<Note['getTrackInstrumentTarget']>;
+  soundOccurrence: ReturnType<Note['getSoundOccurrence']>;
+  startTime: number;
+  deferredFileSeek: ReturnType<Note['getDeferredFileSeek']>;
 }
 
 function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
@@ -48,15 +51,20 @@ function serializeNoteList(notes: NoteList): {
 
     const fileSeekProvenance = note.getFileSeekProvenance();
     const trackInstrumentTarget = note.getTrackInstrumentTarget();
+    const soundOccurrence = note.getSoundOccurrence();
+    const deferredFileSeek = note.getDeferredFileSeek();
     const renderMetadataId = fileSeekProvenance
       ? `file-seek-${index}`
-      : trackInstrumentTarget
+      : trackInstrumentTarget || soundOccurrence || deferredFileSeek
         ? `render-note-${index}`
         : undefined;
     if (renderMetadataId) {
       renderMetadataById.set(renderMetadataId, {
         fileSeekProvenance,
         trackInstrumentTarget,
+        soundOccurrence,
+        startTime: note.getStartTime(),
+        deferredFileSeek,
       });
     }
 
@@ -92,7 +100,14 @@ function deserializeNoteList(
       if (metadata) {
         note.setFileSeekProvenance(metadata.fileSeekProvenance);
         note.setTrackInstrumentTarget(metadata.trackInstrumentTarget);
-
+        note.setDeferredFileSeek(metadata.deferredFileSeek);
+        if (metadata.soundOccurrence) {
+          note.setSoundOccurrence({
+            ...metadata.soundOccurrence,
+            envelopeStart:
+              metadata.soundOccurrence.envelopeStart + note.getStartTime() - metadata.startTime,
+          });
+        }
       }
     }
     noteList.add(note);

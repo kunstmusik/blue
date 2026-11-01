@@ -75,3 +75,7 @@ See [/Users/stevenyi/work/blue-electron/specs/039-sound-score-object-editor/rese
 - **Engine as External Process**: PASS. The preview flow remains an editor-side action, not a transport change.
 - **Test-First for Serialization**: PASS. Contract, renderer, and mutation tests are required before parity is claimed.
 - **Research Integration**: PASS. The plan reuses earlier BSB work and the Spec 037 editor shell instead of diverging from established seams.
+
+### Instance render timing correction
+
+Carry the Sound's instrument and normalized envelope through score generation until the final note positions are known. Allocate private instruments and parameter variables for the surviving occurrences and preserve their Track mixer associations. Verify separate overlapping Instances, both repeat behaviors, scaling, and partial playback in synchronous and asynchronous renders. This intentionally corrects the Java timing bug documented in [research](research.md#legacy-instance-automation-timing-characterization-2026-10-31). All state used for this correction belongs to the render.

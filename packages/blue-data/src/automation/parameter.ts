@@ -84,6 +84,7 @@ export class Parameter implements BlueDataObject {
   private _compilationVarName: string | null = null;
   private _fixedValue = 0;
   private _lineColor = -8355712;
+  private _evaluationTimeBounds: readonly [number, number] | undefined;
 
   private static generateUniqueId(): string {
     return generatePrefixedUuid('param');
@@ -346,10 +347,18 @@ export class Parameter implements BlueDataObject {
     if (!this.isAutomationEnabled()) {
       return this._fixedValue;
     }
+    if (this._evaluationTimeBounds) {
+      time = clamp(time, this._evaluationTimeBounds[0], this._evaluationTimeBounds[1]);
+    }
     if (this._curve === AutomationCurve.LINEAR) {
       return this.evaluateJavaLinear(time);
     }
     return this.evaluateExtensionCurve(time);
+  }
+
+  /** Render-only domain for a compiled Sound occurrence; never serialized. */
+  setEvaluationTimeBounds(start: number, end: number): void {
+    this._evaluationTimeBounds = [start, end];
   }
 
   /**
@@ -646,6 +655,7 @@ export class Parameter implements BlueDataObject {
     copy._compilationVarName = this._compilationVarName;
     copy._fixedValue = this._fixedValue;
     copy._lineColor = this._lineColor;
+    copy._evaluationTimeBounds = this._evaluationTimeBounds;
     return copy;
   }
 }

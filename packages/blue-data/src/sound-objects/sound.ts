@@ -1,3 +1,4 @@
+import { withSoundOccurrences } from './sound-occurrences';
 /**
  * Sound — a SoundObject with a BlueSynthBuilder (BSB) instrument.
  * Mirrors the Java Sound class.
@@ -107,25 +108,26 @@ export class Sound extends AbstractSoundObject {
     endTime: number,
     options?: ScoreGenerationOptions,
   ): NoteList {
-    const bsb = this._blueSynthBuilder.deepCopy() as BlueSynthBuilder;
-
-    // Java parity: clear compilation variable names for score Sound objects
-    // so widget values resolve directly (not gk automation vars from arrangement scope).
-    const soundStart = this._startTime.toBeats(context);
-    const soundDuration = this._subjectiveDuration.toBeats(context);
-    for (const parameter of bsb.getParameters()) {
-      parameter.setCompilationVarName('');
-      parameter.setPoints(
-        parameter.getPoints().map((point) => ({
-          time: soundStart + point.time * soundDuration,
-          value: point.value,
-        })),
-      );
-    }
-
-    const instrumentNumber = compileData.addInstrument(bsb);
-    if (options?.trackId) compileData.addInstrSourceId(bsb, options.trackId);
-    return this.generateNotes(context, instrumentNumber, startTime, endTime);
+    return withSoundOccurrences(
+      compileData,
+      0,
+      this._startTime.toBeats(context) + startTime,
+      endTime > startTime ? this._startTime.toBeats(context) + endTime : -1,
+      () => {
+        const instrumentNumber = compileData.reserveInstrumentNumber();
+        const notes = this.generateNotes(context, instrumentNumber, startTime, endTime);
+        for (const note of notes) {
+          note.setSoundOccurrence({
+            instrument: this._blueSynthBuilder,
+            instrumentNumber,
+            trackId: options?.trackId,
+            envelopeStart: this._startTime.toBeats(context),
+            envelopeDuration: this._subjectiveDuration.toBeats(context),
+          });
+        }
+        return notes;
+      },
+    );
   }
 
   private generateNotes(

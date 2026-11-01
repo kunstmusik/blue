@@ -112,7 +112,7 @@ export class AudioFile extends AbstractSoundObject {
       compileData.addInstrSourceId(instr, options.trackId);
     }
 
-    return this.generateNotes(
+    const notes = this.generateNotes(
       context,
       instrumentNumber,
       startTime,
@@ -120,6 +120,10 @@ export class AudioFile extends AbstractSoundObject {
       options?.beatOrigin ?? 0,
       options?.normalizationOrigin,
     );
+    if (options?.deferFileSeek) {
+      for (const note of notes) note.setDeferredFileSeek({ pField: 4, context });
+    }
+    return notes;
   }
 
   generateInstrument(): GenericInstrument | null {

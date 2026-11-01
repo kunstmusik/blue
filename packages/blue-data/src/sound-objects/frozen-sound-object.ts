@@ -121,7 +121,7 @@ export class FrozenSoundObject extends AbstractSoundObject {
       return new NoteList();
     }
 
-    return this.generateNotes(
+    const notes = this.generateNotes(
       context,
       instrumentNumber,
       startTime,
@@ -129,6 +129,10 @@ export class FrozenSoundObject extends AbstractSoundObject {
       options?.beatOrigin ?? 0,
       options?.normalizationOrigin,
     );
+    if (options?.deferFileSeek) {
+      for (const note of notes) note.setDeferredFileSeek({ pField: 5, context });
+    }
+    return notes;
   }
 
   private generateInstruments(compileData: CompileData, trackId?: string): number {

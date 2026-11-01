@@ -1,3 +1,4 @@
+import { withSoundOccurrences, withSoundOccurrencesAsync } from './sound-occurrences';
 /**
  * Instance — references a SoundObject from the SoundObjectLibrary.
  * Mirrors the Java Instance class.
@@ -31,6 +32,7 @@ import type {
 } from '../score/score-generation-options';
 import { markTrackInstrumentTargets } from '../score/score-generation-options';
 import { getTrackPlacementForSoundObject } from './sound-object-registry';
+import { containsSound, isSoundInstrumentDeferred } from './sound-occurrences';
 
 export class Instance extends AbstractSoundObject {
   private _soundObject: SoundObject | null = null;
@@ -69,53 +71,66 @@ export class Instance extends AbstractSoundObject {
     endTime: number,
     options?: ScoreGenerationOptions,
   ): NoteList {
-    if (!this._soundObject) {
-      return new NoteList();
-    }
-
-    const normalizationOrigin: ScoreNormalizationOrigin = {
-      owner: this._soundObject,
-      allowRangeOrigin:
-        this.getTimeBehavior() === TimeBehavior.NONE &&
-        this.getNoteProcessorChain().getProcessors().length === 0,
-    };
-    const sourceOptions: ScoreGenerationOptions = {
-      ...options,
-      normalizationOrigin,
-      beatOrigin:
-        (options?.beatOrigin ?? 0) +
-        this._startTime.toBeats(context) -
-        this._soundObject.getStartTime().toBeats(context),
-    };
-    const nl = this._soundObject.generateForCSD(
-      context,
+    return withSoundOccurrences(
       compileData,
-      startTime,
-      endTime,
-      sourceOptions,
+      0,
+      this._startTime.toBeats(context) + startTime,
+      endTime > startTime ? this._startTime.toBeats(context) + endTime : -1,
+      () => {
+        if (!this._soundObject) {
+          return new NoteList();
+        }
+
+        const normalizationOrigin: ScoreNormalizationOrigin = {
+          owner: this._soundObject,
+          allowRangeOrigin:
+            this.getTimeBehavior() === TimeBehavior.NONE &&
+            this.getNoteProcessorChain().getProcessors().length === 0,
+        };
+        const sourceOptions: ScoreGenerationOptions = {
+          ...options,
+          normalizationOrigin,
+          deferFileSeek:
+            options?.deferFileSeek ||
+            (isSoundInstrumentDeferred(compileData) && containsSound(this._soundObject)),
+          beatOrigin:
+            (options?.beatOrigin ?? 0) +
+            this._startTime.toBeats(context) -
+            this._soundObject.getStartTime().toBeats(context),
+        };
+        const fullSoundSource =
+          isSoundInstrumentDeferred(compileData) && containsSound(this._soundObject);
+        let nl = this._soundObject.generateForCSD(
+          context,
+          compileData,
+          fullSoundSource ? 0 : startTime,
+          fullSoundSource ? -1 : endTime,
+          sourceOptions,
+        );
+        const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
+        markTrackInstrumentTargets(
+          nl,
+          descriptor?.instrumentTargetBehavior ?? 'none',
+          options?.instrumentTargetCollector,
+        );
+
+        if (normalizationOrigin.rangeOriginBeats === undefined) {
+          normalizeNoteList(nl);
+        }
+
+        // Apply note processor chain
+        const npc = this.getNoteProcessorChain();
+        nl = npc.apply(nl);
+
+        // Apply time behavior
+        const duration = this._subjectiveDuration.toBeats(context);
+        const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
+        applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
+        setScoreStart(nl, this._startTime.toBeats(context));
+
+        return nl;
+      },
     );
-    const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
-    markTrackInstrumentTargets(
-      nl,
-      descriptor?.instrumentTargetBehavior ?? 'none',
-      options?.instrumentTargetCollector,
-    );
-
-    if (normalizationOrigin.rangeOriginBeats === undefined) {
-      normalizeNoteList(nl);
-    }
-
-    // Apply note processor chain
-    const npc = this.getNoteProcessorChain();
-    npc.apply(nl);
-
-    // Apply time behavior
-    const duration = this._subjectiveDuration.toBeats(context);
-    const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-    applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
-    setScoreStart(nl, this._startTime.toBeats(context));
-
-    return nl;
   }
 
   async generateForCSDAsync(
@@ -125,51 +140,70 @@ export class Instance extends AbstractSoundObject {
     endTime: number,
     options?: ScoreGenerationOptions,
   ): Promise<NoteList> {
-    if (!this._soundObject) {
-      return new NoteList();
-    }
+    return withSoundOccurrencesAsync(
+      compileData,
+      0,
+      this._startTime.toBeats(context) + startTime,
+      endTime > startTime ? this._startTime.toBeats(context) + endTime : -1,
+      async () => {
+        if (!this._soundObject) {
+          return new NoteList();
+        }
 
-    const normalizationOrigin: ScoreNormalizationOrigin = {
-      owner: this._soundObject,
-      allowRangeOrigin:
-        this.getTimeBehavior() === TimeBehavior.NONE &&
-        this.getNoteProcessorChain().getProcessors().length === 0,
-    };
-    const sourceOptions: ScoreGenerationOptions = {
-      ...options,
-      normalizationOrigin,
-      beatOrigin:
-        (options?.beatOrigin ?? 0) +
-        this._startTime.toBeats(context) -
-        this._soundObject.getStartTime().toBeats(context),
-    };
-    const nl = this._soundObject.generateForCSDAsync
-      ? await this._soundObject.generateForCSDAsync(
-          context,
-          compileData,
-          startTime,
-          endTime,
-          sourceOptions,
-        )
-      : this._soundObject.generateForCSD(context, compileData, startTime, endTime, sourceOptions);
-    const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
-    markTrackInstrumentTargets(
-      nl,
-      descriptor?.instrumentTargetBehavior ?? 'none',
-      options?.instrumentTargetCollector,
+        const normalizationOrigin: ScoreNormalizationOrigin = {
+          owner: this._soundObject,
+          allowRangeOrigin:
+            this.getTimeBehavior() === TimeBehavior.NONE &&
+            this.getNoteProcessorChain().getProcessors().length === 0,
+        };
+        const sourceOptions: ScoreGenerationOptions = {
+          ...options,
+          normalizationOrigin,
+          deferFileSeek:
+            options?.deferFileSeek ||
+            (isSoundInstrumentDeferred(compileData) && containsSound(this._soundObject)),
+          beatOrigin:
+            (options?.beatOrigin ?? 0) +
+            this._startTime.toBeats(context) -
+            this._soundObject.getStartTime().toBeats(context),
+        };
+        const fullSoundSource =
+          isSoundInstrumentDeferred(compileData) && containsSound(this._soundObject);
+        let nl = this._soundObject.generateForCSDAsync
+          ? await this._soundObject.generateForCSDAsync(
+              context,
+              compileData,
+              fullSoundSource ? 0 : startTime,
+              fullSoundSource ? -1 : endTime,
+              sourceOptions,
+            )
+          : this._soundObject.generateForCSD(
+              context,
+              compileData,
+              fullSoundSource ? 0 : startTime,
+              fullSoundSource ? -1 : endTime,
+              sourceOptions,
+            );
+        const descriptor = getTrackPlacementForSoundObject(this._soundObject).descriptor;
+        markTrackInstrumentTargets(
+          nl,
+          descriptor?.instrumentTargetBehavior ?? 'none',
+          options?.instrumentTargetCollector,
+        );
+
+        if (normalizationOrigin.rangeOriginBeats === undefined) {
+          normalizeNoteList(nl);
+        }
+        const npc = this.getNoteProcessorChain();
+        nl = await npc.applyAsync(nl, compileData);
+        const duration = this._subjectiveDuration.toBeats(context);
+        const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
+        applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
+        setScoreStart(nl, this._startTime.toBeats(context));
+
+        return nl;
+      },
     );
-
-    if (normalizationOrigin.rangeOriginBeats === undefined) {
-      normalizeNoteList(nl);
-    }
-    const npc = this.getNoteProcessorChain();
-    await npc.applyAsync(nl, compileData);
-    const duration = this._subjectiveDuration.toBeats(context);
-    const rpBeats = this._repeatPoint ? this._repeatPoint.toBeats(context) : -1;
-    applyTimeBehavior(nl, this.getTimeBehavior(), duration, rpBeats);
-    setScoreStart(nl, this._startTime.toBeats(context));
-
-    return nl;
   }
 
   override saveAsXML(objRefMap?: ObjRefSaveMap): Element {

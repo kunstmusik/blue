@@ -1,3 +1,4 @@
+import { withSoundOccurrences, withSoundOccurrencesAsync } from './sound-occurrences';
 /**
  * PolyObject — a SoundObject that contains nested SoundLayers with SoundObjects.
  * Mirrors the Java PolyObject class.
@@ -48,6 +49,7 @@ import { PythonObject } from './python-object';
 import { ClojureObject } from './clojure-object';
 import { JavaScriptObject } from './javascript-object';
 import { Instance } from './instance';
+import { containsSound, isSoundInstrumentDeferred } from './sound-occurrences';
 import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
 import {
@@ -253,79 +255,98 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     endTime: number,
     options?: ScoreGenerationOptionsOrSolo,
   ): NoteList {
-    const noteList = new NoteList();
-    const generationOptions = normalizeScoreGenerationOptions(options);
-    const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
-    const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
-    const rangeOriginBeats =
-      generationOptions.normalizationOrigin?.owner === this &&
-      generationOptions.normalizationOrigin.allowRangeOrigin
-        ? this.getLinkedRangeOriginBeats(context, shouldProcessWithSolo)
-        : undefined;
-    if (rangeOriginBeats !== undefined && generationOptions.normalizationOrigin) {
-      generationOptions.normalizationOrigin.rangeOriginBeats = rangeOriginBeats;
-      if (rangeOriginBeats !== null) {
-        generationOptions.normalizationOrigin.originBeats =
-          this._startTime.toBeats(context) + rangeOriginBeats;
-      }
-    }
-    const sourceStartTime =
-      typeof rangeOriginBeats === 'number' ? startTime + rangeOriginBeats : startTime;
-    const sourceEndTime =
-      typeof rangeOriginBeats === 'number'
-        ? endTime > startTime
-          ? endTime + rangeOriginBeats
-          : sourceStartTime
-        : endTime;
-    const childOptions: ScoreGenerationOptions = {
-      deferRenderStartRebase: true,
-      normalizationOrigin:
-        generationOptions.normalizationOrigin?.owner === this
-          ? generationOptions.normalizationOrigin
-          : undefined,
-      beatOrigin: (generationOptions.beatOrigin ?? 0) + this._startTime.toBeats(context),
-    };
-
-    if (shouldProcessWithSolo) {
-      for (const layer of this) {
-        if (!layer.isSolo() || layer.isMuted()) {
-          continue;
-        }
-
-        const nl = layer.generateForCSD(
-          context,
-          compileData,
-          sourceStartTime,
-          sourceEndTime,
-          childOptions,
-        );
-        noteList.merge(nl);
-      }
-    } else {
-      for (const layer of this) {
-        if (layer.isMuted()) {
-          continue;
-        }
-
-        const nl = layer.generateForCSD(
-          context,
-          compileData,
-          sourceStartTime,
-          sourceEndTime,
-          childOptions,
-        );
-        noteList.merge(nl);
-      }
-    }
-
-    return this.processGeneratedNotes(
-      context,
-      noteList,
+    return withSoundOccurrences(
+      compileData,
+      normalizeScoreGenerationOptions(options).deferRenderStartRebase ? 0 : startTime,
       startTime,
       endTime,
-      sourceStartTime,
-      sourceEndTime,
-      generationOptions,
+      () => {
+        const noteList = new NoteList();
+        const generationOptions = normalizeScoreGenerationOptions(options);
+        const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
+        const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
+        const rangeOriginBeats =
+          generationOptions.normalizationOrigin?.owner === this &&
+          generationOptions.normalizationOrigin.allowRangeOrigin
+            ? this.getLinkedRangeOriginBeats(context, shouldProcessWithSolo)
+            : undefined;
+        if (rangeOriginBeats !== undefined && generationOptions.normalizationOrigin) {
+          generationOptions.normalizationOrigin.rangeOriginBeats = rangeOriginBeats;
+          if (rangeOriginBeats !== null) {
+            generationOptions.normalizationOrigin.originBeats =
+              this._startTime.toBeats(context) + rangeOriginBeats;
+          }
+        }
+        const fullSoundSource =
+          isSoundInstrumentDeferred(compileData) &&
+          this._timeBehavior !== TimeBehavior.NONE &&
+          containsSound(this);
+        const sourceStartTime = fullSoundSource
+          ? 0
+          : typeof rangeOriginBeats === 'number'
+            ? startTime + rangeOriginBeats
+            : startTime;
+        const sourceEndTime = fullSoundSource
+          ? -1
+          : typeof rangeOriginBeats === 'number'
+            ? endTime > startTime
+              ? endTime + rangeOriginBeats
+              : sourceStartTime
+            : endTime;
+        const childOptions: ScoreGenerationOptions = {
+          deferFileSeek: generationOptions.deferFileSeek || fullSoundSource,
+          trackId: generationOptions.trackId,
+          instrumentTargetCollector: generationOptions.instrumentTargetCollector,
+          deferRenderStartRebase: true,
+          normalizationOrigin:
+            generationOptions.normalizationOrigin?.owner === this
+              ? generationOptions.normalizationOrigin
+              : undefined,
+          beatOrigin: (generationOptions.beatOrigin ?? 0) + this._startTime.toBeats(context),
+        };
+
+        if (shouldProcessWithSolo) {
+          for (const layer of this) {
+            if (!layer.isSolo() || layer.isMuted()) {
+              continue;
+            }
+
+            const nl = layer.generateForCSD(
+              context,
+              compileData,
+              sourceStartTime,
+              sourceEndTime,
+              childOptions,
+            );
+            noteList.merge(nl);
+          }
+        } else {
+          for (const layer of this) {
+            if (layer.isMuted()) {
+              continue;
+            }
+
+            const nl = layer.generateForCSD(
+              context,
+              compileData,
+              sourceStartTime,
+              sourceEndTime,
+              childOptions,
+            );
+            noteList.merge(nl);
+          }
+        }
+
+        return this.processGeneratedNotes(
+          context,
+          noteList,
+          startTime,
+          endTime,
+          sourceStartTime,
+          sourceEndTime,
+          generationOptions,
+        );
+      },
     );
   }
 
@@ -336,80 +357,99 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     endTime: number,
     options?: ScoreGenerationOptionsOrSolo,
   ): Promise<NoteList> {
-    const noteList = new NoteList();
-    const generationOptions = normalizeScoreGenerationOptions(options);
-    const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
-    const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
-    const rangeOriginBeats =
-      generationOptions.normalizationOrigin?.owner === this &&
-      generationOptions.normalizationOrigin.allowRangeOrigin
-        ? this.getLinkedRangeOriginBeats(context, shouldProcessWithSolo)
-        : undefined;
-    if (rangeOriginBeats !== undefined && generationOptions.normalizationOrigin) {
-      generationOptions.normalizationOrigin.rangeOriginBeats = rangeOriginBeats;
-      if (rangeOriginBeats !== null) {
-        generationOptions.normalizationOrigin.originBeats =
-          this._startTime.toBeats(context) + rangeOriginBeats;
-      }
-    }
-    const sourceStartTime =
-      typeof rangeOriginBeats === 'number' ? startTime + rangeOriginBeats : startTime;
-    const sourceEndTime =
-      typeof rangeOriginBeats === 'number'
-        ? endTime > startTime
-          ? endTime + rangeOriginBeats
-          : sourceStartTime
-        : endTime;
-    const childOptions: ScoreGenerationOptions = {
-      deferRenderStartRebase: true,
-      normalizationOrigin:
-        generationOptions.normalizationOrigin?.owner === this
-          ? generationOptions.normalizationOrigin
-          : undefined,
-      beatOrigin: (generationOptions.beatOrigin ?? 0) + this._startTime.toBeats(context),
-    };
-
-    if (shouldProcessWithSolo) {
-      for (const layer of this) {
-        if (!layer.isSolo() || layer.isMuted()) {
-          continue;
-        }
-
-        const nl = await layer.generateForCSDAsync(
-          context,
-          compileData,
-          sourceStartTime,
-          sourceEndTime,
-          childOptions,
-        );
-        noteList.merge(nl);
-      }
-    } else {
-      for (const layer of this) {
-        if (layer.isMuted()) {
-          continue;
-        }
-
-        const nl = await layer.generateForCSDAsync(
-          context,
-          compileData,
-          sourceStartTime,
-          sourceEndTime,
-          childOptions,
-        );
-        noteList.merge(nl);
-      }
-    }
-
-    return this.processGeneratedNotesAsync(
-      context,
-      noteList,
+    return withSoundOccurrencesAsync(
+      compileData,
+      normalizeScoreGenerationOptions(options).deferRenderStartRebase ? 0 : startTime,
       startTime,
       endTime,
-      sourceStartTime,
-      sourceEndTime,
-      compileData,
-      generationOptions,
+      async () => {
+        const noteList = new NoteList();
+        const generationOptions = normalizeScoreGenerationOptions(options);
+        const processWithSolo = generationOptions.processWithSolo ?? this.hasSoloLayers();
+        const shouldProcessWithSolo = processWithSolo ?? this.hasSoloLayers();
+        const rangeOriginBeats =
+          generationOptions.normalizationOrigin?.owner === this &&
+          generationOptions.normalizationOrigin.allowRangeOrigin
+            ? this.getLinkedRangeOriginBeats(context, shouldProcessWithSolo)
+            : undefined;
+        if (rangeOriginBeats !== undefined && generationOptions.normalizationOrigin) {
+          generationOptions.normalizationOrigin.rangeOriginBeats = rangeOriginBeats;
+          if (rangeOriginBeats !== null) {
+            generationOptions.normalizationOrigin.originBeats =
+              this._startTime.toBeats(context) + rangeOriginBeats;
+          }
+        }
+        const fullSoundSource =
+          isSoundInstrumentDeferred(compileData) &&
+          this._timeBehavior !== TimeBehavior.NONE &&
+          containsSound(this);
+        const sourceStartTime = fullSoundSource
+          ? 0
+          : typeof rangeOriginBeats === 'number'
+            ? startTime + rangeOriginBeats
+            : startTime;
+        const sourceEndTime = fullSoundSource
+          ? -1
+          : typeof rangeOriginBeats === 'number'
+            ? endTime > startTime
+              ? endTime + rangeOriginBeats
+              : sourceStartTime
+            : endTime;
+        const childOptions: ScoreGenerationOptions = {
+          deferFileSeek: generationOptions.deferFileSeek || fullSoundSource,
+          trackId: generationOptions.trackId,
+          instrumentTargetCollector: generationOptions.instrumentTargetCollector,
+          deferRenderStartRebase: true,
+          normalizationOrigin:
+            generationOptions.normalizationOrigin?.owner === this
+              ? generationOptions.normalizationOrigin
+              : undefined,
+          beatOrigin: (generationOptions.beatOrigin ?? 0) + this._startTime.toBeats(context),
+        };
+
+        if (shouldProcessWithSolo) {
+          for (const layer of this) {
+            if (!layer.isSolo() || layer.isMuted()) {
+              continue;
+            }
+
+            const nl = await layer.generateForCSDAsync(
+              context,
+              compileData,
+              sourceStartTime,
+              sourceEndTime,
+              childOptions,
+            );
+            noteList.merge(nl);
+          }
+        } else {
+          for (const layer of this) {
+            if (layer.isMuted()) {
+              continue;
+            }
+
+            const nl = await layer.generateForCSDAsync(
+              context,
+              compileData,
+              sourceStartTime,
+              sourceEndTime,
+              childOptions,
+            );
+            noteList.merge(nl);
+          }
+        }
+
+        return this.processGeneratedNotesAsync(
+          context,
+          noteList,
+          startTime,
+          endTime,
+          sourceStartTime,
+          sourceEndTime,
+          compileData,
+          generationOptions,
+        );
+      },
     );
   }
 
@@ -440,13 +480,14 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
       this._npc.getProcessors().length === 0 &&
       this.every((layer) => layer.getNoteProcessorChain().getProcessors().length === 0);
     if (canFinalizeFileSeeks) {
-      this.applyFileSeekNormalization(
-        context,
-        processed,
-        renderStart,
-        renderEnd,
-        generationOptions,
-      );
+      if (!generationOptions.deferFileSeek)
+        this.applyFileSeekNormalization(
+          context,
+          processed,
+          renderStart,
+          renderEnd,
+          generationOptions,
+        );
     }
 
     if (sourceEnd > sourceStart) {
@@ -501,13 +542,14 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
       this._npc.getProcessors().length === 0 &&
       this.every((layer) => layer.getNoteProcessorChain().getProcessors().length === 0);
     if (canFinalizeFileSeeks) {
-      this.applyFileSeekNormalization(
-        context,
-        processed,
-        renderStart,
-        renderEnd,
-        generationOptions,
-      );
+      if (!generationOptions.deferFileSeek)
+        this.applyFileSeekNormalization(
+          context,
+          processed,
+          renderStart,
+          renderEnd,
+          generationOptions,
+        );
     }
 
     if (sourceEnd > sourceStart) {

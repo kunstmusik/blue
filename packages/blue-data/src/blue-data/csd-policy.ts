@@ -10,6 +10,10 @@ import { Track } from '../score/track/track';
 import { AudioClip } from '../score/audio/audio-clip';
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
+import {
+  deferSoundInstruments,
+  finalizeSoundInstruments,
+} from '../sound-objects/sound-occurrences';
 import { Mixer, buildSubChannelMeterKeys } from '../mixer/mixer';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { Parameter } from '../automation/parameter';
@@ -242,6 +246,7 @@ export function buildStandardCSD(
     const pruneInaudibleTracks =
       gateContext?.mode === 'fixed' ? computeDiskPruningSet(blueData, gateContext) : undefined;
     const prunedDurationSink = { value: 0 };
+    deferSoundInstruments(compileData);
     const noteList = getBlueDataState(blueData).score.generateForCSD(
       compileData,
       startTime,
@@ -256,6 +261,7 @@ export function buildStandardCSD(
         prunedDurationSink,
       },
     );
+    finalizeSoundInstruments(noteList, compileData, startTime, endTime);
     clonedArrangement.generateUserDefinedOpcodes(udos);
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
@@ -542,6 +548,7 @@ export async function buildStandardCSDAsync(
     const pruneInaudibleTracks =
       gateContext?.mode === 'fixed' ? computeDiskPruningSet(blueData, gateContext) : undefined;
     const prunedDurationSink = { value: 0 };
+    deferSoundInstruments(compileData);
     const noteList = await getBlueDataState(blueData).score.generateForCSDAsync(
       compileData,
       startTime,
@@ -556,6 +563,7 @@ export async function buildStandardCSDAsync(
         prunedDurationSink,
       },
     );
+    finalizeSoundInstruments(noteList, compileData, startTime, endTime);
     clonedArrangement.generateUserDefinedOpcodes(udos);
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();

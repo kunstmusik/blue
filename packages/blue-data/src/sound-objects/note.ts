@@ -1,5 +1,7 @@
 import { formatBlueNumber, formatJavaDouble } from '../utilities/number-format';
 import type { ScoreNormalizationOrigin } from '../score/score-generation-options';
+import type { BlueSynthBuilder } from '../instruments/blue-synth-builder';
+import type { TimeContext } from '../time/time-context';
 
 const TOKEN_PATTERN = /"[^"]*"|\[[^\]]*\]|\S*/g;
 
@@ -9,6 +11,15 @@ export interface FileSeekProvenance {
   readonly originalDurationBeats: number;
   readonly generatedOffsetSeconds: number;
   readonly normalizationOrigin: ScoreNormalizationOrigin;
+}
+
+/** Disposable Sound resource and envelope placement, before final instrument allocation. */
+export interface SoundOccurrence {
+  readonly instrument: BlueSynthBuilder;
+  readonly instrumentNumber: number;
+  readonly trackId?: string;
+  readonly envelopeStart: number;
+  readonly envelopeDuration: number;
 }
 
 function evalBracketExpression(expr: string): string {
@@ -31,6 +42,8 @@ export class Note {
   private _subjectiveDuration = 0;
   private _trackInstrumentTarget: 'assignable' | 'preserve' | undefined;
   private _fileSeekProvenance: FileSeekProvenance | undefined;
+  private _soundOccurrence: SoundOccurrence | undefined;
+  private _deferredFileSeek: { readonly pField: 4 | 5; readonly context: TimeContext } | undefined;
   isTied = false;
 
   static createNote(numPFields: number): Note {
@@ -51,6 +64,8 @@ export class Note {
     note._subjectiveDuration = other._subjectiveDuration;
     note._trackInstrumentTarget = other._trackInstrumentTarget;
     note._fileSeekProvenance = other._fileSeekProvenance;
+    note._soundOccurrence = other._soundOccurrence;
+    note._deferredFileSeek = other._deferredFileSeek;
     note.isTied = other.isTied;
     for (const [k, v] of other._pFields) {
       note._pFields.set(k, v);
@@ -144,6 +159,12 @@ export class Note {
     return this._startTime;
   }
   setStartTime(time: number): void {
+    if (this._soundOccurrence) {
+      this._soundOccurrence = {
+        ...this._soundOccurrence,
+        envelopeStart: this._soundOccurrence.envelopeStart + time - this._startTime,
+      };
+    }
     this._startTime = time;
     this._pFields.set(2, formatJavaDouble(time));
   }
@@ -181,7 +202,8 @@ export class Note {
   setPField(value: string, index: number): void {
     this._pFields.set(index, value);
     if (index === 2) {
-      this._startTime = parseFloat(value);
+      this.setStartTime(parseFloat(value));
+      this._pFields.set(index, value);
     }
     if (index === 3) {
       this.setSubjectiveDuration(parseFloat(value));
@@ -206,6 +228,22 @@ export class Note {
 
   setFileSeekProvenance(provenance: FileSeekProvenance | undefined): void {
     this._fileSeekProvenance = provenance;
+  }
+
+  getSoundOccurrence(): SoundOccurrence | undefined {
+    return this._soundOccurrence;
+  }
+
+  setSoundOccurrence(occurrence: SoundOccurrence | undefined): void {
+    this._soundOccurrence = occurrence;
+  }
+
+  getDeferredFileSeek(): typeof this._deferredFileSeek {
+    return this._deferredFileSeek;
+  }
+
+  setDeferredFileSeek(seek: typeof this._deferredFileSeek): void {
+    this._deferredFileSeek = seek;
   }
 
   getPFields(): Map<number, string> {
