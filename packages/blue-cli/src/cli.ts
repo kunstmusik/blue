@@ -11,6 +11,7 @@ import {
   getExternalCommandExecutor,
   setExternalCommandExecutor,
 } from '@blue/data';
+import { resolveCliTuningScales } from './tuning-scales';
 import { prepareCliAudioLayout } from './audio-layout';
 import { CliExternalCommands } from './external-commands';
 
@@ -92,6 +93,7 @@ async function compileProjectNow(
   }
   if (!report.ok) throw new XmlLoadError(report.diagnostics);
   const project = report.value;
+  resolveCliTuningScales(project);
   const layout = prepareCliAudioLayout(project, path.dirname(projectPath));
   await initializeJavaScriptRuntime();
   const commands = new CliExternalCommands(path.dirname(projectPath));

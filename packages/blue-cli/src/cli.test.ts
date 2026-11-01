@@ -25,6 +25,7 @@ vi.mock('@blue/data', async (importOriginal) => ({
   initializeJavaScriptRuntime: dataMock.initializeJavaScriptRuntime,
 }));
 
+vi.mock('./tuning-scales', () => ({ resolveCliTuningScales: vi.fn() }));
 vi.mock('./audio-layout', () => ({ prepareCliAudioLayout: vi.fn() }));
 
 import { compileProject, resolveCompileMode } from './cli';

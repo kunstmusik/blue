@@ -669,3 +669,5 @@ export type { SmpteFormat } from './time/smpte-timecode';
 
 export { readResourceXml } from './resource-xml-policy';
 export type { XmlResourceKind, XmlResource } from './resource-xml-policy';
+
+export { parseScalaScale } from './utilities/scala-scale';

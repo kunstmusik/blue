@@ -5,6 +5,9 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   BlueData,
+  GenericScore,
+  TuningProcessor,
+  Element,
   AudioClip,
   TrackLayerGroup,
   External,
@@ -27,6 +30,38 @@ afterEach(() => {
   for (const directory of directories.splice(0)) fs.rmSync(directory, { recursive: true });
 });
 describe('CLI host preparation', () => {
+  it('resolves Scala scale references and preserves output when a scale disappears', () => {
+    const { directory, project, output } = fixture();
+    const scale = path.join(directory, 'scale.scl');
+    fs.writeFileSync(scale, 'Test scale\n2\n3/2\n2\n');
+    const data = new BlueData();
+    const score = new GenericScore();
+    score.setScoreText('i1 0 1 8.01');
+    score
+      .getNoteProcessorChain()
+      .addProcessor(
+        TuningProcessor.loadFromXML(
+          Element.parse(
+            '<noteProcessor type="TuningProcessor"><scale>' +
+              scale +
+              '</scale><baseFrequency>440</baseFrequency></noteProcessor>',
+          ),
+        ),
+      );
+    (data.getScore()[0]![0]! as SoundLayer).push(score);
+    fs.writeFileSync(project, data.saveToString());
+    execFileSync(process.execPath, [binary, 'compile', '-p', project, '-o', output]);
+    expect(fs.readFileSync(output, 'utf8')).toMatch(/i1\s+0\.0\s+4\s+660/);
+    fs.unlinkSync(scale);
+    fs.writeFileSync(output, 'previous output');
+    const result = spawnSync(process.execPath, [binary, 'compile', '-p', project, '-o', output], {
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Cannot resolve tuning scale');
+    expect(fs.readFileSync(output, 'utf8')).toBe('previous output');
+  });
+
   it.each([1, 2])(
     'inspects %s-channel audio and rejects missing sources without replacing output',
     (channels) => {

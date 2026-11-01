@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   BlueData,
-  Scale,
+  parseScalaScale,
   TuningProcessor,
   Instance,
   FrozenSoundObject,
@@ -17,54 +17,7 @@ export interface TuningDependencyOptions {
   readonly readFile?: (nativePath: string) => string;
 }
 
-/**
- * Original parser based on the public Scala format rules:
- * https://www.huygens-fokker.org/scala/scl_format.html
- * The final supplied interval is the period; implicit unison starts the degrees.
- */
-export function parseScalaScale(text: string): Scale {
-  const lines = text
-    .replace(/^\uFEFF/, '')
-    .split(/\r\n?|\n/)
-    .filter((line) => !line.trimStart().startsWith('!'));
-  const scale = new Scale();
-  scale.scaleName = lines.shift() ?? '';
-  const countText = (lines.shift() ?? '').trim();
-  if (!/^\d+$/.test(countText)) throw new Error('Scala scale requires an integral degree count.');
-  const count = Number(countText);
-  if (!Number.isSafeInteger(count) || count < 0 || count > lines.length)
-    throw new Error('Scala scale requires a complete interval list.');
-  const intervals: number[] = [];
-  for (let index = 0; index < count; index++) {
-    const token = lines[index]!.trim().split(/\s+/)[0];
-    if (!token) throw new Error('Scala scale contains an empty interval.');
-    let ratio: number;
-    if (token.includes('.')) {
-      if (!/^[+-]?(?:\d+\.\d*|\.\d+)$/.test(token))
-        throw new Error('Invalid Scala cents interval.');
-      ratio = Math.pow(2, Number(token) / 1200);
-    } else {
-      if (!/^\d+(?:\/\d+)?$/.test(token)) throw new Error('Invalid Scala ratio interval.');
-      const [numerator, denominator = '1'] = token.split('/');
-      const numeratorValue = Number(numerator);
-      const denominatorValue = Number(denominator);
-      if (
-        !Number.isSafeInteger(numeratorValue) ||
-        numeratorValue <= 0 ||
-        !Number.isSafeInteger(denominatorValue) ||
-        denominatorValue <= 0
-      )
-        throw new Error('Invalid Scala ratio interval.');
-      ratio = numeratorValue / denominatorValue;
-    }
-    if (!Number.isFinite(ratio) || ratio <= 0)
-      throw new Error('Scala intervals must produce finite positive ratios.');
-    intervals.push(ratio);
-  }
-  scale.octave = intervals.pop() ?? 1;
-  scale.ratios = [1, ...intervals];
-  return Scale.loadFromXML(scale.saveAsXML());
-}
+export { parseScalaScale } from '@blue/data';
 
 function tuningProcessors(root: BlueData | SoundObject): TuningProcessor[] {
   const found = new Set<TuningProcessor>();
