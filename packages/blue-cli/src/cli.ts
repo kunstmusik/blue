@@ -3,7 +3,14 @@ import { statSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { Command } from 'commander';
-import { readProjectXml, XmlLoadError, initializeJavaScriptRuntime } from '@blue/data';
+import {
+  readProjectXml,
+  XmlLoadError,
+  initializeJavaScriptRuntime,
+  getExternalCommandExecutor,
+  setExternalCommandExecutor,
+} from '@blue/data';
+import { CliExternalCommands } from './external-commands';
 
 export type CompileMode = 'disk' | 'realtime' | 'bluelive';
 
@@ -49,7 +56,16 @@ function isSameFile(source: string, destination: string): boolean {
   }
 }
 
-export async function compileProject(
+// The data runtime has one external executor per process.
+let compilationQueue: Promise<unknown> = Promise.resolve();
+
+export function compileProject(request: CompileProjectRequest): Promise<{ bytesWritten: number }> {
+  const compilation = compilationQueue.then(() => compileProjectNow(request));
+  compilationQueue = compilation.catch(() => undefined);
+  return compilation;
+}
+
+async function compileProjectNow(
   request: CompileProjectRequest,
 ): Promise<{ bytesWritten: number }> {
   const projectPath = path.resolve(request.projectPath);
@@ -75,6 +91,9 @@ export async function compileProject(
   if (!report.ok) throw new XmlLoadError(report.diagnostics);
   const project = report.value;
   await initializeJavaScriptRuntime();
+  const commands = new CliExternalCommands(path.dirname(projectPath));
+  const previousExecutor = getExternalCommandExecutor();
+  setExternalCommandExecutor(commands);
   let csd: string;
   try {
     csd =
@@ -83,6 +102,7 @@ export async function compileProject(
         : request.mode === 'realtime'
           ? await project.toCSDAsync()
           : await project.toDiskCSDAsync();
+    if (commands.failure) throw commands.failure;
   } catch (error) {
     if (error instanceof Error && /requires a Java runtime session/.test(error.message)) {
       throw new Error(
@@ -91,6 +111,8 @@ export async function compileProject(
       );
     }
     throw error;
+  } finally {
+    setExternalCommandExecutor(previousExecutor);
   }
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });

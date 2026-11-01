@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BlueData } from '@blue/data';
+import { BlueData, External, ObjectBuilder, SoundLayer } from '@blue/data';
 
 const binary = path.resolve('dist/blue-cli.cjs');
 const directories: string[] = [];
@@ -19,6 +19,37 @@ afterEach(() => {
   for (const directory of directories.splice(0)) fs.rmSync(directory, { recursive: true });
 });
 describe('CLI host preparation', () => {
+  it.each(['External', 'ObjectBuilder'])(
+    'runs %s commands in the project directory and fails on errors',
+    (type) => {
+      const data = new BlueData();
+      const object = type === 'External' ? new External() : new ObjectBuilder();
+      const command = '"' + process.execPath + '" generator.cjs $infile $outfile';
+      object.setCommandLine(command);
+      if (object instanceof External) object.setText('source');
+      else {
+        object.setLanguageType('EXTERNAL');
+        object.setCode('source');
+      }
+      (data.getScore()[0]![0]! as SoundLayer).push(object);
+      const { directory, project, output } = fixture(data);
+      fs.writeFileSync(
+        path.join(directory, 'generator.cjs'),
+        "const fs=require('fs'); if(fs.readFileSync(process.argv[2],'utf8')!=='source')process.exit(2); fs.writeFileSync(process.argv[3], 'i1 0 1 440');",
+      );
+      execFileSync(process.execPath, [binary, 'compile', '-p', project, '-o', output]);
+      expect(fs.readFileSync(output, 'utf8')).toMatch(/i1\s+0/);
+      fs.writeFileSync(path.join(directory, 'generator.cjs'), 'process.exit(2)');
+      fs.writeFileSync(output, 'previous output');
+      const result = spawnSync(process.execPath, [binary, 'compile', '-p', project, '-o', output], {
+        encoding: 'utf8',
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('External score generation failed');
+      expect(fs.readFileSync(output, 'utf8')).toBe('previous output');
+    },
+  );
+
   it('protects the project from direct, symbolic-link and hard-link output aliases', () => {
     const { project, directory } = fixture();
     const source = fs.readFileSync(project, 'utf8');
