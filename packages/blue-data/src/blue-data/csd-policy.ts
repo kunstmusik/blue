@@ -223,7 +223,6 @@ export function buildStandardCSD(
     }
 
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
-    clonedArrangement.generateUserDefinedOpcodes(udos);
 
     const parameters = getAllParameters(
       clonedArrangement,
@@ -237,8 +236,6 @@ export function buildStandardCSD(
     appendFtgenTableNumbers(globalOrc, clonedTables);
     clonedArrangement.generateFTables(clonedTables);
     compileData.registerBlueX7CompiledBindings();
-
-    const ftables = clonedTables.getAllTables();
 
     // Score → score events
     const { startTime, endTime } = getRenderWindow(blueData, profile);
@@ -259,6 +256,7 @@ export function buildStandardCSD(
         prunedDurationSink,
       },
     );
+    clonedArrangement.generateUserDefinedOpcodes(udos);
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
     compileData.setHandleParametersAndChannels(false);
@@ -394,7 +392,7 @@ export function buildStandardCSD(
 
     const orc = clonedArrangement.generateOrchestra(compileData, clonedMixer, nchnls, parameterMap);
 
-    const scoreText = buildScoreText(blueData, ftables, globalSco, noteList);
+    const scoreText = buildScoreText(blueData, clonedTables.getAllTables(), globalSco, noteList);
 
     // Build project info comments
     const projectInfo = buildProjectInfo(blueData);
@@ -526,7 +524,6 @@ export async function buildStandardCSDAsync(
     }
 
     const udos = new OpcodeList(getBlueDataState(blueData).opcodeList);
-    clonedArrangement.generateUserDefinedOpcodes(udos);
 
     const parameters = getAllParameters(
       clonedArrangement,
@@ -540,8 +537,6 @@ export async function buildStandardCSDAsync(
     appendFtgenTableNumbers(globalOrc, clonedTables);
     clonedArrangement.generateFTables(clonedTables);
     compileData.registerBlueX7CompiledBindings();
-
-    const ftables = clonedTables.getAllTables();
 
     const { startTime, endTime } = getRenderWindow(blueData, profile);
     const pruneInaudibleTracks =
@@ -561,6 +556,7 @@ export async function buildStandardCSDAsync(
         prunedDurationSink,
       },
     );
+    clonedArrangement.generateUserDefinedOpcodes(udos);
     const allParameters = compileData.getOriginalParameters();
     const allStringChannels = compileData.getStringChannels();
     compileData.setHandleParametersAndChannels(false);
@@ -701,7 +697,7 @@ export async function buildStandardCSDAsync(
       parameterMap,
     );
 
-    const scoreText = buildScoreText(blueData, ftables, globalSco, noteList);
+    const scoreText = buildScoreText(blueData, clonedTables.getAllTables(), globalSco, noteList);
 
     const projectInfo = buildProjectInfo(blueData);
 
