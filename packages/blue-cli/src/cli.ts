@@ -59,12 +59,23 @@ export async function compileProject(
   if (!report.ok) throw new XmlLoadError(report.diagnostics);
   const project = report.value;
   await initializeJavaScriptRuntime();
-  const csd =
-    request.mode === 'bluelive'
-      ? project.toBlueLiveCSD().csdText
-      : request.mode === 'realtime'
-        ? project.toCSD()
-        : project.toDiskCSD();
+  let csd: string;
+  try {
+    csd =
+      request.mode === 'bluelive'
+        ? project.toBlueLiveCSD().csdText
+        : request.mode === 'realtime'
+          ? await project.toCSDAsync()
+          : await project.toDiskCSDAsync();
+  } catch (error) {
+    if (error instanceof Error && /requires a Java runtime session/.test(error.message)) {
+      throw new Error(
+        `${error.message}. Compile this project in the Blue desktop app with the Java runtime enabled; blue-cli does not start a Java runtime.`,
+        { cause: error },
+      );
+    }
+    throw error;
+  }
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, csd, 'utf8');

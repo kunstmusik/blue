@@ -48,11 +48,17 @@ blue-cli compile -p <project-path> -o <output-path> [options]
 | :----------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------- |
 | `--project`  | `-p <path>` | **Required**. Path to the source `.blue` XML project file.                                                                    |
 | `--output`   | `-o <path>` | **Required**. Path where the generated `.csd` file will be written.                                                           |
-| `--realtime` |             | Generate the CSD configured for realtime audio output (`project.toCSD()`). Mutually exclusive with `--bluelive`.              |
+| `--realtime` |             | Generate the CSD configured for realtime audio output (`project.toCSDAsync()`). Mutually exclusive with `--bluelive`.         |
 | `--bluelive` |             | Generate the CSD configured for Blue Live performance mode (`project.toBlueLiveCSD()`). Mutually exclusive with `--realtime`. |
 | `--help`     | `-h`        | Display help text and command usage.                                                                                          |
 
-_When neither `--realtime` nor `--bluelive` is specified, `blue-cli` defaults to generating a **disk render** CSD (`project.toDiskCSD()`)._
+_When neither `--realtime` nor `--bluelive` is specified, `blue-cli` defaults to generating a **disk render** CSD (`project.toDiskCSDAsync()`)._
+
+Disk and realtime compilation execute score generators asynchronously. If a generated object,
+note processor, or enabled instrument requires Java (including Python ObjectBuilder), compilation
+fails before writing the output. Compile these projects in the Blue desktop app with its Java
+runtime enabled; the CLI does not launch Java. Unused runtime-backed library objects do not
+prevent compilation.
 
 ---
 

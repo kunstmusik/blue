@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import { BlueData, ObjectBuilder, PythonInstrument, SoundLayer, TimeDuration } from '@blue/data';
 
 const execFileAsync = promisify(execFile);
 const distBinaryPath = path.resolve(
@@ -13,6 +14,65 @@ const distBinaryPath = path.resolve(
 );
 
 describe('blue-cli binary smoke test', () => {
+  it.each(['disk', 'realtime'])(
+    'fails %s compilation actionably when a Python ObjectBuilder needs Java',
+    async (mode) => {
+      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-cli-python-'));
+      try {
+        const data = new BlueData();
+        const builder = new ObjectBuilder();
+        builder.setLanguageType('PYTHON');
+        builder.setCode('score = "i1 0 1"');
+        builder.setSubjectiveDuration(TimeDuration.beats(1));
+        (data.getScore()[0]![0]! as SoundLayer).push(builder);
+        const projectPath = path.join(tempDir, 'project.blue');
+        const outputPath = path.join(tempDir, 'project.csd');
+        fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
+        fs.writeFileSync(outputPath, 'previous output', 'utf8');
+        await expect(
+          execFileAsync('node', [
+            distBinaryPath,
+            'compile',
+            '-p',
+            projectPath,
+            '-o',
+            outputPath,
+            ...(mode === 'realtime' ? ['--realtime'] : []),
+          ]),
+        ).rejects.toMatchObject({
+          code: 1,
+          stderr: expect.stringMatching(/ObjectBuilder PYTHON.*Blue desktop app.*Java runtime/),
+        });
+        expect(fs.readFileSync(outputPath, 'utf8')).toBe('previous output');
+      } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it('fails for an enabled PythonInstrument and permits unused Python library content', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-cli-runtime-'));
+    try {
+      const data = new BlueData();
+      data.getSoundObjectLibrary().addObject(new ObjectBuilder());
+      const projectPath = path.join(tempDir, 'project.blue');
+      const outputPath = path.join(tempDir, 'project.csd');
+      fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
+      await execFileAsync('node', [distBinaryPath, 'compile', '-p', projectPath, '-o', outputPath]);
+      expect(fs.readFileSync(outputPath, 'utf8')).toContain('<CsoundSynthesizer>');
+      data.getArrangement().addInstrument(new PythonInstrument(), '1');
+      fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
+      await expect(
+        execFileAsync('node', [distBinaryPath, 'compile', '-p', projectPath, '-o', outputPath]),
+      ).rejects.toMatchObject({
+        code: 1,
+        stderr: expect.stringMatching(/PythonInstrument.*Blue desktop app.*Java runtime/),
+      });
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('compiles a minimal project through the built binary', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-cli-smoke-'));
     const projectPath = path.join(tempDir, 'project.blue');

@@ -46,9 +46,9 @@ describe('compileProject', () => {
     dataMock.initializeJavaScriptRuntime.mockReset();
   });
 
-  it('uses toDiskCSD for the default compile mode', async () => {
-    const toDiskCSD = vi.fn(() => 'disk-csd');
-    const toCSD = vi.fn(() => 'realtime-csd');
+  it('uses toDiskCSDAsync for the default compile mode', async () => {
+    const toDiskCSDAsync = vi.fn(() => 'disk-csd');
+    const toCSDAsync = vi.fn(() => 'realtime-csd');
     const toBlueLiveCSD = vi.fn(() => ({ csdText: 'bluelive-csd' }));
 
     fsMock.readFile.mockResolvedValue('project xml');
@@ -59,8 +59,8 @@ describe('compileProject', () => {
       ok: true,
       diagnostics: [],
       value: {
-        toDiskCSD,
-        toCSD,
+        toDiskCSDAsync,
+        toCSDAsync,
         toBlueLiveCSD,
       },
     });
@@ -76,16 +76,16 @@ describe('compileProject', () => {
       label: resolve('/tmp/project.blue'),
       nativePath: resolve('/tmp/project.blue'),
     });
-    expect(toDiskCSD).toHaveBeenCalledTimes(1);
-    expect(toCSD).not.toHaveBeenCalled();
+    expect(toDiskCSDAsync).toHaveBeenCalledTimes(1);
+    expect(toCSDAsync).not.toHaveBeenCalled();
     expect(toBlueLiveCSD).not.toHaveBeenCalled();
     expect(fsMock.writeFile).toHaveBeenCalledWith(resolve('/tmp/project.csd'), 'disk-csd', 'utf8');
     expect(result.bytesWritten).toBe(Buffer.byteLength('disk-csd', 'utf8'));
   });
 
-  it('uses toCSD for realtime mode and toBlueLiveCSD for Blue Live mode', async () => {
-    const toDiskCSD = vi.fn(() => 'disk-csd');
-    const toCSD = vi.fn(() => 'realtime-csd');
+  it('uses toCSDAsync for realtime mode and toBlueLiveCSD for Blue Live mode', async () => {
+    const toDiskCSDAsync = vi.fn(() => 'disk-csd');
+    const toCSDAsync = vi.fn(() => 'realtime-csd');
     const toBlueLiveCSD = vi.fn(() => ({ csdText: 'bluelive-csd' }));
 
     fsMock.readFile.mockResolvedValue('project xml');
@@ -96,8 +96,8 @@ describe('compileProject', () => {
       ok: true,
       diagnostics: [],
       value: {
-        toDiskCSD,
-        toCSD,
+        toDiskCSDAsync,
+        toCSDAsync,
         toBlueLiveCSD,
       },
     });
@@ -114,9 +114,9 @@ describe('compileProject', () => {
       mode: 'bluelive',
     });
 
-    expect(toCSD).toHaveBeenCalledTimes(1);
+    expect(toCSDAsync).toHaveBeenCalledTimes(1);
     expect(toBlueLiveCSD).toHaveBeenCalledTimes(1);
-    expect(toDiskCSD).not.toHaveBeenCalled();
+    expect(toDiskCSDAsync).not.toHaveBeenCalled();
   });
 
   it('reports rejected XML before runtime initialization or output creation', async () => {
@@ -152,7 +152,7 @@ describe('compileProject', () => {
     fsMock.readFile.mockResolvedValue('<blueData/>');
     dataMock.readProjectXml.mockReturnValue({
       ok: true,
-      value: { toDiskCSD: compile },
+      value: { toDiskCSDAsync: compile },
       diagnostics: [
         {
           code: 'P-PPQ',
