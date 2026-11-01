@@ -15,6 +15,11 @@ import { NoteProcessorException } from './note-processor-exception';
 
 const JAVA_TYPE = 'blue.noteProcessor.PythonProcessor';
 
+interface NoteRenderMetadata {
+  fileSeekProvenance: FileSeekProvenance | undefined;
+  trackInstrumentTarget: ReturnType<Note['getTrackInstrumentTarget']>;
+}
+
 function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
   const baseMessage = error?.message?.trim().length ? error.message : message;
   if (error?.line == null) {
@@ -30,10 +35,10 @@ function formatRuntimeError(message: string, error?: JavaRuntimeError): string {
 
 function serializeNoteList(notes: NoteList): {
   serialized: JythonSerializedNote[];
-  fileSeekProvenanceById: Map<string, FileSeekProvenance>;
+  renderMetadataById: Map<string, NoteRenderMetadata>;
 } {
   const serialized: JythonSerializedNote[] = [];
-  const fileSeekProvenanceById = new Map<string, FileSeekProvenance>();
+  const renderMetadataById = new Map<string, NoteRenderMetadata>();
 
   for (const [index, note] of [...notes].entries()) {
     const pfields: string[] = [];
@@ -42,9 +47,17 @@ function serializeNoteList(notes: NoteList): {
     }
 
     const fileSeekProvenance = note.getFileSeekProvenance();
-    const renderMetadataId = fileSeekProvenance ? `file-seek-${index}` : undefined;
-    if (renderMetadataId && fileSeekProvenance) {
-      fileSeekProvenanceById.set(renderMetadataId, fileSeekProvenance);
+    const trackInstrumentTarget = note.getTrackInstrumentTarget();
+    const renderMetadataId = fileSeekProvenance
+      ? `file-seek-${index}`
+      : trackInstrumentTarget
+        ? `render-note-${index}`
+        : undefined;
+    if (renderMetadataId) {
+      renderMetadataById.set(renderMetadataId, {
+        fileSeekProvenance,
+        trackInstrumentTarget,
+      });
     }
 
     serialized.push({
@@ -55,12 +68,12 @@ function serializeNoteList(notes: NoteList): {
     });
   }
 
-  return { serialized, fileSeekProvenanceById };
+  return { serialized, renderMetadataById };
 }
 
 function deserializeNoteList(
   notes: JythonSerializedNote[],
-  fileSeekProvenanceById: ReadonlyMap<string, FileSeekProvenance>,
+  renderMetadataById: ReadonlyMap<string, NoteRenderMetadata>,
 ): NoteList {
   const noteList = new NoteList();
 
@@ -75,8 +88,12 @@ function deserializeNoteList(
     note.setSubjectiveDuration(serialized.subjectiveDuration);
     note.setTied(serialized.tied);
     if (serialized.renderMetadataId) {
-      const provenance = fileSeekProvenanceById.get(serialized.renderMetadataId);
-      if (provenance) note.setFileSeekProvenance(provenance);
+      const metadata = renderMetadataById.get(serialized.renderMetadataId);
+      if (metadata) {
+        note.setFileSeekProvenance(metadata.fileSeekProvenance);
+        note.setTrackInstrumentTarget(metadata.trackInstrumentTarget);
+
+      }
     }
     noteList.add(note);
   }
@@ -116,7 +133,7 @@ export class PythonProcessor extends NoteProcessor {
       throw new NoteProcessorException('PythonProcessor requires a Java runtime session', -1);
     }
 
-    const { serialized, fileSeekProvenanceById } = serializeNoteList(notes);
+    const { serialized, renderMetadataById } = serializeNoteList(notes);
     const response = await runtimeClient.processJythonNoteList({
       code: this.code,
       notes: serialized,
@@ -129,7 +146,7 @@ export class PythonProcessor extends NoteProcessor {
       );
     }
 
-    return deserializeNoteList(response.result?.notes ?? [], fileSeekProvenanceById);
+    return deserializeNoteList(response.result?.notes ?? [], renderMetadataById);
   }
 
   override getDisplayName(): string {

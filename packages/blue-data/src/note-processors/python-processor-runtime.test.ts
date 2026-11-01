@@ -92,12 +92,14 @@ describe('PythonProcessor runtime bridge', () => {
       normalizationOrigin,
     };
     fileNote.setFileSeekProvenance(provenance);
+    fileNote.setTrackInstrumentTarget('preserve');
 
     const scoreNote = Note.createBlank(4);
     scoreNote.setPField('2', 1);
     scoreNote.setPField('2', 2);
     scoreNote.setPField('1', 3);
     scoreNote.setPField('440', 4);
+    scoreNote.setTrackInstrumentTarget('assignable');
     const processor = new PythonProcessor();
     const processed = await processor.processAsync(
       new NoteList([fileNote, scoreNote]),
@@ -108,5 +110,7 @@ describe('PythonProcessor runtime bridge', () => {
     expect(request?.notes[0]?.renderMetadataId).toBe('file-seek-0');
     expect(processed.getNote(0).getFileSeekProvenance()).toBeUndefined();
     expect(processed.getNote(1).getFileSeekProvenance()).toBe(provenance);
+    expect(processed.getNote(0).getTrackInstrumentTarget()).toBe('assignable');
+    expect(processed.getNote(1).getTrackInstrumentTarget()).toBe('preserve');
   });
 });
