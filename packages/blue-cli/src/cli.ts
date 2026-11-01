@@ -11,6 +11,7 @@ import {
   getExternalCommandExecutor,
   setExternalCommandExecutor,
 } from '@blue/data';
+import { startCliJavaRuntime } from './java-runtime';
 import { resolveCliTuningScales } from './tuning-scales';
 import { prepareCliAudioLayout } from './audio-layout';
 import { CliExternalCommands } from './external-commands';
@@ -100,27 +101,25 @@ async function compileProjectNow(
   const previousExecutor = getExternalCommandExecutor();
   const session = new JavaScriptSession();
   setExternalCommandExecutor(commands);
+  let java: Awaited<ReturnType<typeof startCliJavaRuntime>> = null;
   let csd: string;
   try {
-    await project.processOnLoadAsync(session);
+    java = await startCliJavaRuntime(project, path.dirname(projectPath));
+    await project.processOnLoadAsync(session, java?.client);
     csd =
       request.mode === 'bluelive'
-        ? (await project.toBlueLiveCSDAsync(session, undefined, false, layout)).csdText
+        ? (await project.toBlueLiveCSDAsync(session, java?.client, false, layout)).csdText
         : request.mode === 'realtime'
-          ? await project.toCSDAsync(session, undefined, layout)
-          : await project.toDiskCSDAsync(session, undefined, layout);
+          ? await project.toCSDAsync(session, java?.client, layout)
+          : await project.toDiskCSDAsync(session, java?.client, layout);
     if (commands.failure) throw commands.failure;
-  } catch (error) {
-    if (error instanceof Error && /requires a Java runtime session/.test(error.message)) {
-      throw new Error(
-        `${error.message}. Compile this project in the Blue desktop app with the Java runtime enabled; blue-cli does not start a Java runtime.`,
-        { cause: error },
-      );
-    }
-    throw error;
   } finally {
     setExternalCommandExecutor(previousExecutor);
-    session.dispose();
+    try {
+      session.dispose();
+    } finally {
+      await java?.dispose();
+    }
   }
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });

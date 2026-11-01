@@ -56,11 +56,17 @@ _When neither `--realtime` nor `--bluelive` is specified, `blue-cli` defaults to
 
 Compilation initializes project on-load scripts in a shared JavaScript session, resolves Scala tuning references, and inspects Track audio headers. External score commands execute from the project directory. Output must identify a different file from the source project.
 
-Disk and realtime compilation execute score generators asynchronously. Blue Live uses asynchronous orchestra generation. If a generated object,
-note processor, or enabled instrument requires Java (including Python ObjectBuilder), compilation
-fails before writing the output. Compile these projects in the Blue desktop app with its Java
-runtime enabled; the CLI does not launch Java. Unused runtime-backed library objects do not
-prevent compilation.
+Disk and realtime compilation execute score generators asynchronously. Blue Live uses asynchronous orchestra generation. Java-backed projects run with the bundled Blue helper using Java 17 or newer.
+The CLI uses `JAVA_HOME/bin/java` when `JAVA_HOME` is set, or `java` from `PATH`.
+Jython and Clojure generators, Python instruments, Python note processors, and
+on-load scripts use one project session which is terminated after compilation.
+No desktop installation or Maven is needed to run the packed CLI. With pnpm, allow the `zeromq` install script through `pnpm approve-builds` if pnpm requests build approval. Building the
+CLI from source requires Maven and a JDK to package the helper.
+
+The helper includes the standard Python libraries. Optional user libraries can
+be placed in `~/.blue/pythonLib`. Project Clojure dependencies are loaded from
+the project declaration and may require network access on first use.
+Compilation fails before writing output if Java cannot start or evaluation fails.
 
 ---
 
@@ -106,7 +112,7 @@ Wrote /path/to/bluelive.csd (bluelive, 28940 bytes)
 
 ## Architecture & Dependencies
 
-`blue-cli` uses [`esbuild`](https://esbuild.github.io/) to bundle `@blue/data` and the CLI entry point into a single, self-contained CommonJS binary at `dist/blue-cli.cjs`.
+`blue-cli` uses [`esbuild`](https://esbuild.github.io/) to bundle `@blue/data` and the CLI entry point into a CommonJS entry point at `dist/blue-cli.cjs`. The separate Java helper, script libraries, sources, and notices are shipped under `dist/java`.
 
 ### Runtime Note on `quickjs-emscripten`
 

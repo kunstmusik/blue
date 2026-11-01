@@ -15,7 +15,7 @@ const distBinaryPath = path.resolve(
 
 describe('blue-cli binary smoke test', () => {
   it.each(['disk', 'realtime'])(
-    'fails %s compilation actionably when a Python ObjectBuilder needs Java',
+    'reports missing Java for %s compilation without replacing output',
     async (mode) => {
       const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-cli-python-'));
       try {
@@ -30,18 +30,22 @@ describe('blue-cli binary smoke test', () => {
         fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
         fs.writeFileSync(outputPath, 'previous output', 'utf8');
         await expect(
-          execFileAsync('node', [
-            distBinaryPath,
-            'compile',
-            '-p',
-            projectPath,
-            '-o',
-            outputPath,
-            ...(mode === 'realtime' ? ['--realtime'] : mode === 'bluelive' ? ['--bluelive'] : []),
-          ]),
+          execFileAsync(
+            'node',
+            [
+              distBinaryPath,
+              'compile',
+              '-p',
+              projectPath,
+              '-o',
+              outputPath,
+              ...(mode === 'realtime' ? ['--realtime'] : []),
+            ],
+            { env: { ...process.env, JAVA_HOME: path.join(tempDir, 'missing-java') } },
+          ),
         ).rejects.toMatchObject({
           code: 1,
-          stderr: expect.stringMatching(/ObjectBuilder PYTHON.*Blue desktop app.*Java runtime/),
+          stderr: expect.stringMatching(/Cannot start Java 17/),
         });
         expect(fs.readFileSync(outputPath, 'utf8')).toBe('previous output');
       } finally {
@@ -50,11 +54,10 @@ describe('blue-cli binary smoke test', () => {
     },
   );
 
-  it('fails for an enabled PythonInstrument and permits unused Python library content', async () => {
+  it('reports missing Java for enabled Python instruments including Blue Live', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-cli-runtime-'));
     try {
       const data = new BlueData();
-      data.getSoundObjectLibrary().addObject(new ObjectBuilder());
       const projectPath = path.join(tempDir, 'project.blue');
       const outputPath = path.join(tempDir, 'project.csd');
       fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
@@ -64,18 +67,14 @@ describe('blue-cli binary smoke test', () => {
       fs.writeFileSync(projectPath, data.saveToString(), 'utf8');
       for (const mode of [[], ['--bluelive']]) {
         await expect(
-          execFileAsync('node', [
-            distBinaryPath,
-            'compile',
-            '-p',
-            projectPath,
-            '-o',
-            outputPath,
-            ...mode,
-          ]),
+          execFileAsync(
+            'node',
+            [distBinaryPath, 'compile', '-p', projectPath, '-o', outputPath, ...mode],
+            { env: { ...process.env, JAVA_HOME: path.join(tempDir, 'missing-java') } },
+          ),
         ).rejects.toMatchObject({
           code: 1,
-          stderr: expect.stringMatching(/PythonInstrument.*Blue desktop app.*Java runtime/),
+          stderr: expect.stringMatching(/Cannot start Java 17/),
         });
       }
     } finally {

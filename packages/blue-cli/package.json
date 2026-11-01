@@ -28,18 +28,20 @@
     "cli"
   ],
   "author": "Steven Yi",
-  "license": "MIT AND Apache-2.0 AND ISC",
+  "license": "SEE LICENSE IN THIRD_PARTY_NOTICES.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/kunstmusik/blue"
   },
   "devDependencies": {
     "commander": "^14.0.3",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "@blue/java-runtime": "workspace:*",
+    "@blue/data": "workspace:*"
   },
-  "//": "quickjs-emscripten must remain in dependencies because esbuild externalizes it when bundling @blue/data into dist/blue-cli.cjs; standalone CLI installations require it at runtime.",
+  "//": "The bundled CLI externalizes quickjs-emscripten and zeromq. Both must remain runtime dependencies for standalone installations.",
   "dependencies": {
-    "@blue/data": "workspace:*",
-    "quickjs-emscripten": "^0.32.0"
+    "quickjs-emscripten": "^0.32.0",
+    "zeromq": "^6.8.0"
   }
 }

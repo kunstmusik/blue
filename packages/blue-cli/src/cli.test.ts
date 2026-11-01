@@ -25,6 +25,7 @@ vi.mock('@blue/data', async (importOriginal) => ({
   initializeJavaScriptRuntime: dataMock.initializeJavaScriptRuntime,
 }));
 
+vi.mock('./java-runtime', () => ({ startCliJavaRuntime: vi.fn(() => null) }));
 vi.mock('./tuning-scales', () => ({ resolveCliTuningScales: vi.fn() }));
 vi.mock('./audio-layout', () => ({ prepareCliAudioLayout: vi.fn() }));
 
