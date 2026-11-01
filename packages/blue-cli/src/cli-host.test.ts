@@ -3,7 +3,15 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BlueData, External, JavaScriptObject, ObjectBuilder, SoundLayer } from '@blue/data';
+import {
+  BlueData,
+  AudioClip,
+  TrackLayerGroup,
+  External,
+  JavaScriptObject,
+  ObjectBuilder,
+  SoundLayer,
+} from '@blue/data';
 
 const binary = path.resolve('dist/blue-cli.cjs');
 const directories: string[] = [];
@@ -19,6 +27,49 @@ afterEach(() => {
   for (const directory of directories.splice(0)) fs.rmSync(directory, { recursive: true });
 });
 describe('CLI host preparation', () => {
+  it.each([1, 2])(
+    'inspects %s-channel audio and rejects missing sources without replacing output',
+    (channels) => {
+      const data = new BlueData();
+      data.getMixer().setPanningEnabled(true);
+      const group = new TrackLayerGroup();
+      const track = group.newLayerAt(0);
+      const clip = new AudioClip();
+      clip.setAudioFile('sample.wav');
+      track.push(clip);
+      data.getScore().length = 0;
+      data.getScore().push(group);
+      const { directory, project, output } = fixture(data);
+      const header = Buffer.alloc(44 + channels * 2);
+      header.write('RIFF');
+      header.writeUInt32LE(header.length - 8, 4);
+      header.write('WAVEfmt ', 8);
+      header.writeUInt32LE(16, 16);
+      header.writeUInt16LE(1, 20);
+      header.writeUInt16LE(channels, 22);
+      header.writeUInt32LE(44100, 24);
+      header.writeUInt32LE(44100 * channels * 2, 28);
+      header.writeUInt16LE(channels * 2, 32);
+      header.writeUInt16LE(16, 34);
+      header.write('data', 36);
+      header.writeUInt32LE(channels * 2, 40);
+      const sample = path.join(directory, 'sample.wav');
+      fs.writeFileSync(sample, header);
+      for (const mode of [[], ['--realtime'], ['--bluelive']]) {
+        execFileSync(process.execPath, [binary, 'compile', '-p', project, '-o', output, ...mode]);
+        expect(fs.readFileSync(output, 'utf8')).toContain('<CsoundSynthesizer>');
+      }
+      fs.unlinkSync(sample);
+      fs.writeFileSync(output, 'previous output');
+      const result = spawnSync(process.execPath, [binary, 'compile', '-p', project, '-o', output], {
+        encoding: 'utf8',
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('Cannot inspect audio file');
+      expect(fs.readFileSync(output, 'utf8')).toBe('previous output');
+    },
+  );
+
   it('shares on-load JavaScript state with score generation', () => {
     const data = new BlueData();
     const init = new JavaScriptObject();

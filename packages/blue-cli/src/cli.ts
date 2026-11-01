@@ -11,6 +11,7 @@ import {
   getExternalCommandExecutor,
   setExternalCommandExecutor,
 } from '@blue/data';
+import { prepareCliAudioLayout } from './audio-layout';
 import { CliExternalCommands } from './external-commands';
 
 export type CompileMode = 'disk' | 'realtime' | 'bluelive';
@@ -91,6 +92,7 @@ async function compileProjectNow(
   }
   if (!report.ok) throw new XmlLoadError(report.diagnostics);
   const project = report.value;
+  const layout = prepareCliAudioLayout(project, path.dirname(projectPath));
   await initializeJavaScriptRuntime();
   const commands = new CliExternalCommands(path.dirname(projectPath));
   const previousExecutor = getExternalCommandExecutor();
@@ -101,10 +103,10 @@ async function compileProjectNow(
     await project.processOnLoadAsync(session);
     csd =
       request.mode === 'bluelive'
-        ? project.toBlueLiveCSD(session).csdText
+        ? project.toBlueLiveCSD(session, false, layout).csdText
         : request.mode === 'realtime'
-          ? await project.toCSDAsync(session)
-          : await project.toDiskCSDAsync(session);
+          ? await project.toCSDAsync(session, undefined, layout)
+          : await project.toDiskCSDAsync(session, undefined, layout);
     if (commands.failure) throw commands.failure;
   } catch (error) {
     if (error instanceof Error && /requires a Java runtime session/.test(error.message)) {
