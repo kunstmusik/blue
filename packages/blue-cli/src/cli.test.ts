@@ -18,6 +18,9 @@ vi.mock('node:fs/promises', () => ({
 
 vi.mock('@blue/data', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@blue/data')>()),
+  JavaScriptSession: class {
+    dispose() {}
+  },
   readProjectXml: dataMock.readProjectXml,
   initializeJavaScriptRuntime: dataMock.initializeJavaScriptRuntime,
 }));
@@ -59,6 +62,7 @@ describe('compileProject', () => {
       ok: true,
       diagnostics: [],
       value: {
+        processOnLoadAsync: vi.fn(),
         toDiskCSDAsync,
         toCSDAsync,
         toBlueLiveCSD,
@@ -96,6 +100,7 @@ describe('compileProject', () => {
       ok: true,
       diagnostics: [],
       value: {
+        processOnLoadAsync: vi.fn(),
         toDiskCSDAsync,
         toCSDAsync,
         toBlueLiveCSD,
@@ -152,7 +157,7 @@ describe('compileProject', () => {
     fsMock.readFile.mockResolvedValue('<blueData/>');
     dataMock.readProjectXml.mockReturnValue({
       ok: true,
-      value: { toDiskCSDAsync: compile },
+      value: { toDiskCSDAsync: compile, processOnLoadAsync: vi.fn() },
       diagnostics: [
         {
           code: 'P-PPQ',

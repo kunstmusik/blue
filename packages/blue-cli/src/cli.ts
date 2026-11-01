@@ -7,6 +7,7 @@ import {
   readProjectXml,
   XmlLoadError,
   initializeJavaScriptRuntime,
+  JavaScriptSession,
   getExternalCommandExecutor,
   setExternalCommandExecutor,
 } from '@blue/data';
@@ -93,15 +94,17 @@ async function compileProjectNow(
   await initializeJavaScriptRuntime();
   const commands = new CliExternalCommands(path.dirname(projectPath));
   const previousExecutor = getExternalCommandExecutor();
+  const session = new JavaScriptSession();
   setExternalCommandExecutor(commands);
   let csd: string;
   try {
+    await project.processOnLoadAsync(session);
     csd =
       request.mode === 'bluelive'
-        ? project.toBlueLiveCSD().csdText
+        ? project.toBlueLiveCSD(session).csdText
         : request.mode === 'realtime'
-          ? await project.toCSDAsync()
-          : await project.toDiskCSDAsync();
+          ? await project.toCSDAsync(session)
+          : await project.toDiskCSDAsync(session);
     if (commands.failure) throw commands.failure;
   } catch (error) {
     if (error instanceof Error && /requires a Java runtime session/.test(error.message)) {
@@ -113,6 +116,7 @@ async function compileProjectNow(
     throw error;
   } finally {
     setExternalCommandExecutor(previousExecutor);
+    session.dispose();
   }
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });

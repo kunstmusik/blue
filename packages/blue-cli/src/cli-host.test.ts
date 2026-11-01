@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
-import { BlueData, External, ObjectBuilder, SoundLayer } from '@blue/data';
+import { BlueData, External, JavaScriptObject, ObjectBuilder, SoundLayer } from '@blue/data';
 
 const binary = path.resolve('dist/blue-cli.cjs');
 const directories: string[] = [];
@@ -19,6 +19,23 @@ afterEach(() => {
   for (const directory of directories.splice(0)) fs.rmSync(directory, { recursive: true });
 });
 describe('CLI host preparation', () => {
+  it('shares on-load JavaScript state with score generation', () => {
+    const data = new BlueData();
+    const init = new JavaScriptObject();
+    init.setOnLoadProcessable(true);
+    init.setJavaScriptCode('var sharedFrequency = 523;');
+    const muted = new SoundLayer();
+    muted.setMuted(true);
+    muted.push(init);
+    data.getScore()[0]!.push(muted);
+    const score = new JavaScriptObject();
+    score.setJavaScriptCode('score = "i1 0 1 " + sharedFrequency;');
+    (data.getScore()[0]![0]! as SoundLayer).push(score);
+    const { project, output } = fixture(data);
+    execFileSync(process.execPath, [binary, 'compile', '-p', project, '-o', output]);
+    expect(fs.readFileSync(output, 'utf8')).toMatch(/i1\s+0\.0\s+4\s+523/);
+  });
+
   it.each(['External', 'ObjectBuilder'])(
     'runs %s commands in the project directory and fails on errors',
     (type) => {
