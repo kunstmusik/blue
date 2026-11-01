@@ -113,17 +113,19 @@ describe('Arrangement', () => {
     expect(arrangement.getInstrumentId(0)).toBe('2');
   });
 
-  it('generates global score text using compile-data source ids', () => {
+  it('uses allocated ids for global code independently of mixer routing identities', () => {
     const arrangement = new Arrangement();
     const instr = new GenericInstrument();
     instr.setName('Global Sco');
     instr.setGlobalSco('i<INSTR_ID> 0 1');
+    instr.setGlobalOrc('gi_<INSTR_NAME> init nstrnum(<INSTR_ID>)');
     arrangement.addInstrument(instr, 'Bus');
 
     const compileData = new CompileData(arrangement, new Tables());
-    compileData.addInstrSourceId(instr, '7');
+    compileData.addInstrSourceId(instr, 'track-uuid');
 
-    expect(arrangement.generateGlobalSco(compileData)).toContain('i7 0 1');
+    expect(arrangement.generateGlobalSco(compileData)).toContain('i"Bus" 0 1');
+    expect(arrangement.generateGlobalOrc(compileData)).toContain('gi_Bus init nstrnum("Bus")');
   });
 
   it('calls generateFTables on enabled instruments', () => {

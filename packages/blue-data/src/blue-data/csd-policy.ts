@@ -1297,7 +1297,11 @@ function collectAlwaysOnInstruments(
       continue;
     }
 
-    const sourceChannel = sourceChannels.find((channel) => channel.getName() === ia.arrangementId);
+    const sourceId = compileData.getInstrSourceId(ia.instr);
+    const sourceChannel =
+      (sourceId
+        ? sourceChannels.find((channel) => channel.getAssociation() === sourceId)
+        : undefined) ?? sourceChannels.find((channel) => channel.getName() === ia.arrangementId);
     const channelId = sourceChannel ? channelIdAssignments.get(sourceChannel) : undefined;
 
     if (channelId !== undefined) {

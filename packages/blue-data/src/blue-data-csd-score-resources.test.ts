@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BlueX7 } from './instruments/blue-x7';
+import { BlueSynthBuilder } from './instruments/blue-synth-builder';
+import { Channel } from './mixer/channel';
 import { OpcodeDefinition } from './opcodes/opcode-definition';
 import { createTrackFixture } from './score/track/track-test-fixtures';
 import { LineObject } from './sound-objects/line-object';
@@ -49,5 +51,34 @@ describe('score-generated CSD resources', () => {
       expect(Number(table![1])).toBeGreaterThan(1);
     }
     expect(data.saveToString()).toBe(sourceXml);
+  });
+
+  it('uses allocated Sound ids in global code and routes always-on code by Track association', async () => {
+    const { data, track } = createTrackFixture({ includeClip: false, includeSoundObject: false });
+    data.getMixer().setPanningEnabled(false);
+    const channel = new Channel();
+    channel.setName('Renamed strip');
+    channel.setAssociation(track.getUniqueId());
+    data.getMixer().getChannels().push(channel);
+    for (let index = 0; index < 2; index++) {
+      const sound = new Sound();
+      sound.setSubjectiveDuration(TimeDuration.beats(1));
+      const bsb: BlueSynthBuilder = sound.getBlueSynthBuilder();
+      bsb.setInstrumentText('aout init 0\nblueMixerOut aout, aout');
+      bsb.setGlobalOrc('gi_sound_<INSTR_NAME> init <INSTR_ID>');
+      bsb.setGlobalSco('i<INSTR_ID> 0 1');
+      bsb.setAlwaysOnInstrumentText('aL, aR blueMixerIn\nblueMixerOut aL, aR');
+      track.push(sound);
+    }
+    const csd = data.toCSD();
+    expect(await data.toCSDAsync()).toBe(csd);
+    expect(csd).toContain('gi_sound_1 init 1');
+    expect(csd).toContain('gi_sound_2 init 2');
+    expect(csd).not.toContain(`gi_sound_${track.getUniqueId()}`);
+    expect(csd).not.toContain('blueMixerIn');
+    expect(csd.match(/aL = ga_bluemix_0_0/g)).toHaveLength(2);
+    expect(csd.match(/ga_bluemix_0_0\s*=\s*aL/g)).toHaveLength(2);
+    expect(csd).toMatch(/instr 3\s*;/);
+    expect(csd).toMatch(/instr 4\s*;/);
   });
 });

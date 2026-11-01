@@ -285,8 +285,7 @@ export class Arrangement {
       if (seenInstruments.has(ia.instr)) continue;
       const globalOrc = ia.instr.generateGlobalOrc(compileData);
       if (globalOrc) {
-        const assignmentId = compileData.getInstrSourceId(ia.instr) ?? ia.arrangementId;
-        buffer.push(this.replaceInstrumentId(assignmentId, globalOrc));
+        buffer.push(this.replaceInstrumentId(ia.arrangementId, globalOrc));
       }
       seenInstruments.add(ia.instr);
     }
@@ -297,7 +296,7 @@ export class Arrangement {
   /**
    * Generate global score code from all enabled instruments.
    */
-  generateGlobalSco(compileData: CompileData): string {
+  generateGlobalSco(_compileData: CompileData): string {
     const buffer: string[] = [];
 
     for (const ia of this.arrangement) {
@@ -305,8 +304,7 @@ export class Arrangement {
       if (!ia.instr) continue;
       const globalSco = ia.instr.generateGlobalSco();
       if (globalSco) {
-        const assignmentId = compileData.getInstrSourceId(ia.instr) ?? ia.arrangementId;
-        buffer.push(this.replaceInstrumentId(assignmentId, globalSco));
+        buffer.push(this.replaceInstrumentId(ia.arrangementId, globalSco));
       }
     }
 
