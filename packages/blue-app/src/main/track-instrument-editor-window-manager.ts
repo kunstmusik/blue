@@ -8,7 +8,7 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
-import { attachWindowStateHandlers, restoreWindowState } from './window-state-manager';
+import { attachEditorLayout, forgetEditorLayouts } from './window-state-manager';
 interface TrackInstrumentEditorWindowState {
   window: BrowserWindow;
   disposeStateHandlers: (() => void) | null;
@@ -84,8 +84,14 @@ export function openTrackInstrumentEditorWindow(
     },
   });
 
-  restoreWindowState(editorWindow, 'track-instrument-editor');
-  const disposeStateHandlers = attachWindowStateHandlers(editorWindow, 'track-instrument-editor');
+  const disposeStateHandlers = attachEditorLayout(
+    editorWindow,
+    'track-instrument-editor',
+    'track',
+    request.track.rootGroupId,
+    request.track.trackId,
+    String(request.track.projectSessionId),
+  );
 
   trackInstrumentEditorWindows.set(key, {
     window: editorWindow,
@@ -120,6 +126,7 @@ export function closeTrackInstrumentEditorWindowsForTrack(
   rootGroupId: string,
   trackId: string,
 ): void {
+  forgetEditorLayouts('track', rootGroupId, trackId);
   for (const [key, state] of trackInstrumentEditorWindows.entries()) {
     if (state.rootGroupId !== rootGroupId || state.trackId !== trackId) continue;
     if (!state.window.isDestroyed()) state.window.close();
@@ -128,6 +135,7 @@ export function closeTrackInstrumentEditorWindowsForTrack(
 }
 
 export function closeTrackInstrumentEditorWindowsForGroup(rootGroupId: string): void {
+  forgetEditorLayouts('track', rootGroupId);
   for (const [key, state] of trackInstrumentEditorWindows.entries()) {
     if (state.rootGroupId !== rootGroupId) continue;
     if (!state.window.isDestroyed()) state.window.close();
@@ -136,6 +144,7 @@ export function closeTrackInstrumentEditorWindowsForGroup(rootGroupId: string): 
 }
 
 export function closeTrackInstrumentEditorWindows(): void {
+  forgetEditorLayouts('track');
   for (const [key, state] of trackInstrumentEditorWindows.entries()) {
     if (!state.window.isDestroyed()) state.window.close();
     trackInstrumentEditorWindows.delete(key);

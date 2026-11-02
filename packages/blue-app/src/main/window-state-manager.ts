@@ -97,11 +97,41 @@ export function attachWindowStateHandlers(
   };
 }
 
+// Session-only layouts are keyed by the individual editor. Prefixes let project
+// replacement and track removal discard all windows belonging to that owner.
+const editorLayouts = new Map<string, { identity: string[]; state?: WindowStateSnapshot }>();
+
+const initialInterfaceBounds = new WeakMap<BrowserWindow, WindowBoundsSnapshot>();
+
+export function forgetEditorLayouts(...identity: string[]): void {
+  for (const [key, layout] of editorLayouts) {
+    if (identity.every((part, index) => part === layout.identity[index])) editorLayouts.delete(key);
+  }
+}
+
+export function attachEditorLayout(
+  window: BrowserWindow,
+  windowId: WindowId,
+  ...identity: string[]
+): () => void {
+  if (windowId === 'effect-interface') initialInterfaceBounds.set(window, window.getBounds());
+  const key = JSON.stringify(identity);
+  const layout = editorLayouts.get(key) ?? { identity };
+  editorLayouts.set(key, layout);
+  if (layout.state) restoreWindowState(window, windowId, { state: layout.state, minimumSize: 1 });
+  return attachWindowStateHandlers(window, windowId, {
+    onSave: (state) => {
+      layout.state = state;
+    },
+  });
+}
+
 export function restoreWindowState(
   window: BrowserWindow,
   windowId: WindowId,
   options: {
     state?: WindowStateSnapshot;
+    minimumSize?: number;
   } = {},
 ): WindowStateRestoreResult {
   const state = options.state ?? loadWindowLayoutSettings().windows[windowId] ?? null;
@@ -110,7 +140,7 @@ export function restoreWindowState(
   }
 
   const workAreas = safeGetAllDisplays().map((display) => display.workArea);
-  if (!isValidWindowState(state, { workAreas })) {
+  if (!isValidWindowState(state, { workAreas, minimumSize: options.minimumSize })) {
     return { applied: false, state: null };
   }
 
@@ -217,7 +247,7 @@ export function resetWindowToDefaultBounds(window: BrowserWindow, windowId: Wind
   }
 
   try {
-    window.setBounds(getDefaultWindowBounds(windowId));
+    window.setBounds(initialInterfaceBounds.get(window) ?? getDefaultWindowBounds(windowId));
     return true;
   } catch {
     return false;
@@ -225,6 +255,7 @@ export function resetWindowToDefaultBounds(window: BrowserWindow, windowId: Wind
 }
 
 export function resetTrackedWindowsToDefaultBounds(windows: BrowserWindow[]): number {
+  for (const layout of editorLayouts.values()) delete layout.state;
   let resetCount = 0;
   for (const window of windows) {
     const windowId = trackedWindowIds.get(window);

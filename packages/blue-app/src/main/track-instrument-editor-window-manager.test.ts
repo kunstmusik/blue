@@ -3,6 +3,7 @@ import {
   broadcastProjectDocumentUpdateToTrackInstrumentWindows,
   closeTrackInstrumentEditorWindows,
   closeTrackInstrumentEditorWindowsForGroup,
+  closeTrackInstrumentEditorWindowsForTrack,
   isTrackInstrumentEditorWebContents,
   openTrackInstrumentEditorWindow,
 } from './track-instrument-editor-window-manager';
@@ -125,6 +126,27 @@ describe('Track instrument editor window manager', () => {
       PROJECT_DOCUMENT_UPDATED_CHANNEL,
       event,
     );
+  });
+
+  it('remembers bounds for the same track and forgets them on instrument replacement', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const open = (trackId: string) => {
+      openTrackInstrumentEditorWindow(mainWindow, {
+        track: { rootGroupId: 'group', trackId, projectSessionId: 1, projectRevision: 1 },
+      });
+      return electronMock.instances.at(-1)!;
+    };
+
+    const first = open('first');
+    const bounds = { x: 210, y: 90, width: 750, height: 620 };
+    first.getBounds.mockReturnValue(bounds);
+    first.emit('close');
+    first.close();
+
+    expect(open('second').setBounds).not.toHaveBeenCalled();
+    expect(open('first').setBounds).toHaveBeenCalledWith(bounds);
+    closeTrackInstrumentEditorWindowsForTrack('group', 'first');
+    expect(open('first').setBounds).not.toHaveBeenCalled();
   });
 
   it('closes every editor attached to a removed Track group', () => {

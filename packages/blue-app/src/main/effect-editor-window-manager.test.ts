@@ -15,7 +15,8 @@ import {
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
 import { clearSettingsCache, setSettingsFilePathForTesting } from './program-settings-store';
-import { loadWindowLayoutSettings, saveWindowLayoutSettings } from './window-layout-store';
+import { loadWindowLayoutSettings } from './window-layout-store';
+import { resetTrackedWindowsToDefaultBounds } from './window-state-manager';
 
 const electronMock = vi.hoisted(() => {
   const instances: MockBrowserWindow[] = [];
@@ -251,74 +252,53 @@ describe('effect editor window manager', () => {
 });
 
 describe('effect editor and interface layout persistence', () => {
-  it('persists effect editor bounds on close under the "effect-editor" identity', () => {
+  it('resets an open interface to its initial bounds and forgets closed editors', () => {
     const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
-    const request = {
-      ownerType: 'project' as const,
-      effectId: 'effect-1',
-      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'effect-1' },
-    };
+    const chorus = { ownerType: 'project' as const, effectId: 'chorus' };
+    openEffectInterfaceWindow(mainWindow, chorus, 440, 220);
+    const first = electronMock.instances[0]!;
+    first.trigger('close');
+    first.close();
 
-    openEffectEditorWindow(mainWindow, request);
-    const editorWindow = electronMock.instances[0]!;
-    editorWindow.trigger('close');
-
-    const layout = loadWindowLayoutSettings();
-    expect(layout.windows['effect-editor']?.normalBounds).toEqual({
-      x: 320,
-      y: 240,
-      width: 900,
-      height: 700,
-    });
+    const reverb = openEffectInterfaceWindow(
+      mainWindow,
+      { ...chorus, effectId: 'reverb' },
+      210,
+      320,
+    )!;
+    const initial = reverb.getBounds();
+    electronMock.instances[1]!.getBounds.mockReturnValue({ ...initial, width: 730 });
+    resetTrackedWindowsToDefaultBounds([reverb]);
+    expect(reverb.setBounds).toHaveBeenCalledWith(initial);
+    openEffectInterfaceWindow(mainWindow, chorus, 440, 220);
+    expect(electronMock.instances[2]!.setBounds).not.toHaveBeenCalled();
   });
 
-  it('persists effect interface bounds on close under the "effect-interface" identity', () => {
-    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
-    const request = {
-      ownerType: 'project' as const,
-      effectId: 'effect-2',
-      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'effect-2' },
-    };
+  it.each(['interface', 'edit'] as const)(
+    'remembers %s bounds only for the same effect in the current session',
+    (mode) => {
+      const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+      const open = (effectId: string, width: number, height: number) => {
+        const request = { ownerType: 'project' as const, effectId };
+        if (mode === 'interface') openEffectInterfaceWindow(mainWindow, request, width, height);
+        else openEffectEditorWindow(mainWindow, request);
+        return electronMock.instances.at(-1)!;
+      };
 
-    openEffectInterfaceWindow(mainWindow, request, 460, 560);
-    const interfaceWindow = electronMock.instances[0]!;
-    interfaceWindow.trigger('close');
+      const chorus = open('chorus', 440, 220);
+      chorus.trigger('close');
+      chorus.close();
 
-    const layout = loadWindowLayoutSettings();
-    expect(layout.windows['effect-interface']?.normalBounds).toEqual({
-      x: 320,
-      y: 240,
-      width: 900,
-      height: 700,
-    });
-  });
+      const reverb = open('reverb', 210, 320);
+      expect(reverb.setBounds).not.toHaveBeenCalled();
+      if (mode === 'interface') expect(reverb.setContentSize).toHaveBeenCalledWith(210, 320);
+      expect(open('chorus', 440, 220).setBounds).toHaveBeenCalledWith(chorus.getBounds());
+      expect(loadWindowLayoutSettings().windows).toEqual({});
 
-  it('restores effect editor bounds from the canonical store before show', () => {
-    saveWindowLayoutSettings({
-      ...loadWindowLayoutSettings(),
-      windows: {
-        'effect-editor': {
-          normalBounds: { x: 200, y: 200, width: 1100, height: 820 },
-          displayState: 'normal',
-        },
-      },
-    });
-
-    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
-    const request = {
-      ownerType: 'project' as const,
-      effectId: 'effect-3',
-      projectRef: { channelId: 'channel-1', chain: 'pre' as const, entryId: 'effect-3' },
-    };
-
-    openEffectEditorWindow(mainWindow, request);
-    expect(electronMock.instances[0]?.setBounds).toHaveBeenCalledWith({
-      x: 200,
-      y: 200,
-      width: 1100,
-      height: 820,
-    });
-  });
+      closeEffectEditorWindowsForOwner('project');
+      expect(open('chorus', 440, 220).setBounds).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('effect editor window declarative zoom factor (SPEC 061)', () => {

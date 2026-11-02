@@ -8,7 +8,7 @@ import {
   PROJECT_DOCUMENT_UPDATED_CHANNEL,
   type ProjectDocumentUpdatedEvent,
 } from '../shared/workbench-window-contract';
-import { attachWindowStateHandlers, restoreWindowState } from './window-state-manager';
+import { attachEditorLayout, forgetEditorLayouts } from './window-state-manager';
 
 export type EffectEditorMode = 'interface' | 'edit';
 
@@ -130,8 +130,14 @@ export function openEffectInterfaceWindow(
     effectWindow.setContentSize(460, 560);
   }
 
-  restoreWindowState(effectWindow, 'effect-interface');
-  const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-interface');
+  const disposeStateHandlers = attachEditorLayout(
+    effectWindow,
+    'effect-interface',
+    'effect',
+    request.ownerType,
+    request.effectId,
+    'interface',
+  );
 
   finishOpeningEffectWindow(effectWindow, key, request, 'interface', disposeStateHandlers);
   return effectWindow;
@@ -174,14 +180,21 @@ export function openEffectEditorWindow(
     },
   });
 
-  restoreWindowState(effectWindow, 'effect-editor');
-  const disposeStateHandlers = attachWindowStateHandlers(effectWindow, 'effect-editor');
+  const disposeStateHandlers = attachEditorLayout(
+    effectWindow,
+    'effect-editor',
+    'effect',
+    request.ownerType,
+    request.effectId,
+    'edit',
+  );
 
   finishOpeningEffectWindow(effectWindow, key, request, 'edit', disposeStateHandlers);
   return effectWindow;
 }
 
 export function closeEffectEditorWindow(request: EffectEditorRequest): void {
+  forgetEditorLayouts('effect', request.ownerType, request.effectId);
   for (const mode of ['edit', 'interface'] as const) {
     const key = getWindowKey(request, mode);
     const existing = effectEditorWindows.get(key);
@@ -193,6 +206,7 @@ export function closeEffectEditorWindow(request: EffectEditorRequest): void {
 }
 
 export function closeEffectEditorWindowsForOwner(ownerType: 'project' | 'library'): void {
+  forgetEditorLayouts('effect', ownerType);
   for (const [key, state] of effectEditorWindows.entries()) {
     if (!key.includes(`:${ownerType}:`)) {
       continue;
