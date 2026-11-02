@@ -127,7 +127,8 @@ describe('CLI host preparation', () => {
     (type) => {
       const data = new BlueData();
       const object = type === 'External' ? new External() : new ObjectBuilder();
-      const command = '"' + process.execPath + '" generator.cjs $infile $outfile';
+      const callOperator = process.platform === 'win32' ? '& ' : '';
+      const command = `${callOperator}"${process.execPath}" generator.cjs $infile $outfile`;
       object.setCommandLine(command);
       if (object instanceof External) object.setText('source');
       else {
