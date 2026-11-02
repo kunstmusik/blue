@@ -16,7 +16,7 @@
     "engine:build": "pnpm --filter @blue/engine-native build",
     "engine:stage": "node scripts/stage-blue-engine.mjs",
     "engine:prepare": "pnpm engine:build && pnpm engine:stage",
-    "build": "pnpm engine:stage && pnpm --filter @blue/java-runtime build && pnpm --filter @blue/data build && pnpm --filter @blue/engine-client build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
+    "build": "pnpm engine:stage && pnpm --filter @blue/data build && pnpm --filter @blue/engine-client build && pnpm build:main && pnpm build:preload && pnpm build:renderer",
     "dev": "pnpm engine:prepare && vite",
     "osc:send": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON ./scripts/send-osc.mjs",
     "start": "electron .",
