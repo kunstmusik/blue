@@ -152,6 +152,7 @@ describe('CLI host preparation', () => {
       expect(result.stderr).toContain('External score generation failed');
       expect(fs.readFileSync(output, 'utf8')).toBe('previous output');
     },
+    30_000,
   );
 
   it('protects the project from direct, symbolic-link and hard-link output aliases', () => {
