@@ -73,7 +73,6 @@ export class BlueLiveEngineSession {
   private port: number;
   private pubPort: number;
   private outputCallback: EngineOutputCallback | null = null;
-  private namedInstrumentNumbers = new Map<string, number>();
   private projectDirectory: string | null = null;
   private projectData: BlueData | null = null;
   /**
@@ -396,8 +395,6 @@ export class BlueLiveEngineSession {
         );
       }
       const { orchestra, score, options } = parseCSD(csd.csdText);
-      this.namedInstrumentNumbers = resolveNamedInstrumentNumbers(orchestra);
-      const runtimeScore = normalizeScoreForEngineApi(score, this.namedInstrumentNumbers);
 
       const liveOptions = this.buildLiveOptions(liveData, options);
       const tempCsdPath = await (this.dependencies.writeTempCsdSnapshot ?? writeTempCsdSnapshot)(
@@ -476,8 +473,8 @@ export class BlueLiveEngineSession {
         }
       }
 
-      if (runtimeScore) {
-        const resp = await client.readScore(runtimeScore);
+      if (score) {
+        const resp = await client.readScore(score);
         if (await this.stopCancelledStart(lifecycleGeneration)) {
           return this.getSnapshot();
         }
@@ -591,7 +588,7 @@ export class BlueLiveEngineSession {
     }
 
     try {
-      const resp = await client.readScore(this.getAllNotesOffScoreEvent());
+      const resp = await client.readScore('i "blueAllNotesOff" 0 1');
       return { ok: resp.ok, message: resp.ok ? undefined : resp.message };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : String(err) };
@@ -619,9 +616,7 @@ export class BlueLiveEngineSession {
     }
 
     try {
-      const resp = await client.readScore(
-        normalizeScoreForEngineApi(text, this.namedInstrumentNumbers),
-      );
+      const resp = await client.readScore(text);
       return { ok: resp.ok, message: resp.ok ? undefined : resp.message };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : String(err) };
@@ -632,9 +627,8 @@ export class BlueLiveEngineSession {
    * Submit a prepared Manual Trigger score batch, gated by the expected Blue
    * Live session generation. Rejects without an engine call when the session
    * is not running, the generation no longer matches, there is no engine
-   * client, or the score text is empty. Reuses the existing score
-   * normalization and `readScore` path without routing through realtime
-   * playback.
+   * client, or the score text is empty. Reuses the existing `readScore` path
+   * without routing through realtime playback.
    */
   async submitPreparedScore(
     scoreText: string,
@@ -655,9 +649,7 @@ export class BlueLiveEngineSession {
     }
 
     try {
-      const resp = await client.readScore(
-        normalizeScoreForEngineApi(scoreText, this.namedInstrumentNumbers),
-      );
+      const resp = await client.readScore(scoreText);
       return { ok: resp.ok, message: resp.ok ? undefined : resp.message };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : String(err) };
@@ -744,11 +736,6 @@ export class BlueLiveEngineSession {
     if (runtimeInstrumentId === null) {
       return { ok: false, message: 'Unresolved MIDI target' };
     }
-    const scoreInstrumentId = this.resolveRuntimeInstrumentNumber(runtimeInstrumentId);
-    if (scoreInstrumentId === null) {
-      return { ok: false, message: 'Unresolved MIDI target' };
-    }
-
     const mapped = mapMidiTrigger(projectData.getMidiInputProcessor(), {
       midiNote: request.midiNote,
       velocity: request.velocity,
@@ -756,15 +743,21 @@ export class BlueLiveEngineSession {
     });
 
     const paddedNoteNum = this.getPaddedNoteNum(mapped.originalMidiNote);
+    const scoreInstrumentId = this.formatNoteInstrumentId(
+      runtimeInstrumentId,
+      paddedNoteNum,
+      request.type === 'noteOff',
+    );
+    if (scoreInstrumentId === null) {
+      return { ok: false, message: 'Unresolved MIDI target' };
+    }
     const scoreText =
       request.type === 'noteOff'
-        ? `i-${scoreInstrumentId}.${paddedNoteNum} 0 0`
-        : `i${scoreInstrumentId}.${paddedNoteNum} 0 -1 ${mapped.mappedPitchValue} ${mapped.mappedAmplitudeValue}`;
+        ? `i${scoreInstrumentId} 0 0`
+        : `i${scoreInstrumentId} 0 -1 ${mapped.mappedPitchValue} ${mapped.mappedAmplitudeValue}`;
 
     try {
-      const resp = await client.readScore(
-        normalizeScoreForEngineApi(scoreText, this.namedInstrumentNumbers),
-      );
+      const resp = await client.readScore(scoreText);
       if (!resp.ok) {
         return { ok: false, message: resp.message };
       }
@@ -816,7 +809,6 @@ export class BlueLiveEngineSession {
 
     const cleanup = (async () => {
       this.clearStateMonitoring();
-      this.namedInstrumentNumbers.clear();
       this.targetCatalog = null;
       this.parameters = [];
       this.blueX7Bindings = [];
@@ -839,14 +831,6 @@ export class BlueLiveEngineSession {
 
     this.cleanupPromise = cleanup;
     return cleanup;
-  }
-
-  private getAllNotesOffScoreEvent(): string {
-    const instrNum = this.namedInstrumentNumbers.get('blueAllNotesOff');
-    if (instrNum !== undefined) {
-      return `i ${instrNum} 0 1`;
-    }
-    return 'i "blueAllNotesOff" 0 1';
   }
 
   private getPaddedNoteNum(noteNum: number): string {
@@ -951,17 +935,22 @@ export class BlueLiveEngineSession {
     return compiled.runtimeInstrumentId;
   }
 
-  private resolveRuntimeInstrumentNumber(runtimeInstrumentId: number | string): string | null {
-    if (typeof runtimeInstrumentId === 'number') {
-      return Number.isInteger(runtimeInstrumentId) && runtimeInstrumentId >= 0
-        ? String(runtimeInstrumentId)
-        : null;
+  private formatNoteInstrumentId(
+    runtimeInstrumentId: number | string,
+    noteTag: string,
+    noteOff: boolean,
+  ): string | null {
+    if (
+      typeof runtimeInstrumentId === 'number' &&
+      (!Number.isInteger(runtimeInstrumentId) || runtimeInstrumentId < 0)
+    ) {
+      return null;
     }
-    if (/^\d+$/.test(runtimeInstrumentId)) {
-      return runtimeInstrumentId;
-    }
-    const namedNumber = this.namedInstrumentNumbers.get(runtimeInstrumentId);
-    return namedNumber === undefined ? null : String(namedNumber);
+    const id = String(runtimeInstrumentId);
+    if (!/^(?:\d+|[A-Za-z_]\w*)$/.test(id)) return null;
+    const taggedId = `${noteOff ? '-' : ''}${id}.${noteTag}`;
+    // Csound resolves named p1 values, including fractional tags and negative note-off IDs.
+    return /^\d+$/.test(id) ? taggedId : `"${taggedId}"`;
   }
 
   private buildLiveOptions(liveData: LiveData, csdOptions: string[]): string[] {
@@ -994,66 +983,6 @@ export class BlueLiveEngineSession {
 
     return options;
   }
-}
-
-export function resolveNamedInstrumentNumbers(orchestra: string): Map<string, number> {
-  const namedNumbers = new Map<string, number>();
-  let maxNumericId = 0;
-  const namedIdsInOrder: string[] = [];
-
-  for (const line of orchestra.split('\n')) {
-    const match = line.trim().match(/^instr\s+("[^"]+"|[^\s;]+)/);
-    if (!match) {
-      continue;
-    }
-
-    const rawId = match[1] ?? '';
-    const instrId = rawId.startsWith('"') && rawId.endsWith('"') ? rawId.slice(1, -1) : rawId;
-
-    if (/^\d+$/.test(instrId)) {
-      maxNumericId = Math.max(maxNumericId, Number.parseInt(instrId, 10));
-      continue;
-    }
-
-    namedIdsInOrder.push(instrId);
-  }
-
-  let nextInstrumentNumber = maxNumericId + 1;
-  for (const namedId of namedIdsInOrder) {
-    if (!namedNumbers.has(namedId)) {
-      namedNumbers.set(namedId, nextInstrumentNumber);
-      nextInstrumentNumber += 1;
-    }
-  }
-
-  return namedNumbers;
-}
-
-export function normalizeScoreForEngineApi(
-  score: string,
-  namedInstrumentNumbers: ReadonlyMap<string, number>,
-): string {
-  if (namedInstrumentNumbers.size === 0 || !score.trim()) {
-    return score;
-  }
-
-  return score
-    .split('\n')
-    .map((line) => {
-      const match = line.match(/^(\s*i\s*)"([^"]+)"(\s+.*)$/);
-      if (!match) {
-        return line;
-      }
-
-      const instrumentName = match[2] ?? '';
-      const instrumentNumber = namedInstrumentNumbers.get(instrumentName);
-      if (instrumentNumber === undefined) {
-        return line;
-      }
-
-      return `${match[1]}${instrumentNumber}${match[3]}`;
-    })
-    .join('\n');
 }
 
 function parseCSD(csd: string): { orchestra: string; score: string; options: string[] } {

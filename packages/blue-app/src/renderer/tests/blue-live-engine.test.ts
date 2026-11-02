@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BlueData, GenericInstrument, LiveData, TrackLayerGroup } from '@blue/data';
 import {
-  BlueLiveEngineSession,
-  normalizeScoreForEngineApi,
-  resolveNamedInstrumentNumbers,
-} from '../../main/blue-live-engine';
+  BlueData,
+  BlueSynthBuilder,
+  GenericInstrument,
+  LiveData,
+  TrackLayerGroup,
+} from '@blue/data';
+import { BlueLiveEngineSession } from '../../main/blue-live-engine';
 import type { EngineBridge } from '../../main/engine-bridge';
 import type { EngineRuntimeService } from '../../main/engine-runtime';
 
@@ -264,29 +266,89 @@ describe('BlueLiveEngineSession buildLiveOptions (via LiveData)', () => {
   });
 });
 
-describe('parseCSD helper behavior', () => {
-  it('assigns stable numeric ids to named orchestra instruments', () => {
-    const namedIds = resolveNamedInstrumentNumbers(
-      ['instr 1', 'endin', 'instr blueAllNotesOff', 'endin', 'instr BlueMixer', 'endin'].join('\n'),
+describe('Blue Live named score events', () => {
+  it('starts the mixer and plays instrument 6 after disabling assignments 1–5', async () => {
+    const data = new BlueData();
+    data.getMixer().setEnabled(true);
+    for (let id = 1; id <= 6; id += 1) {
+      const instrument = new BlueSynthBuilder();
+      instrument.setInstrumentText('aSig oscili 0.1, 440\nblueMixerOut aSig, aSig');
+      instrument.setAlwaysOnInstrumentText('aL, aR blueMixerIn\nblueMixerOut aL, aR');
+      data.getArrangement().addInstrument(instrument, String(id));
+    }
+    const { session, client } = createRunningSession({ data });
+    expect((await session.start(data, 1)).running).toBe(true);
+    for (let id = 1; id <= 5; id += 1) {
+      data.getArrangement().updateAssignment(String(id), { enabled: false });
+    }
+    const xml = data.saveToString();
+    expect((await session.recompile(data, 2)).running).toBe(true);
+    expect(client.compileOrc).toHaveBeenLastCalledWith(expect.stringContaining('instr 6'));
+    expect(client.compileOrc).toHaveBeenLastCalledWith(expect.not.stringMatching(/instr [1-5]\s/));
+    expect(client.readScore).toHaveBeenLastCalledWith(
+      expect.stringContaining('i "BlueMixer" 0 36000'),
     );
+    expect(client.readScore).toHaveBeenLastCalledWith(expect.stringContaining('i7 0 36000'));
 
-    expect(namedIds.get('blueAllNotesOff')).toBe(2);
-    expect(namedIds.get('BlueMixer')).toBe(3);
+    const request = {
+      midiNote: 60,
+      velocity: 100,
+      channel: 0,
+      source: 'mouse',
+      target: { kind: 'orchestra', assignmentId: '6' },
+    } as const;
+    expect((await session.triggerNote({ ...request, type: 'noteOn' })).ok).toBe(true);
+    expect(client.readScore).toHaveBeenLastCalledWith(expect.stringMatching(/^i6\.060 0 -1 /));
+    expect((await session.triggerNote({ ...request, type: 'noteOff' })).ok).toBe(true);
+    expect(client.readScore).toHaveBeenLastCalledWith('i-6.060 0 0');
+    expect((await session.sendAllNotesOff()).ok).toBe(true);
+    expect(client.readScore).toHaveBeenLastCalledWith('i "blueAllNotesOff" 0 1');
+    expect(data.saveToString()).toBe(xml);
   });
 
-  it('normalizes named score events for engine-api readScore', () => {
-    const namedIds = resolveNamedInstrumentNumbers(
-      ['instr 1', 'endin', 'instr blueAllNotesOff', 'endin', 'instr BlueMixer', 'endin'].join('\n'),
-    );
-
-    const normalized = normalizeScoreForEngineApi(
-      'i "BlueMixer" 0 36000\n i "blueAllNotesOff" 0 1',
-      namedIds,
-    );
-
-    expect(normalized).toContain('i 3 0 36000');
-    expect(normalized).toContain(' i 2 0 1');
+  it('preserves names in evaluated and prepared scores, including newly compiled instruments', async () => {
+    const data = new BlueData();
+    const instrument = new GenericInstrument();
+    instrument.setText('aSig oscili 0.1, 440\nouts aSig, aSig');
+    data.getArrangement().addInstrument(instrument, 'lead');
+    const { session, client } = createRunningSession({ data });
+    expect((await session.start(data, 1)).running).toBe(true);
+    const score = 'i "lead" 0 1\ni "lead.060" 0 -1\ni "-lead.060" 1 0';
+    expect((await session.sendScore(score)).ok).toBe(true);
+    expect(client.readScore).toHaveBeenLastCalledWith(score);
+    expect((await session.submitPreparedScore(score, session.getStatus().sessionId)).ok).toBe(true);
+    expect(client.readScore).toHaveBeenLastCalledWith(score);
+    const orchestra = 'instr added\naSig oscili 0.1, 440\nouts aSig, aSig\nendin';
+    expect((await session.evaluateOrchestra(orchestra)).ok).toBe(true);
+    expect(client.compileOrc).toHaveBeenLastCalledWith(orchestra);
+    expect((await session.sendScore('i "added" 0 1')).ok).toBe(true);
+    expect(client.readScore).toHaveBeenLastCalledWith('i "added" 0 1');
   });
+
+  it.each([-1, 1.5, 'lead" 0 -1\ni1'])(
+    'rejects an invalid compiled MIDI instrument ID: %s',
+    async (runtimeInstrumentId) => {
+      const data = new BlueData();
+      const compiled = data.toBlueLiveCSD();
+      vi.spyOn(data, 'toBlueLiveCSDAsync').mockResolvedValue({
+        ...compiled,
+        midiInstrumentTargets: [{ kind: 'orchestra', assignmentId: 'lead', runtimeInstrumentId }],
+      });
+      const { session, client } = createRunningSession({ data });
+      expect((await session.start(data, 1)).running).toBe(true);
+      client.readScore.mockClear();
+      const result = await session.triggerNote({
+        type: 'noteOn',
+        midiNote: 60,
+        velocity: 100,
+        channel: 0,
+        source: 'mouse',
+        target: { kind: 'orchestra', assignmentId: 'lead' },
+      });
+      expect(result).toEqual({ ok: false, message: 'Unresolved MIDI target' });
+      expect(client.readScore).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('BlueLiveEngineSession target catalog (Spec 067)', () => {
@@ -627,7 +689,7 @@ describe('BlueLiveEngineSession Orchestra target resolution (Spec 067 US2)', () 
     expect(result.submittedScoreText).toMatch(/^i5\.060 0 -1 /);
   });
 
-  it('resolves a named Orchestra assignment through the engine instrument number', async () => {
+  it('preserves a named Orchestra target and its note tag for note-on and note-off', async () => {
     const data = new BlueData();
     const instr = new GenericInstrument();
     instr.setText('out aout');
@@ -648,8 +710,19 @@ describe('BlueLiveEngineSession Orchestra target resolution (Spec 067 US2)', () 
     });
 
     expect(result.ok).toBe(true);
-    expect(client.readScore).toHaveBeenCalledWith(expect.stringMatching(/^i\d+\.060 0 -1 /));
-    expect(client.readScore).not.toHaveBeenCalledWith(expect.stringContaining('lead.060'));
+    expect(client.readScore).toHaveBeenLastCalledWith(expect.stringMatching(/^i"lead\.060" 0 -1 /));
+    expect(result.submittedScoreText).toContain('"lead.060"');
+    const noteOff = await session.triggerNote({
+      type: 'noteOff',
+      midiNote: 60,
+      velocity: 0,
+      channel: 0,
+      source: 'mouse',
+      target: { kind: 'orchestra', assignmentId: 'lead' },
+      liveSessionId: session.getStatus().sessionId,
+    });
+    expect(noteOff).toEqual({ ok: true, submittedScoreText: 'i"-lead.060" 0 0' });
+    expect(client.readScore).toHaveBeenLastCalledWith('i"-lead.060" 0 0');
   });
 
   it('rejects an Orchestra assignment absent from the compiled catalog with no fallback', async () => {
