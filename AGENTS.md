@@ -47,6 +47,10 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 ## Architecture boundaries
 
 - For large-module refactors, apply the review rule and boundary maps in `docs/modularization.md`.
+- For new or modified lifecycles, gestures, or asynchronous resource ownership, apply the
+  [lifecycle and gesture review](docs/modularization.md#lifecycle-and-gesture-review).
+  Document the owner, valid transitions, and cancellation/cleanup rules; verify competing
+  operations and stale completions at the lowest practical test seam.
 - `@blue/data` production source must remain browser-safe and host-neutral: no Node.js
   built-ins, DOM APIs, Electron APIs, `require()`, dynamic `import()`, or inline
   `import("...").Type` annotations.

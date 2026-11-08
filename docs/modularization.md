@@ -46,6 +46,59 @@ For every accepted or deferred proposal, record:
 - rollback boundary and any sanctioned semantic edits;
 - acceptance, retention, or deferral rationale.
 
+## Lifecycle and gesture review
+
+Apply this review when adding or changing lifecycle behavior, gestures, or asynchronous resource
+ownership, even when no module is being split. Record the relevant decisions in the owning spec,
+plan, or change description. These checks make the constitution's state ownership, history, and
+regression rules concrete; they do not require a state-machine framework or conversion of existing
+stores and queues.
+
+1. **Owner and invariants** — Name one canonical owner for each state domain and the combinations
+   of values that must remain valid. Use a discriminated union when phases require mutually
+   exclusive data. Keep independent preferences, clocks, counters, and queue contents separate.
+   Derive related flags through one selector or projection; compatibility fields must update
+   atomically with their source state. Do not use object getters on Zustand state: shallow merges
+   materialize them as values.
+2. **Transitions and event ownership** — Write a small table of current phase, event, next phase,
+   side effects/cleanup, and failure or stale-event behavior. Cover applicable start, completion,
+   release, Escape, blur, cancellation, disposal, retry, and duplicate events. Name the layer that
+   consumes each event. An active gesture's Escape handler must run before the global transport
+   shortcut and consume the event; a later bubble listener cannot undo an earlier handler's effect.
+3. **Async authority and ordering** — Serialize competing operations that replace the same
+   resource, then recheck readiness after acquiring ownership. Give shared or queued requests an
+   explicit identity and cancellation policy. Capture the request/session generation before
+   waiting and recheck authority after awaits before starting more work or publishing state.
+   Clean up an attempt's captured resources without clearing or terminating a newer owner's
+   resources. A phase union alone does not establish ordering or reject stale completions.
+4. **Resource lifetime and terminal paths** — Associate every process, subscription, timer, frame
+   callback, and gesture with one owner and idempotent cleanup. Record ownership as soon as a
+   resource becomes available; immediately release a late resource returned to a cancelled attempt.
+   Specify release, cancellation, unmount, and host-teardown behavior, including whether shutdown
+   requests termination or waits for confirmed exit. Resolve a gesture's host document/window at
+   gesture start; attach active listeners there and remove them with matching capture options.
+   Follow [the popout conventions](popout-popup-conventions.md) for popup event handling.
+5. **Preview, commit, and cancellation** — Trace each outward callback to its actual state owner
+   before classifying an edit as local preview or live project mutation. Capture the baseline
+   before the first durable edit, including mousedown changes. Local previews commit their final
+   value through project history; live project patches use the existing history grouping and
+   cancellation contracts. Specify whether blur settles or cancels. Cancellation restores the
+   required canonical content, dirty state, history, and runtime state; clearing a drag ref is not
+   rollback. Keep applicable history settlement registered while the gesture is active. Persisted
+   layout/settings changes have their own cancellation owner and do not become project history.
+6. **Behavioral evidence** — Add focused regression coverage for the distinct changed paths:
+   competing requests, cancellation/disposal during startup, late success/failure, duplicate
+   terminal events, resource cleanup, and commit/undo/redo where applicable. Use deferred promises,
+   fake clocks, and work counts for deterministic scheduling checks in ordinary correctness CI.
+   Verify host-realm behavior at the appropriate browser/Electron seam; a unit test alone does
+   not establish popout acceptance. Keep speed acceptance under the existing performance policy.
+
+Keep phase transitions in one place within their owner, using a reducer when it makes the rules
+clearer. Extract a shared helper only when repeated behavior has a demonstrated common contract
+and focused test seam. Retain cohesive queues and independent state domains; avoid a global
+machine that couples unrelated features. Review changed behavior first and keep optional structural
+refactors independently reviewable.
+
 ## First-wave boundary maps
 
 The maps below describe the delivered ownership boundaries. The façades remain the
