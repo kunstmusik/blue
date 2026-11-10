@@ -6,6 +6,7 @@ type RequestLike = {
   linger: number;
   sent: Buffer[];
   responses: Buffer[];
+  send: (data: Buffer) => Promise<void>;
   receive: ReturnType<typeof vi.fn>;
   connect: ReturnType<typeof vi.fn>;
   close: ReturnType<typeof vi.fn>;
@@ -256,5 +257,186 @@ describe('java-runtime-client', () => {
     expect(mockState.requestInstances).toHaveLength(2);
     expect(mockState.requestInstances[1].connect).toHaveBeenCalledWith('tcp://127.0.0.1:5555');
     expect(succeeded.ok).toBe(true);
+  });
+
+  it('invalidates queued operations on explicit disconnect without recreating sockets', async () => {
+    const client = new JavaRuntimeClient({
+      endpoint: 'tcp://127.0.0.1:5555',
+      authToken: 'secret',
+    });
+    await client.connect();
+    const socket = mockState.requestInstances[0];
+
+    let resolveReceive!: (value: [Buffer]) => void;
+    socket.receive.mockImplementationOnce(
+      () =>
+        new Promise<[Buffer]>((resolve) => {
+          resolveReceive = resolve;
+        }),
+    );
+
+    let sentResolve!: () => void;
+    const sentPromise = new Promise<void>((r) => {
+      sentResolve = r;
+    });
+    const origSend = socket.send;
+    socket.send = async (data: Buffer) => {
+      await origSend.call(socket, data);
+      sentResolve();
+    };
+
+    const first = client.health();
+    await sentPromise;
+    const second = client.health();
+
+    await client.disconnect();
+
+    resolveReceive([
+      Buffer.from(
+        JSON.stringify({
+          id: 'req-1',
+          ok: true,
+          result: { version: '0.0.1' },
+          stdout: '',
+          stderr: '',
+          elapsedMs: 1,
+        }),
+      ),
+    ]);
+
+    const firstResult = await first;
+    const secondResult = await second;
+
+    expect(firstResult.ok).toBe(false);
+    if (!firstResult.ok) {
+      expect(firstResult.error.code).toBe('CLIENT_DISCONNECTED');
+    }
+    expect(secondResult.ok).toBe(false);
+    if (!secondResult.ok) {
+      expect(secondResult.error.code).toBe('CLIENT_DISCONNECTED');
+    }
+
+    expect(mockState.requestInstances).toHaveLength(1);
+    expect(socket.close).toHaveBeenCalled();
+  });
+
+  it('prevents implicit socket recreation after explicit disconnect', async () => {
+    const client = new JavaRuntimeClient({
+      endpoint: 'tcp://127.0.0.1:5555',
+      authToken: 'secret',
+    });
+    await client.connect();
+    expect(mockState.requestInstances).toHaveLength(1);
+
+    await client.disconnect();
+
+    const response = await client.health();
+    expect(response.ok).toBe(false);
+    if (!response.ok) {
+      expect(response.error.code).toBe('CLIENT_DISCONNECTED');
+    }
+    expect(mockState.requestInstances).toHaveLength(1);
+  });
+
+  it('isolates stale-generation failures after reconnect so they cannot close the new socket', async () => {
+    const onTransportFailure = vi.fn();
+    const client = new JavaRuntimeClient({
+      endpoint: 'tcp://127.0.0.1:5555',
+      authToken: 'secret',
+      onTransportFailure,
+    });
+    await client.connect();
+    const firstSocket = mockState.requestInstances[0];
+
+    let rejectFirstReceive!: (error: Error) => void;
+    firstSocket.receive.mockImplementationOnce(
+      () =>
+        new Promise<[Buffer]>((_, reject) => {
+          rejectFirstReceive = reject;
+        }),
+    );
+
+    let sentResolve!: () => void;
+    const sentPromise = new Promise<void>((r) => {
+      sentResolve = r;
+    });
+    const origSend = firstSocket.send;
+    firstSocket.send = async (data: Buffer) => {
+      await origSend.call(firstSocket, data);
+      sentResolve();
+    };
+
+    const firstReqPromise = client.health();
+    await sentPromise;
+
+    await client.disconnect();
+    expect(firstSocket.close).toHaveBeenCalledTimes(1);
+
+    await client.connect();
+    expect(mockState.requestInstances).toHaveLength(2);
+    const secondSocket = mockState.requestInstances[1];
+
+    secondSocket.responses.push(
+      Buffer.from(
+        JSON.stringify({
+          id: 'req-2',
+          ok: true,
+          result: { version: '0.0.1', capabilities: [], cwd: '', methods: [] },
+          stdout: '',
+          stderr: '',
+          elapsedMs: 1,
+        }),
+      ),
+    );
+
+    const secondReqPromise = client.health();
+    const secondResult = await secondReqPromise;
+    expect(secondResult.ok).toBe(true);
+
+    rejectFirstReceive(new Error('Old socket read error'));
+    const firstResult = await firstReqPromise;
+    expect(firstResult.ok).toBe(false);
+
+    expect(secondSocket.close).not.toHaveBeenCalled();
+    expect(onTransportFailure).not.toHaveBeenCalled();
+  });
+
+  it('notifies onTransportFailure and keeps ordinary transport recovery retryable', async () => {
+    const onTransportFailure = vi.fn();
+    const client = new JavaRuntimeClient({
+      endpoint: 'tcp://127.0.0.1:5555',
+      authToken: 'secret',
+      onTransportFailure,
+    });
+    await client.connect();
+    const firstRequest = mockState.requestInstances[0];
+    firstRequest.receive.mockRejectedValueOnce(new Error('Transport broken'));
+
+    const failed = await client.health();
+    expect(failed.ok).toBe(false);
+    if (!failed.ok) {
+      expect(failed.error.code).toBe('TRANSPORT_ERROR');
+    }
+    expect(onTransportFailure).toHaveBeenCalledTimes(1);
+    expect(firstRequest.close).toHaveBeenCalledTimes(1);
+
+    mockState.onRequestCreated = (request) => {
+      request.responses.push(
+        Buffer.from(
+          JSON.stringify({
+            id: 'req-2',
+            ok: true,
+            result: { version: '0.0.1', capabilities: [], cwd: '', methods: [] },
+            stdout: '',
+            stderr: '',
+            elapsedMs: 1,
+          }),
+        ),
+      );
+    };
+
+    const succeeded = await client.health();
+    expect(succeeded.ok).toBe(true);
+    expect(mockState.requestInstances).toHaveLength(2);
   });
 });

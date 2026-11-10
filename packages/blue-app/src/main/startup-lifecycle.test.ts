@@ -188,6 +188,23 @@ describe('StartupLifecycle', () => {
     expect(source).toContain("void doQuit('signal').catch");
   });
 
+  it('reports shutdown step failures when cleanup rejection occurs without claiming clean disposal', () => {
+    const source = readFileSync(path.join(__dirname, 'main.ts'), 'utf8');
+    const runShutdownStepStart = source.indexOf('async function runShutdownStep(');
+    const runShutdownStepEnd = source.indexOf('async function doQuit(', runShutdownStepStart);
+    const runShutdownStepSource = source.slice(runShutdownStepStart, runShutdownStepEnd);
+
+    expect(runShutdownStepSource).toContain('Shutdown step failed:');
+    expect(runShutdownStepSource).toContain('console.warn');
+
+    const shutdownStart = source.indexOf('async function doQuit(');
+    const shutdownEnd = source.indexOf('// ─── File Operations', shutdownStart);
+    const shutdown = source.slice(shutdownStart, shutdownEnd);
+
+    expect(shutdown).toContain("await runShutdownStep('Java runtime'");
+    expect(shutdown).toContain('await javaRuntimeSessionManager?.dispose()');
+  });
+
   it('uses the app background for native and pre-stylesheet window paint', () => {
     const mainSource = readFileSync(path.join(__dirname, 'main.ts'), 'utf8');
     expect(mainSource.match(/backgroundColor: '#1a1a2e'/g)).toHaveLength(2);

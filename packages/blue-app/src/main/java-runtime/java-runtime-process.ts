@@ -8,6 +8,9 @@ import * as net from 'net';
 const execFileAsync = promisify(execFile);
 const MAX_PROCESS_OUTPUT_CHARS = 1024 * 1024;
 
+export type JavaProcessTerminationResult =
+  { status: 'exited' } | { status: 'not-started' } | { status: 'failed'; reason: string };
+
 export interface JavaExecutableProbe {
   available: boolean;
   executable: string;
@@ -32,13 +35,15 @@ export interface JavaRuntimeProcessHandle {
   spawnError?: string;
 }
 
-interface JavaRuntimeProcessDependencies {
+export interface JavaRuntimeProcessDependencies {
   runCommand?: (command: string, args: string[]) => Promise<{ stdout: string; stderr: string }>;
   spawnProcess?: typeof spawn;
   reservePort?: () => Promise<number>;
   createAuthToken?: () => string;
   existsSync?: typeof fs.existsSync;
   statSync?: typeof fs.statSync;
+  onSpawned?: (handle: JavaRuntimeProcessHandle) => void;
+  isCancelled?: () => boolean;
 }
 
 export function parseJavaVersion(rawOutput: string): number | null {
@@ -99,12 +104,22 @@ export async function createJavaRuntimeProcess(
   const spawnProcess = dependencies.spawnProcess ?? spawn;
   const existsSync = dependencies.existsSync ?? fs.existsSync;
   const statSync = dependencies.statSync ?? fs.statSync;
+
   const controlPort = await reservePort();
   const eventPort = await reservePort();
+
+  if (dependencies.isCancelled?.()) {
+    throw new Error('Java runtime process creation was cancelled');
+  }
+
   const authToken = createAuthToken();
   const controlEndpoint = `tcp://127.0.0.1:${controlPort}`;
   const eventEndpoint = `tcp://127.0.0.1:${eventPort}`;
   const workingDirectory = resolveWorkingDirectory(projectDir, existsSync, statSync);
+
+  if (dependencies.isCancelled?.()) {
+    throw new Error('Java runtime process creation was cancelled');
+  }
 
   const child = spawnProcess(
     javaExecutable,
@@ -154,35 +169,160 @@ export async function createJavaRuntimeProcess(
   });
 
   child.on('error', (error) => {
-    handle.spawnError = error instanceof Error ? error.message : String(error);
+    if (!child.pid) handle.spawnError = error instanceof Error ? error.message : String(error);
   });
+
+  dependencies.onSpawned?.(handle);
 
   return handle;
 }
 
-export function terminateJavaRuntimeProcess(
+export async function terminateJavaRuntimeProcess(
   handle: JavaRuntimeProcessHandle,
   signal: NodeJS.Signals = 'SIGTERM',
   graceMs = 2000,
-): void {
-  if (isJavaRuntimeProcessRunning(handle)) {
-    handle.process.kill(signal);
+  forceGraceMs = 1000,
+): Promise<JavaProcessTerminationResult> {
+  if (handle.spawnError && !handle.process.pid) {
+    return { status: 'not-started' };
   }
 
-  if (signal !== 'SIGTERM') {
-    return;
+  if (
+    handle.exited ||
+    handle.exitCode !== null ||
+    handle.exitSignal !== null ||
+    (handle.process.exitCode !== null && handle.process.exitCode !== undefined)
+  ) {
+    return { status: 'exited' };
   }
 
-  const timer = setTimeout(() => {
-    if (isJavaRuntimeProcessRunning(handle)) {
-      handle.process.kill('SIGKILL');
+  return new Promise<JavaProcessTerminationResult>((resolve) => {
+    let settled = false;
+    let termTimer: NodeJS.Timeout | null = null;
+    let killTimer: NodeJS.Timeout | null = null;
+    let failureReason: string | null = null;
+
+    const cleanup = () => {
+      if (termTimer) {
+        clearTimeout(termTimer);
+        termTimer = null;
+      }
+      if (killTimer) {
+        clearTimeout(killTimer);
+        killTimer = null;
+      }
+      handle.process.removeListener('exit', onExit);
+      handle.process.removeListener('error', onError);
+    };
+
+    const finish = (result: JavaProcessTerminationResult) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(result);
+    };
+
+    const onExit = (code: number | null, exitSignal: NodeJS.Signals | null) => {
+      handle.exited = true;
+      handle.exitCode = code;
+      handle.exitSignal = exitSignal;
+      finish({ status: 'exited' });
+    };
+
+    const onError = (error: Error) => {
+      failureReason = failureReason ?? error.message;
+      if (!handle.process.pid) {
+        finish({ status: 'not-started' });
+      }
+    };
+
+    handle.process.on('exit', onExit);
+    handle.process.on('error', onError);
+
+    if (handle.spawnError && !handle.process.pid) {
+      finish({ status: 'not-started' });
+      return;
     }
-  }, graceMs);
-  timer.unref?.();
+
+    if (
+      handle.exited ||
+      handle.exitCode !== null ||
+      handle.exitSignal !== null ||
+      (handle.process.exitCode !== null && handle.process.exitCode !== undefined)
+    ) {
+      finish({ status: 'exited' });
+      return;
+    }
+
+    // Step 2: Send initial signal (SIGTERM) synchronously before any await
+    try {
+      const delivered = handle.process.kill(signal);
+      if (!delivered && !handle.exited && handle.process.exitCode === null) {
+        failureReason = `Failed to deliver ${signal} to process`;
+      }
+    } catch (error) {
+      failureReason = error instanceof Error ? error.message : String(error);
+      if (!handle.exited && handle.process.exitCode === null) {
+        finish({ status: 'failed', reason: failureReason });
+        return;
+      }
+    }
+
+    if (signal === 'SIGKILL') {
+      killTimer = setTimeout(() => {
+        if (!handle.exited && handle.process.exitCode === null) {
+          finish({
+            status: 'failed',
+            reason: failureReason ?? `Process force-exit timed out after ${forceGraceMs}ms`,
+          });
+        }
+      }, forceGraceMs);
+      return;
+    }
+
+    // Step 3: Wait up to graceMs for SIGTERM exit
+    termTimer = setTimeout(() => {
+      if (handle.exited || handle.process.exitCode !== null) {
+        finish({ status: 'exited' });
+        return;
+      }
+
+      // Step 3: Escalate to SIGKILL. child.killed only indicates signal delivery and must not suppress escalation.
+      try {
+        const delivered = handle.process.kill('SIGKILL');
+        if (!delivered && !handle.exited && handle.process.exitCode === null) {
+          failureReason = failureReason ?? 'Failed to deliver SIGKILL to process';
+        }
+      } catch (error) {
+        failureReason = failureReason ?? (error instanceof Error ? error.message : String(error));
+        if (!handle.exited && handle.process.exitCode === null) {
+          finish({ status: 'failed', reason: failureReason });
+          return;
+        }
+      }
+
+      // Step 4: Wait up to forceGraceMs for force-exit confirmation
+      killTimer = setTimeout(() => {
+        if (handle.exited || handle.process.exitCode !== null) {
+          finish({ status: 'exited' });
+        } else {
+          finish({
+            status: 'failed',
+            reason:
+              failureReason ?? `Process termination timed out after ${graceMs + forceGraceMs}ms`,
+          });
+        }
+      }, forceGraceMs);
+    }, graceMs);
+  });
 }
 
 export function isJavaRuntimeProcessRunning(handle: JavaRuntimeProcessHandle): boolean {
-  return !handle.exited && handle.process.exitCode === null && !handle.process.killed;
+  return (
+    !handle.exited &&
+    (handle.process.exitCode === null || handle.process.exitCode === undefined) &&
+    !(handle.spawnError && !handle.process.pid)
+  );
 }
 
 function appendProcessOutput(current: string, next: string): string {

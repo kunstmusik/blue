@@ -79,6 +79,8 @@ export class JavaRuntimeClient {
   private readonly onTransportFailure?: () => void;
   private requestQueue: Promise<unknown> = Promise.resolve();
   private requestIndex = 0;
+  private lifetimeGeneration = 1;
+  private isDisconnected = false;
 
   constructor(options: JavaRuntimeClientOptions) {
     this.endpoint = options.endpoint;
@@ -88,10 +90,17 @@ export class JavaRuntimeClient {
   }
 
   async connect(): Promise<void> {
+    if (this.isDisconnected) {
+      this.isDisconnected = false;
+      this.lifetimeGeneration += 1;
+    }
     this.ensureRequestSocket();
   }
 
   async disconnect(): Promise<void> {
+    this.isDisconnected = true;
+    this.lifetimeGeneration += 1;
+    this.requestQueue = Promise.resolve();
     this.resetRequestSocket();
   }
 
@@ -172,7 +181,16 @@ export class JavaRuntimeClient {
     params: TParams,
     options?: JavaRuntimeRequestOptions,
   ): Promise<JavaRuntimeResponseEnvelope<TResult>> {
+    const requestGeneration = this.lifetimeGeneration;
+
     const operation = this.requestQueue.then(async () => {
+      if (this.isDisconnected || this.lifetimeGeneration !== requestGeneration) {
+        throw new JavaRuntimeRequestError(
+          'CLIENT_DISCONNECTED',
+          'Java runtime client has been disconnected',
+        );
+      }
+
       const socket = this.ensureRequestSocket();
       const timeout = options?.timeout ?? this.timeout;
       socket.sendTimeout = timeout;
@@ -196,6 +214,13 @@ export class JavaRuntimeClient {
         throw new JavaRuntimeRequestError(
           'TRANSPORT_ERROR',
           error instanceof Error ? error.message : String(error),
+        );
+      }
+
+      if (this.isDisconnected || this.lifetimeGeneration !== requestGeneration) {
+        throw new JavaRuntimeRequestError(
+          'CLIENT_DISCONNECTED',
+          'Java runtime client has been disconnected',
         );
       }
 
@@ -231,11 +256,14 @@ export class JavaRuntimeClient {
     try {
       return await operation;
     } catch (error) {
-      // A REQ socket that hits a transport/state failure can no longer be reused safely.
-      this.resetRequestSocket();
       if (error instanceof JavaRuntimeRequestError) {
-        if (error.code === 'TRANSPORT_ERROR') {
-          this.onTransportFailure?.();
+        // Only reset the socket and fire onTransportFailure if this error belongs to the current generation
+        // and client has not been explicitly disconnected.
+        if (!this.isDisconnected && this.lifetimeGeneration === requestGeneration) {
+          this.resetRequestSocket();
+          if (error.code === 'TRANSPORT_ERROR') {
+            this.onTransportFailure?.();
+          }
         }
         return createFailureEnvelope<TResult>(error);
       }
@@ -244,6 +272,13 @@ export class JavaRuntimeClient {
   }
 
   private ensureRequestSocket(): Request {
+    if (this.isDisconnected) {
+      throw new JavaRuntimeRequestError(
+        'CLIENT_DISCONNECTED',
+        'Cannot create socket: Java runtime client is disconnected',
+      );
+    }
+
     if (!this.socket) {
       this.socket = new Request();
       this.socket.sendTimeout = this.timeout;
