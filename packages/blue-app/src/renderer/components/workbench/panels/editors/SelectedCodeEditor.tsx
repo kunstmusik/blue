@@ -119,7 +119,10 @@ const retainedProjectDrafts = new Map<string, RetainedProjectDraft>();
 
 const blueCodeMirrorTheme = EditorView.theme(
   {
-    '&': {
+    // CodeMirror also gives the theme classes to the tooltip container it
+    // appends to the host body, so a bare '&' rule would make that container
+    // fill and cover a popout window. Restrict editor sizing to the editor.
+    '&.cm-editor': {
       height: '100%',
       color: 'var(--color-app-text-bright)',
       backgroundColor: 'var(--color-app-overlay)',

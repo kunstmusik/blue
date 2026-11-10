@@ -100,6 +100,57 @@ describe('waitForCurrentWorkbenchApi', () => {
 });
 
 describe('createPopoutOpenGuard', () => {
+  it('closes a popout that never adopts a group, while retaining its docked source (T059)', () => {
+    vi.useFakeTimers();
+    const source = makeGroup('grid');
+    const removeGroup = vi.fn();
+    const openedWindow = {
+      closed: false,
+      close: vi.fn(),
+      document: { getElementById: () => null },
+    } as unknown as Window;
+    const guard = createPopoutOpenGuard({ groups: [source], removeGroup } as never);
+
+    try {
+      guard.onDidOpen({ window: openedWindow });
+      vi.advanceTimersByTime(9_999);
+      expect(openedWindow.close).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(openedWindow.close).toHaveBeenCalledOnce();
+      expect(removeGroup).not.toHaveBeenCalled();
+    } finally {
+      guard.complete(false);
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not navigate again while Dockview is adopting a loaded popout (T059)', () => {
+    vi.useFakeTimers();
+    const reload = vi.fn();
+    const doc = { readyState: 'complete', getElementById: vi.fn(() => null) };
+    const openedWindow = {
+      closed: false,
+      close: vi.fn(),
+      document: doc,
+      location: { pathname: '/popout.html', reload },
+    } as unknown as Window;
+    const guard = createPopoutOpenGuard({ groups: [] } as never);
+
+    try {
+      guard.onDidOpen({ window: openedWindow });
+      vi.advanceTimersByTime(50);
+      expect(reload).not.toHaveBeenCalled();
+      doc.getElementById.mockReturnValue({} as never);
+      guard.complete(true);
+      vi.advanceTimersByTime(10_000);
+      expect(reload).not.toHaveBeenCalled();
+      expect(openedWindow.close).not.toHaveBeenCalled();
+    } finally {
+      guard.complete(true);
+      vi.useRealTimers();
+    }
+  });
+
   it("does not reload Electron's about:blank proxy before popout navigation", () => {
     vi.useFakeTimers();
     const reload = vi.fn();
@@ -121,7 +172,7 @@ describe('createPopoutOpenGuard', () => {
 
     location.pathname = '/popout.html';
     vi.advanceTimersByTime(100);
-    expect(reload).toHaveBeenCalledTimes(1);
+    expect(reload).not.toHaveBeenCalled();
 
     guard.complete(true);
     vi.useRealTimers();

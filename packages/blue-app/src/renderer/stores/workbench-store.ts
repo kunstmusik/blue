@@ -920,7 +920,6 @@ function refreshPopoutGroupLayout(group: DockviewGroupPanel): void {
 export function createPopoutOpenGuard(api: DockviewApi): PopoutOpenGuard {
   let popoutWindow: Window | undefined;
   let completed = false;
-  let reloadTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
   let closeTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 
   const hasDockviewContainer = () => {
@@ -935,27 +934,8 @@ export function createPopoutOpenGuard(api: DockviewApi): PopoutOpenGuard {
     onDidOpen: ({ window: openedWindow }) => {
       popoutWindow = openedWindow;
 
-      const reloadAfterNavigation = () => {
-        if (completed || openedWindow.closed || hasDockviewContainer()) {
-          return;
-        }
-
-        try {
-          // Electron initially exposes an about:blank proxy while navigation
-          // to popout.html is still being attached. Reloading that proxy can
-          // cancel the real navigation and leave Dockview waiting forever.
-          if (!/popout\.html$/.test(openedWindow.location.pathname)) {
-            reloadTimer = globalThis.setTimeout(reloadAfterNavigation, 50);
-          } else if (openedWindow.document.readyState !== 'loading') {
-            openedWindow.location.reload();
-          }
-        } catch {
-          // If the window handle is no longer usable, the timeout below will
-          // close it or no-op.
-        }
-      };
-      reloadTimer = globalThis.setTimeout(reloadAfterNavigation, 50);
-
+      // Dockview owns navigation and adoption; a second navigation can erase
+      // its mounted group after the load callback has already resolved.
       closeTimer = globalThis.setTimeout(() => {
         if (!completed && !hasDockviewContainer()) {
           closePopoutWindow(popoutWindow);
@@ -965,9 +945,6 @@ export function createPopoutOpenGuard(api: DockviewApi): PopoutOpenGuard {
     },
     complete: (opened) => {
       completed = true;
-      if (reloadTimer !== undefined) {
-        globalThis.clearTimeout(reloadTimer);
-      }
       if (closeTimer !== undefined) {
         globalThis.clearTimeout(closeTimer);
       }
