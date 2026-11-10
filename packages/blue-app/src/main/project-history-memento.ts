@@ -1,4 +1,10 @@
+import {
+  captureProjectGraphDelta,
+  isNetZeroProjectGraphDelta,
+  type ProjectGraphDelta,
+} from './project-history-graph';
 import { isRejectedMixerChannelUpdate } from '../shared/project-editor/patch-mixer-bluelive';
+import { prepareBsbTransaction, type PreparedBsbTransaction } from './project-history-bsb';
 import {
   BlueData,
   Channel,
@@ -66,15 +72,18 @@ export interface PreparedScalarTransaction {
 export interface PreparedStructuralTransaction {
   readonly kind: 'structure';
   readonly candidate: BlueData;
+  readonly delta: ProjectGraphDelta;
   readonly beforeMemento: BlueData;
-  readonly afterMemento: BlueData;
   readonly changed: boolean;
   readonly patchChanged?: readonly boolean[];
   readonly patchAccepted?: readonly boolean[];
 }
 
 export type PreparedTransaction =
-  PreparedEmptyTransaction | PreparedScalarTransaction | PreparedStructuralTransaction;
+  | PreparedEmptyTransaction
+  | PreparedScalarTransaction
+  | PreparedStructuralTransaction
+  | PreparedBsbTransaction;
 
 export interface PreconditionValidationResult {
   valid: boolean;
@@ -660,6 +669,24 @@ export function rollbackScalarRecords(data: BlueData, records: readonly ScalarFi
   }
 }
 
+function isBsbSelectionOnly(patch: ProjectDocumentPatch): boolean {
+  if (Object.keys(patch).length !== 1) return false;
+  const edit =
+    patch.orchestra?.type === 'updateInstrument'
+      ? patch.orchestra.patch
+      : patch.score?.type === 'updateTrackInstrument'
+        ? patch.score.patch
+        : patch.mixer?.type === 'updateEffect'
+          ? patch.mixer.patch
+          : null;
+  if (edit) return Object.keys(edit).length === 1 && edit.bsbInterface?.type === 'selectWidget';
+  if (patch.score?.type === 'updateTypeSpecificEditor') {
+    const value = patch.score.patch.bsbInterfacePatch as { type?: unknown } | undefined;
+    return Object.keys(patch.score.patch).length === 1 && value?.type === 'selectWidget';
+  }
+  return false;
+}
+
 export function prepareTransaction(
   data: BlueData,
   patches: readonly ProjectDocumentPatch[],
@@ -688,7 +715,9 @@ export function prepareTransaction(
   }
 
   // 2. Empty check
-  const allEmpty = patches.length === 0 || patches.every(isEmptyProjectDocumentPatch);
+  const allEmpty =
+    patches.length === 0 ||
+    patches.every((patch) => isEmptyProjectDocumentPatch(patch) || isBsbSelectionOnly(patch));
   if (allEmpty) {
     return {
       status: 'prepared',
@@ -766,6 +795,15 @@ export function prepareTransaction(
     };
   }
 
+  if (!options?.forceStructural) {
+    try {
+      const compact = prepareBsbTransaction(data, patches, options?.context);
+      if (compact) return { status: 'prepared', transaction: compact };
+    } catch (err) {
+      return { status: 'invalid', reason: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
   // 4. Structural transaction: prepare on detached candidate
   const candidate = data.historyCopy();
   transferProjectEditorIdentities(data, candidate);
@@ -778,7 +816,9 @@ export function prepareTransaction(
   const patchAccepted: boolean[] = [];
   try {
     for (const patch of patches) {
-      const c = applyProjectDocumentPatch(candidate, patch, options?.context);
+      const c = isBsbSelectionOnly(patch)
+        ? false
+        : applyProjectDocumentPatch(candidate, patch, options?.context);
       patchChanged.push(c);
       patchAccepted.push(true);
       changed = c || changed;
@@ -790,17 +830,15 @@ export function prepareTransaction(
     };
   }
 
-  const afterMemento = candidate.historyCopy();
-  transferProjectEditorIdentities(candidate, afterMemento);
-
+  const delta = captureProjectGraphDelta(beforeMemento, candidate);
   return {
     status: 'prepared',
     transaction: {
       kind: 'structure',
+      delta,
       candidate,
       beforeMemento,
-      afterMemento,
-      changed,
+      changed: changed && !isNetZeroProjectGraphDelta(delta),
       patchChanged,
       patchAccepted,
     },

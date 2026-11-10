@@ -18,7 +18,7 @@ export function OversizeProposalDialog(): React.ReactElement | null {
   return (
     <ConfirmationDialog
       open={true}
-      title="Oversize Project Action"
+      title="Undo History Limit"
       description={activeOversizeProposal.explanation}
       actions={actions}
       cancelActionId="cancel"

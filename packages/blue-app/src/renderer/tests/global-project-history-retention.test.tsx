@@ -91,7 +91,7 @@ describe('global project history retention & oversize confirmation (T057, US5)',
     return (
       <ConfirmationDialog
         open={proposal.open}
-        title="Oversize Project Action"
+        title="Undo History Limit"
         description={proposal.explanation}
         actions={actions}
         cancelActionId="cancel"

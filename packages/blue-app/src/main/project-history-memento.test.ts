@@ -16,6 +16,7 @@ import {
   type ScalarFieldRecord,
 } from './project-history-memento';
 import { ProjectSession } from './project-session';
+import { applyProjectGraphDelta } from './project-history-graph';
 import {
   assignExplicitMixerChannelSnapshotId,
   assignExplicitScoreObjectId,
@@ -139,7 +140,7 @@ describe('project-history-memento', () => {
   });
 
   describe('structural transaction preparation and detached candidate publication', () => {
-    it('creates detached candidate and mementos with identities transferred and leaves source intact', () => {
+    it('isolates the candidate and delta, preserves identities and leaves source intact', () => {
       const data = new BlueData();
       data.getScore().length = 0;
       const tlg = new TrackLayerGroup();
@@ -166,20 +167,16 @@ describe('project-history-memento', () => {
       expect(result.transaction.kind).toBe('structure');
       if (result.transaction.kind !== 'structure') return;
 
-      const { candidate, beforeMemento, afterMemento, changed } = result.transaction;
+      const { candidate, beforeMemento, delta, changed } = result.transaction;
       expect(changed).toBe(true);
 
-      // Verify that candidate, beforeMemento, afterMemento, and data are distinct objects
-      expect(new Set([data, candidate, beforeMemento, afterMemento]).size).toBe(4);
+      expect(new Set([data, candidate, beforeMemento]).size).toBe(3);
 
       // Verify source data was NOT mutated
       expect(data.getArrangement().size()).toBe(0);
 
       // Verify candidate was mutated
       expect(candidate.getArrangement().size()).toBe(1);
-
-      // Verify afterMemento reflects candidate
-      expect(afterMemento.getArrangement().size()).toBe(1);
 
       // Verify beforeMemento reflects source
       expect(beforeMemento.getArrangement().size()).toBe(0);
@@ -188,11 +185,24 @@ describe('project-history-memento', () => {
       const candClip = (candidate.getScore()[0] as TrackLayerGroup)[0][0];
       expect(getScoreObjectId(candClip)).toBe('clip-orig-1');
 
-      const afterClip = (afterMemento.getScore()[0] as TrackLayerGroup)[0][0];
-      expect(getScoreObjectId(afterClip)).toBe('clip-orig-1');
-
       const beforeClip = (beforeMemento.getScore()[0] as TrackLayerGroup)[0][0];
       expect(getScoreObjectId(beforeClip)).toBe('clip-orig-1');
+
+      const originalXml = data.saveToString();
+      const expectedXml = candidate.saveToString();
+      candidate.getArrangement().getInstrument(0)!.setName('Changed after capture');
+      candClip.setName('Changed candidate clip');
+      expect(data.saveToString()).toBe(originalXml);
+      expect(beforeMemento.saveToString()).toBe(originalXml);
+
+      applyProjectGraphDelta(data, delta, 'after');
+      expect(data.saveToString()).toBe(expectedXml);
+      expect((data.getScore()[0] as TrackLayerGroup)[0][0]).toBe(clip);
+      expect(getScoreObjectId(clip)).toBe('clip-orig-1');
+      applyProjectGraphDelta(data, delta, 'before');
+      expect(data.saveToString()).toBe(originalXml);
+      applyProjectGraphDelta(data, delta, 'after');
+      expect(data.saveToString()).toBe(expectedXml);
     });
 
     it('rejects transaction when preconditions fail with stale status', () => {

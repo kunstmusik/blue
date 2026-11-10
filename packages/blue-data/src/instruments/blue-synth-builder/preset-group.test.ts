@@ -117,3 +117,19 @@ describe('PresetGroup', () => {
     expect(group.subGroups[0].presets[0].getPresetName()).toBe('Preset B');
   });
 });
+it('serializes authored preset/group reordering while retaining historical interleaving', () => {
+  const group = PresetGroup.loadFromXML(
+    Element.parse(
+      '<presetGroup name="root"><preset name="P1" uniqueId="p1"/><presetGroup name="A"/><preset name="P2" uniqueId="p2"/><presetGroup name="B"/></presetGroup>',
+    ),
+  );
+  group.presets.reverse();
+  group.subGroups.reverse();
+  group.updateChildOrder();
+  const xml = group.saveAsXML().toXml();
+  expect(xml.indexOf('name="P2"')).toBeLessThan(xml.indexOf('name="B"'));
+  expect(xml.indexOf('name="B"')).toBeLessThan(xml.indexOf('name="P1"'));
+  expect(xml.indexOf('name="P1"')).toBeLessThan(xml.indexOf('name="A"'));
+  expect(group.deepCopy('history').saveAsXML().toXml()).toBe(xml);
+  expect(PresetGroup.loadFromXML(Element.parse(xml)).saveAsXML().toXml()).toBe(xml);
+});

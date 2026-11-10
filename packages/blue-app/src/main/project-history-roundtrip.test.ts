@@ -2147,13 +2147,13 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       });
       const context = new MockHistoryContext('ctx-roundtrip');
       const docId = session.read().documentId!;
-      // Structural commits publish a candidate copy, so the canonical
-      // document object changes: always read it through the session.
+      // Always read the canonical owner through the session.
       const live = () => session.read().data!;
 
       // patches() may first prepare baseline state (setup) before returning
       // the committed action, so the baseline snapshot follows it.
       const patches = entry.patches(live(), session);
+      live().getScratchPadData().setScratchText('unrelated project content\n'.repeat(20000));
 
       const fingerprintOf = (data: BlueData): string =>
         entry.fingerprint ? entry.fingerprint(data) : data.saveToString();
@@ -2179,6 +2179,11 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       expect(commit.status, `commit failed: ${JSON.stringify(commit)}`).toBe('committed');
       if (commit.status !== 'committed') return;
       expect(session.read().revision).toBe(commit.revision);
+      if (!patches.some((patch) => patch.scratchPad))
+        expect(
+          history.read().retainedBytes,
+          'unrelated project text must not enter retained history',
+        ).toBeLessThan(250000);
 
       const committedFingerprint = fingerprintOf(live());
       expect(committedFingerprint).not.toBe(baselineFingerprint);

@@ -484,7 +484,7 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
       expect(result.transaction.changed).toBe(true);
       expect(data.saveToString()).toBe(initialXml);
       expect(result.transaction.beforeMemento.saveToString()).toBe(initialXml);
-      expect(result.transaction.afterMemento.saveToString()).not.toBe(initialXml);
+      expect(result.transaction.candidate.saveToString()).not.toBe(initialXml);
     });
 
     it('routes tempo and meter map patches through the structural path', () => {

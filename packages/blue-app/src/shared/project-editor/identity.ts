@@ -1,5 +1,13 @@
+import { transferHistoryNodeIds } from './history-node-identity';
 import {
   BlueData,
+  AbstractSoundObject,
+  AudioClip,
+  TrackLayer,
+  SoundLayer,
+  Preset,
+  TempoPoint,
+  MarkersList,
   Channel,
   Effect,
   Send,
@@ -388,6 +396,73 @@ export function transferClojureProjectEntrySnapshotIds(source: object, target: o
   }
 }
 
+// The ordered tuple is internal metadata for app-local history, never a serialized format.
+const GRAPH_EDITOR_ID_MAPS = [
+  MIXER_CHANNEL_IDS,
+  MIXER_ENTRY_IDS,
+  LAYER_GROUP_ID_MAP,
+  SCORE_OBJECT_ID_MAP,
+  PATTERN_LAYER_ID_MAP,
+  LAYER_SELECTION_ID_MAP,
+  TEMPO_POINT_IDS,
+  PARAMETER_ID_MAP,
+  BSB_GESTURE_TARGET_IDS,
+  BSB_WIDGET_ID_MAP,
+  PRESET_ID_MAP,
+  DROPDOWN_LINK_ID_MAP,
+  LIBRARY_REFERENCE_ID_MAP,
+  CLOJURE_LIBRARY_ENTRY_ID_MAP,
+] as const;
+export interface GraphEditorMetadata {
+  ids: Array<string | undefined>;
+  markers?: string[];
+  clojureEntries?: string[];
+}
+
+export function readGraphEditorMetadata(value: object): GraphEditorMetadata {
+  if (value instanceof BSBWidget) {
+    getBsbGestureTargetId(value);
+    assignBsbWidgetSnapshotId(value, value.id);
+  }
+  if (value instanceof BSBDropdown)
+    for (const item of value.dropdownItems) assignDropdownLinkSnapshotId(item, item.uniqueId);
+  if (value instanceof AbstractSoundObject)
+    assignScoreObjectId(value, value instanceof AudioClip ? 'aclp' : 'sobj');
+  if (value instanceof Channel) getMixerChannelSnapshotId(value);
+  if (value instanceof Effect || value instanceof Send) getMixerEntrySnapshotId(value);
+  if (value instanceof Parameter) assignParameterSnapshotId(value, value.getUniqueId());
+  if (value instanceof Preset) assignPresetSnapshotId(value, value.getUniqueId());
+  if (
+    value instanceof TrackLayerGroup ||
+    value instanceof PolyObject ||
+    value instanceof PatternsLayerGroup
+  )
+    assignLayerGroupId(value);
+  if (value instanceof TrackLayer || value instanceof SoundLayer) assignLayerSelectionId(value);
+  if (value instanceof PatternLayer) assignPatternLayerId(value);
+  if (value instanceof TempoPoint) getTempoPointSnapshotId(value);
+  if (value instanceof MarkersList) getMarkerSnapshotIds(value);
+  if (value instanceof ClojureLibraryEntry) assignClojureLibraryEntrySnapshotId(value);
+  return {
+    ids: GRAPH_EDITOR_ID_MAPS.map((map) => map.get(value)),
+    markers: MARKER_IDS.get(value)?.slice(),
+    clojureEntries: CLOJURE_PROJECT_ENTRY_IDS_MAP.get(value)?.slice(),
+  };
+}
+
+export function restoreGraphEditorMetadata(value: object, metadata: GraphEditorMetadata): void {
+  GRAPH_EDITOR_ID_MAPS.forEach((map, i) => {
+    const id = metadata.ids[i];
+    if (id === undefined) map.delete(value);
+    else map.set(value, id);
+  });
+  if (metadata.markers) MARKER_IDS.set(value, metadata.markers.slice());
+  else MARKER_IDS.delete(value);
+  if (metadata.clojureEntries)
+    CLOJURE_PROJECT_ENTRY_IDS_MAP.set(value, metadata.clojureEntries.slice());
+  else CLOJURE_PROJECT_ENTRY_IDS_MAP.delete(value);
+}
+
 // ─── Identity Transfer Mapping ───
 
 export interface IdentityTransferMap {
@@ -592,14 +667,7 @@ export function transferProjectEditorIdentities(
         }
       }
     } else if (srcObj instanceof Sound && tgtObj instanceof Sound) {
-      const sCandidate = srcObj as Sound & { getInstrument?: () => Instrument };
-      const tCandidate = tgtObj as Sound & { getInstrument?: () => Instrument };
-      if (
-        typeof sCandidate.getInstrument === 'function' &&
-        typeof tCandidate.getInstrument === 'function'
-      ) {
-        pairInstrument(sCandidate.getInstrument(), tCandidate.getInstrument());
-      }
+      pairInstrument(srcObj.getBlueSynthBuilder(), tgtObj.getBlueSynthBuilder());
     } else if (srcObj instanceof Instance && tgtObj instanceof Instance) {
       pairSoundObject(srcObj.getSoundObject(), tgtObj.getSoundObject());
     } else if (srcObj instanceof PatternObject && tgtObj instanceof PatternObject) {
@@ -808,5 +876,8 @@ export function transferProjectEditorIdentities(
     pair(sSets[s], tSets[s]);
   }
 
+  transferHistoryNodeIds(source, target, (a, b) =>
+    restoreGraphEditorMetadata(b, readGraphEditorMetadata(a)),
+  );
   return { sourceToTarget, targetToSource, transferredCount };
 }

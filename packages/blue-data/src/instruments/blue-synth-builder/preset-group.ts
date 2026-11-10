@@ -71,6 +71,17 @@ export class PresetGroup {
     }
   }
 
+  /** Commit an authored reorder while preserving historical preset/group interleaving. */
+  updateChildOrder(): void {
+    const presets = [...this.presets],
+      groups = [...this.subGroups];
+    const children = new Set<Preset | PresetGroup>([...presets, ...groups]);
+    this._childOrder = this._childOrder
+      .filter((child) => children.has(child))
+      .map((child) => (child instanceof Preset ? presets.shift()! : groups.shift()!));
+    this._childOrder.push(...presets, ...groups);
+  }
+
   saveAsXML(): Element {
     const elem = new Element('presetGroup');
     elem.setAttribute('name', this.presetGroupName);

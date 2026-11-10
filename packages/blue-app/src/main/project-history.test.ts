@@ -1636,10 +1636,10 @@ describe('ProjectHistory coordinator', () => {
       );
     });
 
-    it('rejects live edit when baseline beforeData causes candidate retained bytes to exceed budget (T037)', async () => {
+    it('admits small scalar gestures without retaining a complete project baseline', async () => {
       const { data } = setupHistory();
       const baseBytes = estimateBlueDataBytes(data);
-      // Budget is set smaller than the baseline memento size itself
+      // Unrelated project bytes do not belong to a scalar gesture's rollback state.
       const bytesLimit = Math.max(1024, baseBytes - 500);
       const { session: sess, history, context } = setupHistory({ bytesLimit });
       const docId = sess.read().documentId!;
@@ -1654,16 +1654,16 @@ describe('ProjectHistory coordinator', () => {
         ),
       );
 
-      expect(res.status).toBe('oversize');
-      // Rejected safely before mutating
-      expect(sess.read().data?.getProjectProperties().title).toBe('Initial Title');
-      expect(history.read().length).toBe(0);
+      expect(res.status).toBe('committed');
+      expect(sess.read().data?.getProjectProperties().title).toBe('X');
+      expect(history.read().retainedBytes).toBeLessThan(1024);
+      expect(history.read().length).toBe(1);
     });
 
     it('rejects and rolls back safely when cumulative growth of merged records exceeds byte budget (T037)', async () => {
       const { data } = setupHistory();
       const baseBytes = estimateBlueDataBytes(data);
-      // Give enough budget for baseline (~10K) + 1 small edit (~400 bytes), but not 10 edits
+      // The final complete record must fit even when each incremental increase is small.
       const bytesLimit = baseBytes + 800;
       const { session, history, context } = setupHistory({ bytesLimit });
       const docId = session.read().documentId!;
@@ -1689,7 +1689,7 @@ describe('ProjectHistory coordinator', () => {
             docId,
             i - 1,
             'Cumulative Drag',
-            [{ projectProperties: { title: `T${i}` } }],
+            [{ projectProperties: { title: 'T'.repeat(i * 1000) } }],
             { gestureId: 'g-cumul', phase: 'update' },
           ),
         );
@@ -2472,6 +2472,7 @@ describe('ProjectHistory coordinator', () => {
       knob.value = 0.25;
       instrument.setInstrumentText('aout oscili <gain>, 440\nout aout');
       instrument.getGraphicInterface().getRootGroup().addChild(knob);
+      instrument.getParameters();
       data.getArrangement().addInstrument(instrument, 'instr-bsb');
 
       const valueInverse = computeStructuralInversePatches(data, [

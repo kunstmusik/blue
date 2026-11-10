@@ -597,7 +597,12 @@ export class BlueSynthBuilder extends Instrument {
     };
 
     visit(this._graphicInterface.getRootGroup());
-    this._parameters = nextParameters;
+    if (
+      this._parameters.length !== nextParameters.length ||
+      this._parameters.some((parameter, index) => parameter !== nextParameters[index])
+    ) {
+      this._parameters = nextParameters;
+    }
   }
 
   private renameParametersForWidget(widget: BSBWidget, oldObjectName: string): void {

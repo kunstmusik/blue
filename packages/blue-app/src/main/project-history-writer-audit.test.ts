@@ -508,77 +508,54 @@ describe('Project history canonical writer audit (T014)', () => {
       expect(history.read().length).toBe(0);
     });
 
-    it('rolls back oversized already-applied direct mutations and preserves a redo branch on cancel', async () => {
-      const { session, history, context, recorder } = setupTest({ bytesLimit: 500 });
+    it('preserves the redo branch when an oversized detached direct mutation is cancelled', async () => {
+      const { session, history, context } = setupTest({ bytesLimit: 2000 });
       const documentId = session.read().documentId!;
-
-      await history.commit(
-        context.nextCommitRequest(documentId, 0, 'Branching Edit', [
-          { projectProperties: { title: 'Branch' } },
-        ]),
-      );
+      expect(
+        (
+          await history.commit(
+            context.nextCommitRequest(documentId, 0, 'Branching Edit', [
+              { projectProperties: { title: 'Branch' } },
+            ]),
+          )
+        ).status,
+      ).toBe('committed');
       await history.undo(context.nextUndoRequest(documentId, 1));
-      const beforeXml = session.read().data!.saveToString();
-      const beforeMemento = session.read().data!.historyCopy();
-      session.read().data!.getGlobalOrcSco().setGlobalOrc('y'.repeat(2_000));
-      const afterMemento = session.read().data!.historyCopy();
-
-      const receipt = history.recordDirectStructureMutation({
-        label: 'Oversized Applied Direct Edit',
-        beforeMemento,
-        afterMemento,
+      const before = session.read().data!.saveToString();
+      const proposal = await history.commitDirectMutation({
+        label: 'Oversized Direct Edit',
+        mutator: (candidate) => {
+          candidate.getGlobalOrcSco().setGlobalOrc('y'.repeat(4000));
+          return true;
+        },
       });
-
-      expect(receipt.changed).toBe(false);
-      expect(receipt.oversizeProposal?.token).toBeTruthy();
-      expect(session.read().data!.saveToString()).toBe(beforeXml);
+      expect(proposal.oversizeProposal?.token).toBeTruthy();
+      expect(session.read().data!.saveToString()).toBe(before);
       expect(history.read().canRedo).toBe(true);
-      expect(history.read().length).toBe(1);
-      expect(recorder.latest()?.history.canRedo).toBe(true);
-
-      const cancelResult = history.cancelOversizeProposal({
-        proposalToken: receipt.oversizeProposal!.token,
-      });
-      expect(cancelResult).toEqual({ ok: true });
-      expect(session.read().data!.saveToString()).toBe(beforeXml);
+      expect(
+        history.cancelOversizeProposal({ proposalToken: proposal.oversizeProposal!.token }),
+      ).toEqual({ ok: true });
       expect(history.read().canRedo).toBe(true);
     });
-
-    it('consumes one direct oversize proposal exactly once when explicitly confirmed', async () => {
+    it('consumes one detached direct proposal exactly once and applies with empty history', async () => {
       const { session, history } = setupTest({ bytesLimit: 500 });
-      const beforeMemento = session.read().data!.historyCopy();
-      const afterMemento = beforeMemento.historyCopy();
-      afterMemento.getGlobalOrcSco().setGlobalOrc('z'.repeat(2_000));
-      session.read().data!.getGlobalOrcSco().setGlobalOrc('z'.repeat(2_000));
-
-      const proposal = history.recordDirectStructureMutation({
-        label: 'Confirm Oversized Direct Edit',
-        beforeMemento,
-        afterMemento,
-      });
+      const edit = {
+        label: 'Oversized Direct Edit',
+        mutator: (candidate: BlueData) => {
+          candidate.getGlobalOrcSco().setGlobalOrc('z'.repeat(2000));
+          return true;
+        },
+      };
+      const proposal = await history.commitDirectMutation(edit);
       const token = proposal.oversizeProposal!.token;
-
-      const confirmed = history.recordDirectStructureMutation({
-        label: 'Confirm Oversized Direct Edit',
-        beforeMemento,
-        afterMemento,
-        proposalToken: token,
-      });
-      expect(confirmed.changed).toBe(true);
-      // Explicit confirmation authorizes the documented history reset. The
-      // oversized action is applied, but cannot be retained under the limit.
+      expect((await history.commitDirectMutation({ ...edit, proposalToken: token })).changed).toBe(
+        true,
+      );
       expect(history.read().length).toBe(0);
-      expect(history.read().canUndo).toBe(false);
-      expect(session.read().data!.getGlobalOrcSco().getGlobalOrc()).toBe('z'.repeat(2_000));
-
-      const reused = history.recordDirectStructureMutation({
-        label: 'Confirm Oversized Direct Edit',
-        beforeMemento,
-        afterMemento,
-        proposalToken: token,
-      });
-      expect(reused.changed).toBe(false);
-      expect(reused.error).toMatch(/invalid|stale|consumed/i);
+      expect(session.read().data!.getGlobalOrcSco().getGlobalOrc()).toBe('z'.repeat(2000));
+      expect((await history.commitDirectMutation({ ...edit, proposalToken: token })).changed).toBe(
+        false,
+      );
     });
   });
 

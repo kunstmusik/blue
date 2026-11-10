@@ -350,7 +350,7 @@ import {
   removeMarkerSnapshotId,
   getTempoPointSnapshotId,
 } from './identity';
-import { applyBsbInterfacePatch, applyEmbeddedOpcodeListPatch, parseSoundBSB } from './bsb-widgets';
+import { applyBsbInterfacePatch, applyEmbeddedOpcodeListPatch } from './bsb-widgets';
 import {
   buildEditorTargetSnapshot,
   createBarRendererForAudioClip,
@@ -3903,16 +3903,15 @@ export function applyScoreObjectPatch(
         if (p.comment !== undefined) snd.setComment(p.comment as string);
 
         if (p.bsbInterfacePatch !== undefined) {
-          const bsb = parseSoundBSB(snd.getBSBInstrumentText());
+          const bsb = snd.getBlueSynthBuilder();
           if (bsb) {
             applyBsbInterfacePatch(bsb, p.bsbInterfacePatch as BsbInterfacePatch);
-            snd.setBSBInstrumentText(bsb.saveAsXML().toXml());
           }
         }
 
         if (p.bsbCodePatch !== undefined) {
           const codePatch = p.bsbCodePatch as Record<string, string>;
-          const bsb = parseSoundBSB(snd.getBSBInstrumentText());
+          const bsb = snd.getBlueSynthBuilder();
           if (bsb) {
             if (codePatch.instrumentText !== undefined)
               bsb.setInstrumentText(codePatch.instrumentText);
@@ -3920,18 +3919,16 @@ export function applyScoreObjectPatch(
               bsb.setAlwaysOnInstrumentText(codePatch.alwaysOnInstrumentText);
             if (codePatch.globalOrc !== undefined) bsb.setGlobalOrc(codePatch.globalOrc);
             if (codePatch.globalSco !== undefined) bsb.setGlobalSco(codePatch.globalSco);
-            snd.setBSBInstrumentText(bsb.saveAsXML().toXml());
           }
         }
 
         if (p.bsbOpcodeListPatch !== undefined) {
-          const bsb = parseSoundBSB(snd.getBSBInstrumentText());
+          const bsb = snd.getBlueSynthBuilder();
           if (bsb) {
             applyEmbeddedOpcodeListPatch(
               bsb.getOpcodeList(),
               p.bsbOpcodeListPatch as EmbeddedOpcodeListPatch,
             );
-            snd.setBSBInstrumentText(bsb.saveAsXML().toXml());
           }
         }
 
@@ -3943,7 +3940,7 @@ export function applyScoreObjectPatch(
             curve?: string;
             resolutionDecimal?: string;
           };
-          const bsb = parseSoundBSB(snd.getBSBInstrumentText());
+          const bsb = snd.getBlueSynthBuilder();
           if (bsb) {
             const params = bsb.getParameters();
             const param = params.find(
@@ -3978,7 +3975,6 @@ export function applyScoreObjectPatch(
                 }
               }
             }
-            snd.setBSBInstrumentText(bsb.saveAsXML().toXml());
           }
         }
 

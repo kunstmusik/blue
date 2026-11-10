@@ -1,4 +1,14 @@
-import { randomUUID } from 'node:crypto';
+import { compactHistoryRuntimePatches } from './project-history-runtime-patches';
+import {
+  captureProjectGraphDelta,
+  applyProjectGraphDelta,
+  mergeProjectGraphDeltas,
+  isNetZeroProjectGraphDelta,
+  estimateProjectGraphDeltaBytes,
+  type ProjectGraphDelta,
+} from './project-history-graph';
+
+import { createHash, randomUUID } from 'node:crypto';
 import {
   BSBCheckBox,
   BSBGroup,
@@ -66,11 +76,9 @@ import type { ProjectRuntimeReconciliation } from './project-runtime-reconciliat
 import { collectAffectedScoreAutomationParameterIds } from './score-automation-runtime-sync';
 import {
   prepareTransaction,
-  restoreStructuralMemento,
   rollbackScalarRecords,
   applyScalarFieldRecord,
   validatePreconditions,
-  estimateBlueDataBytes,
   type PreparedTransaction,
   type PreparedScalarTransaction,
   type ScalarFieldRecord,
@@ -179,10 +187,10 @@ function collectChangedTargets(patches: readonly ProjectDocumentPatch[]): string
 
 export type HistoryRecord =
   | { readonly kind: 'values'; readonly records: readonly ScalarFieldRecord[] }
+  | { readonly kind: 'bsb'; readonly delta: ProjectGraphDelta }
   | {
       readonly kind: 'structure';
-      readonly beforeMemento: BlueData;
-      readonly afterMemento: BlueData;
+      readonly delta: ProjectGraphDelta;
     };
 
 export interface ActiveGroupState {
@@ -198,7 +206,6 @@ export interface ActiveRollbackCheckpoint {
   readonly baseCursor: number;
   readonly redoEntries: readonly HistoryEntry[];
   readonly evictedEntries: HistoryEntry[];
-  readonly beforeData: BlueData;
   readonly beforeStateId: string;
   readonly wasDirty: boolean;
   readonly savedStateId: string | null;
@@ -280,7 +287,7 @@ function consolidateForwardPatchesForRedo(
 ): readonly ProjectDocumentPatch[] {
   const result: ProjectDocumentPatch[] = [];
   const handledAutomationMembers = new Set<string>();
-  const catalog = getProjectParameterCatalog(afterMemento);
+  let catalog: ReturnType<typeof getProjectParameterCatalog> | undefined;
 
   for (let i = forwardPatches.length - 1; i >= 0; i--) {
     const patch = forwardPatches[i]!;
@@ -303,7 +310,9 @@ function consolidateForwardPatchesForRedo(
             : `${parameterId}:points`;
         if (!handledAutomationMembers.has(memberKey)) {
           handledAutomationMembers.add(memberKey);
-          const entry = catalog.find((c) => c.parameter.getUniqueId() === parameterId);
+          const entry = (catalog ??= getProjectParameterCatalog(afterMemento)).find(
+            (c) => c.parameter.getUniqueId() === parameterId,
+          );
           if (entry) {
             if (score.type === 'setAutomationResolution') {
               result.unshift({
@@ -512,6 +521,14 @@ export function hasConcreteInversePatches(
   );
 }
 
+function instrumentInverseKey(patch: InstrumentPatch | EffectEditablePatch): string {
+  const bsb = patch.bsbInterface;
+  if (bsb?.type === 'updateWidgetProperties')
+    return JSON.stringify([bsb.widgetId, Object.keys(bsb.properties).sort()]);
+  if (bsb?.type === 'updateSliderBankValue') return JSON.stringify([bsb.widgetId, bsb.sliderIndex]);
+  return JSON.stringify(Object.keys(patch).sort());
+}
+
 function getInverseMemberKey(patch: ProjectDocumentPatch): string | null {
   if (patch.score) {
     const s = patch.score;
@@ -522,13 +539,13 @@ function getInverseMemberKey(patch: ProjectDocumentPatch): string | null {
       return `score:automationResolution:${s.parameterId}`;
     }
     if (s.type === 'updateTrackInstrument') {
-      return `score:trackInstrument:${s.track}`;
+      return `score:trackInstrument:${s.track.rootGroupId}:${s.track.trackId}:${instrumentInverseKey(s.patch)}`;
     }
   }
   if (patch.orchestra) {
     const o = patch.orchestra;
     if (o.type === 'updateInstrument') {
-      return `orchestra:instrument:${o.assignmentId}`;
+      return `orchestra:instrument:${o.assignmentId}:${instrumentInverseKey(o.patch)}`;
     }
     if (o.type === 'updateInstrumentComment') {
       return `orchestra:comment:${o.assignmentId}`;
@@ -537,7 +554,7 @@ function getInverseMemberKey(patch: ProjectDocumentPatch): string | null {
   if (patch.mixer) {
     const m = patch.mixer;
     if (m.type === 'updateEffect') {
-      return `mixer:effect:${m.channelId}:${m.chain}:${m.entryId}`;
+      return `mixer:effect:${m.channelId}:${m.chain}:${m.entryId}:${instrumentInverseKey(m.patch)}`;
     }
   }
   return null;
@@ -621,16 +638,11 @@ function previousBsbPropertyValue(widget: BSBWidget, key: string): unknown | und
   }
 }
 
-function getBsbParameterNames(owner: BsbEditableOwner): Set<string> {
-  return new Set(owner.getParameters().map((parameter) => parameter.getName()));
-}
-
 function invertBsbInterfacePatch(
   owner: BsbEditableOwner,
   patch: BsbInterfacePatch,
 ): BsbInterfacePatch[] | null {
   const graphicInterface = owner.getGraphicInterface();
-  const parameterNames = getBsbParameterNames(owner);
 
   switch (patch.type) {
     case 'selectWidget':
@@ -644,13 +656,6 @@ function invertBsbInterfacePatch(
       for (const key of Object.keys(patch.properties)) {
         const previousValue = previousBsbPropertyValue(widget, key);
         if (previousValue === undefined) return null;
-        const parameterName =
-          key === 'xValue'
-            ? `${widget.objectName}X`
-            : key === 'yValue'
-              ? `${widget.objectName}Y`
-              : widget.objectName;
-        if (!parameterNames.has(parameterName)) return null;
         properties[key] = previousValue;
       }
       return [{ type: 'updateWidgetProperties', widgetId: patch.widgetId, properties }];
@@ -660,8 +665,7 @@ function invertBsbInterfacePatch(
       if (
         (!(widget instanceof BSBHSliderBank) && !(widget instanceof BSBVSliderBank)) ||
         patch.sliderIndex < 0 ||
-        patch.sliderIndex >= widget.sliders.length ||
-        !parameterNames.has(`${widget.objectName}_${patch.sliderIndex}`)
+        patch.sliderIndex >= widget.sliders.length
       ) {
         return null;
       }
@@ -682,32 +686,25 @@ function invertBsbInterfacePatch(
           return;
         }
         if (widget instanceof BSBXYController) {
-          if (
-            parameterNames.has(`${widget.objectName}X`) &&
-            parameterNames.has(`${widget.objectName}Y`)
-          ) {
-            inverse.push({
-              type: 'updateWidgetProperties',
-              widgetId: widget.id,
-              properties: { xValue: widget.xValue, yValue: widget.yValue },
-            });
-          }
+          inverse.push({
+            type: 'updateWidgetProperties',
+            widgetId: widget.id,
+            properties: { xValue: widget.xValue, yValue: widget.yValue },
+          });
           return;
         }
         if (widget instanceof BSBHSliderBank || widget instanceof BSBVSliderBank) {
           for (const [sliderIndex, slider] of widget.sliders.entries()) {
-            if (parameterNames.has(`${widget.objectName}_${sliderIndex}`)) {
-              inverse.push({
-                type: 'updateSliderBankValue',
-                widgetId: widget.id,
-                sliderIndex,
-                value: slider.value,
-              });
-            }
+            inverse.push({
+              type: 'updateSliderBankValue',
+              widgetId: widget.id,
+              sliderIndex,
+              value: slider.value,
+            });
           }
           return;
         }
-        if (!widget.objectName || !parameterNames.has(widget.objectName)) return;
+        if (!widget.objectName) return;
         if (widget instanceof BSBDropdown) {
           inverse.push({
             type: 'updateWidgetProperties',
@@ -761,7 +758,7 @@ function invertEditableInstrumentPatches(
     const values: Record<string, number> = {};
     for (const objectName of Object.keys(patch.bsbWidgetValues)) {
       const widget = findBsbWidgetByObjectName(instrument, objectName);
-      if (!widget || !getBsbParameterNames(instrument).has(objectName)) return null;
+      if (!widget) return null;
       values[objectName] = widget.value;
     }
     inverse.push({ bsbWidgetValues: values });
@@ -984,6 +981,58 @@ export function computeStructuralInversePatches(
   return inverse.length > 0 ? inverse : null;
 }
 
+function bsbGroupingEndpoint(data: BlueData, delta: ProjectGraphDelta): BlueData {
+  const result = data.historyCopy();
+  transferProjectEditorIdentities(data, result);
+  applyProjectGraphDelta(result, delta, 'after');
+  return result;
+}
+
+function payloadFingerprint(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function mergeScalarRecords(
+  prior: readonly ScalarFieldRecord[],
+  next: readonly ScalarFieldRecord[],
+): ScalarFieldRecord[] {
+  const records = new Map(
+    prior.map((r) => [JSON.stringify([r.targetType, r.targetId, r.field]), r]),
+  );
+  for (const r of next) {
+    const key = JSON.stringify([r.targetType, r.targetId, r.field]);
+    const previous = records.get(key);
+    records.set(key, { ...r, beforeValue: previous ? previous.beforeValue : r.beforeValue });
+  }
+  return [...records.values()];
+}
+
+function isNetZeroRecord(record: HistoryRecord | undefined): boolean {
+  if (!record) return false;
+  if (record.kind !== 'values') return isNetZeroProjectGraphDelta(record.delta);
+  return record.records.every((r) => r.beforeValue === r.afterValue);
+}
+
+function restoreHistoryRecord(
+  session: ProjectSession,
+  record: HistoryRecord,
+  direction: 'before' | 'after',
+  stateId: string,
+): void {
+  const data = session.read().data!;
+  if (record.kind !== 'values') applyProjectGraphDelta(data, record.delta, direction);
+  else if (direction === 'before') rollbackScalarRecords(data, record.records);
+  else for (const r of record.records) applyScalarFieldRecord(data, r, 'forward');
+  session.recordMutation({ changed: true, stateId });
+}
+
+function oversizeExplanation(bytes: number, limit: number): string {
+  const mib = (value: number): string => (value / (1024 * 1024)).toFixed(2);
+  return bytes > limit
+    ? `This action needs ${mib(bytes)} MiB of undo data; the per-action limit is ${mib(limit)} MiB. Reset history and apply to continue without retaining this action for undo.`
+    : `This gesture cannot retain its cancellation data within the ${mib(limit * 2)} MiB active-history allowance. Cancel the edit or reset history and apply.`;
+}
+
 function estimateEntryBytes(record: HistoryRecord): number {
   const baseOverhead = 256;
   if (record.kind === 'values') {
@@ -995,13 +1044,7 @@ function estimateEntryBytes(record: HistoryRecord): number {
       if (typeof r.afterValue === 'string') bytes += r.afterValue.length * 2;
     }
     return bytes;
-  } else {
-    return (
-      baseOverhead +
-      estimateBlueDataBytes(record.beforeMemento) +
-      estimateBlueDataBytes(record.afterMemento)
-    );
-  }
+  } else return estimateProjectGraphDeltaBytes(record.delta);
 }
 
 export class ProjectHistory {
@@ -1044,8 +1087,6 @@ export class ProjectHistory {
     documentId: string;
     expectedRevision: number;
     payloadFingerprint: string;
-    beforeMemento: BlueData;
-    afterMemento: BlueData;
     label: string;
     origin?: {
       contextId?: string;
@@ -1173,19 +1214,13 @@ export class ProjectHistory {
     candidateExtraBytes = 0,
     includeCheckpoint = true,
   ): number {
-    let bytes = 0;
-    for (const e of this.entries) {
-      bytes += e.retainedBytes;
-    }
+    const retained = new Set(this.entries);
     if (includeCheckpoint && this.activeCheckpoint) {
-      bytes += estimateBlueDataBytes(this.activeCheckpoint.beforeData);
-      for (const e of this.activeCheckpoint.redoEntries) {
-        bytes += e.retainedBytes;
-      }
-      for (const e of this.activeCheckpoint.evictedEntries) {
-        bytes += e.retainedBytes;
-      }
+      for (const entry of this.activeCheckpoint.redoEntries) retained.add(entry);
+      for (const entry of this.activeCheckpoint.evictedEntries) retained.add(entry);
     }
+    let bytes = 0;
+    for (const entry of retained) bytes += entry.retainedBytes;
     return bytes + candidateExtraBytes;
   }
 
@@ -1228,9 +1263,13 @@ export class ProjectHistory {
     this.cursor = this.activeCheckpoint.baseCursor;
     this.savedStateId = this.activeCheckpoint.savedStateId;
 
-    restoreStructuralMemento(this.session, this.activeCheckpoint.beforeData, {
-      stateId: this.activeCheckpoint.beforeStateId,
-    });
+    if (entry)
+      restoreHistoryRecord(
+        this.session,
+        entry.record,
+        'before',
+        this.activeCheckpoint.beforeStateId,
+      );
 
     if (this.reconciliation && gestureIdToDrain) {
       await this.reconciliation.drainPreviews(gestureIdToDrain);
@@ -1300,10 +1339,7 @@ export class ProjectHistory {
     const undoEntry = canUndo ? this.entries[this.cursor - 1] : undefined;
     const redoEntry = canRedo ? this.entries[this.cursor] : undefined;
 
-    let retainedBytes = 0;
-    for (const e of this.entries) {
-      retainedBytes += e.retainedBytes;
-    }
+    const retainedBytes = this.getRetainedBytesWithCheckpoint();
 
     return {
       canUndo,
@@ -1375,7 +1411,7 @@ export class ProjectHistory {
     afterMemento: BlueData,
   ): string {
     try {
-      return JSON.stringify([label, beforeMemento.saveToString(), afterMemento.saveToString()]);
+      return payloadFingerprint([label, beforeMemento.saveToString(), afterMemento.saveToString()]);
     } catch {
       return `${label}:${beforeMemento.constructor.name}:${afterMemento.constructor.name}`;
     }
@@ -1401,9 +1437,10 @@ export class ProjectHistory {
     kind: 'commit' | 'undo' | 'redo',
     operationId: string,
     documentId: string,
-    fingerprint: string,
+    payload: string,
     operation: () => Promise<ProjectHistoryResponse>,
   ): Promise<ProjectHistoryResponse> {
+    const fingerprint = payloadFingerprint(payload);
     const knownFingerprint = this.receiptFingerprints.get(operationId);
     if (knownFingerprint !== undefined && knownFingerprint !== fingerprint) {
       return Promise.resolve({
@@ -1948,18 +1985,15 @@ export class ProjectHistory {
           this.cursor = this.activeCheckpoint.baseCursor;
           this.savedStateId = this.activeCheckpoint.savedStateId;
 
-          restoreStructuralMemento(this.session, this.activeCheckpoint.beforeData, {
-            stateId: this.activeCheckpoint.beforeStateId,
-          });
+          if (entry)
+            restoreHistoryRecord(
+              this.session,
+              entry.record,
+              'before',
+              this.activeCheckpoint.beforeStateId,
+            );
         } else if (entry) {
-          if (entry.record.kind === 'values') {
-            rollbackScalarRecords(current.data, entry.record.records);
-            this.session.recordMutation({ changed: true, stateId: entry.beforeStateId });
-          } else {
-            restoreStructuralMemento(this.session, entry.record.beforeMemento, {
-              stateId: entry.beforeStateId,
-            });
-          }
+          restoreHistoryRecord(this.session, entry.record, 'before', entry.beforeStateId);
         }
 
         this.activeGroup = null;
@@ -2064,7 +2098,6 @@ export class ProjectHistory {
     const isLiveGesture = request.phase === 'begin' || request.phase === 'update';
 
     const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
-    let baselineBeforeData: BlueData | null = null;
     let baselineBaseCursor = this.cursor;
     let baselineRedoEntries: readonly HistoryEntry[] = [];
     let baselineBeforeStateId = beforeStateId;
@@ -2072,8 +2105,6 @@ export class ProjectHistory {
     let baselineSavedStateId = this.savedStateId;
 
     if (isLiveGesture && !canGroup) {
-      baselineBeforeData = current.data.historyCopy();
-      transferProjectEditorIdentities(current.data, baselineBeforeData);
       baselineRedoEntries = this.entries.slice(this.cursor);
     }
 
@@ -2118,10 +2149,7 @@ export class ProjectHistory {
         const isMatchingGroup = matchesActiveGroup(this.activeGroup, request);
 
         if (isMatchingGroup) {
-          if (
-            this.activeCheckpoint &&
-            isNetZeroProjectState(this.activeCheckpoint.beforeData, current.data)
-          ) {
+          if (this.activeCheckpoint && isNetZeroRecord(this.entries[this.cursor - 1]?.record)) {
             return await this.finalizeNetZero(
               request,
               current.documentId,
@@ -2190,57 +2218,143 @@ export class ProjectHistory {
 
     let historyRecord: HistoryRecord;
     if (transaction.kind === 'scalar') {
-      historyRecord = {
-        kind: 'values',
-        records: transaction.records,
-      };
+      if (
+        transaction.records.some(
+          (record) =>
+            typeof record.beforeValue === 'string' &&
+            typeof record.afterValue === 'string' &&
+            record.beforeValue.length + record.afterValue.length > 1024,
+        )
+      ) {
+        const before = current.data.historyCopy();
+        transferProjectEditorIdentities(current.data, before);
+        rollbackScalarRecords(before, transaction.records);
+        const after = current.data.historyCopy();
+        transferProjectEditorIdentities(current.data, after);
+        historyRecord = { kind: 'structure', delta: captureProjectGraphDelta(before, after) };
+      } else historyRecord = { kind: 'values', records: transaction.records };
+    } else if (transaction.kind === 'bsb') {
+      historyRecord = { kind: 'bsb', delta: transaction.delta };
     } else {
       historyRecord = {
         kind: 'structure',
-        beforeMemento: transaction.beforeMemento,
-        afterMemento: transaction.afterMemento,
+        delta: transaction.delta,
       };
     }
 
-    const estimatedBytes = estimateEntryBytes(historyRecord);
+    const forwardPatches = request.patches ? [...request.patches] : [];
+    const rawComputedInverses =
+      transaction.kind === 'scalar'
+        ? scalarRecordsToInversePatches(transaction.records)
+        : (computeStructuralInversePatches(current.data, request.patches) ?? [
+            { orchestra: { type: 'structuralChange' } as never },
+          ]);
+
+    const computedInverses =
+      historyRecord.kind !== 'values'
+        ? compactHistoryRuntimePatches(rawComputedInverses, 'first')
+        : rawComputedInverses;
+
+    const entryBytes = (
+      record: HistoryRecord,
+      forward: readonly ProjectDocumentPatch[],
+      inverse: readonly ProjectDocumentPatch[],
+    ): number =>
+      estimateEntryBytes(record) +
+      JSON.stringify({
+        forward,
+        inverse,
+        label: request.label,
+        origin: request.origin,
+        gestureId: request.gestureId,
+        fieldId: request.fieldId,
+      }).length *
+        2;
+    const initialForwardPatches =
+      historyRecord.kind !== 'values'
+        ? compactHistoryRuntimePatches(forwardPatches)
+        : forwardPatches;
+    const estimatedBytes = entryBytes(historyRecord, initialForwardPatches, computedInverses);
 
     let candidateMergedRecord: HistoryRecord | null = null;
     let candidateExtraBytes = 0;
+    let candidateBytes = estimatedBytes;
+    let candidateForwardPatches = initialForwardPatches;
+    let candidateInversePatches = computedInverses;
+    let adoptGraphIdentitiesFrom: BlueData | undefined;
+    let groupingAfterData = transaction.kind === 'structure' ? transaction.candidate : current.data;
 
     if (canGroup) {
       const top = this.entries[this.cursor - 1]!;
       if (top.record.kind === 'values' && historyRecord.kind === 'values') {
         candidateMergedRecord = {
           kind: 'values',
-          records: [...top.record.records, ...historyRecord.records],
+          records: mergeScalarRecords(top.record.records, historyRecord.records),
+        };
+      } else if (top.record.kind !== 'values' && historyRecord.kind !== 'values') {
+        candidateMergedRecord = {
+          kind: top.record.kind === 'bsb' && historyRecord.kind === 'bsb' ? 'bsb' : 'structure',
+          delta: mergeProjectGraphDeltas(
+            top.record.delta,
+            historyRecord.delta,
+            transaction.kind === 'structure'
+              ? transaction.candidate
+              : transaction.kind === 'bsb'
+                ? () => bsbGroupingEndpoint(current.data!, transaction.delta)
+                : current.data,
+          ),
         };
       } else {
-        const beforeMem =
-          top.record.kind === 'structure' ? top.record.beforeMemento : current.data.historyCopy();
+        const beforeMem = current.data.historyCopy();
+        transferProjectEditorIdentities(current.data, beforeMem);
+        if (transaction.kind === 'scalar') rollbackScalarRecords(beforeMem, transaction.records);
+        if (top.record.kind !== 'values')
+          applyProjectGraphDelta(beforeMem, top.record.delta, 'before');
         if (top.record.kind === 'values') {
-          transferProjectEditorIdentities(current.data, beforeMem);
           rollbackScalarRecords(beforeMem, top.record.records);
         }
         const afterMem =
-          historyRecord.kind === 'structure'
-            ? historyRecord.afterMemento
+          transaction.kind === 'structure'
+            ? transaction.candidate.historyCopy()
             : current.data.historyCopy();
-        if (historyRecord.kind === 'values') {
-          transferProjectEditorIdentities(current.data, afterMem);
-        }
+        transferProjectEditorIdentities(
+          transaction.kind === 'structure' ? transaction.candidate : current.data,
+          afterMem,
+        );
+        if (transaction.kind === 'bsb')
+          applyProjectGraphDelta(afterMem, transaction.delta, 'after');
+        groupingAfterData = afterMem;
+        adoptGraphIdentitiesFrom = afterMem;
         candidateMergedRecord = {
           kind: 'structure',
-          beforeMemento: beforeMem,
-          afterMemento: afterMem,
+          delta: captureProjectGraphDelta(beforeMem, afterMem),
         };
       }
-      const candidateBytes = estimateEntryBytes(candidateMergedRecord);
+      const mergedRecord = candidateMergedRecord!;
+      candidateForwardPatches =
+        mergedRecord.kind === 'values'
+          ? scalarRecordsToForwardPatches(mergedRecord.records)
+          : compactHistoryRuntimePatches(
+              consolidateForwardPatchesForRedo(
+                [...(top.forwardPatches ?? []), ...initialForwardPatches],
+                groupingAfterData,
+              ),
+            );
+      candidateInversePatches =
+        mergedRecord.kind === 'values'
+          ? scalarRecordsToInversePatches(mergedRecord.records)
+          : compactHistoryRuntimePatches(
+              [
+                ...(accumulateConcreteInversePatches(top.inversePatches, computedInverses) ?? [
+                  { orchestra: { type: 'structuralChange' } as never },
+                ]),
+              ],
+              'first',
+            );
+      candidateBytes = entryBytes(mergedRecord, candidateForwardPatches, candidateInversePatches);
       candidateExtraBytes = Math.max(0, candidateBytes - top.retainedBytes);
     } else {
       candidateExtraBytes = estimatedBytes;
-      if (baselineBeforeData) {
-        candidateExtraBytes += estimateBlueDataBytes(baselineBeforeData);
-      }
     }
 
     const totalRetainedBytes = this.getRetainedBytesWithCheckpoint(candidateExtraBytes, canGroup);
@@ -2254,7 +2368,7 @@ export class ProjectHistory {
         if (
           this.pendingOversizeProposal.documentId !== current.documentId ||
           this.pendingOversizeProposal.expectedRevision !== request.expectedRevision ||
-          this.pendingOversizeProposal.payloadFingerprint !== JSON.stringify(request.patches)
+          this.pendingOversizeProposal.payloadFingerprint !== payloadFingerprint(request.patches)
         ) {
           this.pendingOversizeProposal = null;
           if (transaction.kind === 'scalar') {
@@ -2284,7 +2398,10 @@ export class ProjectHistory {
           reason: 'Oversize proposal token is invalid or already consumed',
         };
       }
-    } else if (totalRetainedBytes > this.retainedBytesLimit) {
+    } else if (
+      candidateBytes > this.retainedBytesLimit ||
+      ((isLiveGesture || canGroup) && totalRetainedBytes > this.retainedBytesLimit * 2)
+    ) {
       if (transaction.kind === 'scalar') transaction.rollback();
       if (this.activeCheckpoint && matchesActiveGroup(this.activeGroup, request)) {
         await this.commitInternal({
@@ -2306,11 +2423,9 @@ export class ProjectHistory {
         token,
         documentId: current.documentId,
         expectedRevision: this.session.read().revision,
-        payloadFingerprint: JSON.stringify(request.patches),
+        payloadFingerprint: payloadFingerprint(request.patches),
       };
-      const oversizeEstimated = candidateMergedRecord
-        ? estimateEntryBytes(candidateMergedRecord)
-        : estimatedBytes;
+      const oversizeEstimated = candidateBytes;
       const resp: ProjectHistoryOversizeResponse = {
         status: 'oversize',
         operationId: request.operationId,
@@ -2318,7 +2433,7 @@ export class ProjectHistory {
         proposalToken: token,
         estimatedBytes: oversizeEstimated,
         limitBytes: this.retainedBytesLimit,
-        explanation: `Action of ${Math.round(oversizeEstimated / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
+        explanation: oversizeExplanation(oversizeEstimated, this.retainedBytesLimit),
       };
       this.cacheReceipt(request.operationId, resp);
       return resp;
@@ -2329,14 +2444,13 @@ export class ProjectHistory {
     }
 
     // Capture active rollback checkpoint if beginning live group
-    if (baselineBeforeData && isLiveGesture && this.activeCheckpoint === null && !canGroup) {
+    if (isLiveGesture && !canGroup) {
       this.activeCheckpoint = {
         gestureId: request.gestureId,
         fieldId: request.fieldId,
         baseCursor: baselineBaseCursor,
         redoEntries: baselineRedoEntries,
         evictedEntries: [],
-        beforeData: baselineBeforeData,
         beforeStateId: baselineBeforeStateId,
         wasDirty: baselineWasDirty,
         savedStateId: baselineSavedStateId,
@@ -2348,24 +2462,10 @@ export class ProjectHistory {
       this.entries = this.entries.slice(0, this.cursor);
     }
 
-    const forwardPatches = request.patches ? [...request.patches] : [];
-    const computedInverses =
-      historyRecord.kind === 'values'
-        ? scalarRecordsToInversePatches(historyRecord.records)
-        : (computeStructuralInversePatches(current.data, request.patches) ?? [
-            { orchestra: { type: 'structuralChange' } as never },
-          ]);
-
     if (canGroup) {
       // Merge with top entry: keep original before-state, update after-state
       const top = this.entries[this.cursor - 1]!;
       const mergedRecord = candidateMergedRecord!;
-      const accumulatedInverses =
-        mergedRecord.kind === 'values'
-          ? scalarRecordsToInversePatches(mergedRecord.records)
-          : (accumulateConcreteInversePatches(top.inversePatches, computedInverses) ?? [
-              { orchestra: { type: 'structuralChange' } as never },
-            ]);
 
       const mergedEntry: HistoryEntry = {
         entryId: top.entryId,
@@ -2379,7 +2479,7 @@ export class ProjectHistory {
         gestureId: request.gestureId ?? top.gestureId,
         fieldId: request.fieldId ?? top.fieldId,
         timestamp: now,
-        retainedBytes: estimateEntryBytes(mergedRecord),
+        retainedBytes: candidateBytes,
         record: mergedRecord,
         changedTargets: [
           ...new Set([
@@ -2387,8 +2487,8 @@ export class ProjectHistory {
             ...collectChangedTargets(request.patches ?? []),
           ]),
         ],
-        forwardPatches: [...(top.forwardPatches ?? []), ...forwardPatches],
-        inversePatches: accumulatedInverses,
+        forwardPatches: candidateForwardPatches,
+        inversePatches: candidateInversePatches,
       };
 
       this.entries[this.cursor - 1] = mergedEntry;
@@ -2415,7 +2515,7 @@ export class ProjectHistory {
         retainedBytes: estimatedBytes,
         record: historyRecord,
         changedTargets: collectChangedTargets(request.patches ?? []),
-        forwardPatches,
+        forwardPatches: initialForwardPatches,
         inversePatches: computedInverses,
       };
 
@@ -2448,22 +2548,24 @@ export class ProjectHistory {
 
     // Apply change to ProjectSession
     if (transaction.kind === 'structure') {
-      this.session.publishCommittedDocument(transaction.candidate, {
-        stateId: nextStateId,
-      });
+      applyProjectGraphDelta(current.data, transaction.delta, 'after');
+      this.session.recordMutation({ changed: true, stateId: nextStateId });
     } else {
+      if (transaction.kind === 'bsb') transaction.apply();
       this.session.recordMutation({
         changed: true,
         stateId: nextStateId,
       });
     }
 
+    if (adoptGraphIdentitiesFrom)
+      transferProjectEditorIdentities(adoptGraphIdentitiesFrom, this.session.read().data!);
+
     if (request.phase === 'end') {
       const isMatchingGroup = matchesActiveGroup(this.activeGroup, request);
 
       if (isMatchingGroup && this.activeCheckpoint) {
-        const finalDocument = this.session.read().data!;
-        if (isNetZeroProjectState(this.activeCheckpoint.beforeData, finalDocument)) {
+        if (isNetZeroRecord(this.entries[this.cursor - 1]?.record)) {
           return await this.finalizeNetZero(
             request,
             current.documentId,
@@ -2627,20 +2729,20 @@ export class ProjectHistory {
       };
     }
 
-    const afterMemento = candidate.historyCopy();
-    transferProjectEditorIdentities(candidate, afterMemento);
-
-    const historyRecord: HistoryRecord = {
-      kind: 'structure',
-      beforeMemento,
-      afterMemento,
-    };
-    const estimatedBytes = estimateEntryBytes(historyRecord);
     const payloadFingerprint = ProjectHistory.directMutationFingerprint(
       options.label,
       beforeMemento,
-      afterMemento,
+      candidate,
     );
+
+    const historyRecord: HistoryRecord = {
+      kind: 'structure',
+      delta: captureProjectGraphDelta(beforeMemento, candidate),
+    };
+    const estimatedBytes =
+      estimateEntryBytes(historyRecord) +
+      JSON.stringify({ label: options.label, origin: options.origin }).length * 2 +
+      256;
     const expectedRevision = current.revision;
 
     if (options.proposalToken) {
@@ -2667,8 +2769,6 @@ export class ProjectHistory {
         documentId: current.documentId,
         expectedRevision,
         payloadFingerprint,
-        beforeMemento,
-        afterMemento,
         label: options.label,
         origin: options.origin,
       };
@@ -2677,7 +2777,7 @@ export class ProjectHistory {
           token,
           estimatedBytes,
           limitBytes: this.retainedBytesLimit,
-          explanation: `Action of ${Math.round(estimatedBytes / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
+          explanation: oversizeExplanation(estimatedBytes, this.retainedBytesLimit),
         },
       });
     }
@@ -2707,7 +2807,8 @@ export class ProjectHistory {
     this.cursor = this.entries.length;
     this.activeGroup = null;
 
-    this.session.publishCommittedDocument(candidate, { stateId: nextStateId });
+    applyProjectGraphDelta(current.data, historyRecord.delta, 'after');
+    this.session.recordMutation({ changed: true, stateId: nextStateId });
     this.enforceLimits();
 
     const updatedSnap = this.session.read();
@@ -2746,175 +2847,6 @@ export class ProjectHistory {
       documentId: updatedSnap.documentId!,
       stateId: updatedSnap.stateId!,
     };
-  }
-
-  recordDirectStructureMutation(options: {
-    label: string;
-    beforeMemento: BlueData;
-    afterMemento: BlueData;
-    expectedRevision?: number;
-    proposalToken?: string;
-    origin?: ProjectHistoryOrigin;
-  }): ProjectDocumentCommitReceipt {
-    this.closeGroup();
-    const current = this.session.read();
-    if (!current.data || !current.documentId) {
-      throw new Error('No active project session');
-    }
-
-    if (this.orderedMutationPending > 0 || this.activeBarrier) {
-      return this.createDirectReceipt(current, false, current.stateId ?? '', {
-        error: 'Direct structural mutation deferred while another history operation is settling',
-      });
-    }
-
-    if (options.expectedRevision !== undefined && options.expectedRevision !== current.revision) {
-      return this.createDirectReceipt(current, false, current.stateId ?? '', {
-        error: `Revision mismatch (expected ${options.expectedRevision}, current ${current.revision})`,
-      });
-    }
-
-    const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
-    const nextStateId = `state-${randomUUID()}`;
-
-    const historyRecord: HistoryRecord = {
-      kind: 'structure',
-      beforeMemento: options.beforeMemento,
-      afterMemento: options.afterMemento,
-    };
-    const estimatedBytes = estimateEntryBytes(historyRecord);
-    const payloadFingerprint = ProjectHistory.directMutationFingerprint(
-      options.label,
-      options.beforeMemento,
-      options.afterMemento,
-    );
-    const expectedRevision = current.revision;
-
-    if (options.proposalToken) {
-      const proposal = this.pendingDirectOversizeProposal;
-      if (
-        !proposal ||
-        proposal.token !== options.proposalToken ||
-        proposal.documentId !== current.documentId ||
-        proposal.expectedRevision !== expectedRevision ||
-        proposal.payloadFingerprint !== payloadFingerprint
-      ) {
-        return this.createDirectReceipt(current, false, current.stateId ?? '', {
-          error: 'Oversize proposal token is invalid, stale, or already consumed',
-        });
-      }
-      this.pendingDirectOversizeProposal = null;
-      this.clear();
-      // The first attempt was rolled back below; the confirmed attempt now
-      // publishes the staged after-state as the single retained entry.
-      restoreStructuralMemento(this.session, options.afterMemento, { stateId: nextStateId });
-    } else if (estimatedBytes > this.retainedBytesLimit) {
-      const token = `oversize-${randomUUID()}`;
-      this.pendingDirectOversizeProposal = {
-        token,
-        documentId: current.documentId,
-        expectedRevision: current.revision + 1,
-        payloadFingerprint,
-        beforeMemento: options.beforeMemento,
-        afterMemento: options.afterMemento,
-        label: options.label,
-        origin: options.origin,
-      };
-      // Direct callers have already changed the live object. Restore the
-      // before-state before exposing the proposal so cancel leaves both the
-      // document and redo branch untouched.
-      restoreStructuralMemento(this.session, options.beforeMemento, {
-        stateId: beforeStateId,
-      });
-      const rolledBack = this.session.read();
-      const rollbackProjection = this.read();
-      const rollbackSnapshot = this.capturePublishedSnapshot();
-      void this.publishUpdated?.({
-        documentId: rolledBack.documentId!,
-        sessionId: rolledBack.sessionId,
-        revision: rolledBack.revision,
-        stateId: rolledBack.stateId!,
-        isDirty: this.isDirty(),
-        history: rollbackProjection,
-        acceptedOperationIds: [],
-        snapshot: rollbackSnapshot,
-        selectionHints: options.origin?.selection,
-        originViewId: options.origin?.viewId,
-        originContextId: options.origin?.contextId,
-      });
-      return this.createDirectReceipt(rolledBack, false, rolledBack.stateId ?? '', {
-        oversizeProposal: {
-          token,
-          estimatedBytes,
-          limitBytes: this.retainedBytesLimit,
-          explanation: `Action of ${Math.round(estimatedBytes / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
-        },
-      });
-    }
-
-    // Truncate redo stack on new commit (chronological branch semantics)
-    if (this.cursor < this.entries.length) {
-      this.entries.splice(this.cursor);
-    }
-
-    const entry: HistoryEntry = {
-      entryId: `entry-${randomUUID()}`,
-      documentId: current.documentId,
-      beforeStateId,
-      afterStateId: nextStateId,
-      label: options.label,
-      sourceContextId: options.origin?.contextId,
-      originViewId: options.origin?.viewId,
-      originSelectionHints: options.origin?.selection,
-      timestamp: Date.now(),
-      retainedBytes: estimatedBytes,
-      record: historyRecord,
-      forwardPatches: [{ orchestra: { type: 'structuralChange' } as never }],
-      inversePatches: [{ orchestra: { type: 'structuralChange' } as never }],
-    };
-
-    this.entries.push(entry);
-    this.cursor = this.entries.length;
-    this.activeGroup = null;
-
-    const receipt = options.proposalToken
-      ? this.createDirectReceipt(this.session.read(), true, nextStateId)
-      : this.session.recordMutation({ changed: true, stateId: nextStateId });
-    this.enforceLimits();
-
-    const updatedSnap = this.session.read();
-    const projection = this.read();
-    const publishedIsDirty = this.isDirty();
-    const publishedSnapshot = this.capturePublishedSnapshot();
-
-    const updatedEvent: ProjectDocumentUpdatedEvent = {
-      documentId: updatedSnap.documentId!,
-      sessionId: updatedSnap.sessionId,
-      revision: updatedSnap.revision,
-      stateId: updatedSnap.stateId!,
-      isDirty: publishedIsDirty,
-      history: projection,
-      acceptedOperationIds: [],
-      snapshot: publishedSnapshot,
-      selectionHints: options.origin?.selection,
-      originViewId: options.origin?.viewId,
-      originContextId: options.origin?.contextId,
-    };
-    void this.publishUpdated?.(updatedEvent);
-
-    if (this.reconciliation) {
-      void this.reconciliation
-        .reconcileCommit({
-          documentId: updatedSnap.documentId!,
-          revision: updatedSnap.revision,
-          patches: [{ orchestra: { type: 'structuralChange' } as never }],
-        })
-        .catch((err) => {
-          console.error('Error reconciling commit:', err);
-        });
-    }
-
-    return receipt;
   }
 
   undo(request: ProjectHistoryUndoRequest): Promise<ProjectHistoryResponse> {
@@ -3035,20 +2967,13 @@ export class ProjectHistory {
 
     // Target entry is at cursor - 1
     const entry = this.entries[this.cursor - 1]!;
-    this.cursor--;
 
     if (this.reconciliation && entry.gestureId) {
       await this.reconciliation.drainPreviews(entry.gestureId);
     }
 
-    if (entry.record.kind === 'values') {
-      rollbackScalarRecords(current.data, entry.record.records);
-      this.session.recordMutation({ changed: true, stateId: entry.beforeStateId });
-    } else {
-      restoreStructuralMemento(this.session, entry.record.beforeMemento, {
-        stateId: entry.beforeStateId,
-      });
-    }
+    restoreHistoryRecord(this.session, entry.record, 'before', entry.beforeStateId);
+    this.cursor--;
 
     const updatedSnap = this.session.read();
     const projection = this.read();
@@ -3223,22 +3148,13 @@ export class ProjectHistory {
 
     // Target entry is at cursor
     const entry = this.entries[this.cursor]!;
-    this.cursor++;
 
     if (this.reconciliation && entry.gestureId) {
       await this.reconciliation.drainPreviews(entry.gestureId);
     }
 
-    if (entry.record.kind === 'values') {
-      for (const rec of entry.record.records) {
-        applyScalarFieldRecord(current.data, rec, 'forward');
-      }
-      this.session.recordMutation({ changed: true, stateId: entry.afterStateId });
-    } else {
-      restoreStructuralMemento(this.session, entry.record.afterMemento, {
-        stateId: entry.afterStateId,
-      });
-    }
+    restoreHistoryRecord(this.session, entry.record, 'after', entry.afterStateId);
+    this.cursor++;
 
     const updatedSnap = this.session.read();
     const projection = this.read();
@@ -3246,13 +3162,13 @@ export class ProjectHistory {
     const publishedSnapshot = this.capturePublishedSnapshot();
 
     let forwardPatches = entry.forwardPatches;
-    if (!forwardPatches || forwardPatches.length === 0) {
+    if (!forwardPatches) {
       forwardPatches =
         entry.record.kind === 'values'
           ? scalarRecordsToForwardPatches(entry.record.records)
           : [{ orchestra: { type: 'structuralChange' } as never }];
     } else if (entry.record.kind === 'structure') {
-      forwardPatches = consolidateForwardPatchesForRedo(forwardPatches, entry.record.afterMemento);
+      forwardPatches = consolidateForwardPatchesForRedo(forwardPatches, updatedSnap.data!);
     }
 
     const reconciliationPromise = this.reconciliation

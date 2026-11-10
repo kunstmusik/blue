@@ -1,6 +1,6 @@
 # Data Model: Global Project Undo and Redo
 
-These are logical TypeScript models, not persisted schemas. Shared messages contain serializable values only; canonical graph mementos never cross preload.
+These are logical TypeScript models, not persisted schemas. Shared messages contain serializable values only; history graph deltas never cross preload.
 
 ## Project document state
 
@@ -17,17 +17,21 @@ Dirty is `stateId !== savedStateId`. A saved token may remain known even after i
 
 - `entryId`, `documentId`, `beforeStateId`, `afterStateId`.
 - `label`, `sourceContextId`, optional `originViewId`, optional `gestureId`/stable `fieldId`.
-- `record`: `values` or `structure`.
+- `record`: `values`, compact `bsb`, or `structure` ([completed footprint audit](../../docs/project-history-audit.md)).
 - `selectionBefore`, `selectionAfter`: bounded stable-ID selections or text ranges for the origin; no complete workspace snapshot.
 - `retainedBytes`: conservative unique retained payload accounting, including identity metadata.
 
-`values` holds ordered typed target/field/before/after records. Target IDs are stable; resolution and expected values validate before apply. Secondary effects or identity changes disqualify this representation. `structure` holds isolated canonical before/after graphs with snapshot-identity mappings; complete graph aliases are preserved internally and detached from mutable live state. Replay clones the retained graph before making it canonical. Runtime caches are excluded/rebound.
+`values` holds ordered typed target/field/before/after records. Target IDs are stable; resolution and expected values validate before apply. Large text values use graph text spans instead of retaining complete strings.
+
+Both `structure` and `bsb` retain reversible model-graph deltas: changed own fields, collection/text spans, editor metadata, and isolated blueprints for added/removed subgraphs. References to unchanged nodes are numeric history identities, with no retained complete BlueData roots or mutable live aliases. Replay resolves and validates targets before applying changes in place, preserving unaffected references and restoring prototypes, editor identities and aliases for recreated nodes. BSB-only preparation clones affected owners, including Sound-owned builders; other preparation may clone transient project candidates. No candidate or complete preimage/postimage survives in a completed entry or pending oversize proposal.
+
+Grouped deltas retain earliest preimages and final postimages. Replay patches consolidate runtime endpoint intent and bounded restart markers rather than repeated code/XML. Replay hints and metadata count in entry estimates. Genuinely added/deleted large content still consumes its actual changed payload.
 
 A history entry is immutable after grouping closes. A forming group retains the original preimage and latest committed postimage. Every changed incremental publication gets a new stateId; no intermediate state remains a saved checkpoint because save first closes grouping. Other-context edits close the group. Cancelling restores the preimage only when it remains the uninterrupted top group; otherwise treat already committed segments as completed actions, preserving their separate order and reporting the interruption.
 
 ## History state
 
-`entries`, `cursor` (number of applied retained entries, 0..length), `activeGroup`, `savedStateId`, `retainedBytes`, `limitReached`, `busy`, and command label/availability projections. New changed commit truncates redo; unchanged/rejected requests do not. Evict oldest whole entries until limits hold. If a single prepared entry exceeds the byte budget, return an oversize proposal without publication. Confirmation creates the new state with empty history and unchanged saved checkpoint; cancellation changes nothing.
+`entries`, `cursor` (number of applied retained entries, 0..length), `activeGroup`, `savedStateId`, `retainedBytes`, `limitReached`, `busy`, and command label/availability projections. New changed commit truncates redo; unchanged/rejected requests do not. Evict oldest whole entries until limits hold. One active group may retain at most one additional byte budget of baseline entry references for exact cancellation ([retention contract](../../docs/project-history-audit.md)), with shared references counted once; rollback uses the entry preimage. If a single prepared entry exceeds the byte budget, return an oversize proposal without publication. Confirmation creates the new state with empty history and unchanged saved checkpoint; cancellation changes nothing.
 
 ## Prepared transaction (main only)
 

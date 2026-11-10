@@ -895,6 +895,8 @@ function movePresetAtPath(
       : rawPresetIndex;
   const presetIndex = Math.max(0, Math.min(adjustedPresetIndex, targetParent.presets.length));
   targetParent.presets.splice(presetIndex, 0, preset);
+  sourceParent.updateChildOrder();
+  if (sourceParent !== targetParent) targetParent.updateChildOrder();
   return true;
 }
 
@@ -936,6 +938,8 @@ function movePresetGroupAtPath(
       : rawGroupIndex;
   const groupIndex = Math.max(0, Math.min(adjustedGroupIndex, targetParent.subGroups.length));
   targetParent.subGroups.splice(groupIndex, 0, group);
+  sourceParent.updateChildOrder();
+  if (sourceParent !== targetParent) targetParent.updateChildOrder();
   return true;
 }
 

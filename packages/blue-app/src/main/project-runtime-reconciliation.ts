@@ -555,8 +555,14 @@ function classifyProjectPropertiesPatch(
   return works.length > 0 ? combinePatchWork(works) : emptyPatchWork();
 }
 
+/** Internal replay-only hint. Canonical patch validation rejects this extra key at IPC. */
+export interface HistoryRuntimeWorkPatch extends ProjectDocumentPatch {
+  readonly historyRuntimeWork: PatchRuntimeWork;
+}
+
 /** Classifies one committed patch into runtime capability and unresolved work. */
 export function extractPatchRuntimeWork(patch: ProjectDocumentPatch): PatchRuntimeWork {
+  if ('historyRuntimeWork' in patch) return (patch as HistoryRuntimeWorkPatch).historyRuntimeWork;
   if (patch.scratchPad !== undefined) return emptyPatchWork();
   if (patch.globalOrc !== undefined) return restartWork('globalOrc');
   if (patch.globalSco !== undefined) return restartWork('globalSco');
