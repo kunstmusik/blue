@@ -156,6 +156,9 @@ describe('Toolbar display render isolation', () => {
     const tree = renderRoot(<ToolbarDisplays />);
 
     act(() => {
+      usePlaybackStore
+        .getState()
+        .setStatus({ status: 'starting', message: 'Preparing playback...' });
       usePlaybackStore.getState().acceptPlaybackClock({
         sessionId: 1,
         sampleFrames: 0,

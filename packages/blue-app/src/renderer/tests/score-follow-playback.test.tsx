@@ -949,3 +949,124 @@ describe('Command/Control+Shift+F shortcut toggles follow playback', () => {
     cleanupPanel(rendered);
   });
 });
+
+describe('ScorePanel once-only follow-on-start and terminal restoration (US4 / T027)', () => {
+  it('applies follow-on-start once per confirmed attempt, respects navigation suspension across loop wraps and duplicate statuses, and restores saved follow on stop', () => {
+    seedLoadedProject();
+    usePlaybackStore.setState({
+      followPlayback: false,
+      savedFollowPlayback: false,
+      followPlaybackOnStart: true,
+    });
+
+    const rendered = renderPanel();
+    const { body } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
+
+    // 1. Playback starts and confirms -> follow-on-start applies once
+    act(() => {
+      usePlaybackStore.getState().setStatus({ status: 'starting' });
+      usePlaybackStore.getState().setStatus({ status: 'playing' });
+      seedPlayingClock(2);
+    });
+
+    expect(usePlaybackStore.getState().followPlayback).toBe(true);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+
+    // Playhead crosses boundary -> follows to 1200
+    act(() => advancePlayhead(12));
+    expect(body.scrollLeft).toBe(1200);
+
+    // 2. User manually scrolls -> follow is suspended for session
+    act(() => {
+      body.scrollLeft = 400;
+      body.dispatchEvent(new Event('scroll'));
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+
+    // 3. Duplicate status does not reapply follow-on-start
+    act(() => {
+      usePlaybackStore.getState().setStatus({ status: 'playing', message: 'Still playing' });
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(body.scrollLeft).toBe(400);
+
+    // 4. Internal loop wrap / backward seek does not reapply follow-on-start
+    act(() => {
+      advancePlayhead(1);
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(body.scrollLeft).toBe(400);
+
+    // 5. Display tick does not reapply follow-on-start
+    act(() => {
+      usePlaybackStore.getState().tickDisplay();
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+
+    // 6. Stop restores active follow from saved preference (false)
+    act(() => {
+      usePlaybackStore.getState().setStatus({ status: 'stopped' });
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(false);
+    expect(syncFollowPlaybackState).toHaveBeenCalledWith(false);
+
+    cleanupPanel(rendered);
+  });
+
+  it('restores saved follow state on playback error and ignores late clock in terminal state', () => {
+    seedLoadedProject();
+    usePlaybackStore.setState({
+      followPlayback: true,
+      savedFollowPlayback: true,
+      followPlaybackOnStart: false,
+    });
+
+    const rendered = renderPanel();
+    const { body } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
+
+    act(() => seedPlayingClock(2));
+    expect(usePlaybackStore.getState().followPlayback).toBe(true);
+
+    // Suspend follow
+    act(() => {
+      body.scrollLeft = 600;
+      body.dispatchEvent(new Event('scroll'));
+    });
+    expect(usePlaybackStore.getState().followPlayback).toBe(false);
+
+    // Playback error occurs -> restores saved follow preference (true)
+    act(() => {
+      usePlaybackStore.getState().setError('CSound engine stopped unexpectedly');
+    });
+    expect(usePlaybackStore.getState().status).toBe('error');
+    expect(usePlaybackStore.getState().followPlayback).toBe(true);
+    expect(usePlaybackStore.getState().savedFollowPlayback).toBe(true);
+    expect(syncFollowPlaybackState).toHaveBeenCalledWith(true);
+
+    // Late clock from ended session arrives while in terminal error state
+    act(() => {
+      usePlaybackStore.getState().acceptPlaybackClock({
+        sessionId: 1,
+        sampleFrames: 99999,
+        sequence: 99,
+        sampleRate: 44100,
+        ksmps: 64,
+      });
+    });
+
+    // Clock must remain null and display idle
+    expect(usePlaybackStore.getState().clock).toBeNull();
+    expect(usePlaybackStore.getState().display.source).toBe('idle-anchor');
+    expect(usePlaybackStore.getState().display.sampleFrames).toBe(0);
+
+    cleanupPanel(rendered);
+  });
+});

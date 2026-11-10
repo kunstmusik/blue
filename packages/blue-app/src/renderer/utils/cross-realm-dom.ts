@@ -45,6 +45,7 @@ export function isEventInsidePortalPopup(target: EventTarget | null): boolean {
         name === 'menu' ||
         name === 'menuitem' ||
         name === 'dialog' ||
+        name === 'alertdialog' ||
         name === 'listbox' ||
         name === 'tooltip'
       ) {

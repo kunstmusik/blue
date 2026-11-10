@@ -1,4 +1,7 @@
-import { createElement } from 'react';
+// @vitest-environment jsdom
+
+import { createElement, act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BlueData, Effect, PolyObject, SoundLayer } from '@blue/data';
@@ -22,7 +25,18 @@ import {
   buildPlayheadDisplayState,
   buildSelectionDisplayState,
 } from '../components/menu-bar/toolbar-formatters';
-import { isTextEditingTarget } from '../hooks/use-keyboard-shortcuts';
+import {
+  isTextEditingTarget,
+  hasActiveModalInDocument,
+  hasActiveModal,
+  isInsideModalOrPopup,
+  getTargetDocument,
+  useKeyboardShortcuts,
+} from '../hooks/use-keyboard-shortcuts';
+
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 // Mock window.blueAPI
 const mockBlueAPI = {
@@ -64,8 +78,8 @@ const mockLocalStorage: Storage = {
 
 beforeEach(() => {
   vi.useRealTimers();
-  vi.stubGlobal('window', { blueAPI: mockBlueAPI });
-  vi.stubGlobal('localStorage', mockLocalStorage);
+  (window as unknown as { blueAPI: unknown }).blueAPI = mockBlueAPI;
+  (window as unknown as { localStorage: unknown }).localStorage = mockLocalStorage;
   // Reset all stores
   useProjectStore.getState().clearProject();
   usePlaybackStore.getState().reset();
@@ -74,7 +88,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  vi.unstubAllGlobals();
+  delete (window as unknown as { blueAPI?: unknown }).blueAPI;
   vi.clearAllMocks();
   __testClearPendingPatches();
 });
@@ -1478,7 +1492,7 @@ describe('Playback Store', () => {
     await __testAwaitPendingPatches();
 
     expect(mockBlueAPI.commitProjectDocumentPatches).toHaveBeenCalledWith(
-      [{ score: { type: 'addMarker', timeBeats: 4.5 } }],
+      [{ score: { type: 'addMarker', timeBeats: 4.5, markerId: expect.any(String) } }],
       expect.objectContaining({
         label: 'Add Marker',
         phase: 'single',
@@ -1588,6 +1602,362 @@ describe('Keyboard Shortcuts', () => {
       } as never),
     ).toBe(false);
     expect(isTextEditingTarget(null)).toBe(false);
+  });
+
+  describe('useKeyboardShortcuts containment and event ownership (US1)', () => {
+    let container: HTMLDivElement;
+    let root: Root;
+
+    function ShortcutProbe(): React.ReactElement {
+      useKeyboardShortcuts();
+      return createElement('div', { 'data-testid': 'shortcut-probe' });
+    }
+
+    async function dispatchKey(
+      target: EventTarget,
+      init: KeyboardEventInit & { code?: string; key?: string },
+    ): Promise<KeyboardEvent> {
+      const event = new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      });
+      await act(async () => {
+        target.dispatchEvent(event);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      return event;
+    }
+
+    beforeEach(() => {
+      useProjectStore.setState({ filePath: '/path/to/test.blue' });
+      mockBlueAPI.togglePlay.mockResolvedValue(true);
+      mockBlueAPI.stopPlayback.mockResolvedValue(undefined);
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      root = createRoot(container);
+      act(() => {
+        root.render(createElement(ShortcutProbe));
+      });
+    });
+
+    afterEach(() => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+      document.body.innerHTML = '';
+    });
+
+    it('does not toggle playback on Space when focus is on a button, checkbox, or dialog container in an active modal', async () => {
+      const modal = document.createElement('div');
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      const btn = document.createElement('button');
+      btn.textContent = 'OK';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      modal.appendChild(btn);
+      modal.appendChild(checkbox);
+      document.body.appendChild(modal);
+
+      await dispatchKey(btn, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      await dispatchKey(checkbox, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      await dispatchKey(modal, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+    });
+
+    it('does not toggle playback on Space when focus is inside a role="alertdialog"', async () => {
+      const alert = document.createElement('div');
+      alert.setAttribute('role', 'alertdialog');
+      const alertBtn = document.createElement('button');
+      alertBtn.textContent = 'Acknowledge';
+      alert.appendChild(alertBtn);
+      document.body.appendChild(alert);
+
+      await dispatchKey(alertBtn, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+    });
+
+    it('preserves late Escape handling on host window so dialog dismisses and playback continues', async () => {
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      });
+
+      const modal = document.createElement('div');
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      document.body.appendChild(modal);
+
+      const onDismiss = vi.fn();
+      // Emulate useDialogFocus's host window Escape listener registered after app shortcut hook
+      const lateEscapeListener = vi.fn((e: KeyboardEvent) => {
+        if (e.defaultPrevented) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          onDismiss();
+        }
+      });
+      window.addEventListener('keydown', lateEscapeListener);
+
+      try {
+        const escEvent = await dispatchKey(modal, { code: 'Escape', key: 'Escape' });
+        expect(lateEscapeListener).toHaveBeenCalled();
+        expect(onDismiss).toHaveBeenCalled();
+        expect(mockBlueAPI.stopPlayback).not.toHaveBeenCalled();
+        expect(usePlaybackStore.getState().isPlaying).toBe(true);
+      } finally {
+        window.removeEventListener('keydown', lateEscapeListener);
+      }
+    });
+
+    it('honors defaultPrevented events and performs no workspace action', async () => {
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      });
+
+      const el = document.createElement('div');
+      document.body.appendChild(el);
+      el.addEventListener('keydown', (e) => {
+        e.preventDefault();
+      });
+
+      await dispatchKey(el, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      await dispatchKey(el, { code: 'Escape', key: 'Escape' });
+      expect(mockBlueAPI.stopPlayback).not.toHaveBeenCalled();
+
+      await dispatchKey(el, { code: 'KeyO', key: 'o', metaKey: true });
+      expect(mockBlueAPI.openFile).not.toHaveBeenCalled();
+
+      await dispatchKey(el, { code: 'KeyS', key: 's', metaKey: true });
+      expect(mockBlueAPI.saveFile).not.toHaveBeenCalled();
+    });
+
+    it('does not trigger transport when focus is inside a menu, listbox, or tooltip popup', async () => {
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      });
+
+      const menu = document.createElement('div');
+      menu.setAttribute('role', 'menu');
+      const menuItem = document.createElement('div');
+      menuItem.setAttribute('role', 'menuitem');
+      menu.appendChild(menuItem);
+      document.body.appendChild(menu);
+
+      await dispatchKey(menuItem, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      await dispatchKey(menuItem, { code: 'Escape', key: 'Escape' });
+      expect(mockBlueAPI.stopPlayback).not.toHaveBeenCalled();
+
+      const listbox = document.createElement('div');
+      listbox.setAttribute('role', 'listbox');
+      const option = document.createElement('div');
+      listbox.appendChild(option);
+      document.body.appendChild(listbox);
+
+      await dispatchKey(option, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      const tooltip = document.createElement('div');
+      tooltip.setAttribute('role', 'tooltip');
+      const tipContent = document.createElement('span');
+      tooltip.appendChild(tipContent);
+      document.body.appendChild(tooltip);
+
+      await dispatchKey(tipContent, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+    });
+
+    it('does not toggle playback when an editor cell or tree item handles Space', async () => {
+      const tree = document.createElement('div');
+      tree.setAttribute('role', 'tree');
+      const treeItem = document.createElement('div');
+      treeItem.setAttribute('role', 'treeitem');
+      tree.appendChild(treeItem);
+      document.body.appendChild(tree);
+
+      const onTreeAction = vi.fn();
+      treeItem.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.key === ' ') {
+          e.preventDefault();
+          onTreeAction();
+        }
+      });
+
+      const event = await dispatchKey(treeItem, { code: 'Space', key: ' ' });
+      expect(onTreeAction).toHaveBeenCalledOnce();
+      expect(event.defaultPrevented).toBe(true);
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+    });
+
+    it('restricts non-modal help handling to its own subtree while allowing workspace shortcuts outside it', async () => {
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      });
+
+      // Non-modal help dialog (role="dialog" without aria-modal="true")
+      const helpDialog = document.createElement('div');
+      helpDialog.setAttribute('role', 'dialog');
+      const helpButton = document.createElement('button');
+      helpButton.textContent = 'Close Help';
+      helpDialog.appendChild(helpButton);
+      document.body.appendChild(helpDialog);
+
+      // Element in the workspace canvas outside help
+      const canvas = document.createElement('div');
+      canvas.className = 'score-canvas';
+      document.body.appendChild(canvas);
+
+      // When focus is inside the non-modal help subtree: shortcuts are ignored
+      await dispatchKey(helpButton, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      await dispatchKey(helpButton, { code: 'Escape', key: 'Escape' });
+      expect(mockBlueAPI.stopPlayback).not.toHaveBeenCalled();
+
+      // When focus is outside the non-modal help subtree: shortcuts work normally
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: false, status: 'idle' });
+      });
+      await dispatchKey(canvas, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).toHaveBeenCalledOnce();
+
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      });
+      await dispatchKey(canvas, { code: 'Escape', key: 'Escape' });
+      expect(mockBlueAPI.stopPlayback).toHaveBeenCalledOnce();
+    });
+
+    it('allows Space transport control when focus is on a workspace toolbar button', async () => {
+      const toolbar = document.createElement('header');
+      toolbar.className = 'toolbar-shell';
+      const toolbarBtn = document.createElement('button');
+      toolbarBtn.className = 'toolbar-icon-button';
+      toolbarBtn.setAttribute('title', 'Play');
+      toolbar.appendChild(toolbarBtn);
+      document.body.appendChild(toolbar);
+
+      const event = await dispatchKey(toolbarBtn, { code: 'Space', key: ' ' });
+      expect(event.defaultPrevented).toBe(true);
+      expect(mockBlueAPI.togglePlay).toHaveBeenCalledOnce();
+    });
+
+    it('preserves text editing and key repeat exclusions', async () => {
+      // Repeat Space does not toggle
+      await dispatchKey(window, { code: 'Space', key: ' ', repeat: true });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      // Repeat Follow does not toggle
+      const initialFollow = usePlaybackStore.getState().followPlayback;
+      await dispatchKey(window, {
+        code: 'KeyF',
+        key: 'f',
+        metaKey: true,
+        shiftKey: true,
+        repeat: true,
+      });
+      expect(usePlaybackStore.getState().followPlayback).toBe(initialFollow);
+
+      // Text editing inputs
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+
+      await dispatchKey(input, { code: 'Space', key: ' ' });
+      expect(mockBlueAPI.togglePlay).not.toHaveBeenCalled();
+
+      await dispatchKey(input, { code: 'Escape', key: 'Escape' });
+      expect(mockBlueAPI.stopPlayback).not.toHaveBeenCalled();
+
+      await dispatchKey(input, {
+        code: 'KeyF',
+        key: 'f',
+        metaKey: true,
+        shiftKey: true,
+      });
+      expect(usePlaybackStore.getState().followPlayback).toBe(initialFollow);
+    });
+
+    it('does not run Open, Save, or Follow shortcuts behind an active modal', async () => {
+      const modal = document.createElement('div');
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      const modalInput = document.createElement('input');
+      modal.appendChild(modalInput);
+      document.body.appendChild(modal);
+
+      const initialFollow = usePlaybackStore.getState().followPlayback;
+
+      await dispatchKey(modalInput, { code: 'KeyO', key: 'o', metaKey: true });
+      expect(mockBlueAPI.openFile).not.toHaveBeenCalled();
+
+      await dispatchKey(modalInput, { code: 'KeyS', key: 's', metaKey: true });
+      expect(mockBlueAPI.saveFile).not.toHaveBeenCalled();
+
+      await dispatchKey(modalInput, { code: 'KeyS', key: 's', metaKey: true, shiftKey: true });
+      expect(mockBlueAPI.saveFileAs).not.toHaveBeenCalled();
+
+      await dispatchKey(modalInput, { code: 'KeyF', key: 'f', metaKey: true, shiftKey: true });
+      expect(usePlaybackStore.getState().followPlayback).toBe(initialFollow);
+    });
+
+    it('stops active playback on idle/unclaimed Escape when no modal or gesture owns it', async () => {
+      act(() => {
+        usePlaybackStore.setState({ isPlaying: true, status: 'playing' });
+      });
+
+      const event = await dispatchKey(window, { code: 'Escape', key: 'Escape' });
+      expect(event.defaultPrevented).toBe(true);
+      expect(mockBlueAPI.stopPlayback).toHaveBeenCalledOnce();
+    });
+
+    it('correctly inspects host documents and target ancestry with realm-safe helpers', () => {
+      expect(hasActiveModalInDocument(null)).toBe(false);
+      expect(hasActiveModalInDocument(window)).toBe(false);
+      expect(hasActiveModalInDocument(document)).toBe(false);
+      expect(getTargetDocument(null)).toBe(document);
+      expect(getTargetDocument(window)).toBe(document);
+      expect(getTargetDocument(document)).toBe(document);
+
+      const dialog = document.createElement('div');
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      const child = document.createElement('span');
+      dialog.appendChild(child);
+      document.body.appendChild(dialog);
+
+      expect(hasActiveModalInDocument(child)).toBe(true);
+      expect(hasActiveModal(child)).toBe(true);
+      expect(isInsideModalOrPopup(child)).toBe(true);
+
+      dialog.remove();
+      expect(hasActiveModalInDocument(child)).toBe(false);
+
+      const alert = document.createElement('div');
+      alert.setAttribute('role', 'alertdialog');
+      document.body.appendChild(alert);
+      expect(hasActiveModalInDocument(alert)).toBe(true);
+      alert.remove();
+
+      const nonModal = document.createElement('div');
+      nonModal.setAttribute('role', 'dialog');
+      const inner = document.createElement('button');
+      nonModal.appendChild(inner);
+      document.body.appendChild(nonModal);
+
+      expect(hasActiveModalInDocument(inner)).toBe(false);
+      expect(isInsideModalOrPopup(inner)).toBe(true);
+      expect(isInsideModalOrPopup(document.body)).toBe(false);
+      nonModal.remove();
+    });
   });
 });
 

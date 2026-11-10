@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
-import type {
-  PlaybackClockSnapshot,
-  ToolbarProjectTransportSnapshot,
+import {
+  createEmptyToolbarProjectTransportSnapshot,
+  type PlaybackClockSnapshot,
+  type ToolbarProjectTransportSnapshot,
 } from '../../shared/project-editor';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 import { useProjectStore } from './project-store';
 
 export type PlaybackStatus = 'idle' | 'starting' | 'playing' | 'stopping' | 'stopped' | 'error';
-
+export type PlaybackMode = 'normal' | 'audition';
 export type PlaybackClockSource = 'idle-anchor' | 'engine-authority' | 'interpolated';
 
 export interface PlaybackClockState {
@@ -28,10 +29,498 @@ export interface PlaybackDisplayState {
 
 export type PlaybackTransportAnchor = ToolbarProjectTransportSnapshot;
 
-interface PlaybackState {
+export function clonePlaybackTransportAnchor(
+  transport: ToolbarProjectTransportSnapshot,
+): PlaybackTransportAnchor {
+  return {
+    renderStartTime: transport.renderStartTime,
+    renderEndTime: transport.renderEndTime,
+    loopRendering: transport.loopRendering,
+    tempoMap: {
+      enabled: transport.tempoMap.enabled,
+      visible: transport.tempoMap.visible,
+      points: transport.tempoMap.points.map((point) => ({ ...point })),
+    },
+    meterMap: {
+      entries: transport.meterMap.entries.map((entry) => ({ ...entry })),
+    },
+    sampleRate: transport.sampleRate,
+    smpteFrameRate: transport.smpteFrameRate,
+    smpteDropFrame: transport.smpteDropFrame,
+  };
+}
+export interface PlaybackLifecycleIdle {
+  readonly phase: 'idle';
+  readonly message: string;
+}
+
+export interface PlaybackLifecycleStopped {
+  readonly phase: 'stopped';
+  readonly message: string;
+}
+
+export interface PlaybackLifecycleError {
+  readonly phase: 'error';
+  readonly message: string;
+}
+
+export interface PlaybackLifecycleStarting {
+  readonly phase: 'starting';
+  readonly attemptId: number;
+  readonly mode: PlaybackMode;
+  readonly message: string;
+  readonly transportAnchor: PlaybackTransportAnchor | null;
+  readonly confirmedActive: boolean;
+  readonly followApplied: boolean;
+}
+
+export interface PlaybackLifecyclePlaying {
+  readonly phase: 'playing';
+  readonly attemptId: number;
+  readonly mode: PlaybackMode;
+  readonly message: string;
+  readonly transportAnchor: PlaybackTransportAnchor | null;
+  readonly followApplied: boolean;
+}
+
+export interface PlaybackLifecycleStopping {
+  readonly phase: 'stopping';
+  readonly attemptId: number;
+  readonly mode: PlaybackMode;
+  readonly message: string;
+  readonly transportAnchor: PlaybackTransportAnchor | null;
+  readonly wasPlaying: boolean;
+  readonly auditionExplicitlyCleared?: boolean;
+}
+
+export type PlaybackLifecycle =
+  | PlaybackLifecycleIdle
+  | PlaybackLifecycleStopped
+  | PlaybackLifecycleError
+  | PlaybackLifecycleStarting
+  | PlaybackLifecyclePlaying
+  | PlaybackLifecycleStopping;
+
+export function isPlaybackLifecycleTerminal(lifecycle: PlaybackLifecycle): boolean {
+  return lifecycle.phase === 'idle' || lifecycle.phase === 'stopped' || lifecycle.phase === 'error';
+}
+
+export interface ProjectedPlaybackLifecycle {
+  status: PlaybackStatus;
+  isPlaying: boolean;
+  isAuditioning: boolean;
+  message: string;
+  transportAnchor: PlaybackTransportAnchor | null;
+  mode: PlaybackMode | null;
+}
+
+export function projectPlaybackLifecycle(lifecycle: PlaybackLifecycle): ProjectedPlaybackLifecycle {
+  switch (lifecycle.phase) {
+    case 'idle':
+    case 'stopped':
+    case 'error':
+      return {
+        status: lifecycle.phase,
+        isPlaying: false,
+        isAuditioning: false,
+        message: lifecycle.message,
+        transportAnchor: null,
+        mode: null,
+      };
+    case 'starting':
+      return {
+        status: 'starting',
+        isPlaying: false,
+        isAuditioning: lifecycle.mode === 'audition',
+        message: lifecycle.message,
+        transportAnchor: lifecycle.transportAnchor,
+        mode: lifecycle.mode,
+      };
+    case 'playing':
+      return {
+        status: 'playing',
+        isPlaying: true,
+        isAuditioning: lifecycle.mode === 'audition',
+        message: lifecycle.message,
+        transportAnchor: lifecycle.transportAnchor,
+        mode: lifecycle.mode,
+      };
+    case 'stopping':
+      return {
+        status: 'stopping',
+        isPlaying: lifecycle.wasPlaying,
+        isAuditioning: lifecycle.auditionExplicitlyCleared ? false : lifecycle.mode === 'audition',
+        message: lifecycle.message,
+        transportAnchor: lifecycle.transportAnchor,
+        mode: lifecycle.mode,
+      };
+  }
+}
+
+export type PlaybackLifecycleEvent =
+  | {
+      type: 'start-requested';
+      attemptId: number;
+      mode: PlaybackMode;
+      message?: string;
+      transportAnchor?: PlaybackTransportAnchor | null;
+    }
+  | {
+      type: 'start-confirmed';
+      attemptId: number;
+      playing: boolean;
+      defaultAnchor?: PlaybackTransportAnchor | null;
+    }
+  | {
+      type: 'stop-requested';
+      message?: string;
+    }
+  | {
+      type: 'status-reported';
+      status: PlaybackStatus;
+      message?: string;
+      renderStartTime?: number;
+      auditioning?: boolean;
+      attemptId?: number;
+      defaultAnchor?: PlaybackTransportAnchor | null;
+    }
+  | {
+      type: 'set-playing-requested';
+      playing: boolean;
+      attemptId?: number;
+      defaultAnchor?: PlaybackTransportAnchor | null;
+    }
+  | {
+      type: 'error-occurred';
+      message: string;
+    }
+  | {
+      type: 'reset-requested';
+    };
+
+export function hasStartingAuthority(lifecycle: PlaybackLifecycle, attemptId: number): boolean {
+  return lifecycle.phase === 'starting' && lifecycle.attemptId === attemptId;
+}
+
+export function transitionPlaybackLifecycle(
+  current: PlaybackLifecycle,
+  event: PlaybackLifecycleEvent,
+): PlaybackLifecycle {
+  switch (event.type) {
+    case 'start-requested': {
+      return {
+        phase: 'starting',
+        attemptId: event.attemptId,
+        mode: event.mode,
+        message:
+          event.message ||
+          (event.mode === 'audition' ? 'Preparing audition...' : 'Preparing playback...'),
+        transportAnchor: event.transportAnchor ?? null,
+        confirmedActive: false,
+        followApplied: false,
+      };
+    }
+
+    case 'start-confirmed': {
+      if (current.phase === 'starting' && current.attemptId === event.attemptId) {
+        if (event.playing) {
+          return {
+            phase: 'playing',
+            attemptId: current.attemptId,
+            mode: current.mode,
+            message:
+              current.mode === 'audition'
+                ? 'Auditioning selected ScoreObjects'
+                : 'Playing via blue-engine',
+            transportAnchor: current.transportAnchor ?? event.defaultAnchor ?? null,
+            followApplied: true,
+          };
+        }
+        return {
+          phase: 'stopped',
+          message: '',
+        };
+      }
+      if (current.phase === 'playing' && current.attemptId === event.attemptId) {
+        if (event.playing && !current.followApplied && current.mode === 'normal') {
+          return {
+            ...current,
+            followApplied: true,
+          };
+        }
+        return current;
+      }
+      return current;
+    }
+
+    case 'stop-requested': {
+      if (
+        current.phase === 'starting' ||
+        current.phase === 'playing' ||
+        current.phase === 'stopping'
+      ) {
+        const wasPlaying =
+          current.phase === 'playing'
+            ? true
+            : current.phase === 'starting'
+              ? current.confirmedActive
+              : current.wasPlaying;
+
+        return {
+          phase: 'stopping',
+          attemptId: current.attemptId,
+          mode: current.mode,
+          transportAnchor: current.transportAnchor,
+          message: event.message || 'Stopping playback...',
+          wasPlaying,
+          auditionExplicitlyCleared: true,
+        };
+      }
+      return current;
+    }
+
+    case 'status-reported': {
+      switch (event.status) {
+        case 'starting': {
+          if (current.phase === 'starting' || current.phase === 'playing') {
+            const mode =
+              event.auditioning !== undefined
+                ? event.auditioning
+                  ? 'audition'
+                  : 'normal'
+                : current.mode;
+            const transportAnchor =
+              event.renderStartTime !== undefined && Number.isFinite(event.renderStartTime)
+                ? clonePlaybackTransportAnchor({
+                    ...(current.transportAnchor ??
+                      event.defaultAnchor ??
+                      createEmptyToolbarProjectTransportSnapshot()),
+                    renderStartTime: event.renderStartTime,
+                  })
+                : current.transportAnchor;
+            return {
+              phase: 'starting',
+              attemptId: current.attemptId,
+              mode,
+              message: event.message || current.message,
+              transportAnchor,
+              confirmedActive: current.phase === 'playing' || current.confirmedActive,
+              followApplied: current.followApplied,
+            };
+          }
+          const attemptId = event.attemptId ?? 1;
+          const mode = event.auditioning ? 'audition' : 'normal';
+          const transportAnchor =
+            event.renderStartTime !== undefined && Number.isFinite(event.renderStartTime)
+              ? clonePlaybackTransportAnchor({
+                  ...(event.defaultAnchor ?? createEmptyToolbarProjectTransportSnapshot()),
+                  renderStartTime: event.renderStartTime,
+                })
+              : mode === 'normal' && event.defaultAnchor
+                ? clonePlaybackTransportAnchor(event.defaultAnchor)
+                : null;
+          return {
+            phase: 'starting',
+            attemptId,
+            mode,
+            message:
+              event.message ||
+              (mode === 'audition' ? 'Preparing audition...' : 'Preparing playback...'),
+            transportAnchor,
+            confirmedActive: false,
+            followApplied: false,
+          };
+        }
+
+        case 'playing': {
+          const activeAttemptId =
+            !isPlaybackLifecycleTerminal(current) && 'attemptId' in current
+              ? current.attemptId
+              : (event.attemptId ?? 1);
+
+          const activeMode =
+            event.auditioning !== undefined
+              ? event.auditioning
+                ? 'audition'
+                : 'normal'
+              : !isPlaybackLifecycleTerminal(current) && 'mode' in current
+                ? current.mode
+                : 'normal';
+
+          let activeAnchor: PlaybackTransportAnchor | null = null;
+          if (event.renderStartTime !== undefined && Number.isFinite(event.renderStartTime)) {
+            activeAnchor = clonePlaybackTransportAnchor({
+              ...((!isPlaybackLifecycleTerminal(current) && 'transportAnchor' in current
+                ? current.transportAnchor
+                : null) ??
+                event.defaultAnchor ??
+                createEmptyToolbarProjectTransportSnapshot()),
+              renderStartTime: event.renderStartTime,
+            });
+          } else if (
+            !isPlaybackLifecycleTerminal(current) &&
+            'transportAnchor' in current &&
+            current.transportAnchor !== null
+          ) {
+            activeAnchor = current.transportAnchor;
+          } else if (activeMode === 'normal' && event.defaultAnchor) {
+            activeAnchor = clonePlaybackTransportAnchor(event.defaultAnchor);
+          }
+
+          const alreadyApplied =
+            current.phase === 'playing' ||
+            (!isPlaybackLifecycleTerminal(current) && 'followApplied' in current
+              ? current.followApplied
+              : false);
+
+          const shouldApplyFollow = activeMode === 'normal' && !alreadyApplied;
+
+          return {
+            phase: 'playing',
+            attemptId: activeAttemptId,
+            mode: activeMode,
+            message:
+              event.message ||
+              (activeMode === 'audition'
+                ? 'Auditioning selected ScoreObjects'
+                : 'Playing via blue-engine'),
+            transportAnchor: activeAnchor,
+            followApplied: alreadyApplied || shouldApplyFollow,
+          };
+        }
+
+        case 'stopping': {
+          const activeAttemptId =
+            !isPlaybackLifecycleTerminal(current) && 'attemptId' in current
+              ? current.attemptId
+              : (event.attemptId ?? 1);
+
+          const activeMode =
+            event.auditioning !== undefined
+              ? event.auditioning
+                ? 'audition'
+                : 'normal'
+              : !isPlaybackLifecycleTerminal(current) && 'mode' in current
+                ? current.mode
+                : 'normal';
+
+          let activeAnchor: PlaybackTransportAnchor | null = null;
+          if (event.renderStartTime !== undefined && Number.isFinite(event.renderStartTime)) {
+            activeAnchor = clonePlaybackTransportAnchor({
+              ...((!isPlaybackLifecycleTerminal(current) && 'transportAnchor' in current
+                ? current.transportAnchor
+                : null) ??
+                event.defaultAnchor ??
+                createEmptyToolbarProjectTransportSnapshot()),
+              renderStartTime: event.renderStartTime,
+            });
+          } else if (!isPlaybackLifecycleTerminal(current) && 'transportAnchor' in current) {
+            activeAnchor = current.transportAnchor;
+          }
+
+          return {
+            phase: 'stopping',
+            attemptId: activeAttemptId,
+            mode: activeMode,
+            transportAnchor: activeAnchor,
+            message: event.message || 'Stopping playback...',
+            wasPlaying: true,
+            auditionExplicitlyCleared: event.auditioning === false,
+          };
+        }
+
+        case 'stopped': {
+          return {
+            phase: 'stopped',
+            message: event.message || '',
+          };
+        }
+
+        case 'idle': {
+          return {
+            phase: 'idle',
+            message: event.message || '',
+          };
+        }
+
+        case 'error': {
+          return {
+            phase: 'error',
+            message: event.message || 'Playback error',
+          };
+        }
+      }
+    }
+
+    case 'set-playing-requested': {
+      if (event.playing) {
+        if (current.phase === 'starting') {
+          return {
+            phase: 'playing',
+            attemptId: current.attemptId,
+            mode: current.mode,
+            message:
+              current.message ||
+              (current.mode === 'audition'
+                ? 'Auditioning selected ScoreObjects'
+                : 'Playing via blue-engine'),
+            transportAnchor:
+              current.transportAnchor ??
+              (event.defaultAnchor ? clonePlaybackTransportAnchor(event.defaultAnchor) : null),
+            followApplied: current.followApplied || current.mode === 'normal',
+          };
+        }
+        if (current.phase === 'playing') {
+          return current;
+        }
+        if (current.phase === 'stopping') {
+          return {
+            ...current,
+            wasPlaying: true,
+          };
+        }
+        return {
+          phase: 'playing',
+          attemptId: event.attemptId ?? 1,
+          mode: 'normal',
+          message: 'Playing via blue-engine',
+          transportAnchor: event.defaultAnchor
+            ? clonePlaybackTransportAnchor(event.defaultAnchor)
+            : null,
+          followApplied: true,
+        };
+      }
+      if (!isPlaybackLifecycleTerminal(current)) {
+        return {
+          phase: 'stopped',
+          message: '',
+        };
+      }
+      return current;
+    }
+
+    case 'error-occurred': {
+      return {
+        phase: 'error',
+        message: event.message,
+      };
+    }
+
+    case 'reset-requested': {
+      return {
+        phase: 'idle',
+        message: '',
+      };
+    }
+  }
+}
+
+export interface PlaybackState {
+  lifecycle: PlaybackLifecycle;
   isPlaying: boolean;
   isAuditioning: boolean;
   status: PlaybackStatus;
+  mode: PlaybackMode | null;
   message: string;
   /** Active follow state for the current playback session (may be suspended). */
   followPlayback: boolean;
@@ -45,7 +534,7 @@ interface PlaybackState {
   transportAnchor: PlaybackTransportAnchor | null;
 }
 
-interface PlaybackActions {
+export interface PlaybackActions {
   togglePlay: () => Promise<void>;
   startFresh: () => Promise<void>;
   auditionScoreObjects: (objectIds: string[]) => Promise<void>;
@@ -146,12 +635,14 @@ export function usePlaybackDisplayTicker(active: boolean): void {
   }, [active, intervalMs]);
 }
 
+export const IDLE_PLAYBACK_DISPLAY: Readonly<PlaybackDisplayState> = Object.freeze({
+  sampleFrames: 0,
+  elapsedSeconds: 0,
+  source: 'idle-anchor',
+});
+
 export function createIdlePlaybackDisplayState(): PlaybackDisplayState {
-  return {
-    sampleFrames: 0,
-    elapsedSeconds: 0,
-    source: 'idle-anchor',
-  };
+  return IDLE_PLAYBACK_DISPLAY;
 }
 
 export function derivePlaybackDisplayState(
@@ -168,27 +659,6 @@ export function derivePlaybackDisplayState(
     sampleFrames: interpolatedFrames,
     elapsedSeconds,
     source: elapsedMs > 0 ? 'interpolated' : 'engine-authority',
-  };
-}
-
-function clonePlaybackTransportAnchor(
-  transport: ToolbarProjectTransportSnapshot,
-): PlaybackTransportAnchor {
-  return {
-    renderStartTime: transport.renderStartTime,
-    renderEndTime: transport.renderEndTime,
-    loopRendering: transport.loopRendering,
-    tempoMap: {
-      enabled: transport.tempoMap.enabled,
-      visible: transport.tempoMap.visible,
-      points: transport.tempoMap.points.map((point) => ({ ...point })),
-    },
-    meterMap: {
-      entries: transport.meterMap.entries.map((entry) => ({ ...entry })),
-    },
-    sampleRate: transport.sampleRate,
-    smpteFrameRate: transport.smpteFrameRate,
-    smpteDropFrame: transport.smpteDropFrame,
   };
 }
 
@@ -223,19 +693,36 @@ function restoreFollowFromSaved(
   mirrorFollowState(state.savedFollowPlayback);
 }
 
-export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, get) => ({
-  isPlaying: false,
-  isAuditioning: false,
-  status: 'idle',
+let nextAttemptIdentity = 0;
+let retiredSessionWatermark = 0;
+
+export function __testResetPlaybackSessionWatermark(): void {
+  retiredSessionWatermark = 0;
+}
+
+function isAttemptCurrent(lifecycle: PlaybackLifecycle, attemptId: number): boolean {
+  return (
+    !isPlaybackLifecycleTerminal(lifecycle) &&
+    'attemptId' in lifecycle &&
+    lifecycle.attemptId === attemptId
+  );
+}
+
+const initialLifecycle: PlaybackLifecycleIdle = {
+  phase: 'idle',
   message: '',
+};
+
+export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, get) => ({
+  lifecycle: initialLifecycle,
+  ...projectPlaybackLifecycle(initialLifecycle),
   followPlayback: true,
   savedFollowPlayback: true,
   followPlaybackOnStart: true,
   playbackFps: DEFAULT_PLAYBACK_FPS,
   latencyCorrection: 0,
   clock: null,
-  display: createIdlePlaybackDisplayState(),
-  transportAnchor: null,
+  display: IDLE_PLAYBACK_DISPLAY,
 
   togglePlay: async () => {
     if (get().status === 'starting' || get().status === 'stopping') {
@@ -247,75 +734,136 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
       return;
     }
 
-    try {
-      set({
-        isPlaying: false,
-        isAuditioning: false,
-        status: 'starting',
-        message: 'Preparing playback...',
-        clock: null,
-        display: createIdlePlaybackDisplayState(),
-      });
+    const attemptId = ++nextAttemptIdentity;
+    const projectTransport = useProjectStore.getState().transport;
+    const transportAnchor = clonePlaybackTransportAnchor(projectTransport);
 
+    const startingLifecycle = transitionPlaybackLifecycle(get().lifecycle, {
+      type: 'start-requested',
+      attemptId,
+      mode: 'normal',
+      message: 'Preparing playback...',
+      transportAnchor,
+    });
+
+    set({
+      lifecycle: startingLifecycle,
+      ...projectPlaybackLifecycle(startingLifecycle),
+      clock: null,
+      display: IDLE_PLAYBACK_DISPLAY,
+    });
+
+    try {
       await useProjectStore.getState().flushPendingPatches();
 
-      const transportAnchor = clonePlaybackTransportAnchor(useProjectStore.getState().transport);
-      set((state) => ({
-        ...state,
-        transportAnchor,
-      }));
+      if (!hasStartingAuthority(get().lifecycle, attemptId)) {
+        return;
+      }
 
       const playing = await window.blueAPI.togglePlay();
 
-      if (get().status === 'starting') {
+      const current = get().lifecycle;
+      const transitioned = transitionPlaybackLifecycle(current, {
+        type: 'start-confirmed',
+        attemptId,
+        playing,
+        defaultAnchor: transportAnchor,
+      });
+
+      if (transitioned !== current) {
         set({
-          isPlaying: playing,
-          isAuditioning: false,
-          status: playing ? 'playing' : 'stopped',
-          message: playing ? 'Playing via blue-engine' : '',
-          transportAnchor: playing ? transportAnchor : null,
+          lifecycle: transitioned,
+          ...projectPlaybackLifecycle(transitioned),
+          ...(transitioned.phase === 'stopped'
+            ? { clock: null, display: IDLE_PLAYBACK_DISPLAY }
+            : {}),
         });
-        // Only a confirmed start applies the follow-on-start rule; failed
-        // starts leave the hydrated preferences untouched.
-        if (playing) {
+
+        if (
+          transitioned.phase === 'playing' &&
+          ('followApplied' in current ? !current.followApplied : true) &&
+          transitioned.mode === 'normal'
+        ) {
           applyFollowOnStartRule(get(), set);
+        } else if (transitioned.phase === 'stopped') {
+          restoreFollowFromSaved(get(), set);
         }
       }
     } catch (err: unknown) {
-      get().setError(err instanceof Error ? err.message : String(err));
+      const current = get().lifecycle;
+      if (
+        (current.phase === 'starting' || current.phase === 'stopping') &&
+        current.attemptId === attemptId
+      ) {
+        get().setError(err instanceof Error ? err.message : String(err));
+      }
     }
   },
 
   startFresh: async () => {
-    try {
-      set({
-        isPlaying: false,
-        isAuditioning: false,
-        status: 'starting',
-        message: 'Preparing playback...',
-        clock: null,
-        display: createIdlePlaybackDisplayState(),
-      });
+    const attemptId = ++nextAttemptIdentity;
+    const projectTransport = useProjectStore.getState().transport;
+    const transportAnchor = clonePlaybackTransportAnchor(projectTransport);
 
+    const startingLifecycle = transitionPlaybackLifecycle(get().lifecycle, {
+      type: 'start-requested',
+      attemptId,
+      mode: 'normal',
+      message: 'Preparing playback...',
+      transportAnchor,
+    });
+
+    set({
+      lifecycle: startingLifecycle,
+      ...projectPlaybackLifecycle(startingLifecycle),
+      clock: null,
+      display: IDLE_PLAYBACK_DISPLAY,
+    });
+
+    try {
       await useProjectStore.getState().flushPendingPatches();
 
-      const transportAnchor = clonePlaybackTransportAnchor(useProjectStore.getState().transport);
-      set((state) => ({ ...state, transportAnchor }));
+      if (!hasStartingAuthority(get().lifecycle, attemptId)) {
+        return;
+      }
 
       const playing = await window.blueAPI.restartPlayback();
-      if (get().status === 'starting') {
+
+      const current = get().lifecycle;
+      const transitioned = transitionPlaybackLifecycle(current, {
+        type: 'start-confirmed',
+        attemptId,
+        playing,
+        defaultAnchor: transportAnchor,
+      });
+
+      if (transitioned !== current) {
         set({
-          isPlaying: playing,
-          status: playing ? 'playing' : 'stopped',
-          message: playing ? 'Playing via blue-engine' : '',
-          transportAnchor: playing ? transportAnchor : null,
+          lifecycle: transitioned,
+          ...projectPlaybackLifecycle(transitioned),
+          ...(transitioned.phase === 'stopped'
+            ? { clock: null, display: IDLE_PLAYBACK_DISPLAY }
+            : {}),
         });
-        if (playing) {
+
+        if (
+          transitioned.phase === 'playing' &&
+          ('followApplied' in current ? !current.followApplied : true) &&
+          transitioned.mode === 'normal'
+        ) {
           applyFollowOnStartRule(get(), set);
+        } else if (transitioned.phase === 'stopped') {
+          restoreFollowFromSaved(get(), set);
         }
       }
     } catch (err: unknown) {
-      get().setError(err instanceof Error ? err.message : String(err));
+      const current = get().lifecycle;
+      if (
+        (current.phase === 'starting' || current.phase === 'stopping') &&
+        current.attemptId === attemptId
+      ) {
+        get().setError(err instanceof Error ? err.message : String(err));
+      }
     }
   },
 
@@ -324,29 +872,61 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
       return;
     }
 
+    const attemptId = ++nextAttemptIdentity;
+
+    const startingLifecycle = transitionPlaybackLifecycle(get().lifecycle, {
+      type: 'start-requested',
+      attemptId,
+      mode: 'audition',
+      message: 'Preparing audition...',
+      transportAnchor: null,
+    });
+
+    set({
+      lifecycle: startingLifecycle,
+      ...projectPlaybackLifecycle(startingLifecycle),
+      clock: null,
+      display: IDLE_PLAYBACK_DISPLAY,
+    });
+
     try {
-      set({
-        isPlaying: false,
-        isAuditioning: true,
-        status: 'starting',
-        message: 'Preparing audition...',
-        clock: null,
-        display: createIdlePlaybackDisplayState(),
-        transportAnchor: null,
+      await useProjectStore.getState().flushPendingPatches();
+
+      if (!hasStartingAuthority(get().lifecycle, attemptId)) {
+        return;
+      }
+
+      const playing = await window.blueAPI.auditionScoreObjects([...objectIds]);
+
+      const current = get().lifecycle;
+      const transitioned = transitionPlaybackLifecycle(current, {
+        type: 'start-confirmed',
+        attemptId,
+        playing,
+        defaultAnchor: null,
       });
 
-      await useProjectStore.getState().flushPendingPatches();
-      const playing = await window.blueAPI.auditionScoreObjects([...objectIds]);
-      if (get().status === 'starting') {
+      if (transitioned !== current) {
         set({
-          isPlaying: playing,
-          isAuditioning: playing,
-          status: playing ? 'playing' : 'stopped',
-          message: playing ? 'Auditioning selected ScoreObjects' : '',
+          lifecycle: transitioned,
+          ...projectPlaybackLifecycle(transitioned),
+          ...(transitioned.phase === 'stopped'
+            ? { clock: null, display: IDLE_PLAYBACK_DISPLAY }
+            : {}),
         });
+
+        if (transitioned.phase === 'stopped') {
+          restoreFollowFromSaved(get(), set);
+        }
       }
     } catch (err: unknown) {
-      get().setError(err instanceof Error ? err.message : String(err));
+      const current = get().lifecycle;
+      if (
+        (current.phase === 'starting' || current.phase === 'stopping') &&
+        current.attemptId === attemptId
+      ) {
+        get().setError(err instanceof Error ? err.message : String(err));
+      }
     }
   },
 
@@ -356,25 +936,64 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
   },
 
   stop: async () => {
-    const state = get();
-    const shouldShowStopping =
-      state.status === 'starting' || state.status === 'playing' || state.status === 'stopping';
+    const current = get().lifecycle;
+    const transitioned = transitionPlaybackLifecycle(current, {
+      type: 'stop-requested',
+    });
 
-    if (shouldShowStopping) {
+    if (transitioned !== current) {
       set({
-        isPlaying: state.isPlaying,
-        isAuditioning: false,
-        status: 'stopping',
-        message: 'Stopping playback...',
+        lifecycle: transitioned,
+        ...projectPlaybackLifecycle(transitioned),
       });
     }
 
     await window.blueAPI.stopPlayback();
   },
 
-  setPlaying: (isPlaying) => set({ isPlaying }),
+  setPlaying: (playing) => {
+    const current = get().lifecycle;
+    if (!playing && !isPlaybackLifecycleTerminal(current)) {
+      const currentClock = get().clock;
+      if (currentClock !== null) {
+        retiredSessionWatermark = Math.max(retiredSessionWatermark, currentClock.sessionId);
+      }
+    }
+
+    const defaultAnchor = clonePlaybackTransportAnchor(useProjectStore.getState().transport);
+    const attemptId = ++nextAttemptIdentity;
+
+    const transitioned = transitionPlaybackLifecycle(current, {
+      type: 'set-playing-requested',
+      playing,
+      attemptId,
+      defaultAnchor,
+    });
+
+    if (transitioned === current) {
+      return;
+    }
+
+    set({
+      lifecycle: transitioned,
+      ...projectPlaybackLifecycle(transitioned),
+      ...(!playing ? { clock: null, display: IDLE_PLAYBACK_DISPLAY } : {}),
+    });
+
+    if (playing) {
+      if (
+        (current.phase === 'starting' && current.mode === 'normal' && !current.followApplied) ||
+        isPlaybackLifecycleTerminal(current)
+      ) {
+        applyFollowOnStartRule(get(), set);
+      }
+    } else {
+      restoreFollowFromSaved(get(), set);
+    }
+  },
 
   setStatus: ({ status, message, renderStartTime, auditioning }) => {
+    const current = get().lifecycle;
     const normalizedStatus: PlaybackStatus =
       status === 'starting' ||
       status === 'playing' ||
@@ -384,86 +1003,103 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         ? status
         : 'idle';
 
-    set((state) => {
-      const nextState: Partial<PlaybackState> = {
-        status: normalizedStatus,
-        isPlaying: normalizedStatus === 'playing' || normalizedStatus === 'stopping',
-        message: message || '',
-      };
-
-      if (auditioning !== undefined) {
-        nextState.isAuditioning = auditioning;
-      }
-
-      if (renderStartTime !== undefined && Number.isFinite(renderStartTime)) {
-        nextState.transportAnchor = clonePlaybackTransportAnchor({
-          ...(state.transportAnchor ?? useProjectStore.getState().transport),
-          renderStartTime,
-        });
-      }
-
-      if (normalizedStatus === 'starting') {
-        nextState.clock = null;
-        nextState.display = createIdlePlaybackDisplayState();
-      } else if (
-        normalizedStatus === 'idle' ||
-        normalizedStatus === 'stopped' ||
-        normalizedStatus === 'error'
-      ) {
-        nextState.isAuditioning = false;
-        nextState.clock = null;
-        nextState.display = createIdlePlaybackDisplayState();
-        nextState.transportAnchor = null;
-      } else if (
-        normalizedStatus === 'playing' &&
-        state.transportAnchor === null &&
-        nextState.transportAnchor === undefined
-      ) {
-        nextState.transportAnchor = clonePlaybackTransportAnchor(
-          useProjectStore.getState().transport,
-        );
-      }
-
-      return nextState;
-    });
-
-    // Session end discards the session's follow state (including suspension)
-    // and reverts the toolbar/native menu to the saved preference.
     if (
-      normalizedStatus === 'idle' ||
       normalizedStatus === 'stopped' ||
+      normalizedStatus === 'idle' ||
       normalizedStatus === 'error'
     ) {
+      const currentClock = get().clock;
+      if (currentClock !== null) {
+        retiredSessionWatermark = Math.max(retiredSessionWatermark, currentClock.sessionId);
+      }
+    }
+
+    const defaultAnchor = clonePlaybackTransportAnchor(useProjectStore.getState().transport);
+    const attemptId = ++nextAttemptIdentity;
+
+    const transitioned = transitionPlaybackLifecycle(current, {
+      type: 'status-reported',
+      status: normalizedStatus,
+      message,
+      renderStartTime,
+      auditioning,
+      attemptId,
+      defaultAnchor,
+    });
+
+    const isTerminal = isPlaybackLifecycleTerminal(transitioned);
+    const isNowPlaying = transitioned.phase === 'playing';
+    const wasAlreadyPlaying =
+      get().isPlaying || (!isPlaybackLifecycleTerminal(current) && current.phase === 'playing');
+    const shouldApplyFollow =
+      isNowPlaying &&
+      transitioned.mode === 'normal' &&
+      !wasAlreadyPlaying &&
+      (!('followApplied' in current) || !current.followApplied);
+
+    set({
+      lifecycle: transitioned,
+      ...projectPlaybackLifecycle(transitioned),
+      ...(isTerminal ? { clock: null, display: IDLE_PLAYBACK_DISPLAY } : {}),
+      ...(normalizedStatus === 'starting' && isPlaybackLifecycleTerminal(current)
+        ? { clock: null, display: IDLE_PLAYBACK_DISPLAY }
+        : {}),
+    });
+
+    if (shouldApplyFollow) {
+      applyFollowOnStartRule(get(), set);
+    } else if (isTerminal) {
       restoreFollowFromSaved(get(), set);
     }
   },
 
   setError: (error) => {
-    set({
-      status: 'error',
-      isPlaying: false,
-      isAuditioning: false,
+    const currentClock = get().clock;
+    if (currentClock !== null) {
+      retiredSessionWatermark = Math.max(retiredSessionWatermark, currentClock.sessionId);
+    }
+    const transitioned = transitionPlaybackLifecycle(get().lifecycle, {
+      type: 'error-occurred',
       message: error,
+    });
+    set({
+      lifecycle: transitioned,
+      ...projectPlaybackLifecycle(transitioned),
       clock: null,
-      display: createIdlePlaybackDisplayState(),
-      transportAnchor: null,
+      display: IDLE_PLAYBACK_DISPLAY,
     });
     restoreFollowFromSaved(get(), set);
   },
 
   acceptPlaybackClock: (snapshot) => {
     set((state) => {
-      const currentClock = state.clock;
-      if (
-        currentClock &&
-        currentClock.sessionId === snapshot.sessionId &&
-        snapshot.sequence < currentClock.sequence
-      ) {
+      if (isPlaybackLifecycleTerminal(state.lifecycle)) {
         return state;
       }
 
-      const sampleRate = snapshot.sampleRate ?? currentClock?.sampleRate ?? null;
-      const ksmps = snapshot.ksmps ?? currentClock?.ksmps ?? null;
+      if (snapshot.sessionId <= retiredSessionWatermark) {
+        return state;
+      }
+
+      const currentClock = state.clock;
+
+      if (currentClock && currentClock.sessionId === snapshot.sessionId) {
+        if (snapshot.sequence < currentClock.sequence) {
+          return state;
+        }
+      }
+
+      if (currentClock && snapshot.sessionId < currentClock.sessionId) {
+        return state;
+      }
+
+      if (currentClock && snapshot.sessionId > currentClock.sessionId) {
+        retiredSessionWatermark = Math.max(retiredSessionWatermark, currentClock.sessionId);
+      }
+
+      const isSameSession = currentClock !== null && currentClock.sessionId === snapshot.sessionId;
+      const sampleRate = snapshot.sampleRate ?? (isSameSession ? currentClock.sampleRate : null);
+      const ksmps = snapshot.ksmps ?? (isSameSession ? currentClock.ksmps : null);
       const receivedAtMs = Date.now();
       const nextClock: PlaybackClockState = {
         sessionId: snapshot.sessionId,
@@ -474,13 +1110,10 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
         receivedAtMs,
       };
 
-      const nextState: PlaybackState = {
-        ...state,
+      return {
         clock: nextClock,
         display: derivePlaybackDisplayState(nextClock, receivedAtMs),
       };
-
-      return nextState;
     });
   },
 
@@ -498,9 +1131,6 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
     void updatePreferences({ followPlayback: enabled })
       .then((result) => {
-        // A failed durable write keeps the last confirmed saved preference;
-        // the active session keeps the user's choice until the next
-        // authoritative settings result reconciles it.
         if (!result?.ok && get().savedFollowPlayback === enabled) {
           set({ savedFollowPlayback: previousSaved });
         }
@@ -518,8 +1148,6 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
 
   suspendFollowForSession: () => {
     const state = get();
-    // Navigation while stopped/paused or while follow is already inactive
-    // never changes follow state (FR-008).
     if (!state.isPlaying || !state.followPlayback) return;
     set({ followPlayback: false });
     mirrorFollowState(false);
@@ -596,22 +1224,20 @@ export const usePlaybackStore = create<PlaybackState & PlaybackActions>()((set, 
   },
 
   reset: () => {
-    // Runtime reset preserves the hydrated follow preferences and restores the
-    // active follow state from the saved preference (FR-013).
     const { savedFollowPlayback, followPlayback, followPlaybackOnStart, playbackFps } = get();
+    const idleLifecycle = transitionPlaybackLifecycle(get().lifecycle, {
+      type: 'reset-requested',
+    });
     set({
-      isPlaying: false,
-      isAuditioning: false,
-      status: 'idle',
-      message: '',
+      lifecycle: idleLifecycle,
+      ...projectPlaybackLifecycle(idleLifecycle),
       followPlayback: savedFollowPlayback,
       savedFollowPlayback,
       followPlaybackOnStart,
       playbackFps,
       latencyCorrection: 0,
       clock: null,
-      display: createIdlePlaybackDisplayState(),
-      transportAnchor: null,
+      display: IDLE_PLAYBACK_DISPLAY,
     });
     if (followPlayback !== savedFollowPlayback) {
       mirrorFollowState(savedFollowPlayback);
