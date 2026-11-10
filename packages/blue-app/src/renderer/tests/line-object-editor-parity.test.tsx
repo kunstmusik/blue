@@ -446,7 +446,460 @@ describe('Line and Zak line score editors', () => {
         type: 'updateWidgetProperties',
         widgetId: 'line-widget',
       }),
+      { label: 'Edit Line Object Lines', phase: 'single' },
     );
+
+    tree.unmount();
+  });
+
+  it('LineObjectEditor commits with label Edit Line and phase single', () => {
+    const onPatch = vi.fn();
+    const tree = renderEditor(
+      <LineObjectEditor
+        document={makeDocument('LineObject', {
+          lines: [
+            {
+              varName: 'lineA',
+              min: 0,
+              max: 1,
+              color: '#20dd00',
+              rightBound: true,
+              endPointsLinked: false,
+              points: [
+                { x: 0, y: 0.2 },
+                { x: 1, y: 0.8 },
+              ],
+            },
+          ],
+        })}
+        onPatch={onPatch}
+      />,
+    );
+
+    const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
+    expect(svg).not.toBeNull();
+
+    const point = getClientPointForSvg(svg!, 5, 280);
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
+    });
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 100,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 100,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenCalledTimes(1);
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'updateTypeSpecificEditor',
+      }),
+      { label: 'Edit Line', phase: 'single' },
+    );
+
+    tree.unmount();
+  });
+
+  it('ZakLineObjectEditor commits with label Edit Line and phase single', () => {
+    const onPatch = vi.fn();
+    const tree = renderEditor(
+      <ZakLineObjectEditor
+        document={makeDocument('ZakLineObject', {
+          lines: [
+            {
+              varName: 'zakLineA',
+              min: 0,
+              max: 1,
+              color: '#20dd00',
+              rightBound: true,
+              endPointsLinked: false,
+              points: [
+                { x: 0, y: 0.2 },
+                { x: 1, y: 0.8 },
+              ],
+            },
+          ],
+        })}
+        onPatch={onPatch}
+      />,
+    );
+
+    const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
+    expect(svg).not.toBeNull();
+
+    const point = getClientPointForSvg(svg!, 5, 280);
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
+    });
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 100,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 100,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenCalledTimes(1);
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'updateTypeSpecificEditor',
+      }),
+      { label: 'Edit Line', phase: 'single' },
+    );
+
+    tree.unmount();
+  });
+});
+
+describe('EditableLineCanvas draft and terminal gesture lifecycle', () => {
+  const baseLines = [
+    {
+      varName: 'line0',
+      min: 0,
+      max: 1,
+      color: '#20dd00',
+      rightBound: true,
+      endPointsLinked: false,
+      points: [
+        { x: 0, y: 0.2 },
+        { x: 1, y: 0.8 },
+      ],
+    },
+  ];
+
+  it.each([false, true])(
+    'handles changed lines during a draft (target changed: %s)',
+    (targetChanged) => {
+      const lines = [
+        ...baseLines,
+        {
+          ...baseLines[0]!,
+          varName: 'line1',
+          points: baseLines[0]!.points.map((point) => ({ ...point })),
+        },
+      ];
+      const oldChange = vi.fn();
+      const newChange = vi.fn();
+      const tree = renderEditor(
+        <EditableLineCanvas
+          lines={lines}
+          selectedLineIndex={0}
+          onLinesChange={oldChange}
+          canvasWidth={800}
+          canvasHeight={360}
+          interactive
+        />,
+      );
+      const svg = tree.container.querySelector('polyline')!.ownerSVGElement!;
+      act(() =>
+        svg.dispatchEvent(
+          new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 400, clientY: 180 }),
+        ),
+      );
+      const updated = structuredClone(lines);
+      updated[targetChanged ? 0 : 1]!.points[0]!.y = 0.7;
+      act(() =>
+        tree.root.render(
+          <HostDocumentContext.Provider value={document}>
+            <EditableLineCanvas
+              lines={updated}
+              selectedLineIndex={0}
+              onLinesChange={newChange}
+              canvasWidth={800}
+              canvasHeight={360}
+              interactive
+            />
+          </HostDocumentContext.Provider>,
+        ),
+      );
+      act(() => {
+        window.dispatchEvent(
+          new MouseEvent('mousemove', { bubbles: true, clientX: 400, clientY: 120 }),
+        );
+        window.dispatchEvent(
+          new MouseEvent('mouseup', { bubbles: true, clientX: 400, clientY: 120 }),
+        );
+      });
+      expect(oldChange).not.toHaveBeenCalled();
+      expect(newChange).toHaveBeenCalledTimes(targetChanged ? 0 : 1);
+      if (!targetChanged) expect(newChange.mock.calls[0]![0][1].points[0].y).toBe(0.7);
+      tree.unmount();
+    },
+  );
+
+  it('keeps local draft during point insertion and commits once on release', () => {
+    const onLinesChange = vi.fn();
+    const tree = renderEditor(
+      <EditableLineCanvas
+        lines={baseLines}
+        selectedLineIndex={0}
+        onLinesChange={onLinesChange}
+        canvasWidth={800}
+        canvasHeight={360}
+        interactive
+      />,
+    );
+
+    const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
+    expect(svg).not.toBeNull();
+
+    // Click in middle to insert a new point
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 400,
+          clientY: 180,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 400,
+          clientY: 120,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 400,
+          clientY: 120,
+        }),
+      );
+    });
+    expect(onLinesChange).toHaveBeenCalledTimes(1);
+    expect(onLinesChange.mock.calls[0]![0][0]!.points).toHaveLength(3);
+
+    tree.unmount();
+  });
+
+  it('discards insertion draft on Escape without calling onLinesChange', () => {
+    const onLinesChange = vi.fn();
+    const tree = renderEditor(
+      <EditableLineCanvas
+        lines={baseLines}
+        selectedLineIndex={0}
+        onLinesChange={onLinesChange}
+        canvasWidth={800}
+        canvasHeight={360}
+        interactive
+      />,
+    );
+
+    const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
+    expect(svg).not.toBeNull();
+
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 400,
+          clientY: 180,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 400,
+          clientY: 120,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    tree.unmount();
+  });
+
+  it('discards point move draft on blur without calling onLinesChange', () => {
+    const onLinesChange = vi.fn();
+    const tree = renderEditor(
+      <EditableLineCanvas
+        lines={baseLines}
+        selectedLineIndex={0}
+        onLinesChange={onLinesChange}
+        canvasWidth={800}
+        canvasHeight={360}
+        interactive
+      />,
+    );
+
+    const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
+    expect(svg).not.toBeNull();
+
+    // Hit test point 0 at left edge (svgX = 5, svgY = 285)
+    const point = getClientPointForSvg(svg!, 5, 285);
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 50,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new Event('blur'));
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 50,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    tree.unmount();
+  });
+
+  it('does not commit when point is dragged back to original position (net zero)', () => {
+    const onLinesChange = vi.fn();
+    const tree = renderEditor(
+      <EditableLineCanvas
+        lines={baseLines}
+        selectedLineIndex={0}
+        onLinesChange={onLinesChange}
+        canvasWidth={800}
+        canvasHeight={360}
+        interactive
+      />,
+    );
+
+    const svg = tree.container.querySelector('polyline')?.ownerSVGElement;
+    expect(svg).not.toBeNull();
+
+    const point = getClientPointForSvg(svg!, 5, 285);
+    act(() => {
+      svg!.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY - 50,
+        }),
+      );
+    });
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
+    });
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: point.clientX,
+          clientY: point.clientY,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
 
     tree.unmount();
   });

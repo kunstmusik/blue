@@ -115,4 +115,147 @@ describe('ArrangementPanel popout dismissal', () => {
     });
     expect(openMenu()).toBeFalsy();
   });
+
+  it('resizes columns locally in popout document without persistence and commits on release', () => {
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <ArrangementPanel
+            rows={[
+              {
+                assignmentId: '1',
+                instrumentName: 'Test Instrument',
+                enabled: true,
+                extraColumns: {},
+              },
+            ]}
+            selectedAssignmentId={'1'}
+            onSelectAssignment={vi.fn()}
+            onOrchestraPatch={vi.fn()}
+            projectSessionId={1}
+            projectRevision={1}
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const resizer = host.querySelector('.cursor-col-resize') as HTMLElement;
+    expect(resizer).toBeTruthy();
+    const th = resizer.closest('th') as HTMLTableCellElement;
+    const initialWidth = th.style.width;
+
+    act(() => {
+      resizer.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true, clientX: 50 }));
+    });
+    expect(popoutDoc.body.style.cursor).toBe('col-resize');
+
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mousemove', { bubbles: true, clientX: 120 }),
+      );
+    });
+    expect(th.style.width).not.toBe(initialWidth);
+
+    act(() => {
+      popout.window.dispatchEvent(new PopoutMouseEvent('mouseup', { bubbles: true, clientX: 120 }));
+    });
+    expect(popoutDoc.body.style.cursor).toBe('');
+    expect(th.style.width).not.toBe(initialWidth);
+  });
+
+  it('cancels column resize on Escape in popout document and restores baseline width', () => {
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <ArrangementPanel
+            rows={[
+              {
+                assignmentId: '1',
+                instrumentName: 'Test Instrument',
+                enabled: true,
+                extraColumns: {},
+              },
+            ]}
+            selectedAssignmentId={'1'}
+            onSelectAssignment={vi.fn()}
+            onOrchestraPatch={vi.fn()}
+            projectSessionId={1}
+            projectRevision={1}
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const resizer = host.querySelector('.cursor-col-resize') as HTMLElement;
+    const th = resizer.closest('th') as HTMLTableCellElement;
+    const initialWidth = th.style.width;
+
+    act(() => {
+      resizer.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true, clientX: 50 }));
+    });
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mousemove', { bubbles: true, clientX: 150 }),
+      );
+    });
+    expect(th.style.width).not.toBe(initialWidth);
+
+    act(() => {
+      popout.window.dispatchEvent(
+        new popout.window.KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    expect(th.style.width).toBe(initialWidth);
+    expect(popoutDoc.body.style.cursor).toBe('');
+  });
+
+  it('cancels column resize on host blur in popout document and restores baseline width', () => {
+    act(() => {
+      root.render(
+        <HostDocumentContext.Provider value={popoutDoc}>
+          <ArrangementPanel
+            rows={[
+              {
+                assignmentId: '1',
+                instrumentName: 'Test Instrument',
+                enabled: true,
+                extraColumns: {},
+              },
+            ]}
+            selectedAssignmentId={'1'}
+            onSelectAssignment={vi.fn()}
+            onOrchestraPatch={vi.fn()}
+            projectSessionId={1}
+            projectRevision={1}
+          />
+        </HostDocumentContext.Provider>,
+      );
+    });
+
+    const resizer = host.querySelector('.cursor-col-resize') as HTMLElement;
+    const th = resizer.closest('th') as HTMLTableCellElement;
+    const initialWidth = th.style.width;
+
+    act(() => {
+      resizer.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true, clientX: 50 }));
+    });
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mousemove', { bubbles: true, clientX: 150 }),
+      );
+    });
+    expect(th.style.width).not.toBe(initialWidth);
+
+    act(() => {
+      popout.window.dispatchEvent(new popout.window.FocusEvent('blur'));
+    });
+
+    expect(th.style.width).toBe(initialWidth);
+    expect(popoutDoc.body.style.cursor).toBe('');
+  });
 });

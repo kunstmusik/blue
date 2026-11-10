@@ -2,6 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { PopoutTooltipPortal } from '../../../../../../hooks/host-portals';
 import type { NoteSnapshot, ScaleSnapshot, FieldDefSnapshot } from './types';
+import { attachHostGesture, type HostGestureDisposer } from '../../../../../../lib/host-gesture';
+import { registerHistoryEditorSettlement } from '../../../../../../lib/history-scope-router';
+import { getProjectDocumentId, useProjectStore } from '../../../../../../stores/project-store';
 
 interface FieldEditorProps {
   notes: NoteSnapshot[];
@@ -16,6 +19,7 @@ interface FieldEditorProps {
   snapBeats: number;
   onSelectionChange: (indices: Set<number>) => void;
   onCommitFieldEdit: (noteIndices: number[], fieldIndex: number, values: number[]) => void;
+  targetKey?: string;
 }
 
 interface PinInfo {
@@ -55,11 +59,20 @@ export default function FieldEditor({
   snapBeats,
   onSelectionChange,
   onCommitFieldEdit,
+  targetKey,
 }: FieldEditorProps): React.ReactElement {
   void scale;
   void noteHeight;
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const hostGestureDisposerRef = useRef<HostGestureDisposer | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const gestureFenceRef = useRef<{
+    documentId: string;
+    sessionId: number;
+    targetKey?: string;
+    source: string;
+  } | null>(null);
   const dragRef = useRef<{
     noteIndices: number[];
     fieldIndex: number;
@@ -70,6 +83,37 @@ export default function FieldEditor({
   const [editorHeight, setEditorHeight] = useState(100);
   const [draftValues, setDraftValues] = useState<Map<number, number> | null>(null);
   const [grabbedNoteIndex, setGrabbedNoteIndex] = useState<number | null>(null);
+
+  const endHostGesture = useCallback(() => {
+    if (hostGestureDisposerRef.current) {
+      hostGestureDisposerRef.current();
+      hostGestureDisposerRef.current = null;
+    }
+  }, []);
+
+  const clearGesture = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureFenceRef.current = null;
+    endHostGesture();
+  }, [endHostGesture]);
+
+  const latestSource = useRef({ targetKey, source: '', commit: onCommitFieldEdit });
+  latestSource.current = {
+    targetKey,
+    source: JSON.stringify([notes, fieldDef, fieldIndex]),
+    commit: onCommitFieldEdit,
+  };
+  const hasAuthority = useCallback(() => {
+    const fence = gestureFenceRef.current;
+    return (
+      !!fence &&
+      fence.documentId === (getProjectDocumentId() ?? '') &&
+      fence.sessionId === useProjectStore.getState().sessionId &&
+      fence.targetKey === latestSource.current.targetKey &&
+      fence.source === latestSource.current.source
+    );
+  }, []);
 
   const yScale = useMemo(() => {
     if (!fieldDef) return { min: 0, max: 1, range: 1 };
@@ -168,6 +212,55 @@ export default function FieldEditor({
     return () => observer.disconnect();
   }, []);
 
+  const cancelDrag = useCallback(() => {
+    dragRef.current = null;
+    setDraftValues(null);
+    setGrabbedNoteIndex(null);
+  }, []);
+
+  const applyPointerPosition = useCallback(
+    (clientY: number) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      if (!hasAuthority()) {
+        clearGesture();
+        cancelDrag();
+        return;
+      }
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const mouseValue = yToValue(clientY - rect.top, editorHeight);
+      const valueDelta = mouseValue - drag.startValue;
+      const draft = new Map<number, number>();
+      const currentValues = drag.noteIndices.map((noteIndex, i) => {
+        const nextValue = normalizeValue(drag.originalValues[i]! + valueDelta);
+        draft.set(noteIndex, nextValue);
+        return nextValue;
+      });
+      drag.currentValues = currentValues;
+      setDraftValues(draft);
+    },
+    [editorHeight, normalizeValue, yToValue, hasAuthority, clearGesture, cancelDrag],
+  );
+
+  const endDrag = useCallback(() => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const valid = hasAuthority();
+    const changed = drag.currentValues.some((v, i) => v !== drag.originalValues[i]);
+    clearGesture();
+    cancelDrag();
+    if (valid && changed)
+      latestSource.current.commit(drag.noteIndices, drag.fieldIndex, drag.currentValues);
+  }, [hasAuthority, clearGesture, cancelDrag]);
+
+  useEffect(() => {
+    if (gestureFenceRef.current && !hasAuthority()) {
+      clearGesture();
+      cancelDrag();
+    }
+  }, [targetKey, notes, fieldDef, fieldIndex, hasAuthority, clearGesture, cancelDrag]);
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!fieldDef || fieldIndex < 0) return;
@@ -210,6 +303,7 @@ export default function FieldEditor({
         onSelectionChange(new Set(noteIndices));
       }
 
+      clearGesture();
       const originalValues = noteIndices.map(
         (noteIndex) => notes[noteIndex]!.fieldValues[fieldIndex] ?? fieldDef.defaultValue,
       );
@@ -218,10 +312,95 @@ export default function FieldEditor({
         fieldIndex,
         startValue: yToValue(y, editorHeight),
         originalValues,
-        currentValues: originalValues,
+        currentValues: [...originalValues],
       };
       setGrabbedNoteIndex(pin.noteIndex);
       e.preventDefault();
+
+      const documentId =
+        typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+      const sessionId = useProjectStore.getState().sessionId;
+      gestureFenceRef.current = {
+        documentId,
+        sessionId,
+        targetKey,
+        source: latestSource.current.source,
+      };
+
+      const host = rootRef.current;
+      if (typeof registerHistoryEditorSettlement === 'function') {
+        const hostDoc = (host as Element)?.ownerDocument ?? document;
+        unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+          const currentDocId =
+            typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+          const currentSessionId = useProjectStore.getState().sessionId;
+          if (
+            gestureFenceRef.current?.documentId === currentDocId &&
+            gestureFenceRef.current?.sessionId === currentSessionId &&
+            gestureFenceRef.current?.targetKey === targetKey
+          ) {
+            endDrag();
+          } else {
+            cancelDrag();
+          }
+          clearGesture();
+          return useProjectStore.getState().flushPendingPatches?.();
+        });
+      }
+
+      const disposer = attachHostGesture({
+        host,
+        onMove: (moveEvent) => {
+          const currentDocId =
+            typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+          const currentSessionId = useProjectStore.getState().sessionId;
+          if (
+            currentDocId !== gestureFenceRef.current?.documentId ||
+            currentSessionId !== gestureFenceRef.current?.sessionId ||
+            targetKey !== gestureFenceRef.current?.targetKey
+          ) {
+            hostGestureDisposerRef.current = null;
+            cancelDrag();
+            clearGesture();
+            return;
+          }
+          applyPointerPosition((moveEvent as MouseEvent).clientY);
+        },
+        onRelease: () => {
+          const currentDocId =
+            typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+          const currentSessionId = useProjectStore.getState().sessionId;
+          if (
+            currentDocId !== gestureFenceRef.current?.documentId ||
+            currentSessionId !== gestureFenceRef.current?.sessionId ||
+            targetKey !== gestureFenceRef.current?.targetKey
+          ) {
+            hostGestureDisposerRef.current = null;
+            cancelDrag();
+            clearGesture();
+            return;
+          }
+          hostGestureDisposerRef.current = null;
+          endDrag();
+          clearGesture();
+        },
+        onEscape: () => {
+          hostGestureDisposerRef.current = null;
+          cancelDrag();
+          clearGesture();
+        },
+        onBlur: () => {
+          hostGestureDisposerRef.current = null;
+          cancelDrag();
+          clearGesture();
+        },
+        onCancel: () => {
+          hostGestureDisposerRef.current = null;
+          cancelDrag();
+          clearGesture();
+        },
+      });
+      hostGestureDisposerRef.current = disposer;
     },
     [
       fieldDef,
@@ -233,52 +412,20 @@ export default function FieldEditor({
       notes,
       valueToY,
       yToValue,
+      clearGesture,
+      applyPointerPosition,
+      endDrag,
+      cancelDrag,
+      targetKey,
     ],
   );
 
-  const applyPointerPosition = useCallback(
-    (clientY: number) => {
-      const drag = dragRef.current;
-      if (!drag) return;
-      const rect = rootRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const mouseValue = yToValue(clientY - rect.top, editorHeight);
-      const valueDelta = mouseValue - drag.startValue;
-      const draft = new Map<number, number>();
-      const currentValues = drag.noteIndices.map((noteIndex, i) => {
-        const nextValue = normalizeValue(drag.originalValues[i]! + valueDelta);
-        draft.set(noteIndex, nextValue);
-        return nextValue;
-      });
-      drag.currentValues = currentValues;
-      setDraftValues(draft);
-    },
-    [editorHeight, normalizeValue, yToValue],
-  );
-
-  const endDrag = useCallback(() => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    onCommitFieldEdit(drag.noteIndices, drag.fieldIndex, drag.currentValues);
-    dragRef.current = null;
-    setDraftValues(null);
-    setGrabbedNoteIndex(null);
-  }, [onCommitFieldEdit]);
-
-  // Track moves and release on the window so a pin drag keeps working when
-  // the pointer leaves the field lane (or the panel's scroll container)
-  // before the button is released.
   useEffect(() => {
-    if (grabbedNoteIndex === null) return;
-    const handleMouseMove = (e: MouseEvent) => applyPointerPosition(e.clientY);
-    const handleMouseUp = () => endDrag();
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      clearGesture();
+      cancelDrag();
     };
-  }, [grabbedNoteIndex, applyPointerPosition, endDrag]);
+  }, [clearGesture, cancelDrag]);
 
   if (!fieldDef) {
     return <div className="h-full bg-app-canvas" style={{ width }} />;
@@ -293,7 +440,6 @@ export default function FieldEditor({
         className="relative h-full overflow-hidden"
         onMouseDown={handleMouseDown}
         onMouseMove={(e) => applyPointerPosition(e.clientY)}
-        onMouseUp={endDrag}
       >
         {laneSnapLines.map((line, i) => (
           <div

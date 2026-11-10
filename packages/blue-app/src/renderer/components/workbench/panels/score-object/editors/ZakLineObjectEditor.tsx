@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import type { ZakLineData } from '@blue/data';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import {
   EditableLineCanvas,
   getJavaLineColor,
@@ -43,19 +44,22 @@ export default function ZakLineObjectEditor({
   }, [lines.length, selectedLineIndex]);
 
   const patch = useCallback(
-    (nextPatch: Record<string, unknown>) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: nextPatch,
-      });
+    (nextPatch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: nextPatch,
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );
 
   const patchLines = useCallback(
     (nextLines: ZakLineData[]) => {
-      patch({ lines: nextLines });
+      patch({ lines: nextLines }, { label: 'Edit Line', phase: 'single' });
     },
     [patch],
   );
@@ -197,6 +201,7 @@ export default function ZakLineObjectEditor({
 
             <div ref={canvasHostRef} className="min-h-0 flex-1">
               <EditableLineCanvas
+                key={JSON.stringify(document.target)}
                 lines={lines}
                 selectedLineIndex={selectedLineIndex}
                 onLinesChange={patchLines}

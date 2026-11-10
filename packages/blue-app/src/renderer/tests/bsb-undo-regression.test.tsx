@@ -19,6 +19,7 @@ import BSBInterfaceEditor from '../components/workbench/panels/orchestra/bsb/BSB
 import { createProjectPatchQueue } from '../stores/project-store/project-patch-queue';
 import { applyBsbInterfacePatchToSnapshot } from '../stores/project-store/bsb-interface-snapshot';
 import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
+import { useProjectStore } from '../stores/project-store';
 import { settleHistoryEditors } from '../lib/history-scope-router';
 
 (
@@ -217,12 +218,80 @@ function fixture() {
     submissions,
     dispatch,
     optimistic: () => optimistic,
+    renderInstrument: (instrument: BlueSynthBuilderInstrumentSnapshot) => {
+      optimistic = instrument;
+      act(render);
+    },
     context,
     documentId,
   };
 }
 
 describe('BSB editor → queue → canonical undo', () => {
+  it.each(
+    ['project', 'instrument', 'widget', 'removal'].flatMap((change) =>
+      ['move', 'resize'].flatMap((kind) =>
+        [false, true].flatMap((flushed) =>
+          ['release', 'escape', 'blur', 'unmount'].map((terminal) => ({
+            change,
+            kind,
+            flushed,
+            terminal,
+          })),
+        ),
+      ),
+    ),
+  )(
+    'discards obsolete $kind after $change ($flushed flushed, $terminal) (T054)',
+    async ({ change, kind, flushed, terminal }) => {
+      const f = fixture();
+      f.select('panel-a');
+      const target =
+        kind === 'move'
+          ? f.widget('panel-a')
+          : f.widget('panel-a').querySelector('[data-resize-edge="right"]')!;
+      expect(target).toBeTruthy();
+      f.mouse(target, 'mousedown', 10, 10);
+      f.mouse(window, 'mousemove', 40, 40);
+      if (flushed) {
+        frame();
+        await f.flush();
+      }
+      const before = f.submissions.length;
+      const replacement = structuredClone(f.optimistic());
+      if (change === 'project')
+        act(() =>
+          useProjectStore.setState({ sessionId: useProjectStore.getState().sessionId + 1 }),
+        );
+      if (change === 'instrument') replacement.widgetTree.gestureTargetId = 'new-instrument';
+      if (change === 'widget')
+        replacement.widgetTree.children![0]!.gestureTargetId = 'replacement-widget';
+      if (change === 'removal') replacement.widgetTree.children!.splice(0, 1);
+      f.renderInstrument(replacement);
+      // Deliver both a pending frame and a later input before the terminal.
+      frame();
+      f.mouse(window, 'mousemove', 80, 80);
+      frame();
+      if (terminal === 'release') f.mouse(window, 'mouseup', 80, 80);
+      else if (terminal === 'escape')
+        act(() =>
+          window.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+          ),
+        );
+      else if (terminal === 'blur') act(() => window.dispatchEvent(new Event('blur')));
+      else {
+        act(() => mounted!.root.unmount());
+        mounted!.container.remove();
+        mounted = undefined;
+      }
+      await f.flush();
+      expect(f.submissions).toHaveLength(before);
+      expect(f.session.read().data!.saveToString()).not.toContain('gestureTargetId');
+      expect(frames.size).toBe(0);
+    },
+  );
+
   it('restores nested cut/paste/move/multi-panel move/delete with one undo per action', async () => {
     const f = fixture();
     const states = [f.state()];
@@ -479,5 +548,138 @@ describe('BSB editor → queue → canonical undo', () => {
     expect(f.currentBsb().getGraphicInterface().findWidgetById('knob')?.x).toBe(60);
     await f.undo();
     expect(f.currentBsb().getGraphicInterface().findWidgetById('knob')?.x).toBe(10);
+  });
+
+  it('restores all optimistic widget baselines and cancels with no canonical action when Escape is pressed before queue flush', async () => {
+    const f = fixture();
+    const initial = f.state();
+    f.select('panel-a');
+    f.select('panel-b', true);
+    f.mouse(f.widget('panel-a'), 'mousedown', 10, 10);
+    f.mouse(window, 'mousemove', 50, 50);
+    frame();
+
+    const optChildren = f.optimistic().widgetTree.children!;
+    expect(optChildren[0].x).toBe(50);
+    expect(optChildren[1].x).toBe(250);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+
+    const restoredOpt = f.optimistic().widgetTree.children!;
+    expect(restoredOpt[0].x).toBe(10);
+    expect(restoredOpt[1].x).toBe(210);
+
+    await f.flush();
+    expect(f.state()).toBe(initial);
+    expect(f.history.isDirty()).toBe(false);
+    expect(f.history.read().length).toBe(0);
+  });
+
+  it('restores all optimistic widget baselines and rolls back grouped records in canonical history when Escape is pressed after queue flush', async () => {
+    const f = fixture();
+    const initial = f.state();
+    f.select('panel-a');
+    f.select('panel-b', true);
+    f.mouse(f.widget('panel-a'), 'mousedown', 10, 10);
+    f.mouse(window, 'mousemove', 50, 50);
+    frame();
+    await f.flush();
+
+    expect(f.currentBsb().getGraphicInterface().findWidgetById('panel-a')?.x).toBe(50);
+    expect(f.currentBsb().getGraphicInterface().findWidgetById('panel-b')?.x).toBe(250);
+    expect(f.history.isDirty()).toBe(true);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+
+    const restoredOpt = f.optimistic().widgetTree.children!;
+    expect(restoredOpt[0].x).toBe(10);
+    expect(restoredOpt[1].x).toBe(210);
+
+    await f.flush();
+    expect(f.state()).toBe(initial);
+    expect(f.history.isDirty()).toBe(false);
+    expect(f.history.read().length).toBe(0);
+  });
+
+  it('settles active widget drag on host blur as one completed action', async () => {
+    const f = fixture();
+    const initial = f.state();
+    f.select('panel-a');
+    f.mouse(f.widget('panel-a'), 'mousedown', 10, 10);
+    f.mouse(window, 'mousemove', 60, 50);
+    frame();
+
+    act(() => {
+      window.dispatchEvent(new FocusEvent('blur'));
+    });
+    await f.flush();
+
+    expect(f.currentBsb().getGraphicInterface().findWidgetById('panel-a')?.x).toBe(60);
+    expect(f.history.isDirty()).toBe(true);
+    expect(f.history.read().length).toBe(1);
+
+    await f.undo();
+    expect(f.state()).toBe(initial);
+    expect(f.history.isDirty()).toBe(false);
+  });
+
+  it('restores widget size baseline when resize is cancelled via Escape', async () => {
+    const f = fixture();
+    f.enter('panel-a');
+    f.select('knob');
+    const initial = f.state();
+    const handle = f.container.querySelector('[data-resize-edge="right"]')!;
+    expect(handle).not.toBeNull();
+    f.mouse(handle, 'mousedown', 10, 10);
+    f.mouse(window, 'mousemove', 40, 10);
+    frame();
+    await f.flush();
+
+    expect(f.state()).not.toBe(initial);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+    await f.flush();
+
+    expect(f.state()).toBe(initial);
+    expect(f.history.isDirty()).toBe(false);
+  });
+
+  it('attaches host listeners only during active drag and removes them on settlement', async () => {
+    const f = fixture();
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+    const moveListenersBefore = addEventListenerSpy.mock.calls.filter(
+      ([type]) => type === 'mousemove',
+    );
+    const callCountBefore = moveListenersBefore.length;
+
+    f.select('panel-a');
+    f.mouse(f.widget('panel-a'), 'mousedown', 10, 10);
+
+    const moveListenersDuring = addEventListenerSpy.mock.calls.filter(
+      ([type]) => type === 'mousemove',
+    );
+    expect(moveListenersDuring.length).toBeGreaterThan(callCountBefore);
+
+    f.mouse(window, 'mousemove', 20, 20);
+    f.mouse(window, 'mouseup', 20, 20);
+
+    const removeMoveListeners = removeEventListenerSpy.mock.calls.filter(
+      ([type]) => type === 'mousemove',
+    );
+    expect(removeMoveListeners.length).toBeGreaterThan(0);
   });
 });

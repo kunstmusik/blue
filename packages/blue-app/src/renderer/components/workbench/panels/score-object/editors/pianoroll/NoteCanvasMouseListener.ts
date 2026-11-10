@@ -50,52 +50,194 @@ export interface NoteCanvasListenerCallbacks {
   setScrollPosition: (left: number, top: number) => void;
 }
 
+export type PianoRollGestureState =
+  | { readonly kind: 'idle' }
+  | {
+      readonly kind: 'selecting';
+      readonly startX: number;
+      readonly startY: number;
+      currentX: number;
+      currentY: number;
+      pointerX: number;
+      pointerY: number;
+    }
+  | {
+      readonly kind: 'move';
+      readonly startBeat: number;
+      readonly startOctave: number;
+      readonly startScaleDegree: number;
+      readonly mouseNoteIndex: number;
+      readonly sourceData: NoteData[];
+      pointerX: number;
+      pointerY: number;
+    }
+  | {
+      readonly kind: 'create';
+      readonly startBeat: number;
+      readonly startOctave: number;
+      readonly startScaleDegree: number;
+      readonly dragStartX: number;
+      createNote: NoteSnapshot;
+      pointerX: number;
+      pointerY: number;
+    }
+  | {
+      readonly kind: 'resize_right';
+      readonly dragStartX: number;
+      readonly mouseNoteIndex: number;
+      readonly sourceData: NoteData[];
+      readonly minTimeAdjust: number;
+      pointerX: number;
+      pointerY: number;
+    }
+  | {
+      readonly kind: 'resize_left';
+      readonly dragStartX: number;
+      readonly mouseNoteIndex: number;
+      readonly sourceData: NoteData[];
+      readonly sourceStart: number;
+      readonly minTimeAdjust: number;
+      pointerX: number;
+      pointerY: number;
+    }
+  | {
+      readonly kind: 'field_edit';
+      readonly startBeat: number;
+      readonly startOctave: number;
+      readonly startScaleDegree: number;
+      readonly dragStartY: number;
+      readonly affectedFieldIndex: number;
+      readonly fieldEditNoteIndices: number[];
+      readonly originalFieldValues: number[];
+      pointerX: number;
+      pointerY: number;
+    };
+
+/**
+ * Separate controller managing viewport-edge autoscrolling during gestures.
+ */
+export class PianoRollAutoScroller {
+  private interval: ReturnType<typeof setInterval> | null = null;
+  private pointer: { clientX: number; clientY: number } | null = null;
+
+  constructor(
+    private readonly getBounds: () => {
+      viewportRect: DOMRect | null;
+      viewportSize: { width: number; height: number };
+      scrollPosition: { scrollLeft: number; scrollTop: number };
+    },
+    private readonly setScroll: (scrollLeft: number, scrollTop: number) => void,
+    private readonly onScrollTick?: () => void,
+  ) {}
+
+  updatePointer(clientX: number, clientY: number): void {
+    this.pointer = { clientX, clientY };
+  }
+
+  getPointer(): { clientX: number; clientY: number } | null {
+    return this.pointer;
+  }
+
+  isScrolling(): boolean {
+    return this.interval !== null;
+  }
+
+  start(): void {
+    if (this.interval) return;
+    this.interval = setInterval(() => {
+      if (!this.pointer) return;
+      const { viewportRect, viewportSize, scrollPosition } = this.getBounds();
+      if (!viewportRect) return;
+
+      let dx = 0;
+      let dy = 0;
+      const relX = this.pointer.clientX - viewportRect.left;
+      const relY = this.pointer.clientY - viewportRect.top;
+
+      if (relX < AUTO_SCROLL_MARGIN) dx = -AUTO_SCROLL_SPEED;
+      else if (relX > viewportSize.width - AUTO_SCROLL_MARGIN) dx = AUTO_SCROLL_SPEED;
+      if (relY < AUTO_SCROLL_MARGIN) dy = -AUTO_SCROLL_SPEED;
+      else if (relY > viewportSize.height - AUTO_SCROLL_MARGIN) dy = AUTO_SCROLL_SPEED;
+
+      if (dx !== 0 || dy !== 0) {
+        this.setScroll(scrollPosition.scrollLeft + dx, scrollPosition.scrollTop + dy);
+        this.onScrollTick?.();
+      }
+    }, 50);
+  }
+
+  stop(): void {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+  }
+
+  dispose(): void {
+    this.stop();
+    this.pointer = null;
+  }
+}
+
 export class NoteCanvasMouseListener {
   private callbacks: NoteCanvasListenerCallbacks;
-  private dragMode: DragMode = 'NONE';
-  private startBeat = 0;
-  private startOctave = 0;
-  private startScaleDegree = 0;
-  private mouseNoteIndex = -1;
-  private noteSourceData: NoteData[] = [];
-  private noteSourceStart = 0;
-  private minTimeAdjust = 0;
-  private originalFieldValues: number[] = [];
-  private affectedFieldIndex = -1;
-  private fieldEditNoteIndices: number[] = [];
-  private createNote: NoteSnapshot | null = null;
-
-  private marqueeStartX = 0;
-  private marqueeStartY = 0;
-  private marqueeEndX = 0;
-  private marqueeEndY = 0;
-  private marqueeVisible = false;
-  private dragStartX = 0;
-
+  private state: PianoRollGestureState = { kind: 'idle' };
   private previewNotes: NoteSnapshot[] | null = null;
-
-  private autoScrollInterval: ReturnType<typeof setInterval> | null = null;
-  private currentMouseX = 0;
-  private currentMouseY = 0;
+  private readonly autoScroller: PianoRollAutoScroller;
 
   constructor(callbacks: NoteCanvasListenerCallbacks) {
     this.callbacks = callbacks;
+    this.autoScroller = new PianoRollAutoScroller(
+      () => ({
+        viewportRect: this.callbacks.getViewportRect(),
+        viewportSize: this.callbacks.getViewportSize(),
+        scrollPosition: this.callbacks.getScrollPosition(),
+      }),
+      (left, top) => this.callbacks.setScrollPosition(left, top),
+      () => {
+        const ptr = this.autoScroller.getPointer();
+        if (ptr) {
+          this.updateGestureFromPointer(ptr.clientX, ptr.clientY);
+        }
+      },
+    );
   }
 
   getDragMode(): DragMode {
-    return this.dragMode;
+    switch (this.state.kind) {
+      case 'idle':
+        return 'NONE';
+      case 'selecting':
+        return 'SELECTING';
+      case 'move':
+        return 'MOVE';
+      case 'create':
+        return 'CREATE';
+      case 'resize_right':
+        return 'RESIZE_RIGHT';
+      case 'resize_left':
+        return 'RESIZE_LEFT';
+      case 'field_edit':
+        return 'FIELD_EDIT';
+    }
   }
+
   getPreviewNotes(): NoteSnapshot[] | null {
     return this.previewNotes;
   }
+
   getMarquee(): { x1: number; y1: number; x2: number; y2: number } | null {
-    if (!this.marqueeVisible) return null;
+    if (this.state.kind !== 'selecting') return null;
     return {
-      x1: Math.min(this.marqueeStartX, this.marqueeEndX),
-      y1: Math.min(this.marqueeStartY, this.marqueeEndY),
-      x2: Math.max(this.marqueeStartX, this.marqueeEndX),
-      y2: Math.max(this.marqueeStartY, this.marqueeEndY),
+      x1: Math.min(this.state.startX, this.state.currentX),
+      y1: Math.min(this.state.startY, this.state.currentY),
+      x2: Math.max(this.state.startX, this.state.currentX),
+      y2: Math.max(this.state.startY, this.state.currentY),
     };
+  }
+
+  getAutoScroller(): PianoRollAutoScroller {
+    return this.autoScroller;
   }
 
   private isMidi(): boolean {
@@ -168,14 +310,16 @@ export class NoteCanvasMouseListener {
     return null;
   }
 
-  private setupSourceData(): void {
+  private getSourceData(mouseNoteIndex: number): {
+    sourceData: NoteData[];
+    sourceStart: number;
+    minTimeAdjust: number;
+  } {
     const notes = this.callbacks.notes;
     const selected = this.callbacks.selectedIndices;
     const sourceIndices =
-      selected.size > 0 && selected.has(this.mouseNoteIndex)
-        ? [...selected]
-        : [this.mouseNoteIndex];
-    this.noteSourceData = sourceIndices.flatMap((i) => {
+      selected.size > 0 && selected.has(mouseNoteIndex) ? [...selected] : [mouseNoteIndex];
+    const sourceData: NoteData[] = sourceIndices.flatMap((i) => {
       const note = notes[i];
       if (!note) return [];
       return [
@@ -188,17 +332,15 @@ export class NoteCanvasMouseListener {
         },
       ];
     });
-    this.noteSourceStart = this.noteSourceData.reduce(
-      (min, d) => Math.min(min, d.originStart),
-      Infinity,
-    );
-    this.minTimeAdjust = this.noteSourceData.reduce(
+    const sourceStart = sourceData.reduce((min, d) => Math.min(min, d.originStart), Infinity);
+    const minTimeAdjust = sourceData.reduce(
       (max, d) => Math.max(max, -d.originDuration),
       -Infinity,
     );
+    return { sourceData, sourceStart, minTimeAdjust };
   }
 
-  mousePressed(e: React.MouseEvent): void {
+  mousePressed(e: React.MouseEvent | MouseEvent): void {
     const rect = this.callbacks.getCanvasRect();
     if (!rect) return;
     const x = e.clientX - rect.left;
@@ -220,27 +362,32 @@ export class NoteCanvasMouseListener {
 
     if (hit) {
       if (ctrlOrMeta && this.callbacks.selectedFieldDef) {
-        this.dragMode = 'FIELD_EDIT';
-        this.mouseNoteIndex = hit.index;
         if (!this.callbacks.selectedIndices.has(hit.index)) {
           this.callbacks.setSelection(new Set([hit.index]));
         }
-        this.setupSourceData();
         const fdIndex = this.callbacks.fieldDefinitions.findIndex(
           (fd) => fd.fieldName === this.callbacks.selectedFieldDef!.fieldName,
         );
-        this.affectedFieldIndex = fdIndex;
         const selectedForFieldEdit = this.callbacks.selectedIndices.has(hit.index)
           ? [...this.callbacks.selectedIndices]
           : [hit.index];
-        this.fieldEditNoteIndices = selectedForFieldEdit;
-        this.originalFieldValues = selectedForFieldEdit.map((i) => {
+        const originalFieldValues = selectedForFieldEdit.map((i) => {
           const note = this.callbacks.notes[i]!;
           return note.fieldValues[fdIndex] ?? this.callbacks.selectedFieldDef!.defaultValue;
         });
-        this.startBeat = beat;
-        this.startOctave = octave;
-        this.startScaleDegree = scaleDegree;
+
+        this.state = {
+          kind: 'field_edit',
+          startBeat: beat,
+          startOctave: octave,
+          startScaleDegree: scaleDegree,
+          dragStartY: y,
+          affectedFieldIndex: fdIndex,
+          fieldEditNoteIndices: selectedForFieldEdit,
+          originalFieldValues,
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+        };
         return;
       }
 
@@ -257,20 +404,41 @@ export class NoteCanvasMouseListener {
         this.callbacks.setSelection(new Set([hit.index]));
       }
 
-      this.mouseNoteIndex = hit.index;
-      this.setupSourceData();
+      const { sourceData, sourceStart, minTimeAdjust } = this.getSourceData(hit.index);
 
       if (hit.edge === 'right') {
-        this.dragMode = 'RESIZE_RIGHT';
+        this.state = {
+          kind: 'resize_right',
+          dragStartX: x,
+          mouseNoteIndex: hit.index,
+          sourceData,
+          minTimeAdjust,
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+        };
       } else if (hit.edge === 'left') {
-        this.dragMode = 'RESIZE_LEFT';
+        this.state = {
+          kind: 'resize_left',
+          dragStartX: x,
+          mouseNoteIndex: hit.index,
+          sourceData,
+          sourceStart,
+          minTimeAdjust,
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+        };
       } else {
-        this.dragMode = 'MOVE';
+        this.state = {
+          kind: 'move',
+          startBeat: beat,
+          startOctave: octave,
+          startScaleDegree: scaleDegree,
+          mouseNoteIndex: hit.index,
+          sourceData,
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+        };
       }
-      this.startBeat = beat;
-      this.startOctave = octave;
-      this.startScaleDegree = scaleDegree;
-      this.dragStartX = x;
     } else {
       if (ctrlOrMeta) {
         this.callbacks.pasteNotesAt(beat, octave, scaleDegree);
@@ -278,70 +446,93 @@ export class NoteCanvasMouseListener {
       }
 
       if (e.shiftKey) {
-        this.dragMode = 'CREATE';
-        this.startBeat = beat;
-        this.startOctave = octave;
-        this.startScaleDegree = scaleDegree;
-        this.dragStartX = x;
         const initialDuration = this.callbacks.snapEnabled
           ? this.callbacks.snapBeats > 0
             ? this.callbacks.snapBeats
             : 1
           : 5 / this.callbacks.pixelSecond;
-        this.createNote = {
+        const createNote: NoteSnapshot = {
           octave,
           scaleDegree,
           start: beat,
           duration: initialDuration,
           fieldValues: this.callbacks.fieldDefinitions.map((fd) => fd.defaultValue),
         };
-        this.previewNotes = [...this.callbacks.notes, this.createNote];
+        this.state = {
+          kind: 'create',
+          startBeat: beat,
+          startOctave: octave,
+          startScaleDegree: scaleDegree,
+          dragStartX: x,
+          createNote,
+          pointerX: e.clientX,
+          pointerY: e.clientY,
+        };
+        this.previewNotes = [...this.callbacks.notes, createNote];
         this.callbacks.requestRedraw();
         return;
       }
 
       this.callbacks.clearSelection();
-      this.dragMode = 'SELECTING';
-      this.marqueeStartX = x;
-      this.marqueeStartY = y;
-      this.marqueeEndX = x;
-      this.marqueeEndY = y;
-      this.marqueeVisible = true;
+      this.state = {
+        kind: 'selecting',
+        startX: x,
+        startY: y,
+        currentX: x,
+        currentY: y,
+        pointerX: e.clientX,
+        pointerY: e.clientY,
+      };
       this.callbacks.requestRedraw();
     }
   }
 
-  mouseDragged(e: React.MouseEvent): void {
-    if (this.dragMode === 'NONE') return;
+  mouseDragged(e: React.MouseEvent | MouseEvent): void {
+    this.updateGestureFromPointer(e.clientX, e.clientY);
+  }
+
+  private updateGestureFromPointer(clientX: number, clientY: number): void {
+    if (this.state.kind === 'idle') return;
     const rect = this.callbacks.getCanvasRect();
     if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    this.currentMouseX = e.clientX;
-    this.currentMouseY = e.clientY;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    this.autoScroller.updatePointer(clientX, clientY);
 
     const snapBeats = this.callbacks.snapEnabled ? this.callbacks.snapBeats : 0;
     const beat = snapBeatRound(this.xToBeat(x), snapBeats);
     const { octave, scaleDegree } = this.yToPitch(y);
 
-    switch (this.dragMode) {
-      case 'SELECTING':
-        this.marqueeEndX = x;
-        this.marqueeEndY = y;
-        this.startAutoScroll();
+    switch (this.state.kind) {
+      case 'selecting': {
+        this.state.currentX = x;
+        this.state.currentY = y;
+        this.state.pointerX = clientX;
+        this.state.pointerY = clientY;
+        this.autoScroller.start();
         this.callbacks.requestRedraw();
         break;
+      }
 
-      case 'MOVE': {
-        const deltaBeat = beat - this.startBeat;
+      case 'move': {
+        this.state.pointerX = clientX;
+        this.state.pointerY = clientY;
+        const deltaBeat = beat - this.state.startBeat;
         const nd = this.numDegrees();
-        const deltaOctave = octave - this.startOctave;
-        const deltaDegree = scaleDegree - this.startScaleDegree;
+        const deltaOctave = octave - this.state.startOctave;
+        const deltaDegree = scaleDegree - this.state.startScaleDegree;
         const notes = this.callbacks.notes;
         const selected = this.callbacks.selectedIndices;
         this.previewNotes = notes.map((n, i) => {
-          const src = this.noteSourceData.find((d) => d.noteIndex === i);
-          if (src && (selected.has(i) || i === this.mouseNoteIndex)) {
+          const src =
+            this.state.kind === 'move'
+              ? this.state.sourceData.find((d) => d.noteIndex === i)
+              : undefined;
+          if (
+            src &&
+            (selected.has(i) || (this.state.kind === 'move' && i === this.state.mouseNoteIndex))
+          ) {
             return {
               ...n,
               start: src.originStart + deltaBeat,
@@ -351,12 +542,14 @@ export class NoteCanvasMouseListener {
           }
           return { ...n };
         });
-        this.startAutoScroll();
+        this.autoScroller.start();
         this.callbacks.requestRedraw();
         break;
       }
 
-      case 'CREATE': {
+      case 'create': {
+        this.state.pointerX = clientX;
+        this.state.pointerY = clientY;
         const pixelSecond = this.callbacks.pixelSecond;
         const minDuration = this.callbacks.snapEnabled
           ? this.callbacks.snapBeats > 0
@@ -368,40 +561,44 @@ export class NoteCanvasMouseListener {
             ? this.callbacks.snapBeats
             : 1
           : 5 / pixelSecond;
-        const originEnd = this.startBeat + initialDuration;
-        const rawTimeAdjust = (x - this.dragStartX) / pixelSecond;
+        const originEnd = this.state.startBeat + initialDuration;
+        const rawTimeAdjust = (x - this.state.dragStartX) / pixelSecond;
         let duration = Math.max(minDuration, initialDuration + rawTimeAdjust);
 
         if (this.callbacks.snapEnabled && this.callbacks.snapBeats > 0) {
           const snapValue = this.callbacks.snapBeats;
           const snapEndTime = snapBeatRound(originEnd + rawTimeAdjust, snapValue);
-          let newDuration = snapEndTime - this.startBeat;
+          let newDuration = snapEndTime - this.state.startBeat;
           const rawDuration = initialDuration + rawTimeAdjust;
           duration = newDuration < rawDuration ? newDuration + snapValue : newDuration;
           duration = Math.max(minDuration, duration);
         }
 
-        this.createNote = {
-          octave: this.startOctave,
-          scaleDegree: this.startScaleDegree,
-          start: this.startBeat,
+        this.state.createNote = {
+          octave: this.state.startOctave,
+          scaleDegree: this.state.startScaleDegree,
+          start: this.state.startBeat,
           duration,
           fieldValues: this.callbacks.fieldDefinitions.map((fd) => fd.defaultValue),
         };
-        this.previewNotes = [...this.callbacks.notes, this.createNote];
+        this.previewNotes = [...this.callbacks.notes, this.state.createNote];
         this.callbacks.requestRedraw();
         break;
       }
 
-      case 'RESIZE_RIGHT': {
+      case 'resize_right': {
+        this.state.pointerX = clientX;
+        this.state.pointerY = clientY;
         const pixelSecond = this.callbacks.pixelSecond;
         const minDuration = EDGE / pixelSecond;
-        const rawTimeAdjust = (x - this.dragStartX) / pixelSecond;
-        let timeAdjust = Math.max(rawTimeAdjust, this.minTimeAdjust + minDuration);
+        const rawTimeAdjust = (x - this.state.dragStartX) / pixelSecond;
+        let timeAdjust = Math.max(rawTimeAdjust, this.state.minTimeAdjust + minDuration);
 
         if (this.callbacks.snapEnabled && this.callbacks.snapBeats > 0) {
           const snapValue = this.callbacks.snapBeats;
-          const src = this.noteSourceData.find((d) => d.noteIndex === this.mouseNoteIndex);
+          const src = this.state.sourceData.find(
+            (d) => d.noteIndex === (this.state as { mouseNoteIndex: number }).mouseNoteIndex,
+          );
           if (src) {
             const originEnd = src.originStart + src.originDuration;
             const snapEndTime = snapBeatRound(originEnd + timeAdjust, snapValue);
@@ -412,7 +609,10 @@ export class NoteCanvasMouseListener {
 
         const finalTimeAdjust = timeAdjust;
         this.previewNotes = this.callbacks.notes.map((n, i) => {
-          const src = this.noteSourceData.find((d) => d.noteIndex === i);
+          const src =
+            this.state.kind === 'resize_right'
+              ? this.state.sourceData.find((d) => d.noteIndex === i)
+              : undefined;
           if (src) {
             return {
               ...n,
@@ -426,19 +626,23 @@ export class NoteCanvasMouseListener {
         break;
       }
 
-      case 'RESIZE_LEFT': {
+      case 'resize_left': {
+        this.state.pointerX = clientX;
+        this.state.pointerY = clientY;
         const pixelSecond = this.callbacks.pixelSecond;
         const minDuration = EDGE / pixelSecond;
-        const rawTimeAdjust = (x - this.dragStartX) / pixelSecond;
+        const rawTimeAdjust = (x - this.state.dragStartX) / pixelSecond;
 
         let timeAdjust = rawTimeAdjust;
-        timeAdjust = Math.max(-this.noteSourceStart, timeAdjust);
-        const leftMinTimeAdjust = -this.minTimeAdjust - minDuration;
+        timeAdjust = Math.max(-this.state.sourceStart, timeAdjust);
+        const leftMinTimeAdjust = -this.state.minTimeAdjust - minDuration;
         timeAdjust = Math.min(timeAdjust, leftMinTimeAdjust);
 
         if (this.callbacks.snapEnabled && this.callbacks.snapBeats > 0) {
           const snapValue = this.callbacks.snapBeats;
-          const src = this.noteSourceData.find((d) => d.noteIndex === this.mouseNoteIndex);
+          const src = this.state.sourceData.find(
+            (d) => d.noteIndex === (this.state as { mouseNoteIndex: number }).mouseNoteIndex,
+          );
           if (src) {
             const snapStartTime = snapBeatRound(src.originStart + timeAdjust, snapValue);
             let newTimeAdjust = snapStartTime - src.originStart;
@@ -449,7 +653,10 @@ export class NoteCanvasMouseListener {
 
         const finalTimeAdjust = timeAdjust;
         this.previewNotes = this.callbacks.notes.map((n, i) => {
-          const src = this.noteSourceData.find((d) => d.noteIndex === i);
+          const src =
+            this.state.kind === 'resize_left'
+              ? this.state.sourceData.find((d) => d.noteIndex === i)
+              : undefined;
           if (src) {
             const originEnd = src.originStart + src.originDuration;
             const newStart = src.originStart + finalTimeAdjust;
@@ -462,30 +669,33 @@ export class NoteCanvasMouseListener {
         break;
       }
 
-      case 'FIELD_EDIT': {
-        const deltaY = y - this.pitchToY(this.startOctave, this.startScaleDegree);
+      case 'field_edit': {
+        this.state.pointerX = clientX;
+        this.state.pointerY = clientY;
+        const deltaY = y - this.state.dragStartY;
         const fieldDef = this.callbacks.selectedFieldDef;
-        if (!fieldDef || this.affectedFieldIndex < 0) break;
+        if (!fieldDef || this.state.affectedFieldIndex < 0) break;
         const range = fieldDef.maxValue - fieldDef.minValue;
         if (range <= 0) break;
         const yScale = 200;
         const valueDelta = -(deltaY / yScale) * range;
-        const selected =
-          this.fieldEditNoteIndices.length > 0
-            ? this.fieldEditNoteIndices
-            : [...this.callbacks.selectedIndices];
+        const selected = this.state.fieldEditNoteIndices;
         const notes = this.callbacks.notes;
         this.previewNotes = notes.map((n, i) => {
           const selIdx = selected.indexOf(i);
           if (selIdx >= 0) {
-            const origVal = this.originalFieldValues[selIdx]!;
+            const origVal =
+              this.state.kind === 'field_edit' ? this.state.originalFieldValues[selIdx]! : 0;
             const newVal = Math.max(
               fieldDef.minValue,
               Math.min(fieldDef.maxValue, origVal + valueDelta),
             );
             const newFields = [...n.fieldValues];
-            if (this.affectedFieldIndex < newFields.length) {
-              newFields[this.affectedFieldIndex] =
+            if (
+              this.state.kind === 'field_edit' &&
+              this.state.affectedFieldIndex < newFields.length
+            ) {
+              newFields[this.state.affectedFieldIndex] =
                 fieldDef.fieldType === 'DISCRETE' ? Math.round(newVal) : newVal;
             }
             return { ...n, fieldValues: newFields };
@@ -498,101 +708,122 @@ export class NoteCanvasMouseListener {
     }
   }
 
-  mouseReleased(_e: React.MouseEvent): void {
-    this.stopAutoScroll();
+  mouseReleased(_e?: React.MouseEvent | MouseEvent): void {
+    this.autoScroller.stop();
+    const state = this.state;
 
-    switch (this.dragMode) {
-      case 'SELECTING':
+    switch (state.kind) {
+      case 'selecting': {
         this.endMarquee();
         break;
+      }
 
-      case 'MOVE': {
-        if (!this.previewNotes) break;
-        const endData: NoteData[] = [];
-        for (const src of this.noteSourceData) {
-          const pn = this.previewNotes[src.noteIndex];
-          if (pn) {
-            endData.push({
-              noteIndex: src.noteIndex,
-              originStart: src.originStart,
-              originDuration: src.originDuration,
-              octave: pn.octave,
-              scaleDegree: pn.scaleDegree,
-            });
+      case 'move': {
+        if (this.previewNotes) {
+          const endData: NoteData[] = [];
+          for (const src of state.sourceData) {
+            const pn = this.previewNotes[src.noteIndex];
+            if (pn) {
+              endData.push({
+                noteIndex: src.noteIndex,
+                originStart: pn.start,
+                originDuration: pn.duration,
+                octave: pn.octave,
+                scaleDegree: pn.scaleDegree,
+              });
+            }
+          }
+          const hasChange = endData.some((end) => {
+            const src = state.sourceData.find((s) => s.noteIndex === end.noteIndex);
+            if (!src) return false;
+            return (
+              end.originStart !== src.originStart ||
+              end.originDuration !== src.originDuration ||
+              end.octave !== src.octave ||
+              end.scaleDegree !== src.scaleDegree
+            );
+          });
+          if (hasChange) {
+            this.callbacks.commitNoteTimeEdit(state.sourceData, endData);
           }
         }
-        if (endData.length > 0) {
-          const actualEnd = endData.map((d) => ({
-            ...d,
-            originStart: this.previewNotes![d.noteIndex]!.start,
-            originDuration: this.previewNotes![d.noteIndex]!.duration,
-          }));
-          this.callbacks.commitNoteTimeEdit(this.noteSourceData, actualEnd);
+        break;
+      }
+
+      case 'create': {
+        if (state.createNote) {
+          this.callbacks.addNote(
+            state.createNote.start,
+            state.createNote.scaleDegree,
+            state.createNote.octave,
+            state.createNote.duration,
+          );
         }
         break;
       }
 
-      case 'CREATE': {
-        if (!this.createNote) break;
-        this.callbacks.addNote(
-          this.createNote.start,
-          this.createNote.scaleDegree,
-          this.createNote.octave,
-          this.createNote.duration,
-        );
-        break;
-      }
-
-      case 'RESIZE_RIGHT':
-      case 'RESIZE_LEFT': {
-        if (!this.previewNotes) break;
-        const endData: NoteData[] = [];
-        for (const src of this.noteSourceData) {
-          const pn = this.previewNotes[src.noteIndex];
-          if (pn && (pn.start !== src.originStart || pn.duration !== src.originDuration)) {
-            endData.push({ ...src, originStart: pn.start, originDuration: pn.duration });
+      case 'resize_right':
+      case 'resize_left': {
+        if (this.previewNotes) {
+          const endData: NoteData[] = [];
+          for (const src of state.sourceData) {
+            const pn = this.previewNotes[src.noteIndex];
+            if (pn && (pn.start !== src.originStart || pn.duration !== src.originDuration)) {
+              endData.push({ ...src, originStart: pn.start, originDuration: pn.duration });
+            }
+          }
+          if (endData.length > 0) {
+            this.callbacks.commitNoteTimeEdit(state.sourceData, endData);
           }
         }
-        if (endData.length > 0) {
-          this.callbacks.commitNoteTimeEdit(this.noteSourceData, endData);
+        break;
+      }
+
+      case 'field_edit': {
+        if (this.previewNotes && state.affectedFieldIndex >= 0) {
+          const selected = state.fieldEditNoteIndices;
+          const endValues = selected.map((i) => {
+            const note = this.previewNotes![i];
+            return note ? (note.fieldValues[state.affectedFieldIndex] ?? 0) : 0;
+          });
+          const hasChange = endValues.some((val, idx) => val !== state.originalFieldValues[idx]);
+          if (hasChange) {
+            this.callbacks.commitFieldEdit(
+              selected,
+              state.affectedFieldIndex,
+              state.originalFieldValues,
+              endValues,
+            );
+          }
         }
         break;
       }
 
-      case 'FIELD_EDIT': {
-        if (!this.previewNotes || this.affectedFieldIndex < 0) break;
-        const selected =
-          this.fieldEditNoteIndices.length > 0
-            ? this.fieldEditNoteIndices
-            : [...this.callbacks.selectedIndices];
-        const endValues = selected.map((i) => {
-          const note = this.previewNotes![i];
-          return note ? (note.fieldValues[this.affectedFieldIndex] ?? 0) : 0;
-        });
-        this.callbacks.commitFieldEdit(
-          selected,
-          this.affectedFieldIndex,
-          this.originalFieldValues,
-          endValues,
-        );
+      case 'idle':
         break;
-      }
     }
 
-    this.dragMode = 'NONE';
+    this.state = { kind: 'idle' };
     this.previewNotes = null;
-    this.createNote = null;
-    this.marqueeVisible = false;
-    this.noteSourceData = [];
-    this.noteSourceStart = 0;
-    this.minTimeAdjust = 0;
-    this.fieldEditNoteIndices = [];
     this.callbacks.requestRedraw();
+  }
+
+  cancel(): void {
+    if (this.state.kind === 'idle') return;
+    this.autoScroller.stop();
+    this.state = { kind: 'idle' };
+    this.previewNotes = null;
+    this.callbacks.requestRedraw();
+  }
+
+  dispose(): void {
+    this.autoScroller.dispose();
+    this.state = { kind: 'idle' };
+    this.previewNotes = null;
   }
 
   private endMarquee(): void {
     const m = this.getMarquee();
-    this.marqueeVisible = false;
     if (!m) return;
     const notes = this.callbacks.notes;
     const selected = new Set<number>();
@@ -610,54 +841,20 @@ export class NoteCanvasMouseListener {
   }
 
   getCursor(x: number, y: number): string {
-    if (this.dragMode === 'RESIZE_RIGHT' || this.dragMode === 'RESIZE_LEFT') {
+    if (this.state.kind === 'resize_right' || this.state.kind === 'resize_left') {
       return 'ew-resize';
     }
-    if (this.dragMode === 'FIELD_EDIT') {
+    if (this.state.kind === 'field_edit') {
       return 'ns-resize';
     }
-    if (this.dragMode !== 'NONE') {
+    if (this.state.kind !== 'idle') {
       return 'default';
     }
     const hit = this.hitTestNotes(x, y);
     if (!hit) return 'default';
     if (hit.edge === 'right') return 'ew-resize';
     if (hit.edge === 'left') return 'ew-resize';
-    if (this.callbacks.selectedFieldDef) {
-      // Could be field edit if ctrl is held - browser handles cursor based on CSS
-    }
     return 'default';
-  }
-
-  private startAutoScroll(): void {
-    if (this.autoScrollInterval) return;
-    this.autoScrollInterval = setInterval(() => {
-      const vp = this.callbacks.getViewportSize();
-      const rect = this.callbacks.getViewportRect();
-      if (!rect) return;
-
-      let dx = 0;
-      let dy = 0;
-      const relX = this.currentMouseX - rect.left;
-      const relY = this.currentMouseY - rect.top;
-
-      if (relX < AUTO_SCROLL_MARGIN) dx = -AUTO_SCROLL_SPEED;
-      else if (relX > vp.width - AUTO_SCROLL_MARGIN) dx = AUTO_SCROLL_SPEED;
-      if (relY < AUTO_SCROLL_MARGIN) dy = -AUTO_SCROLL_SPEED;
-      else if (relY > vp.height - AUTO_SCROLL_MARGIN) dy = AUTO_SCROLL_SPEED;
-
-      if (dx !== 0 || dy !== 0) {
-        const scroll = this.callbacks.getScrollPosition();
-        this.callbacks.setScrollPosition(scroll.scrollLeft + dx, scroll.scrollTop + dy);
-      }
-    }, 50);
-  }
-
-  private stopAutoScroll(): void {
-    if (this.autoScrollInterval) {
-      clearInterval(this.autoScrollInterval);
-      this.autoScrollInterval = null;
-    }
   }
 
   updateCallbacks(callbacks: NoteCanvasListenerCallbacks): void {

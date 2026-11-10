@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
@@ -42,14 +42,20 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
   let root: Root;
   let svg: SVGSVGElement;
 
-  const renderCanvas = (providerDocument: Document | null = popoutDoc) => {
+  const renderCanvas = (
+    providerDocument: Document | null = popoutDoc,
+    onLinesChange: (lines: typeof initialLines) => void = () => {},
+  ) => {
+    if (providerDocument && host && host.ownerDocument !== providerDocument) {
+      providerDocument.body.appendChild(host);
+    }
     act(() => {
       root.render(
         <HostDocumentContext.Provider value={providerDocument}>
           <EditableLineCanvas
             lines={initialLines}
             selectedLineIndex={0}
-            onLinesChange={() => {}}
+            onLinesChange={onLinesChange}
             canvasWidth={200}
             canvasHeight={120}
             interactive
@@ -384,5 +390,311 @@ describe('EditableLineCanvas popups in a floated (popout) panel', () => {
     expect(popoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')).toHaveLength(0);
     expect(secondPopoutDoc.querySelectorAll('[data-host-surface], [role="menu"]')).toHaveLength(0);
     expect(document.querySelectorAll('[data-host-surface], [role="menu"]')).toHaveLength(0);
+  });
+
+  it('commits point drag on release via the hosting popout window', () => {
+    const onLinesChange = vi.fn();
+    renderCanvas(popoutDoc, onLinesChange);
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 98,
+        }),
+      );
+    });
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onLinesChange).toHaveBeenCalledTimes(1);
+    expect(onLinesChange.mock.calls[0]![0][0]!.points[0]!.y).toBeGreaterThan(0.5);
+  });
+
+  it('cancels point drag on Escape via the hosting popout window without calling onLinesChange', () => {
+    const onLinesChange = vi.fn();
+    renderCanvas(popoutDoc, onLinesChange);
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 98,
+        }),
+      );
+    });
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutKeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+  });
+
+  it('cancels point drag on blur via the hosting popout window without calling onLinesChange', () => {
+    const onLinesChange = vi.fn();
+    renderCanvas(popoutDoc, onLinesChange);
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 98,
+        }),
+      );
+    });
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+
+    act(() => {
+      popout.window.dispatchEvent(new popout.window.Event('blur'));
+    });
+
+    act(() => {
+      popout.window.dispatchEvent(
+        new PopoutMouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onLinesChange).not.toHaveBeenCalled();
+  });
+
+  describe('docked to floated adoption regression (T040)', () => {
+    it('proves main-window events cannot drive the gesture after adoption, and new host window release, escape, and blur work', () => {
+      const onLinesChange = vi.fn();
+      // 1. Mount while docked in the main document.
+      renderCanvas(document, onLinesChange);
+      const dockedSvg = host.querySelector('polyline')!.ownerSVGElement!;
+      expect(dockedSvg.ownerDocument).toBe(document);
+      Object.defineProperty(dockedSvg, 'getBoundingClientRect', {
+        configurable: true,
+        value: () => ({
+          left: 0,
+          top: 0,
+          right: 200,
+          bottom: 120,
+          width: 200,
+          height: 120,
+          x: 0,
+          y: 0,
+          toJSON: () => undefined,
+        }),
+      });
+
+      // 2. Adopt the already-mounted host into the popout window without unmounting/recreating.
+      popoutDoc.body.appendChild(host);
+      expect(dockedSvg.ownerDocument).toBe(popoutDoc);
+
+      // 3. Start drag on dockedSvg (now physically hosted in popoutDoc)
+      act(() => {
+        dockedSvg.dispatchEvent(
+          new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientX: 5,
+            clientY: 98,
+          }),
+        );
+      });
+
+      // 4. Main-window events must NOT drive the gesture
+      act(() => {
+        window.dispatchEvent(
+          new MouseEvent('mousemove', {
+            bubbles: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+        window.dispatchEvent(
+          new MouseEvent('mouseup', {
+            bubbles: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+      });
+      expect(onLinesChange).not.toHaveBeenCalled();
+
+      // 5. Popout window mousemove and release outside SVG DO drive and commit the gesture
+      act(() => {
+        popout.window.dispatchEvent(
+          new PopoutMouseEvent('mousemove', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+        popout.window.dispatchEvent(
+          new PopoutMouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+      });
+      expect(onLinesChange).toHaveBeenCalledTimes(1);
+
+      // 6. Escape in new host cancels, while main-window Escape does not
+      onLinesChange.mockClear();
+      act(() => {
+        dockedSvg.dispatchEvent(
+          new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientX: 5,
+            clientY: 98,
+          }),
+        );
+        popout.window.dispatchEvent(
+          new PopoutMouseEvent('mousemove', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+      });
+      // Main-window Escape must NOT cancel the gesture in the popout
+      act(() => {
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      });
+      // Popout Escape DOES cancel
+      act(() => {
+        popout.window.dispatchEvent(
+          new PopoutKeyboardEvent('keydown', {
+            key: 'Escape',
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      });
+      act(() => {
+        popout.window.dispatchEvent(
+          new PopoutMouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+      });
+      expect(onLinesChange).not.toHaveBeenCalled();
+
+      // 7. Blur in new host cancels, while main-window blur does not
+      act(() => {
+        dockedSvg.dispatchEvent(
+          new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            clientX: 5,
+            clientY: 98,
+          }),
+        );
+        popout.window.dispatchEvent(
+          new PopoutMouseEvent('mousemove', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+      });
+      // Main-window blur must NOT cancel the gesture in the popout
+      act(() => {
+        window.dispatchEvent(new Event('blur'));
+      });
+      // Popout blur DOES cancel
+      act(() => {
+        popout.window.dispatchEvent(new popout.window.Event('blur'));
+      });
+      act(() => {
+        popout.window.dispatchEvent(
+          new PopoutMouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+            clientX: 5,
+            clientY: 20,
+          }),
+        );
+      });
+      expect(onLinesChange).not.toHaveBeenCalled();
+    });
   });
 });

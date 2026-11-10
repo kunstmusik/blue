@@ -1,7 +1,8 @@
-import React, { useMemo, useState, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Element, loadInstrumentFromXML } from '@blue/data';
 import { toast } from 'sonner';
+import { attachHostGesture } from '../../../../lib/host-gesture';
 import {
   createInstrumentSnapshot,
   type SupportedNewInstrumentType,
@@ -104,6 +105,13 @@ function ArrangementPanel({
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
   const tableRef = useRef<HTMLTableElement>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      dragCleanupRef.current?.();
+    };
+  }, []);
 
   const table = useReactTable({
     data: rows,
@@ -133,33 +141,72 @@ function ArrangementPanel({
     (colId: string, e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+
+      dragCleanupRef.current?.();
+
+      const hostDocument = tableRef.current?.ownerDocument ?? document;
+      const hostBody = hostDocument.body;
+      const previousCursor = hostBody?.style.cursor ?? '';
+      const previousUserSelect = hostBody?.style.userSelect ?? '';
+
       setResizingCol(colId);
       resizeStartX.current = e.clientX;
-      resizeStartWidth.current = getColumnWidth(colId);
+      const initialWidth = getColumnWidth(colId);
+      resizeStartWidth.current = initialWidth;
 
       const minSize = (() => {
         const col = columns.find((c) => ('id' in c ? c.id === colId : false));
         return col && 'minSize' in col ? (col as any).minSize : 30;
       })();
 
-      const onMouseMove = (moveEvent: MouseEvent) => {
-        const delta = moveEvent.clientX - resizeStartX.current;
-        const newWidth = Math.max(minSize, resizeStartWidth.current + delta);
-        setColumnSizing((prev) => ({ ...prev, [colId]: newWidth }));
+      if (hostBody) {
+        hostBody.style.cursor = 'col-resize';
+        hostBody.style.userSelect = 'none';
+      }
+
+      const restoreStyles = () => {
+        if (hostBody) {
+          hostBody.style.cursor = previousCursor;
+          hostBody.style.userSelect = previousUserSelect;
+        }
       };
 
-      const onMouseUp = () => {
+      const finishResize = () => {
         setResizingCol(null);
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
+        restoreStyles();
+        dragCleanupRef.current = null;
       };
 
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      const cancelResize = () => {
+        setResizingCol(null);
+        restoreStyles();
+        setColumnSizing((prev) => ({ ...prev, [colId]: initialWidth }));
+        dragCleanupRef.current = null;
+      };
+
+      const disposer = attachHostGesture({
+        host: hostDocument,
+        kind: 'mouse',
+        onMove: (moveEvent) => {
+          const delta = (moveEvent as MouseEvent).clientX - resizeStartX.current;
+          const newWidth = Math.max(minSize, initialWidth + delta);
+          setColumnSizing((prev) => ({ ...prev, [colId]: newWidth }));
+        },
+        onRelease: () => {
+          finishResize();
+        },
+        onEscape: () => {
+          cancelResize();
+        },
+        onBlur: () => {
+          cancelResize();
+        },
+      });
+
+      dragCleanupRef.current = () => {
+        disposer();
+        cancelResize();
+      };
     },
     [columns, columnSizing],
   );

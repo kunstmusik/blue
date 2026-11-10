@@ -1,5 +1,9 @@
+// @vitest-environment jsdom
+
+import React, { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlueData, JMask, PolyObject, SoundLayer, TimeDuration } from '@blue/data';
 import {
   applyProjectDocumentPatch,
@@ -9,13 +13,50 @@ import {
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
 import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
+import { useProjectStore } from '../stores/project-store';
 import JMaskEditor from '../components/workbench/panels/score-object/editors/JMaskEditor';
+import TableEditor from '../components/workbench/panels/score-object/editors/jmask/TableEditor';
 import {
   createDefaultGeneratorSnapshot,
   createDefaultParameterSnapshot,
   type FieldSnapshot,
   type ParameterSnapshot,
+  type TableSnapshot,
 } from '../components/workbench/panels/score-object/editors/jmask/jmask-utils';
+
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
+
+class MockResizeObserver {
+  constructor(private readonly callback: ResizeObserverCallback) {}
+  observe() {
+    this.callback([] as ResizeObserverEntry[], this as unknown as ResizeObserver);
+  }
+  disconnect() {}
+  unobserve() {}
+}
+
+(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver;
+
+if (typeof HTMLCanvasElement !== 'undefined') {
+  HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+    save() {},
+    restore() {},
+    scale() {},
+    clearRect() {},
+    fillRect() {},
+    strokeRect() {},
+    stroke() {},
+    beginPath() {},
+    moveTo() {},
+    lineTo() {},
+    arc() {},
+    fill() {},
+    fillText() {},
+  });
+}
 
 function makeTimelineTarget(): ScoreObjectEditorTargetSnapshot {
   return {
@@ -174,5 +215,456 @@ describe('JMask editor contract and renderer helpers', () => {
     });
     expect(jmask.getSeed()).toBe('-9223372036854775808');
     expect(jmask.saveAsXML().getTextString('seed')).toBe('-9223372036854775808');
+  });
+});
+
+describe('TableEditor draft and terminal gesture lifecycle', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  let rectSpy: ReturnType<typeof vi.spyOn>;
+
+  const baseTable: TableSnapshot = {
+    kind: 'Table',
+    min: 0,
+    max: 1,
+    interpolationType: 1,
+    interpolation: 0,
+    points: [
+      { kind: 'TablePoint', time: 0, value: 0 },
+      { kind: 'TablePoint', time: 1, value: 1 },
+    ],
+  };
+
+  beforeEach(() => {
+    document.documentElement.style.setProperty('--text-role-subheadline', '11px');
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    rectSpy = vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 100,
+      width: 400,
+      height: 100,
+      toJSON: () => ({}),
+    } as DOMRect);
+  });
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--text-role-subheadline');
+    rectSpy.mockRestore();
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it.each([false, true])('handles table replacement during a draft (changed: %s)', (changed) => {
+    const oldChange = vi.fn();
+    const newChange = vi.fn();
+    act(() => root.render(<TableEditor table={baseTable} duration={4} onChange={oldChange} />));
+    const canvas = container.querySelector('canvas')!;
+    act(() =>
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 200, clientY: 50 }),
+      ),
+    );
+    const nextTable = structuredClone(baseTable);
+    if (changed) nextTable.points[1]!.value = 0.25;
+    act(() => root.render(<TableEditor table={nextTable} duration={4} onChange={newChange} />));
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 200, clientY: 30 }),
+      );
+      window.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 200, clientY: 30 }));
+    });
+    expect(oldChange).not.toHaveBeenCalled();
+    expect(newChange).toHaveBeenCalledTimes(changed ? 0 : 1);
+  });
+
+  it('keeps local draft during point drag and commits once on release', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+    expect(canvas).not.toBeNull();
+
+    // Hit point 0 at (5, 95)
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 95,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedPoints = onChange.mock.calls[0]![0].points;
+    expect(updatedPoints[0].value).toBeGreaterThan(0.5);
+  });
+
+  it('discards drag draft on Escape without calling onChange', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 95,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('discards drag draft on blur without calling onChange', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 95,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new Event('blur'));
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('does not call onChange when dragged back to original position (net zero)', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 5,
+          clientY: 95,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 20,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 95,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 5,
+          clientY: 95,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps local draft during point insertion and commits on release', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    // Click at middle (200, 50) to insert a point
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 200,
+          clientY: 50,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 200,
+          clientY: 30,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 200,
+          clientY: 30,
+        }),
+      );
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0]![0].points).toHaveLength(3);
+  });
+
+  it('discards point insertion draft on Escape', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 200,
+          clientY: 50,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 200,
+          clientY: 30,
+        }),
+      );
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('discards local draft on unmount without calling onChange (T039)', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 200,
+          clientY: 50,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 200,
+          clientY: 30,
+        }),
+      );
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+
+    // Closure / unmount
+    act(() => {
+      root.unmount();
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('fences drag move and release on session mismatch without calling onChange (T035)', () => {
+    const onChange = vi.fn();
+    act(() => {
+      root.render(<TableEditor table={baseTable} duration={4} onChange={onChange} />);
+    });
+
+    const canvas = container.querySelector('canvas')!;
+
+    act(() => {
+      canvas.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          clientX: 200,
+          clientY: 50,
+        }),
+      );
+    });
+
+    const origSessionId = useProjectStore.getState().sessionId;
+    useProjectStore.setState({ sessionId: origSessionId + 10 });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 200,
+          clientY: 30,
+        }),
+      );
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 200,
+          clientY: 30,
+        }),
+      );
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+    useProjectStore.setState({ sessionId: origSessionId });
   });
 });

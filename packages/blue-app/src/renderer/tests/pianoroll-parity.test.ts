@@ -393,4 +393,142 @@ describe('NoteCanvasMouseListener', () => {
 
     expect(harness.calls.setSelection.at(-1)).toEqual([0]);
   });
+
+  it('keeps local previewNotes during note move and does not commit until release', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const startX = note.start * harness.payload.pixelSecond + 10;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(createMouseEvent({ clientX: startX, clientY: startY }));
+    harness.listener.mouseDragged(createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }));
+
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
+    expect(harness.listener.getPreviewNotes()).not.toBeNull();
+    expect(harness.listener.getPreviewNotes()![0]!.start).toBeCloseTo(2);
+
+    harness.listener.mouseReleased(
+      createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }),
+    );
+
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(1);
+    expect(harness.listener.getPreviewNotes()).toBeNull();
+  });
+
+  it('discards previewNotes and does not commit on cancel() during note move', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const startX = note.start * harness.payload.pixelSecond + 10;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(createMouseEvent({ clientX: startX, clientY: startY }));
+    harness.listener.mouseDragged(createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }));
+
+    expect(harness.listener.getPreviewNotes()).not.toBeNull();
+
+    harness.listener.cancel();
+
+    expect(harness.listener.getPreviewNotes()).toBeNull();
+    expect(harness.listener.getDragMode()).toBe('NONE');
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
+
+    harness.listener.mouseReleased(
+      createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }),
+    );
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
+  });
+
+  it('does not commit when note is dragged back to original position (net zero)', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const startX = note.start * harness.payload.pixelSecond + 10;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(createMouseEvent({ clientX: startX, clientY: startY }));
+    harness.listener.mouseDragged(createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }));
+    harness.listener.mouseDragged(createMouseEvent({ clientX: startX, clientY: startY }));
+    harness.listener.mouseReleased(createMouseEvent({ clientX: startX, clientY: startY }));
+
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
+    expect(harness.listener.getPreviewNotes()).toBeNull();
+  });
+
+  it('keeps local preview during resize and cancel() discards without commit', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const noteX = note.start * harness.payload.pixelSecond;
+    const noteW = note.duration * harness.payload.pixelSecond;
+    const rightEdgeX = noteX + noteW - 2;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(createMouseEvent({ clientX: rightEdgeX, clientY: startY }));
+    expect(harness.listener.getDragMode()).toBe('RESIZE_RIGHT');
+
+    harness.listener.mouseDragged(createMouseEvent({ clientX: rightEdgeX + 40, clientY: startY }));
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
+    expect(harness.listener.getPreviewNotes()).not.toBeNull();
+    expect(harness.listener.getPreviewNotes()![0]!.duration).toBeGreaterThan(note.duration);
+
+    harness.listener.cancel();
+    expect(harness.listener.getPreviewNotes()).toBeNull();
+    expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
+  });
+
+  it('keeps local field editing preview and cancel() discards without commit', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const startX = note.start * harness.payload.pixelSecond + 10;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(
+      createMouseEvent({ clientX: startX, clientY: startY, ctrlKey: true }),
+    );
+    expect(harness.listener.getDragMode()).toBe('FIELD_EDIT');
+
+    harness.listener.mouseDragged(
+      createMouseEvent({ clientX: startX, clientY: startY - 50, ctrlKey: true }),
+    );
+    expect(harness.calls.commitFieldEdit).toHaveLength(0);
+
+    harness.listener.cancel();
+    expect(harness.listener.getDragMode()).toBe('NONE');
+    expect(harness.calls.commitFieldEdit).toHaveLength(0);
+  });
+
+  it('does not commit field edits when dragged back to original value (net zero)', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const startX = note.start * harness.payload.pixelSecond + 10;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(
+      createMouseEvent({ clientX: startX, clientY: startY, ctrlKey: true }),
+    );
+    harness.listener.mouseDragged(
+      createMouseEvent({ clientX: startX, clientY: startY - 50, ctrlKey: true }),
+    );
+    harness.listener.mouseDragged(
+      createMouseEvent({ clientX: startX, clientY: startY, ctrlKey: true }),
+    );
+    harness.listener.mouseReleased(
+      createMouseEvent({ clientX: startX, clientY: startY, ctrlKey: true }),
+    );
+
+    expect(harness.calls.commitFieldEdit).toHaveLength(0);
+  });
+
+  it('autoscroller starts on edge drag and stops on cancel or mouseReleased', () => {
+    const note = createPayload().notes[0]!;
+    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const startX = note.start * harness.payload.pixelSecond + 10;
+    const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
+
+    harness.listener.mousePressed(createMouseEvent({ clientX: startX, clientY: startY }));
+    harness.listener.mouseDragged(createMouseEvent({ clientX: 790, clientY: 10 }));
+
+    expect(harness.listener.getAutoScroller().isScrolling()).toBe(true);
+
+    harness.listener.cancel();
+    expect(harness.listener.getAutoScroller().isScrolling()).toBe(false);
+  });
 });

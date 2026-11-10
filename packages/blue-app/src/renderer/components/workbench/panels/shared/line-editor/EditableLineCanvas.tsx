@@ -3,6 +3,9 @@ import { clamp } from '@blue/data';
 import { useHostDocument } from '../../../../../hooks/use-host-document';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
+import { attachHostGesture, type HostGestureDisposer } from '../../../../../lib/host-gesture';
+import { registerHistoryEditorSettlement } from '../../../../../lib/history-scope-router';
+import { getProjectDocumentId, useProjectStore } from '../../../../../stores/project-store';
 import CommitNumberInput from '../../../../CommitNumberInput';
 import { cn } from '../../../../../lib/cn';
 
@@ -250,6 +253,23 @@ function formatAxisValue(value: number): string {
   return fixed.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
 }
 
+export function areLinesEqual<TLine extends EditableLineLike>(a: TLine[], b: TLine[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const lineA = a[i]!;
+    const lineB = b[i]!;
+    if (lineA.points.length !== lineB.points.length) return false;
+    for (let p = 0; p < lineA.points.length; p++) {
+      const ptA = lineA.points[p]!;
+      const ptB = lineB.points[p]!;
+      if (Math.abs(ptA.x - ptB.x) > 1e-6 || Math.abs(ptA.y - ptB.y) > 1e-6) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 export function useMeasuredElementSize<TElement extends HTMLElement>(fallback: {
   width: number;
   height: number;
@@ -306,11 +326,58 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   plotBorderColor = 'var(--color-app-text-soft)',
   tooltipFormatter,
 }: EditableLineCanvasProps<TLine>): React.ReactElement {
+  const [draftLines, setDraftLines] = useState<TLine[] | null>(null);
+  const draftLinesRef = useRef<TLine[] | null>(null);
+  const hostGestureDisposerRef = useRef<HostGestureDisposer | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const gestureFenceRef = useRef<{
+    docId: string;
+    sessionId: number;
+    lineIndex: number;
+    varName?: string;
+    baseline: string;
+  } | null>(null);
+
+  const isGestureFencedValid = useCallback(() => {
+    const fence = gestureFenceRef.current;
+    if (!fence) return true;
+    const currentDocId = getProjectDocumentId() ?? '';
+    const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+    if (fence.docId && currentDocId && currentDocId !== fence.docId) return false;
+    if (
+      fence.sessionId !== undefined &&
+      currentSessionId !== undefined &&
+      currentSessionId !== fence.sessionId
+    )
+      return false;
+    const targetLine = linesRef.current[fence.lineIndex];
+    if (!targetLine) return false;
+    if (fence.varName !== undefined && targetLine.varName !== fence.varName) return false;
+    if (JSON.stringify(targetLine) !== fence.baseline) return false;
+    return true;
+  }, []);
+
+  const endHostGesture = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureFenceRef.current = null;
+    if (hostGestureDisposerRef.current) {
+      hostGestureDisposerRef.current();
+      hostGestureDisposerRef.current = null;
+    }
+    dragRef.current = null;
+    draftLinesRef.current = null;
+    setDraftLines(null);
+    setHoverPoint(null);
+  }, []);
+
+  const effectiveLines = draftLines ?? lines;
   const activeLineIndex =
-    selectedLineIndex >= 0 && selectedLineIndex < lines.length ? selectedLineIndex : 0;
-  const currentLine = lines[activeLineIndex] ?? null;
+    selectedLineIndex >= 0 && selectedLineIndex < effectiveLines.length ? selectedLineIndex : 0;
+  const currentLine = effectiveLines[activeLineIndex] ?? null;
   const svgRef = useRef<SVGSVGElement | null>(null);
   const linesRef = useRef(lines);
+  const onLinesChangeRef = useRef(onLinesChange);
   const selectedLineIndexRef = useRef(activeLineIndex);
   const dragRef = useRef<PointHit | null>(null);
   const [hoverPoint, setHoverPoint] = useState<PointHit | null>(null);
@@ -335,12 +402,39 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   });
 
   linesRef.current = lines;
+  onLinesChangeRef.current = onLinesChange;
   selectedLineIndexRef.current = activeLineIndex;
+
+  const getGestureCommit = useCallback(() => {
+    const fence = gestureFenceRef.current;
+    const editedLine = fence && draftLinesRef.current?.[fence.lineIndex];
+    if (!fence || !editedLine || !isGestureFencedValid()) return null;
+    const next = cloneEditableLines(linesRef.current);
+    next[fence.lineIndex] = editedLine;
+    return areLinesEqual(next, linesRef.current) ? null : next;
+  }, [isGestureFencedValid]);
 
   useEffect(() => {
     setHoverPoint(null);
+    endHostGesture();
     dragRef.current = null;
-  }, [activeLineIndex]);
+    draftLinesRef.current = null;
+    setDraftLines(null);
+  }, [activeLineIndex, endHostGesture]);
+
+  useEffect(() => {
+    return () => {
+      endHostGesture();
+      dragRef.current = null;
+      draftLinesRef.current = null;
+    };
+  }, [endHostGesture]);
+
+  useEffect(() => {
+    if (dragRef.current !== null && !isGestureFencedValid()) {
+      endHostGesture();
+    }
+  }, [lines, selectedLineIndex, isGestureFencedValid, endHostGesture]);
 
   useEffect(() => {
     if (!locked) {
@@ -375,12 +469,9 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
   const plotWidth = Math.max(1, canvasWidth - plotLeft - plotRight);
   const plotHeight = Math.max(1, canvasHeight - plotTop - plotBottom);
 
-  const commitLines = useCallback(
-    (nextLines: TLine[]) => {
-      onLinesChange(nextLines);
-    },
-    [onLinesChange],
-  );
+  const commitLines = useCallback((nextLines: TLine[]) => {
+    onLinesChangeRef.current(nextLines);
+  }, []);
 
   const getPointFromEvent = useCallback(
     (clientX: number, clientY: number): PointerLocation | null => {
@@ -418,7 +509,8 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
 
   const findPointHit = useCallback(
     (clientX: number, clientY: number): PointHit | null => {
-      const line = linesRef.current[selectedLineIndexRef.current];
+      const currentLines = draftLinesRef.current ?? linesRef.current;
+      const line = currentLines[selectedLineIndexRef.current];
       if (!line) {
         return null;
       }
@@ -542,8 +634,96 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
       if (hit) {
         event.preventDefault();
         event.stopPropagation();
+        endHostGesture();
+
+        const draft = cloneEditableLines(linesRef.current);
+        draftLinesRef.current = draft;
+        setDraftLines(draft);
         setHoverPoint(hit);
         dragRef.current = hit;
+
+        const pressedSvg = event.currentTarget ?? svgRef.current;
+        const targetDoc =
+          pressedSvg?.ownerDocument ??
+          hostDocument ??
+          (typeof document !== 'undefined' ? document : null);
+        const targetWin =
+          targetDoc?.defaultView ?? hostWindow ?? (typeof window !== 'undefined' ? window : null);
+
+        const docId = getProjectDocumentId() ?? '';
+        const sessionId = useProjectStore?.getState?.()?.sessionId ?? 0;
+        gestureFenceRef.current = {
+          docId,
+          sessionId,
+          lineIndex: hit.lineIndex,
+          varName: draft[hit.lineIndex]?.varName,
+          baseline: JSON.stringify(linesRef.current[hit.lineIndex]),
+        };
+
+        if (targetDoc) {
+          unregisterSettlementRef.current = registerHistoryEditorSettlement(targetDoc, async () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            if (hostGestureDisposerRef.current) {
+              hostGestureDisposerRef.current();
+              hostGestureDisposerRef.current = null;
+            }
+            const finalLines = getGestureCommit();
+            endHostGesture();
+            if (finalLines) {
+              commitLines(finalLines);
+            }
+            return useProjectStore?.getState?.()?.flushPendingPatches?.();
+          });
+        }
+
+        const disposer = attachHostGesture({
+          host: pressedSvg,
+          hostDocument: targetDoc,
+          hostWindow: targetWin,
+          onMove: (moveEvent) => {
+            if (!isGestureFencedValid()) {
+              endHostGesture();
+              return;
+            }
+            const drag = dragRef.current;
+            if (!drag || !draftLinesRef.current) return;
+            const pt = getPointFromEvent(
+              (moveEvent as MouseEvent).clientX,
+              (moveEvent as MouseEvent).clientY,
+            );
+            if (!pt) return;
+            const targetLine = draftLinesRef.current[drag.lineIndex];
+            if (!targetLine) return;
+            const y = canvasYToPointValue(targetLine, pt.yFromTop);
+            draftLinesRef.current[drag.lineIndex] = movePoint(targetLine, drag.pointIndex, pt.x, y);
+            setHoverPoint({ lineIndex: drag.lineIndex, pointIndex: drag.pointIndex });
+            setDraftLines([...draftLinesRef.current]);
+          },
+          onRelease: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            hostGestureDisposerRef.current = null;
+            const finalLines = getGestureCommit();
+            gestureFenceRef.current = null;
+            dragRef.current = null;
+            draftLinesRef.current = null;
+            setDraftLines(null);
+            if (finalLines) {
+              commitLines(finalLines);
+            }
+          },
+          onEscape: () => {
+            endHostGesture();
+          },
+          onBlur: () => {
+            endHostGesture();
+          },
+          onCancel: () => {
+            endHostGesture();
+          },
+        });
+        hostGestureDisposerRef.current = disposer;
         return;
       }
 
@@ -558,11 +738,13 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
 
       event.preventDefault();
       event.stopPropagation();
+      endHostGesture();
+
       const startY = event.altKey
         ? getLinePointY(currentLine, point.x)
         : canvasYToPointValue(currentLine, point.yFromTop);
-      const nextLines = cloneEditableLines(linesRef.current);
-      const targetLine = nextLines[selectedLineIndexRef.current];
+      const draft = cloneEditableLines(linesRef.current);
+      const targetLine = draft[selectedLineIndexRef.current];
       if (!targetLine) {
         return;
       }
@@ -571,12 +753,106 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
         point.x,
         clamp(startY, lineMinimum(targetLine), lineMaximum(targetLine)),
       );
-      nextLines[selectedLineIndexRef.current] = inserted.line;
+      draft[selectedLineIndexRef.current] = inserted.line;
+      draftLinesRef.current = draft;
+      setDraftLines(draft);
       setHoverPoint({ lineIndex: selectedLineIndexRef.current, pointIndex: inserted.index });
       dragRef.current = { lineIndex: selectedLineIndexRef.current, pointIndex: inserted.index };
-      commitLines(nextLines);
+
+      const pressedSvg = event.currentTarget ?? svgRef.current;
+      const targetDoc =
+        pressedSvg?.ownerDocument ??
+        hostDocument ??
+        (typeof document !== 'undefined' ? document : null);
+      const targetWin =
+        targetDoc?.defaultView ?? hostWindow ?? (typeof window !== 'undefined' ? window : null);
+
+      const docId = getProjectDocumentId() ?? '';
+      const sessionId = useProjectStore?.getState?.()?.sessionId ?? 0;
+      gestureFenceRef.current = {
+        docId,
+        sessionId,
+        lineIndex: selectedLineIndexRef.current,
+        varName: draft[selectedLineIndexRef.current]?.varName,
+        baseline: JSON.stringify(linesRef.current[selectedLineIndexRef.current]),
+      };
+
+      if (targetDoc) {
+        unregisterSettlementRef.current = registerHistoryEditorSettlement(targetDoc, async () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          if (hostGestureDisposerRef.current) {
+            hostGestureDisposerRef.current();
+            hostGestureDisposerRef.current = null;
+          }
+          const finalLines = getGestureCommit();
+          endHostGesture();
+          if (finalLines) {
+            commitLines(finalLines);
+          }
+          return useProjectStore?.getState?.()?.flushPendingPatches?.();
+        });
+      }
+
+      const disposer = attachHostGesture({
+        host: pressedSvg,
+        hostDocument: targetDoc,
+        hostWindow: targetWin,
+        onMove: (moveEvent) => {
+          if (!isGestureFencedValid()) {
+            endHostGesture();
+            return;
+          }
+          const drag = dragRef.current;
+          if (!drag || !draftLinesRef.current) return;
+          const pt = getPointFromEvent(
+            (moveEvent as MouseEvent).clientX,
+            (moveEvent as MouseEvent).clientY,
+          );
+          if (!pt) return;
+          const target = draftLinesRef.current[drag.lineIndex];
+          if (!target) return;
+          const y = canvasYToPointValue(target, pt.yFromTop);
+          draftLinesRef.current[drag.lineIndex] = movePoint(target, drag.pointIndex, pt.x, y);
+          setHoverPoint({ lineIndex: drag.lineIndex, pointIndex: drag.pointIndex });
+          setDraftLines([...draftLinesRef.current]);
+        },
+        onRelease: () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current = null;
+          const finalLines = getGestureCommit();
+          gestureFenceRef.current = null;
+          dragRef.current = null;
+          draftLinesRef.current = null;
+          setDraftLines(null);
+          if (finalLines) {
+            commitLines(finalLines);
+          }
+        },
+        onEscape: () => {
+          endHostGesture();
+        },
+        onBlur: () => {
+          endHostGesture();
+        },
+        onCancel: () => {
+          endHostGesture();
+        },
+      });
+      hostGestureDisposerRef.current = disposer;
     },
-    [commitLines, currentLine, findPointHit, getPointFromEvent, interactive, locked],
+    [
+      commitLines,
+      currentLine,
+      endHostGesture,
+      findPointHit,
+      getPointFromEvent,
+      getGestureCommit,
+      interactive,
+      isGestureFencedValid,
+      locked,
+    ],
   );
 
   const handleCanvasMouseMove = useCallback(
@@ -588,46 +864,6 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
     },
     [currentLine, findPointHit, interactive],
   );
-
-  useEffect(() => {
-    if (!interactive) {
-      dragRef.current = null;
-      return undefined;
-    }
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const drag = dragRef.current;
-      if (!drag) {
-        return;
-      }
-      const point = getPointFromEvent(event.clientX, event.clientY);
-      if (!point) {
-        return;
-      }
-
-      const nextLines = cloneEditableLines(linesRef.current);
-      const targetLine = nextLines[drag.lineIndex];
-      if (!targetLine) {
-        return;
-      }
-
-      const y = canvasYToPointValue(targetLine, point.yFromTop);
-      nextLines[drag.lineIndex] = movePoint(targetLine, drag.pointIndex, point.x, y);
-      setHoverPoint({ lineIndex: drag.lineIndex, pointIndex: drag.pointIndex });
-      commitLines(nextLines);
-    };
-
-    const handleMouseUp = () => {
-      dragRef.current = null;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [commitLines, getPointFromEvent, interactive]);
 
   const handleContextMenu = useCallback(
     (event: React.MouseEvent<SVGSVGElement>) => {
@@ -827,7 +1063,7 @@ export function EditableLineCanvas<TLine extends EditableLineLike>({
             </g>
           )}
 
-          {lines.map((line, lineIndex) => {
+          {effectiveLines.map((line, lineIndex) => {
             if (lineIndex === activeLineIndex) {
               return null;
             }

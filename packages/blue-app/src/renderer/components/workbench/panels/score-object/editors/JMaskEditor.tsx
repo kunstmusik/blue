@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react';
 import type { JMaskEditorPayload } from '../../../../../../shared/project-editor';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import type { FieldSnapshot, ParameterSnapshot } from './jmask/jmask-utils';
 import { getParameters, cloneField } from './jmask/jmask-utils';
 import ParameterRow from './jmask/ParameterRow';
@@ -59,19 +60,22 @@ export default function JMaskEditor({
   }, [handleTest]);
 
   const patch = useCallback(
-    (nextPatch: Record<string, unknown>) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: nextPatch,
-      });
+    (nextPatch: Record<string, unknown>, metadata?: ProjectDocumentCommitMetadata) => {
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: nextPatch,
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );
 
   const handleFieldChange = useCallback(
     (nextField: FieldSnapshot) => {
-      patch({ field: nextField });
+      patch({ field: nextField }, { label: 'Edit JMask Field', phase: 'single' });
     },
     [patch],
   );
@@ -191,7 +195,7 @@ export default function JMaskEditor({
           .filter((r) => r.parameter.visible !== false)
           .map((row) => (
             <ParameterRow
-              key={row.fieldIndex}
+              key={`${JSON.stringify(document.target)}:${row.fieldIndex}`}
               parameter={row.parameter}
               parameterNum={row.parameterNum}
               duration={duration}

@@ -110,12 +110,16 @@ export default function SoundEditor({
         curve?: string;
         resolutionDecimal?: string;
       },
+      metadata?: ProjectDocumentCommitMetadata,
     ) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: { automationPatch: { parameterId, ...updates } },
-      });
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: { automationPatch: { parameterId, ...updates } },
+        },
+        metadata,
+      );
     },
     [document.target, onPatch],
   );
@@ -244,6 +248,7 @@ interface SoundAutomationPanelProps {
       curve?: string;
       resolutionDecimal?: string;
     },
+    metadata?: ProjectDocumentCommitMetadata,
   ) => void;
   startTimeBeats: number;
   durationBeats: number;
@@ -390,15 +395,19 @@ function SoundAutomationPanel({
       nextLines.forEach((nextLine, index) => {
         const previousLine = lines[index];
         if (!previousLine || previousLine.parameterId !== nextLine.parameterId) {
-          onAutomationPatch(nextLine.parameterId, {
-            points: nextLine.points.map((point) => ({ ...point })),
-          });
+          onAutomationPatch(
+            nextLine.parameterId,
+            { points: nextLine.points.map((point) => ({ ...point })) },
+            { label: 'Edit Automation Line', phase: 'single' },
+          );
           return;
         }
         if (!pointsEqual(previousLine.points, nextLine.points)) {
-          onAutomationPatch(nextLine.parameterId, {
-            points: nextLine.points.map((point) => ({ ...point })),
-          });
+          onAutomationPatch(
+            nextLine.parameterId,
+            { points: nextLine.points.map((point) => ({ ...point })) },
+            { label: 'Edit Automation Line', phase: 'single' },
+          );
         }
       });
     },

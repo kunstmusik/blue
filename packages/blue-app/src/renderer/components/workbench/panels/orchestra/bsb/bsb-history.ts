@@ -1,3 +1,4 @@
+import { createContext } from 'react';
 import { settleHistoryEditors } from '../../../../../lib/history-scope-router';
 import type { BsbInterfacePatch } from '../../../../../../shared/project-editor';
 import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
@@ -30,3 +31,8 @@ export function dispatchBsbAction(
     });
   });
 }
+
+/** The editor owns the instrument; wrappers capture authority for their selected widgets. */
+export const BsbGestureAuthorityContext = createContext<
+  ((widgetIds: readonly string[]) => () => boolean) | null
+>(null);

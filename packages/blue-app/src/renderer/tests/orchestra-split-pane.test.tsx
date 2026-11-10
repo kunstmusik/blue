@@ -48,6 +48,15 @@ beforeEach(() => {
   root = createRoot(container);
   updateSplitLocation.mockClear();
   loadLayoutSpy.mockClear();
+  (useLayoutSettingsStore as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+    (selector?: (s: unknown) => unknown) => {
+      const state = {
+        layout: createDefaultWindowLayoutSettings(),
+        updateSplitLocation: (...args: unknown[]) => updateSplitLocation(...args),
+      };
+      return typeof selector === 'function' ? selector(state) : state;
+    },
+  );
 });
 
 afterEach(() => {
@@ -245,6 +254,308 @@ describe('SplitPane persistence contract', () => {
       expect(separator.className).toContain('focus-visible:ring-1');
     } finally {
       rectSpy.mockRestore();
+    }
+  });
+
+  function makePointer(type: string, init: MouseEventInit & { pointerId?: number } = {}) {
+    const EventCtor = (window.PointerEvent ?? window.MouseEvent) as unknown as new (
+      type: string,
+      init: any,
+    ) => PointerEvent;
+    const evt = new EventCtor(type, { bubbles: true, cancelable: true, ...init });
+    if (init.pointerId !== undefined && (evt as any).pointerId === undefined) {
+      Object.defineProperty(evt, 'pointerId', { value: init.pointerId });
+    }
+    return evt;
+  }
+
+  it('keeps drag previews local and persists once only on successful release', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 812,
+      height: 600,
+      top: 0,
+      right: 812,
+      bottom: 600,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root.render(
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="Resize outer split"
+            splitId="orchestra.outer"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={140}
+            minSecondSize={140}
+            first={<div>first</div>}
+            second={<div>second</div>}
+          />,
+        );
+      });
+
+      const separator = container.querySelector('[role="separator"]') as HTMLButtonElement;
+      expect(separator.getAttribute('aria-valuenow')).toBe('200');
+
+      act(() => {
+        separator.dispatchEvent(makePointer('pointerdown', { pointerId: 1, clientX: 200 }));
+      });
+
+      act(() => {
+        window.dispatchEvent(makePointer('pointermove', { pointerId: 1, clientX: 280 }));
+      });
+
+      // Preview is local: aria-valuenow reflects 280, but persistence has NOT been called!
+      expect(separator.getAttribute('aria-valuenow')).toBe('280');
+      expect(updateSplitLocation).not.toHaveBeenCalled();
+
+      // Successful release: persists once with the final size!
+      act(() => {
+        window.dispatchEvent(makePointer('pointerup', { pointerId: 1, clientX: 280 }));
+      });
+
+      expect(updateSplitLocation).toHaveBeenCalledTimes(1);
+      expect(updateSplitLocation).toHaveBeenCalledWith('orchestra.outer', {
+        orientation: 'horizontal',
+        controlledPane: 'first',
+        sizePx: 280,
+      });
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
+  it('cancels drag preview and pending save on Escape, restoring baseline size and body styles without persistence', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 812,
+      height: 600,
+      top: 0,
+      right: 812,
+      bottom: 600,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root.render(
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="Resize outer split"
+            splitId="orchestra.outer"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={140}
+            minSecondSize={140}
+            first={<div>first</div>}
+            second={<div>second</div>}
+          />,
+        );
+      });
+
+      const separator = container.querySelector('[role="separator"]') as HTMLButtonElement;
+      expect(document.body.style.cursor).toBe('');
+
+      act(() => {
+        separator.dispatchEvent(makePointer('pointerdown', { pointerId: 1, clientX: 200 }));
+      });
+      expect(document.body.style.cursor).toBe('col-resize');
+
+      act(() => {
+        window.dispatchEvent(makePointer('pointermove', { pointerId: 1, clientX: 320 }));
+      });
+      expect(separator.getAttribute('aria-valuenow')).toBe('320');
+
+      // Cancel with Escape
+      act(() => {
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+        );
+      });
+
+      // Baseline restored, styles restored, no persistence!
+      expect(separator.getAttribute('aria-valuenow')).toBe('200');
+      expect(document.body.style.cursor).toBe('');
+      expect(updateSplitLocation).not.toHaveBeenCalled();
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
+  it('cancels drag preview on host blur, restoring baseline size and body styles without persistence', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 812,
+      height: 600,
+      top: 0,
+      right: 812,
+      bottom: 600,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root.render(
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="Resize outer split"
+            splitId="orchestra.outer"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={140}
+            minSecondSize={140}
+            first={<div>first</div>}
+            second={<div>second</div>}
+          />,
+        );
+      });
+
+      const separator = container.querySelector('[role="separator"]') as HTMLButtonElement;
+
+      act(() => {
+        separator.dispatchEvent(makePointer('pointerdown', { pointerId: 1, clientX: 200 }));
+      });
+      act(() => {
+        window.dispatchEvent(makePointer('pointermove', { pointerId: 1, clientX: 340 }));
+      });
+      expect(separator.getAttribute('aria-valuenow')).toBe('340');
+
+      // Host window blur
+      act(() => {
+        window.dispatchEvent(new FocusEvent('blur'));
+      });
+
+      expect(separator.getAttribute('aria-valuenow')).toBe('200');
+      expect(document.body.style.cursor).toBe('');
+      expect(updateSplitLocation).not.toHaveBeenCalled();
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
+  it('cancels drag preview on pointercancel, restoring baseline size without persistence', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 812,
+      height: 600,
+      top: 0,
+      right: 812,
+      bottom: 600,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root.render(
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="Resize outer split"
+            splitId="orchestra.outer"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={140}
+            minSecondSize={140}
+            first={<div>first</div>}
+            second={<div>second</div>}
+          />,
+        );
+      });
+
+      const separator = container.querySelector('[role="separator"]') as HTMLButtonElement;
+
+      act(() => {
+        separator.dispatchEvent(makePointer('pointerdown', { pointerId: 1, clientX: 200 }));
+      });
+      act(() => {
+        window.dispatchEvent(makePointer('pointermove', { pointerId: 1, clientX: 340 }));
+      });
+      expect(separator.getAttribute('aria-valuenow')).toBe('340');
+
+      // Pointer cancelled
+      act(() => {
+        window.dispatchEvent(makePointer('pointercancel', { pointerId: 1 }));
+      });
+
+      expect(separator.getAttribute('aria-valuenow')).toBe('200');
+      expect(document.body.style.cursor).toBe('');
+      expect(updateSplitLocation).not.toHaveBeenCalled();
+    } finally {
+      rectSpy.mockRestore();
+    }
+  });
+
+  it('cancels pending keyboard save timer when drag starts', () => {
+    vi.useFakeTimers();
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 812,
+      height: 600,
+      top: 0,
+      right: 812,
+      bottom: 600,
+      left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+
+    try {
+      act(() => {
+        root.render(
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="Resize outer split"
+            splitId="orchestra.outer"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={140}
+            minSecondSize={140}
+            first={<div>first</div>}
+            second={<div>second</div>}
+          />,
+        );
+      });
+
+      const separator = container.querySelector('[role="separator"]') as HTMLButtonElement;
+
+      // Keyboard navigation schedules 150ms save timer
+      act(() => {
+        separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      });
+
+      // Before timer finishes, a pointer drag begins
+      act(() => {
+        vi.advanceTimersByTime(50);
+        separator.dispatchEvent(makePointer('pointerdown', { pointerId: 1, clientX: 224 }));
+      });
+
+      // Now cancel the drag with Escape
+      act(() => {
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+        );
+      });
+
+      // Advance past 150ms
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+
+      // The keyboard save was cancelled by starting the drag!
+      expect(updateSplitLocation).not.toHaveBeenCalled();
+    } finally {
+      rectSpy.mockRestore();
+      vi.useRealTimers();
     }
   });
 });

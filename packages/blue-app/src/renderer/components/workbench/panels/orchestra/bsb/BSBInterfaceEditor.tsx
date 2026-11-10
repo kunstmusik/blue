@@ -8,7 +8,7 @@ import type {
 } from '../../../../../../shared/project-editor';
 import { BSB_PROPERTY_SPLIT_SIZE_PX } from '../../../../../../shared/window-layout-settings';
 import { collectBsbReplacementKeysFromSnapshotTree } from '../../../../../../shared/project-editor';
-import { useProjectStore } from '../../../../../stores/project-store';
+import { getProjectDocumentId, useProjectStore } from '../../../../../stores/project-store';
 import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import { prepareBsbWidgetCreation } from '../../../../../../shared/bsb-widget-commands';
 import { bsbInterfaceActionLabel } from '../../../../../../shared/project-editor';
@@ -16,7 +16,7 @@ import {
   registerHistoryEditorSettlement,
   settleHistoryEditors,
 } from '../../../../../lib/history-scope-router';
-import type { BsbInterfacePatchHandler } from './bsb-history';
+import { BsbGestureAuthorityContext, type BsbInterfacePatchHandler } from './bsb-history';
 import BSBInterfaceCanvas from './BSBInterfaceCanvas';
 import BSBPropertySheet from './BSBPropertySheet';
 import BSBGridSettingsPanel from './BSBGridSettingsPanel';
@@ -41,6 +41,29 @@ function BSBInterfaceEditor({
   onInstrumentPatch,
   showEditModeToggle = true,
 }: BSBInterfaceEditorProps) {
+  const currentInstrument = useRef(instrument);
+  currentInstrument.current = instrument;
+  const captureGestureAuthority = useCallback((widgetIds: readonly string[]) => {
+    const source = currentInstrument.current;
+    const documentId = getProjectDocumentId();
+    const sessionId = useProjectStore.getState().sessionId;
+    const targets = widgetIds.map(
+      (id) => [id, findWidgetInTree(source.widgetTree, id)?.gestureTargetId] as const,
+    );
+    return () => {
+      const current = currentInstrument.current;
+      return (
+        getProjectDocumentId() === documentId &&
+        useProjectStore.getState().sessionId === sessionId &&
+        current.assignmentId === source.assignmentId &&
+        current.widgetTree.gestureTargetId === source.widgetTree.gestureTargetId &&
+        targets.every(([id, identity]) => {
+          const node = findWidgetInTree(current.widgetTree, id);
+          return !!node && node.gestureTargetId === identity;
+        })
+      );
+    };
+  }, []);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState<Set<string>>(new Set());
   const [rightTab, setRightTab] = useState<RightPanelTab>('properties');
   const editorRef = useRef<HTMLDivElement>(null);
@@ -175,117 +198,119 @@ function BSBInterfaceEditor({
   );
 
   return (
-    <div
-      ref={editorRef}
-      onMouseDownCapture={(event) => {
-        if (editEnabled || event.button !== 0) return;
-        const target = event.target as Element;
-        const widgetId =
-          typeof target.closest === 'function'
-            ? target.closest('[data-widget-id]')?.getAttribute('data-widget-id')
-            : null;
-        if (!widgetId || isTextEditingTarget(event.target)) return;
-        void settleHistoryEditors(event.currentTarget.ownerDocument);
-        performanceGesture.current = {
-          id: crypto.randomUUID(),
-          widgetId,
-          dispatch: onInstrumentPatch,
-        };
-      }}
-      onKeyDownCapture={settlePerformanceGesture}
-      className="flex h-full min-h-0 flex-col bg-blue-bg"
-      data-shortcut-scope="bsb-interface-editor"
-      onKeyDown={handleEditorKeyDown}
-    >
-      {showEditModeToggle && (
-        <div className="flex items-center justify-between border-b border-blue-border px-3 py-1">
-          <BSBPresetBar instrument={instrument} onBsbInterfacePatch={dispatchBsbPatch} />
-          <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-role-body text-gray-100">
-            <input
-              type="checkbox"
-              checked={editEnabled}
-              onChange={(e) =>
-                dispatchBsbPatch({ type: 'setEditEnabled', value: e.target.checked })
-              }
-              className="accent-blue-accent"
-            />
-            Edit Mode
-          </label>
-        </div>
-      )}
-      {!showEditModeToggle && instrument.presetGroup && (
-        <div className="flex items-center border-b border-blue-border px-3 py-1">
-          <BSBPresetBar instrument={instrument} onBsbInterfacePatch={dispatchBsbPatch} />
-        </div>
-      )}
+    <BsbGestureAuthorityContext.Provider value={captureGestureAuthority}>
+      <div
+        ref={editorRef}
+        onMouseDownCapture={(event) => {
+          if (editEnabled || event.button !== 0) return;
+          const target = event.target as Element;
+          const widgetId =
+            typeof target.closest === 'function'
+              ? target.closest('[data-widget-id]')?.getAttribute('data-widget-id')
+              : null;
+          if (!widgetId || isTextEditingTarget(event.target)) return;
+          void settleHistoryEditors(event.currentTarget.ownerDocument);
+          performanceGesture.current = {
+            id: crypto.randomUUID(),
+            widgetId,
+            dispatch: onInstrumentPatch,
+          };
+        }}
+        onKeyDownCapture={settlePerformanceGesture}
+        className="flex h-full min-h-0 flex-col bg-blue-bg"
+        data-shortcut-scope="bsb-interface-editor"
+        onKeyDown={handleEditorKeyDown}
+      >
+        {showEditModeToggle && (
+          <div className="flex items-center justify-between border-b border-blue-border px-3 py-1">
+            <BSBPresetBar instrument={instrument} onBsbInterfacePatch={dispatchBsbPatch} />
+            <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-role-body text-gray-100">
+              <input
+                type="checkbox"
+                checked={editEnabled}
+                onChange={(e) =>
+                  dispatchBsbPatch({ type: 'setEditEnabled', value: e.target.checked })
+                }
+                className="accent-blue-accent"
+              />
+              Edit Mode
+            </label>
+          </div>
+        )}
+        {!showEditModeToggle && instrument.presetGroup && (
+          <div className="flex items-center border-b border-blue-border px-3 py-1">
+            <BSBPresetBar instrument={instrument} onBsbInterfacePatch={dispatchBsbPatch} />
+          </div>
+        )}
 
-      {editEnabled ? (
-        <SplitPane
-          orientation="horizontal"
-          ariaLabel="BSB Interface and Properties"
-          splitId="bsb.interface.properties"
-          controlledPane="second"
-          defaultSizePx={BSB_PROPERTY_SPLIT_SIZE_PX}
-          minFirstSize={200}
-          minSecondSize={180}
-          firstClassName="flex flex-col"
-          secondClassName="flex flex-col bg-app-bsb-panel"
-          first={<BSBInterfaceCanvas {...canvasProps} />}
-          second={
-            <>
-              <div className="border-b border-blue-border">
-                <div className="flex">
-                  <button
-                    type="button"
-                    className={cn(
-                      'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
-                      rightTab === 'properties'
-                        ? 'border-blue-accent text-gray-100'
-                        : 'border-transparent text-blue-muted hover:text-gray-100',
-                    )}
-                    onClick={() => setRightTab('properties')}
-                  >
-                    Properties
-                  </button>
-                  <button
-                    type="button"
-                    className={cn(
-                      'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
-                      rightTab === 'grid'
-                        ? 'border-blue-accent text-gray-100'
-                        : 'border-transparent text-blue-muted hover:text-gray-100',
-                    )}
-                    onClick={() => setRightTab('grid')}
-                  >
-                    Grid
-                  </button>
+        {editEnabled ? (
+          <SplitPane
+            orientation="horizontal"
+            ariaLabel="BSB Interface and Properties"
+            splitId="bsb.interface.properties"
+            controlledPane="second"
+            defaultSizePx={BSB_PROPERTY_SPLIT_SIZE_PX}
+            minFirstSize={200}
+            minSecondSize={180}
+            firstClassName="flex flex-col"
+            secondClassName="flex flex-col bg-app-bsb-panel"
+            first={<BSBInterfaceCanvas {...canvasProps} />}
+            second={
+              <>
+                <div className="border-b border-blue-border">
+                  <div className="flex">
+                    <button
+                      type="button"
+                      className={cn(
+                        'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
+                        rightTab === 'properties'
+                          ? 'border-blue-accent text-gray-100'
+                          : 'border-transparent text-blue-muted hover:text-gray-100',
+                      )}
+                      onClick={() => setRightTab('properties')}
+                    >
+                      Properties
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        'flex-1 border-b-2 px-2 py-1.5 text-role-body uppercase tracking-[0.12em]',
+                        rightTab === 'grid'
+                          ? 'border-blue-accent text-gray-100'
+                          : 'border-transparent text-blue-muted hover:text-gray-100',
+                      )}
+                      onClick={() => setRightTab('grid')}
+                    >
+                      Grid
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                {rightTab === 'properties' ? (
-                  <BSBPropertySheet
-                    widget={selectedWidget}
-                    selectedCount={selectedWidgetIds.size}
-                    editEnabled={editEnabled}
-                    allObjectNames={allObjectNames}
-                    onBsbInterfacePatch={dispatchBsbPatch}
-                  />
-                ) : (
-                  <BSBGridSettingsPanel
-                    gridSettings={instrument.gridSettings}
-                    onBsbInterfacePatch={dispatchBsbPatch}
-                  />
-                )}
-              </div>
-            </>
-          }
-        />
-      ) : (
-        <div className="min-h-0 flex-1">
-          <BSBInterfaceCanvas {...canvasProps} />
-        </div>
-      )}
-    </div>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  {rightTab === 'properties' ? (
+                    <BSBPropertySheet
+                      widget={selectedWidget}
+                      selectedCount={selectedWidgetIds.size}
+                      editEnabled={editEnabled}
+                      allObjectNames={allObjectNames}
+                      onBsbInterfacePatch={dispatchBsbPatch}
+                    />
+                  ) : (
+                    <BSBGridSettingsPanel
+                      gridSettings={instrument.gridSettings}
+                      onBsbInterfacePatch={dispatchBsbPatch}
+                    />
+                  )}
+                </div>
+              </>
+            }
+          />
+        ) : (
+          <div className="min-h-0 flex-1">
+            <BSBInterfaceCanvas {...canvasProps} />
+          </div>
+        )}
+      </div>
+    </BsbGestureAuthorityContext.Provider>
   );
 }
 

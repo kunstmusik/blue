@@ -48,11 +48,14 @@ export default function LineObjectEditor({
 
   const patchLines = useCallback(
     (nextLines: LineData[]) => {
-      onPatch({
-        type: 'updateTypeSpecificEditor',
-        target: document.target,
-        patch: { lines: nextLines },
-      });
+      onPatch(
+        {
+          type: 'updateTypeSpecificEditor',
+          target: document.target,
+          patch: { lines: nextLines },
+        },
+        { label: 'Edit Line', phase: 'single' },
+      );
     },
     [document.target, onPatch],
   );
@@ -135,6 +138,7 @@ export default function LineObjectEditor({
 
             <div ref={canvasHostRef} className="min-h-0 flex-1">
               <EditableLineCanvas
+                key={JSON.stringify(document.target)}
                 lines={lines}
                 selectedLineIndex={selectedLineIndex}
                 onLinesChange={patchLines}

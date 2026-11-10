@@ -62,11 +62,17 @@ function BSBLineObjectWidget({
 
   const commitLines = useCallback(
     (nextLines: LineData[]) => {
-      onBsbInterfacePatch?.({
-        type: 'updateWidgetProperties',
-        widgetId: node.id,
-        properties: { lines: nextLines },
-      });
+      onBsbInterfacePatch?.(
+        {
+          type: 'updateWidgetProperties',
+          widgetId: node.id,
+          properties: { lines: nextLines },
+        },
+        {
+          label: 'Edit Line Object Lines',
+          phase: 'single',
+        },
+      );
     },
     [node.id, onBsbInterfacePatch],
   );

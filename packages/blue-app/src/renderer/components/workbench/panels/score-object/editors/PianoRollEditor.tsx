@@ -157,11 +157,19 @@ export default function PianoRollEditor({
         return;
       }
 
-      patch(nextPatch);
+      patch(nextPatch, { label, phase: 'single' });
       pushUndoEdit({
         label,
-        undo: () => patch(buildPianoRollRestorePatch(previousPayload)),
-        redo: () => patch(buildPianoRollRestorePatch(nextPayload)),
+        undo: () =>
+          patch(buildPianoRollRestorePatch(previousPayload), {
+            label: `Undo ${label}`,
+            phase: 'single',
+          }),
+        redo: () =>
+          patch(buildPianoRollRestorePatch(nextPayload), {
+            label: `Redo ${label}`,
+            phase: 'single',
+          }),
       });
     },
     [patch, payload, pushUndoEdit],
@@ -195,6 +203,7 @@ export default function PianoRollEditor({
   }, [fieldDefinitions]);
 
   useEffect(() => {
+    listenerRef.current?.cancel();
     clearUndoHistory();
     setSelectedIndices(new Set());
     setPasteTarget(null);
@@ -831,6 +840,7 @@ export default function PianoRollEditor({
                           listener={listenerRef.current!}
                           canvasRef={canvasRef}
                           minWidth={rollViewportWidth}
+                          targetKey={targetKey}
                         />
                       </div>
                     </div>
@@ -872,6 +882,7 @@ export default function PianoRollEditor({
                           snapBeats={snapBeats}
                           onSelectionChange={setSelectedIndices}
                           onCommitFieldEdit={handleCommitFieldValues}
+                          targetKey={targetKey}
                         />
                       </div>
                     </div>

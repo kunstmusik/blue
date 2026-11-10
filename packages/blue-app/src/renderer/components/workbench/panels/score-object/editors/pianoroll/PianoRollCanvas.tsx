@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { FieldDefSnapshot, NoteSnapshot, ScaleSnapshot } from './types';
 import {
   OCTAVES,
@@ -8,6 +8,9 @@ import {
   formatPianoRollPitch,
 } from './types';
 import type { NoteCanvasMouseListener } from './NoteCanvasMouseListener';
+import { attachHostGesture, type HostGestureDisposer } from '../../../../../../lib/host-gesture';
+import { registerHistoryEditorSettlement } from '../../../../../../lib/history-scope-router';
+import { getProjectDocumentId, useProjectStore } from '../../../../../../stores/project-store';
 import { cn } from '../../../../../../lib/cn';
 
 interface PianoRollCanvasProps {
@@ -26,6 +29,7 @@ interface PianoRollCanvasProps {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   /** Viewport width floor so grid layers reach the right edge on short scores. */
   minWidth?: number;
+  targetKey?: string;
 }
 
 export default function PianoRollCanvas({
@@ -43,6 +47,7 @@ export default function PianoRollCanvas({
   listener,
   canvasRef,
   minWidth,
+  targetKey,
 }: PianoRollCanvasProps): React.ReactElement {
   const isMidi = pchGenerationMethod === GENERATE_MIDI;
   const numDegrees = isMidi ? 12 : scale.ratios.length || 12;
@@ -73,42 +78,158 @@ export default function PianoRollCanvas({
     [isMidi, numDegrees, noteHeight],
   );
 
+  const hostGestureDisposerRef = useRef<HostGestureDisposer | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const gestureFenceRef = useRef<{
+    documentId: string;
+    sessionId: number;
+    targetKey?: string;
+    source: string;
+  } | null>(null);
+  const latestSource = useRef({ targetKey, source: '' });
+  latestSource.current = { targetKey, source: JSON.stringify([notes, scale, fieldDefinitions]) };
+
+  const endHostGesture = useCallback(() => {
+    if (hostGestureDisposerRef.current) {
+      hostGestureDisposerRef.current();
+      hostGestureDisposerRef.current = null;
+    }
+  }, []);
+
+  const clearGesture = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureFenceRef.current = null;
+    endHostGesture();
+  }, [endHostGesture]);
+
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent<HTMLDivElement>) => {
       e.preventDefault();
+      clearGesture();
       listener.mousePressed(e);
+
+      if (listener.getDragMode() !== 'NONE') {
+        const documentId =
+          typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+        const sessionId = useProjectStore.getState().sessionId;
+        gestureFenceRef.current = { documentId, sessionId, ...latestSource.current };
+
+        const host = canvasRef.current;
+        if (typeof registerHistoryEditorSettlement === 'function') {
+          const hostDoc = (host as Element)?.ownerDocument ?? document;
+          unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+            const currentDocId =
+              typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (
+              gestureFenceRef.current?.documentId === currentDocId &&
+              gestureFenceRef.current?.sessionId === currentSessionId &&
+              gestureFenceRef.current?.targetKey === latestSource.current.targetKey &&
+              gestureFenceRef.current?.source === latestSource.current.source
+            ) {
+              listener.mouseReleased();
+            } else {
+              listener.cancel();
+            }
+            clearGesture();
+            return useProjectStore.getState().flushPendingPatches?.();
+          });
+        }
+
+        const disposer = attachHostGesture({
+          host,
+          onMove: (moveEvent) => {
+            const currentDocId =
+              typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (
+              currentDocId !== gestureFenceRef.current?.documentId ||
+              currentSessionId !== gestureFenceRef.current?.sessionId ||
+              latestSource.current.targetKey !== gestureFenceRef.current?.targetKey ||
+              latestSource.current.source !== gestureFenceRef.current?.source
+            ) {
+              hostGestureDisposerRef.current = null;
+              listener.cancel();
+              clearGesture();
+              return;
+            }
+            listener.mouseDragged(moveEvent as unknown as React.MouseEvent);
+          },
+          onRelease: (releaseEvent) => {
+            const currentDocId =
+              typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (
+              currentDocId !== gestureFenceRef.current?.documentId ||
+              currentSessionId !== gestureFenceRef.current?.sessionId ||
+              latestSource.current.targetKey !== gestureFenceRef.current?.targetKey ||
+              latestSource.current.source !== gestureFenceRef.current?.source
+            ) {
+              hostGestureDisposerRef.current = null;
+              listener.cancel();
+              clearGesture();
+              return;
+            }
+            hostGestureDisposerRef.current = null;
+            listener.mouseReleased(releaseEvent as unknown as React.MouseEvent);
+            clearGesture();
+          },
+          onEscape: () => {
+            hostGestureDisposerRef.current = null;
+            listener.cancel();
+            clearGesture();
+          },
+          onBlur: () => {
+            hostGestureDisposerRef.current = null;
+            listener.cancel();
+            clearGesture();
+          },
+          onCancel: () => {
+            hostGestureDisposerRef.current = null;
+            listener.cancel();
+            clearGesture();
+          },
+        });
+        hostGestureDisposerRef.current = disposer;
+      }
     },
-    [listener],
+    [canvasRef, clearGesture, listener, targetKey],
   );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      listener.mouseDragged(e);
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (rect) {
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const cursor = listener.getCursor(x, y);
-        if (canvasRef.current) canvasRef.current.style.cursor = cursor;
+      if (listener.getDragMode() === 'NONE') {
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const cursor = listener.getCursor(x, y);
+          if (canvasRef.current) canvasRef.current.style.cursor = cursor;
+        }
       }
     },
-    [listener, canvasRef],
-  );
-
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent) => {
-      listener.mouseReleased(e);
-    },
-    [listener],
+    [canvasRef, listener],
   );
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      listener.mouseReleased(e as unknown as React.MouseEvent);
+    return () => {
+      clearGesture();
+      listener.cancel();
+      listener.dispose();
     };
-    window.addEventListener('mouseup', handler);
-    return () => window.removeEventListener('mouseup', handler);
-  }, [listener]);
+  }, [clearGesture, listener]);
+
+  useEffect(() => {
+    if (
+      gestureFenceRef.current &&
+      (gestureFenceRef.current.targetKey !== targetKey ||
+        gestureFenceRef.current.source !== latestSource.current.source)
+    ) {
+      clearGesture();
+      listener.cancel();
+    }
+  }, [targetKey, notes, scale, fieldDefinitions, clearGesture, listener]);
 
   const marquee = listener.getMarquee();
 
@@ -182,7 +303,6 @@ export default function PianoRollCanvas({
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
     >
       {octaveBackgrounds.map((bg, i) => (
         <div

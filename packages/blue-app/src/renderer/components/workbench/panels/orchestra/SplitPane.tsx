@@ -6,6 +6,7 @@ import {
   type SplitOrientation,
 } from '../../../../../shared/window-layout-settings';
 import { useLayoutSettingsStore } from '../../../../stores/layout-settings-store';
+import { attachHostGesture } from '../../../../lib/host-gesture';
 import { cn } from '../../../../lib/cn';
 
 const HANDLE_SIZE = 12;
@@ -188,53 +189,101 @@ export default function SplitPane({
     event.preventDefault();
     event.currentTarget.focus();
 
-    const pointerId = event.pointerId;
-    const previousCursor = document.body.style.cursor;
-    const previousUserSelect = document.body.style.userSelect;
+    const hostDocument = containerRef.current?.ownerDocument ?? document;
+    const hostBody = hostDocument.body;
+    const previousCursor = hostBody?.style.cursor ?? '';
+    const previousUserSelect = hostBody?.style.userSelect ?? '';
 
-    document.body.style.cursor = orientation === 'horizontal' ? 'col-resize' : 'row-resize';
-    document.body.style.userSelect = 'none';
+    if (hostBody) {
+      hostBody.style.cursor = orientation === 'horizontal' ? 'col-resize' : 'row-resize';
+      hostBody.style.userSelect = 'none';
+    }
 
-    let onPointerMove: (moveEvent: PointerEvent) => void = () => {};
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
 
-    const stopDragging = () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', stopDragging);
-      window.removeEventListener('pointercancel', stopDragging);
-      document.body.style.cursor = previousCursor;
-      document.body.style.userSelect = previousUserSelect;
-      dragCleanupRef.current = null;
-    };
+    const baselineControlledSize = controlledSizePx;
+    const baselineRatio = splitRatio;
+    let latestControlledSize = controlledSizePx;
+    let latestRatio = splitRatio;
 
-    onPointerMove = (moveEvent: PointerEvent) => {
-      if (moveEvent.pointerId !== pointerId) return;
-
-      const element = containerRef.current;
-      if (!element) return;
-
-      const rect = element.getBoundingClientRect();
-      const available = Math.max(getMainAxisSize(rect, orientation) - HANDLE_SIZE, 0);
-      if (available <= 0) return;
-
-      const pointerOffset = getPointerOffset(moveEvent, rect, orientation);
-      const nextMaxFirstSize = Math.max(0, available - minSecondSize);
-      const nextMinFirstSize = Math.max(0, Math.min(minFirstSize, nextMaxFirstSize));
-      const nextFirstSize = Math.min(Math.max(pointerOffset, nextMinFirstSize), nextMaxFirstSize);
-
-      if (splitId) {
-        const nextControlled =
-          controlledPane === 'first' ? nextFirstSize : Math.max(0, available - nextFirstSize);
-        setControlledSizePx(nextControlled);
-        persistControlledSize(nextControlled);
-      } else {
-        setSplitRatio(nextFirstSize / available);
+    const restoreStyles = () => {
+      if (hostBody) {
+        hostBody.style.cursor = previousCursor;
+        hostBody.style.userSelect = previousUserSelect;
       }
     };
 
-    dragCleanupRef.current = stopDragging;
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', stopDragging);
-    window.addEventListener('pointercancel', stopDragging);
+    const cancelDrag = () => {
+      restoreStyles();
+      if (splitId) {
+        setControlledSizePx(baselineControlledSize);
+      } else {
+        setSplitRatio(baselineRatio);
+      }
+      dragCleanupRef.current = null;
+    };
+
+    const commitDrag = () => {
+      restoreStyles();
+      if (splitId && Number.isFinite(latestControlledSize) && latestControlledSize > 0) {
+        void useLayoutSettingsStore.getState().updateSplitLocation(splitId, {
+          orientation,
+          controlledPane,
+          sizePx: Math.round(latestControlledSize),
+        });
+      }
+      dragCleanupRef.current = null;
+    };
+
+    const disposer = attachHostGesture({
+      host: hostDocument,
+      kind: 'pointer',
+      pointerId: event.pointerId,
+      onMove: (moveEvent) => {
+        const element = containerRef.current;
+        if (!element) return;
+
+        const rect = element.getBoundingClientRect();
+        const available = Math.max(getMainAxisSize(rect, orientation) - HANDLE_SIZE, 0);
+        if (available <= 0) return;
+
+        const pointerOffset = getPointerOffset(moveEvent as PointerEvent, rect, orientation);
+        const nextMaxFirstSize = Math.max(0, available - minSecondSize);
+        const nextMinFirstSize = Math.max(0, Math.min(minFirstSize, nextMaxFirstSize));
+        const nextFirstSize = Math.min(Math.max(pointerOffset, nextMinFirstSize), nextMaxFirstSize);
+
+        if (splitId) {
+          const nextControlled =
+            controlledPane === 'first' ? nextFirstSize : Math.max(0, available - nextFirstSize);
+          latestControlledSize = nextControlled;
+          setControlledSizePx(nextControlled);
+        } else {
+          const nextRatio = nextFirstSize / available;
+          latestRatio = nextRatio;
+          setSplitRatio(nextRatio);
+        }
+      },
+      onRelease: () => {
+        commitDrag();
+      },
+      onEscape: () => {
+        cancelDrag();
+      },
+      onBlur: () => {
+        cancelDrag();
+      },
+      onCancel: () => {
+        cancelDrag();
+      },
+    });
+
+    dragCleanupRef.current = () => {
+      disposer();
+      cancelDrag();
+    };
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {

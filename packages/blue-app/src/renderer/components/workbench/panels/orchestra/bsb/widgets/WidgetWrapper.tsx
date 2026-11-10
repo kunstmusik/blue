@@ -2,9 +2,11 @@ import {
   registerHistoryEditorSettlement,
   settleHistoryEditors,
 } from '../../../../../../lib/history-scope-router';
-import { dispatchBsbAction } from '../bsb-history';
+import { attachHostGesture } from '../../../../../../lib/host-gesture';
+import { getProjectDocumentId, useProjectStore } from '../../../../../../stores/project-store';
+import { BsbGestureAuthorityContext, dispatchBsbAction } from '../bsb-history';
 import type { BsbInterfacePatchHandler } from '../bsb-history';
-import React, { useRef, useEffect } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ChevronRight } from 'lucide-react';
@@ -59,6 +61,22 @@ function WidgetWrapper({
   getWidgetPosition,
   onWidgetAction,
 }: WidgetWrapperProps): React.ReactElement {
+  const editorAuthority = useContext(BsbGestureAuthorityContext);
+  const currentNode = useRef(node);
+  currentNode.current = node;
+  const captureAuthority = (ids: readonly string[]) => {
+    const ownerIsCurrent = editorAuthority?.(ids);
+    const source = currentNode.current;
+    const documentId = getProjectDocumentId();
+    const sessionId = useProjectStore.getState().sessionId;
+    return () =>
+      getProjectDocumentId() === documentId &&
+      useProjectStore.getState().sessionId === sessionId &&
+      (ownerIsCurrent
+        ? ownerIsCurrent()
+        : currentNode.current.id === source.id &&
+          currentNode.current.gestureTargetId === source.gestureTargetId);
+  };
   const measuredSize = getWidgetDisplaySize(node);
   const w = displayWidth ?? measuredSize.width;
   const h = displayHeight ?? measuredSize.height;
@@ -66,6 +84,8 @@ function WidgetWrapper({
   const heightResizeProperty = resizeMeta?.heightProperty ?? 'height';
 
   type MoveDragState = {
+    isCurrent: () => boolean;
+    hostWindow: Window;
     gestureId: string;
     begun: boolean;
     latest: MouseEvent | null;
@@ -76,6 +96,8 @@ function WidgetWrapper({
   };
 
   const moveDragRef = useRef<MoveDragState | null>(null);
+  const moveDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterMoveSettlementRef = useRef<(() => void) | null>(null);
   const hasDraggedRef = useRef(false);
   const moveParamsRef = useRef({
     gridSnapEnabled,
@@ -85,91 +107,143 @@ function WidgetWrapper({
   moveParamsRef.current = { gridSnapEnabled, gridSnapWidth, gridSnapHeight };
 
   const moveRafRef = useRef(0);
-
   const wrapperRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const hostDocument = wrapperRef.current?.ownerDocument;
-    const hostWindow = hostDocument?.defaultView;
-    if (!hostDocument || !hostWindow) return;
-    const applyMove = (phase: 'begin' | 'update' | 'end') => {
-      const md = moveDragRef.current;
-      if (!md?.latest) return;
-      const {
-        gridSnapEnabled: snap,
-        gridSnapWidth: gw,
-        gridSnapHeight: gh,
-      } = moveParamsRef.current;
-      let dx = md.latest.clientX - md.originClientX;
-      let dy = md.latest.clientY - md.originClientY;
+
+  const applyMove = (phase: 'begin' | 'update' | 'end') => {
+    const md = moveDragRef.current;
+    if (!md) return;
+    if (!md.isCurrent()) {
+      discardMove();
+      return;
+    }
+    if (!md.begun && !md.latest) return;
+    const { gridSnapEnabled: snap, gridSnapWidth: gw, gridSnapHeight: gh } = moveParamsRef.current;
+    let dx = 0;
+    let dy = 0;
+    if (md.latest) {
+      dx = md.latest.clientX - md.originClientX;
+      dy = md.latest.clientY - md.originClientY;
       if (snap && gw) dx = Math.round(dx / gw) * gw;
       if (snap && gh) dy = Math.round(dy / gh) * gh;
-      const minNx = Math.min(...[...md.positions.values()].map((pos) => pos.x + dx));
-      const minNy = Math.min(...[...md.positions.values()].map((pos) => pos.y + dy));
-      if (minNx < 0) dx -= minNx;
-      if (minNy < 0) dy -= minNy;
-      const positions = [...md.positions];
-      positions.forEach(([id, startPos], index) => {
-        md.dispatch?.(
-          {
-            type: 'updateWidgetProperties',
-            widgetId: id,
-            properties: { x: startPos.x + dx, y: startPos.y + dy },
-          },
-          {
-            label: 'Move Blue Synth Builder Widgets',
-            gestureId: md.gestureId,
-            phase:
-              phase === 'begin'
-                ? index === 0
-                  ? 'begin'
+    }
+    const minNx = Math.min(...[...md.positions.values()].map((pos) => pos.x + dx));
+    const minNy = Math.min(...[...md.positions.values()].map((pos) => pos.y + dy));
+    if (minNx < 0) dx -= minNx;
+    if (minNy < 0) dy -= minNy;
+    const positions = [...md.positions];
+    positions.forEach(([id, startPos], index) => {
+      md.dispatch?.(
+        {
+          type: 'updateWidgetProperties',
+          widgetId: id,
+          properties: { x: startPos.x + dx, y: startPos.y + dy },
+        },
+        {
+          label: 'Move Blue Synth Builder Widgets',
+          gestureId: md.gestureId,
+          phase:
+            phase === 'begin'
+              ? index === 0
+                ? 'begin'
+                : 'update'
+              : phase === 'end'
+                ? index === positions.length - 1
+                  ? 'end'
                   : 'update'
-                : phase === 'end'
-                  ? index === positions.length - 1
-                    ? 'end'
-                    : 'update'
-                  : 'update',
-          },
-        );
-      });
-      md.begun = true;
-    };
-    const onMove = (e: MouseEvent) => {
-      const md = moveDragRef.current;
-      if (!md) return;
-      hasDraggedRef.current = true;
-      md.latest = e;
-      e.preventDefault();
-      hostWindow.cancelAnimationFrame(moveRafRef.current);
-      moveRafRef.current = hostWindow.requestAnimationFrame(() =>
-        applyMove(md.begun ? 'update' : 'begin'),
+                : 'update',
+        },
       );
-    };
-    const settle = () => {
-      hostWindow.cancelAnimationFrame(moveRafRef.current);
-      const md = moveDragRef.current;
-      if (md?.latest) {
-        if (!md.begun) applyMove('begin');
+    });
+    md.begun = true;
+  };
+
+  const cleanupMove = () => {
+    if (moveDisposerRef.current) {
+      moveDisposerRef.current();
+      moveDisposerRef.current = null;
+    }
+    if (unregisterMoveSettlementRef.current) {
+      unregisterMoveSettlementRef.current();
+      unregisterMoveSettlementRef.current = null;
+    }
+  };
+
+  const discardMove = () => {
+    const md = moveDragRef.current;
+    moveDragRef.current = null;
+    md?.hostWindow.cancelAnimationFrame(moveRafRef.current);
+    cleanupMove();
+    hasDraggedRef.current = false;
+  };
+
+  useEffect(() => {
+    if (moveDragRef.current && !moveDragRef.current.isCurrent()) discardMove();
+  });
+
+  const settleMove = (hostWindow?: Window | null) => {
+    const win = hostWindow ?? wrapperRef.current?.ownerDocument?.defaultView ?? window;
+    win.cancelAnimationFrame(moveRafRef.current);
+    const md = moveDragRef.current;
+    if (md && !md.isCurrent()) {
+      discardMove();
+      return;
+    }
+    if (md) {
+      if (md.latest && !md.begun) {
+        applyMove('begin');
+      }
+      if (md.begun) {
         applyMove('end');
       }
       moveDragRef.current = null;
-      setTimeout(() => {
-        hasDraggedRef.current = false;
-      }, 0);
-    };
-    const onUp = (e: MouseEvent) => {
-      if (moveDragRef.current?.latest) moveDragRef.current.latest = e;
-      settle();
-    };
-    const unregister = registerHistoryEditorSettlement(hostDocument, settle);
-    hostWindow.addEventListener('mousemove', onMove);
-    hostWindow.addEventListener('mouseup', onUp);
-    hostWindow.addEventListener('blur', settle);
+    }
+    cleanupMove();
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 0);
+    return useProjectStore?.getState?.()?.flushPendingPatches?.();
+  };
+
+  const cancelMove = (hostWindow?: Window | null) => {
+    const win = hostWindow ?? wrapperRef.current?.ownerDocument?.defaultView ?? window;
+    win.cancelAnimationFrame(moveRafRef.current);
+    const md = moveDragRef.current;
+    if (md && !md.isCurrent()) {
+      discardMove();
+      return;
+    }
+    if (md) {
+      if (md.begun) {
+        const positions = [...md.positions];
+        positions.forEach(([id, startPos], index) => {
+          md.dispatch?.(
+            {
+              type: 'updateWidgetProperties',
+              widgetId: id,
+              properties: { x: startPos.x, y: startPos.y },
+            },
+            {
+              label: 'Move Blue Synth Builder Widgets',
+              gestureId: md.gestureId,
+              phase: index === positions.length - 1 ? 'cancel' : 'update',
+            },
+          );
+        });
+      }
+      moveDragRef.current = null;
+    }
+    cleanupMove();
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 0);
+    return useProjectStore?.getState?.()?.flushPendingPatches?.();
+  };
+
+  useEffect(() => {
     return () => {
-      unregister();
-      hostWindow.removeEventListener('mousemove', onMove);
-      hostWindow.removeEventListener('mouseup', onUp);
-      hostWindow.removeEventListener('blur', settle);
-      settle();
+      if (moveDragRef.current) {
+        settleMove();
+      }
     };
   }, []);
 
@@ -243,9 +317,19 @@ function WidgetWrapper({
         if (positions.size === 0) {
           positions.set(node.id, { x: node.x, y: node.y });
         }
-        void settleHistoryEditors(e.currentTarget.ownerDocument);
+        const hostDocument = e.currentTarget.ownerDocument;
+        const hostWindow = hostDocument?.defaultView ?? window;
+        void settleHistoryEditors(hostDocument);
+
+        if (moveDragRef.current) {
+          settleMove(hostWindow);
+        }
+
+        const gestureId = crypto.randomUUID();
         moveDragRef.current = {
-          gestureId: crypto.randomUUID(),
+          isCurrent: captureAuthority([...positions.keys()]),
+          hostWindow,
+          gestureId,
           begun: false,
           latest: null,
           dispatch: onBsbInterfacePatch,
@@ -253,6 +337,45 @@ function WidgetWrapper({
           originClientY: e.clientY,
           positions,
         };
+
+        unregisterMoveSettlementRef.current = registerHistoryEditorSettlement(hostDocument, () =>
+          settleMove(hostWindow),
+        );
+
+        moveDisposerRef.current = attachHostGesture({
+          host: hostDocument,
+          kind: 'mouse',
+          onMove: (moveEvent) => {
+            const md = moveDragRef.current;
+            if (!md) return;
+            if (!md.isCurrent()) {
+              discardMove();
+              return;
+            }
+            hasDraggedRef.current = true;
+            md.latest = moveEvent as MouseEvent;
+            moveEvent.preventDefault();
+            hostWindow.cancelAnimationFrame(moveRafRef.current);
+            moveRafRef.current = hostWindow.requestAnimationFrame(() => {
+              if (moveDragRef.current === md) applyMove(md.begun ? 'update' : 'begin');
+            });
+          },
+          onRelease: (releaseEvent) => {
+            if (moveDragRef.current?.latest) {
+              moveDragRef.current.latest = releaseEvent as MouseEvent;
+            }
+            settleMove(hostWindow);
+          },
+          onBlur: () => {
+            settleMove(hostWindow);
+          },
+          onEscape: () => {
+            cancelMove(hostWindow);
+          },
+          onCancel: () => {
+            cancelMove(hostWindow);
+          },
+        });
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
@@ -273,6 +396,7 @@ function WidgetWrapper({
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapWidth}
             onPatch={onBsbInterfacePatch!}
+            captureAuthority={() => captureAuthority([node.id])}
           />
           <ResizeHandle
             edge="left"
@@ -286,6 +410,7 @@ function WidgetWrapper({
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapWidth}
             onPatch={onBsbInterfacePatch!}
+            captureAuthority={() => captureAuthority([node.id])}
           />
         </>
       )}
@@ -302,6 +427,7 @@ function WidgetWrapper({
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapHeight}
             onPatch={onBsbInterfacePatch!}
+            captureAuthority={() => captureAuthority([node.id])}
           />
           <ResizeHandle
             edge="top"
@@ -315,6 +441,7 @@ function WidgetWrapper({
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapHeight}
             onPatch={onBsbInterfacePatch!}
+            captureAuthority={() => captureAuthority([node.id])}
           />
         </>
       )}
@@ -502,6 +629,7 @@ interface ResizeHandleProps {
   gridSnapEnabled?: boolean;
   gridSnapSize?: number;
   onPatch: BsbInterfacePatchHandler;
+  captureAuthority: () => () => boolean;
 }
 
 function ResizeHandle({
@@ -517,8 +645,11 @@ function ResizeHandle({
   gridSnapEnabled,
   gridSnapSize,
   onPatch,
+  captureAuthority,
 }: ResizeHandleProps): React.ReactElement {
   const dragState = useRef<{
+    isCurrent: () => boolean;
+    hostWindow: Window;
     gestureId: string;
     begun: boolean;
     latest: MouseEvent | null;
@@ -527,6 +658,8 @@ function ResizeHandle({
     startVal: number;
     startPos: number;
   } | null>(null);
+  const resizeDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterResizeSettlementRef = useRef<(() => void) | null>(null);
   const rafRef = useRef(0);
   const paramsRef = useRef({
     nodeId,
@@ -589,77 +722,132 @@ function ResizeHandle({
   })();
 
   const handleRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const hostDocument = handleRef.current?.ownerDocument;
-    const hostWindow = hostDocument?.defaultView;
-    if (!hostDocument || !hostWindow) return;
-    const applyResize = (phase: 'begin' | 'update' | 'end') => {
-      const ds = dragState.current;
-      if (!ds?.latest) return;
-      const {
-        nodeId: id,
-        minSize: ms,
-        gridSnapEnabled: snap,
-        gridSnapSize: gs,
-        propertyKey: pk,
-      } = paramsRef.current;
+
+  const applyResize = (phase: 'begin' | 'update' | 'end') => {
+    const ds = dragState.current;
+    if (!ds) return;
+    if (!ds.isCurrent()) {
+      discardResize();
+      return;
+    }
+    if (!ds.begun && !ds.latest) return;
+    const {
+      nodeId: id,
+      minSize: ms,
+      gridSnapEnabled: snap,
+      gridSnapSize: gs,
+      propertyKey: pk,
+    } = paramsRef.current;
+    let delta = 0;
+    if (ds.latest) {
       const client = isHorizontal ? ds.latest.clientX : ds.latest.clientY;
-      let delta = client - ds.startClient;
+      delta = client - ds.startClient;
       if (snap && gs) delta = Math.round(delta / gs) * gs;
-      const properties: Record<string, unknown> = {};
-      if (edge === 'right' || edge === 'bottom') {
-        properties[pk] = Math.max(ms, ds.startVal + delta);
-      } else {
-        delta = Math.max(-ds.startPos, Math.min(delta, ds.startVal - ms));
-        const newPos = ds.startPos + delta;
-        properties[pk] = Math.max(ms, ds.startVal - delta);
-        properties[isHorizontal ? 'x' : 'y'] = newPos;
+    }
+    const properties: Record<string, unknown> = {};
+    if (edge === 'right' || edge === 'bottom') {
+      properties[pk] = Math.max(ms, ds.startVal + delta);
+    } else {
+      delta = Math.max(-ds.startPos, Math.min(delta, ds.startVal - ms));
+      const newPos = ds.startPos + delta;
+      properties[pk] = Math.max(ms, ds.startVal - delta);
+      properties[isHorizontal ? 'x' : 'y'] = newPos;
+    }
+    ds.dispatch(
+      { type: 'updateWidgetProperties', widgetId: id, properties },
+      {
+        label: 'Resize Blue Synth Builder Widget',
+        gestureId: ds.gestureId,
+        phase,
+      },
+    );
+    ds.begun = true;
+  };
+
+  const cleanupResize = () => {
+    if (resizeDisposerRef.current) {
+      resizeDisposerRef.current();
+      resizeDisposerRef.current = null;
+    }
+    if (unregisterResizeSettlementRef.current) {
+      unregisterResizeSettlementRef.current();
+      unregisterResizeSettlementRef.current = null;
+    }
+  };
+
+  const discardResize = () => {
+    const ds = dragState.current;
+    dragState.current = null;
+    ds?.hostWindow.cancelAnimationFrame(rafRef.current);
+    cleanupResize();
+  };
+
+  useEffect(() => {
+    if (dragState.current && !dragState.current.isCurrent()) discardResize();
+  });
+
+  const settleResize = (hostWindow?: Window | null) => {
+    const win = hostWindow ?? handleRef.current?.ownerDocument?.defaultView ?? window;
+    win.cancelAnimationFrame(rafRef.current);
+    const ds = dragState.current;
+    if (ds && !ds.isCurrent()) {
+      discardResize();
+      return;
+    }
+    if (ds) {
+      if (ds.latest && !ds.begun) {
+        applyResize('begin');
       }
-      ds.dispatch(
-        { type: 'updateWidgetProperties', widgetId: id, properties },
-        {
-          label: 'Resize Blue Synth Builder Widget',
-          gestureId: ds.gestureId,
-          phase,
-        },
-      );
-      ds.begun = true;
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      const ds = dragState.current;
-      if (!ds) return;
-      ds.latest = e;
-      e.preventDefault();
-      hostWindow.cancelAnimationFrame(rafRef.current);
-      rafRef.current = hostWindow.requestAnimationFrame(() =>
-        applyResize(ds.begun ? 'update' : 'begin'),
-      );
-    };
-    const settle = () => {
-      hostWindow.cancelAnimationFrame(rafRef.current);
-      const ds = dragState.current;
-      if (ds?.latest) {
-        if (!ds.begun) applyResize('begin');
+      if (ds.begun) {
         applyResize('end');
       }
       dragState.current = null;
-    };
-    const onMouseUp = (e: MouseEvent) => {
-      if (dragState.current?.latest) dragState.current.latest = e;
-      settle();
-    };
-    const unregister = registerHistoryEditorSettlement(hostDocument, settle);
-    hostWindow.addEventListener('mousemove', onMouseMove);
-    hostWindow.addEventListener('mouseup', onMouseUp);
-    hostWindow.addEventListener('blur', settle);
+    }
+    cleanupResize();
+    return useProjectStore?.getState?.()?.flushPendingPatches?.();
+  };
+
+  const cancelResize = (hostWindow?: Window | null) => {
+    const win = hostWindow ?? handleRef.current?.ownerDocument?.defaultView ?? window;
+    win.cancelAnimationFrame(rafRef.current);
+    const ds = dragState.current;
+    if (ds && !ds.isCurrent()) {
+      discardResize();
+      return;
+    }
+    if (ds) {
+      if (ds.begun) {
+        const { nodeId: id, propertyKey: pk } = paramsRef.current;
+        const properties: Record<string, unknown> = {
+          [pk]: ds.startVal,
+        };
+        if (edge === 'left') {
+          properties.x = ds.startPos;
+        } else if (edge === 'top') {
+          properties.y = ds.startPos;
+        }
+        ds.dispatch(
+          { type: 'updateWidgetProperties', widgetId: id, properties },
+          {
+            label: 'Resize Blue Synth Builder Widget',
+            gestureId: ds.gestureId,
+            phase: 'cancel',
+          },
+        );
+      }
+      dragState.current = null;
+    }
+    cleanupResize();
+    return useProjectStore?.getState?.()?.flushPendingPatches?.();
+  };
+
+  useEffect(() => {
     return () => {
-      unregister();
-      hostWindow.removeEventListener('mousemove', onMouseMove);
-      hostWindow.removeEventListener('mouseup', onMouseUp);
-      hostWindow.removeEventListener('blur', settle);
-      settle();
+      if (dragState.current) {
+        settleResize();
+      }
     };
-  }, [edge, isHorizontal]);
+  }, []);
 
   return (
     <div
@@ -671,9 +859,19 @@ function ResizeHandle({
         e.stopPropagation();
         e.preventDefault();
         if (e.button !== 0) return;
-        void settleHistoryEditors(e.currentTarget.ownerDocument);
+        const hostDocument = e.currentTarget.ownerDocument;
+        const hostWindow = hostDocument?.defaultView ?? window;
+        void settleHistoryEditors(hostDocument);
+
+        if (dragState.current) {
+          settleResize(hostWindow);
+        }
+
+        const gestureId = crypto.randomUUID();
         dragState.current = {
-          gestureId: crypto.randomUUID(),
+          isCurrent: captureAuthority(),
+          hostWindow,
+          gestureId,
           begun: false,
           latest: null,
           dispatch: patchRef.current,
@@ -681,6 +879,44 @@ function ResizeHandle({
           startVal: startValue,
           startPos: edge === 'left' ? (nodeX ?? 0) : edge === 'top' ? (nodeY ?? 0) : 0,
         };
+
+        unregisterResizeSettlementRef.current = registerHistoryEditorSettlement(hostDocument, () =>
+          settleResize(hostWindow),
+        );
+
+        resizeDisposerRef.current = attachHostGesture({
+          host: hostDocument,
+          kind: 'mouse',
+          onMove: (moveEvent) => {
+            const ds = dragState.current;
+            if (!ds) return;
+            if (!ds.isCurrent()) {
+              discardResize();
+              return;
+            }
+            ds.latest = moveEvent as MouseEvent;
+            moveEvent.preventDefault();
+            hostWindow.cancelAnimationFrame(rafRef.current);
+            rafRef.current = hostWindow.requestAnimationFrame(() => {
+              if (dragState.current === ds) applyResize(ds.begun ? 'update' : 'begin');
+            });
+          },
+          onRelease: (releaseEvent) => {
+            if (dragState.current?.latest) {
+              dragState.current.latest = releaseEvent as MouseEvent;
+            }
+            settleResize(hostWindow);
+          },
+          onBlur: () => {
+            settleResize(hostWindow);
+          },
+          onEscape: () => {
+            cancelResize(hostWindow);
+          },
+          onCancel: () => {
+            cancelResize(hostWindow);
+          },
+        });
       }}
       onClick={(e) => e.stopPropagation()}
     />
