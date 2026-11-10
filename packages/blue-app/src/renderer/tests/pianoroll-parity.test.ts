@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyPianoRollPatchToPayload,
-  buildPianoRollRestorePatch,
   CENTER_OCTAVE,
   type FieldDefSnapshot,
   GENERATE_FREQUENCY,
@@ -260,47 +259,6 @@ describe('PianoRoll editor parity helpers', () => {
     expect(updated.notes[0]!.fieldValues).toEqual([0.5, 5]);
   });
 
-  it('restores the previous payload state from an undo snapshot patch', () => {
-    const payload = createPayload();
-    const next = applyPianoRollPatchToPayload(payload, {
-      scale: {
-        scaleName: 'Modified',
-        baseFrequency: 440,
-        octave: 2,
-        ratios: [1, 1.5],
-      },
-      fieldDefinitions: [
-        createFieldDefinition({
-          fieldName: 'PAN',
-          fieldType: 'DISCRETE',
-          minValue: 0,
-          maxValue: 8,
-          defaultValue: 6,
-        }),
-      ],
-      pianoRollNoteBatch: {
-        operations: [
-          {
-            kind: 'replace',
-            notes: [
-              {
-                octave: CENTER_OCTAVE,
-                scaleDegree: 4,
-                start: 3,
-                duration: 2,
-                fieldValues: [6],
-                noteTemplate: 'i2 0 1 60 6',
-              },
-            ],
-          },
-        ],
-      },
-    });
-
-    const restored = applyPianoRollPatchToPayload(next, buildPianoRollRestorePatch(payload));
-
-    expect(restored).toEqual(payload);
-  });
 });
 
 describe('NoteCanvasMouseListener', () => {

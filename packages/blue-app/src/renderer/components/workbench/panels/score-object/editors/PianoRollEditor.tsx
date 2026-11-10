@@ -4,8 +4,6 @@ import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { FieldDefSnapshot, NoteData, PianoRollPayload } from './pianoroll/types';
 import {
   applyPianoRollPatchToPayload,
-  buildPianoRollRestorePatch,
-  clonePianoRollPayload,
   GENERATE_MIDI,
   MIDI_NOTE_COUNT,
   OCTAVES,
@@ -14,7 +12,6 @@ import {
 } from './pianoroll/types';
 import { usePianoRollClipboardStore } from '../../../../../stores/pianoroll-clipboard-store';
 import { useProjectStore } from '../../../../../stores/project-store';
-import { usePianoRollUndoStore } from './pianoroll/pianoroll-undo-store';
 import PianoRollCanvas from './pianoroll/PianoRollCanvas';
 import PitchHeader from './pianoroll/PitchHeader';
 import TimeBar, { getPianoRollRulerHeight } from './pianoroll/TimeBar';
@@ -112,10 +109,6 @@ export default function PianoRollEditor({
 
   const clipboard = usePianoRollClipboardStore((s) => s.clipboard);
   const setClipboard = usePianoRollClipboardStore((s) => s.setClipboard);
-  const pushUndoEdit = usePianoRollUndoStore((s) => s.pushEdit);
-  const undo = usePianoRollUndoStore((s) => s.undo);
-  const redo = usePianoRollUndoStore((s) => s.redo);
-  const clearUndoHistory = usePianoRollUndoStore((s) => s.clear);
   const scoreTimeState = useProjectStore((s) => s.score.timeState);
 
   const snapBeats = useMemo(
@@ -150,29 +143,13 @@ export default function PianoRollEditor({
 
   const commitUndoablePatch = useCallback(
     (nextPatch: Record<string, unknown>, label: string) => {
-      const previousPayload = clonePianoRollPayload(payload);
-      const nextPayload = applyPianoRollPatchToPayload(previousPayload, nextPatch);
+      const nextPayload = applyPianoRollPatchToPayload(payload, nextPatch);
 
-      if (JSON.stringify(previousPayload) === JSON.stringify(nextPayload)) {
-        return;
-      }
+      if (JSON.stringify(payload) === JSON.stringify(nextPayload)) return;
 
       patch(nextPatch, { label, phase: 'single' });
-      pushUndoEdit({
-        label,
-        undo: () =>
-          patch(buildPianoRollRestorePatch(previousPayload), {
-            label: `Undo ${label}`,
-            phase: 'single',
-          }),
-        redo: () =>
-          patch(buildPianoRollRestorePatch(nextPayload), {
-            label: `Redo ${label}`,
-            phase: 'single',
-          }),
-      });
     },
-    [patch, payload, pushUndoEdit],
+    [patch, payload],
   );
 
   useEffect(() => {
@@ -204,10 +181,9 @@ export default function PianoRollEditor({
 
   useEffect(() => {
     listenerRef.current?.cancel();
-    clearUndoHistory();
     setSelectedIndices(new Set());
     setPasteTarget(null);
-  }, [clearUndoHistory, targetKey]);
+  }, [targetKey]);
 
   const handleAddNote = useCallback(
     (start: number, scaleDegree: number, octave: number, duration = 1) => {

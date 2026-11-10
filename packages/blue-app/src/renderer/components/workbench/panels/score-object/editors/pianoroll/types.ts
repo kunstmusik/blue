@@ -287,28 +287,6 @@ export function applyPianoRollPatchToPayload(
   return next;
 }
 
-export function buildPianoRollRestorePatch(payload: PianoRollPayload): Record<string, unknown> {
-  return {
-    instrumentId: payload.instrumentId,
-    noteTemplate: payload.noteTemplate,
-    pchGenerationMethod: payload.pchGenerationMethod,
-    transposition: payload.transposition,
-    pixelSecond: payload.pixelSecond,
-    noteHeight: payload.noteHeight,
-    snapEnabled: payload.snapEnabled,
-    snapValue: payload.snapValue,
-    useGlobalRuler: payload.useGlobalRuler,
-    primaryTimeDisplay: payload.primaryTimeDisplay,
-    secondaryTimeDisplay: payload.secondaryTimeDisplay,
-    secondaryRulerEnabled: payload.secondaryRulerEnabled,
-    scale: clonePianoRollScale(payload.scale),
-    fieldDefinitions: clonePianoRollFieldDefinitions(payload.fieldDefinitions),
-    pianoRollNoteBatch: {
-      operations: [{ kind: 'replace', notes: clonePianoRollNotes(payload.notes) }],
-    },
-  };
-}
-
 function applyPianoRollNoteBatch(notes: NoteSnapshot[], batch: PianoRollNoteBatch): NoteSnapshot[] {
   let nextNotes = clonePianoRollNotes(notes);
 
