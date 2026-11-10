@@ -99,6 +99,20 @@ and focused test seam. Retain cohesive queues and independent state domains; avo
 machine that couples unrelated features. Review changed behavior first and keep optional structural
 refactors independently reviewable.
 
+Feature-specific reference contracts and concrete retained owner boundaries:
+
+- [Gestures and History Contract](../specs/119-fix-implicit-state-machines/contracts/gestures-and-history.md) —
+  details the narrow host-gesture listener lifetime (`renderer/lib/host-gesture.ts`), transient score/audio
+  projection (`renderer/stores/score-selection-store.ts`), local editor drafts (`EditableLineCanvas`, `TableEditor`),
+  and canonical history settlement, net-zero release, and rollback checkpoints (`main/project-history.ts`,
+  `renderer/lib/history-scope-router.ts`).
+- [Java Runtime Lifecycle Contract](../specs/119-fix-implicit-state-machines/contracts/java-runtime-lifecycle.md) —
+  details host-side JVM serialization, synchronous handle registration, bounded escalation termination,
+  and client queue invalidation (`main/java-runtime/*`).
+- [Playback and Shortcuts Contract](../specs/119-fix-implicit-state-machines/contracts/playback-and-shortcuts.md) —
+  details host-document modal containment for shortcuts (`use-keyboard-shortcuts.ts`) and pure internal
+  playback lifecycle transitions and atomic compatibility projection (`renderer/stores/playback-store.ts`).
+
 ## First-wave boundary maps
 
 The maps below describe the delivered ownership boundaries. The façades remain the
