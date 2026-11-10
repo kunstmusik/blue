@@ -1,8 +1,10 @@
 import { create } from 'zustand';
+import { getProjectDocumentId, useProjectStore } from './project-store';
 import type {
   ScoreObjectEditorTargetSnapshot,
   ScoreDocumentSnapshot,
   ScoreRowObjectSnapshot,
+  ScoreLayerGroupSnapshot,
 } from '../../shared/project-editor';
 import type { ProjectHistorySelectionHint } from '../../shared/project-history';
 
@@ -50,11 +52,27 @@ export interface PatternClipboardShape {
   height: number;
 }
 
+export interface ScoreGestureObjectProjection {
+  objectId: string;
+  startBeats: number;
+  durationBeats: number;
+  targetLayerIndex?: number;
+  targetGroupId?: string;
+}
+
+export interface ScoreGestureProjection {
+  gestureId: string;
+  documentId?: string;
+  sessionId?: number;
+  objects: Readonly<Record<string, ScoreGestureObjectProjection>>;
+}
+
 interface ScoreSelectionState {
   selectedObjectIds: ReadonlySet<string>;
   selectedObjectTarget: ScoreObjectEditorTargetSnapshot | null;
   selectedObjectTargets: Readonly<Record<string, ScoreObjectEditorTargetSnapshot>>;
   liveSharedProperties: Readonly<Record<string, { startBeats?: number; durationBeats?: number }>>;
+  gestureProjection: ScoreGestureProjection | null;
   clipboard: ScoreObjectClipboardEntry[];
   patternClipboard: PatternClipboardShape | null;
   audioDropGuideBeat: number | null;
@@ -71,6 +89,8 @@ interface ScoreSelectionState {
     updates: Array<{ objectId: string; startBeats?: number; durationBeats?: number }>,
   ) => void;
   clearLiveSharedProperties: (objectIds?: string[]) => void;
+  setGestureProjection: (projection: ScoreGestureProjection | null) => void;
+  clearGestureProjection: (gestureId?: string) => void;
   copySelected: (entries: ScoreObjectClipboardEntry[]) => void;
   clearClipboard: () => void;
   copyPatternShape: (shape: PatternClipboardShape) => void;
@@ -108,6 +128,7 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
   selectedObjectTarget: null,
   selectedObjectTargets: {},
   liveSharedProperties: {},
+  gestureProjection: null,
   clipboard: [],
   patternClipboard: null,
   audioDropGuideBeat: null,
@@ -192,6 +213,7 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
       selectedObjectTarget: null,
       selectedObjectTargets: {},
       liveSharedProperties: {},
+      gestureProjection: null,
     });
   },
 
@@ -305,6 +327,45 @@ export const useScoreSelectionStore = create<ScoreSelectionState>((set) => ({
     });
   },
 
+  setGestureProjection(projection) {
+    if (!projection) {
+      set({ gestureProjection: null, liveSharedProperties: {} });
+      return;
+    }
+    const currentDocId = getProjectDocumentId?.() ?? '';
+    const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+    if (
+      (projection.documentId && currentDocId && projection.documentId !== currentDocId) ||
+      (projection.sessionId !== undefined &&
+        currentSessionId !== undefined &&
+        projection.sessionId !== currentSessionId)
+    ) {
+      set({ gestureProjection: null, liveSharedProperties: {} });
+      return;
+    }
+    const liveUpdates: Record<string, { startBeats?: number; durationBeats?: number }> = {};
+    for (const [id, obj] of Object.entries(projection.objects)) {
+      liveUpdates[id] = { startBeats: obj.startBeats, durationBeats: obj.durationBeats };
+    }
+    set({
+      gestureProjection: projection,
+      liveSharedProperties: liveUpdates,
+    });
+  },
+
+  clearGestureProjection(gestureId) {
+    set((state) => {
+      if (!state.gestureProjection) return state;
+      if (gestureId !== undefined && state.gestureProjection.gestureId !== gestureId) {
+        return state;
+      }
+      return {
+        gestureProjection: null,
+        liveSharedProperties: {},
+      };
+    });
+  },
+
   copySelected(entries) {
     set({ clipboard: entries });
   },
@@ -377,12 +438,48 @@ export function reconcileExternalSelectionHints(
   }
 }
 
-/** Removes selections that no longer resolve in the newly published Score. */
+/** Removes selections and clears or prunes stale gesture projections that no longer resolve in the newly published Score. */
 export function reconcileSelectionWithCanonicalScore(
   score: ScoreDocumentSnapshot | undefined,
 ): void {
   const existing = getScoreObjectIds(score);
   const state = useScoreSelectionStore.getState();
+
+  if (state.gestureProjection) {
+    const currentDocId = getProjectDocumentId?.() ?? '';
+    const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+    if (
+      (state.gestureProjection.documentId &&
+        currentDocId &&
+        state.gestureProjection.documentId !== currentDocId) ||
+      (state.gestureProjection.sessionId !== undefined &&
+        currentSessionId !== undefined &&
+        state.gestureProjection.sessionId !== currentSessionId)
+    ) {
+      state.clearGestureProjection();
+    } else {
+      const survivingProjection: Record<string, ScoreGestureObjectProjection> = {};
+      let pruned = false;
+      for (const [id, obj] of Object.entries(state.gestureProjection.objects)) {
+        if (existing.has(id)) {
+          survivingProjection[id] = obj;
+        } else {
+          pruned = true;
+        }
+      }
+      if (pruned) {
+        if (Object.keys(survivingProjection).length === 0) {
+          state.clearGestureProjection();
+        } else {
+          state.setGestureProjection({
+            ...state.gestureProjection,
+            objects: survivingProjection,
+          });
+        }
+      }
+    }
+  }
+
   const surviving = [...state.selectedObjectIds].filter((objectId) => existing.has(objectId));
   if (surviving.length === state.selectedObjectIds.size) return;
 
@@ -392,6 +489,145 @@ export function reconcileSelectionWithCanonicalScore(
       editorTarget: state.selectedObjectTargets[objectId],
     })),
   );
+}
+
+/**
+ * Composes canonical or display layer groups with a transient score gesture projection.
+ * Relocates moved objects across groups and layers, updates timings, and leaves
+ * non-projected items unchanged without mutating input groups.
+ */
+export function projectScoreLayerGroupsWithGesture(
+  groups: ScoreLayerGroupSnapshot[],
+  projection: ScoreGestureProjection | null | undefined,
+): ScoreLayerGroupSnapshot[] {
+  if (!projection || Object.keys(projection.objects).length === 0) {
+    return groups;
+  }
+  const currentDocId = getProjectDocumentId?.() ?? '';
+  const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+  if (
+    (projection.documentId && currentDocId && projection.documentId !== currentDocId) ||
+    (projection.sessionId !== undefined &&
+      currentSessionId !== undefined &&
+      projection.sessionId !== currentSessionId)
+  ) {
+    return groups;
+  }
+
+  const projectedObjectIds = new Set(Object.keys(projection.objects));
+  const itemById = new Map<string, ScoreRowObjectSnapshot>();
+  const originalLocationById = new Map<string, { groupId: string; layerIndex: number }>();
+
+  for (const group of groups) {
+    for (let li = 0; li < group.layers.length; li++) {
+      const layer = group.layers[li];
+      for (const item of layer.items) {
+        if (projectedObjectIds.has(item.objectId)) {
+          itemById.set(item.objectId, item);
+          originalLocationById.set(item.objectId, { groupId: group.groupId, layerIndex: li });
+        }
+      }
+    }
+  }
+
+  const additionsByGroupAndLayer = new Map<string, Map<number, ScoreRowObjectSnapshot[]>>();
+
+  for (const [id, proj] of Object.entries(projection.objects)) {
+    const orig = itemById.get(id);
+    const origLoc = originalLocationById.get(id);
+    if (!orig || !origLoc) continue;
+
+    const targetGroupId = proj.targetGroupId ?? origLoc.groupId;
+    const targetLayerIndex = proj.targetLayerIndex ?? origLoc.layerIndex;
+
+    const isRelocated =
+      targetGroupId !== origLoc.groupId || targetLayerIndex !== origLoc.layerIndex;
+    if (isRelocated) {
+      let groupMap = additionsByGroupAndLayer.get(targetGroupId);
+      if (!groupMap) {
+        groupMap = new Map();
+        additionsByGroupAndLayer.set(targetGroupId, groupMap);
+      }
+      let layerList = groupMap.get(targetLayerIndex);
+      if (!layerList) {
+        layerList = [];
+        groupMap.set(targetLayerIndex, layerList);
+      }
+      layerList.push({
+        ...orig,
+        startBeats: Math.max(0, proj.startBeats),
+        durationBeats: Math.max(0.001, proj.durationBeats),
+        editorTarget: orig.editorTarget?.location
+          ? {
+              ...orig.editorTarget,
+              location: {
+                ...orig.editorTarget.location,
+                layerIndex: targetLayerIndex,
+              },
+            }
+          : orig.editorTarget,
+      });
+    }
+  }
+
+  return groups.map((group, groupIndex) => {
+    const groupAdditions = additionsByGroupAndLayer.get(group.groupId);
+    const newLayers = group.layers.map((layer, layerIndex) => {
+      const remainingItems: ScoreRowObjectSnapshot[] = [];
+      for (const item of layer.items) {
+        const proj = projection.objects[item.objectId];
+        if (!proj) {
+          remainingItems.push(item);
+          continue;
+        }
+        const origLoc = originalLocationById.get(item.objectId);
+        const targetGroupId = proj.targetGroupId ?? origLoc?.groupId ?? group.groupId;
+        const targetLayerIndex = proj.targetLayerIndex ?? origLoc?.layerIndex ?? layerIndex;
+
+        const isRelocated = targetGroupId !== group.groupId || targetLayerIndex !== layerIndex;
+        if (isRelocated) {
+          continue;
+        }
+
+        remainingItems.push({
+          ...item,
+          startBeats: Math.max(0, proj.startBeats),
+          durationBeats: Math.max(0.001, proj.durationBeats),
+        });
+      }
+
+      const additions = groupAdditions?.get(layerIndex) ?? [];
+      if (additions.length === 0) {
+        return { ...layer, items: remainingItems };
+      }
+
+      return {
+        ...layer,
+        items: [
+          ...remainingItems,
+          ...additions.map((item, idx) => ({
+            ...item,
+            editorTarget: item.editorTarget?.location
+              ? {
+                  ...item.editorTarget,
+                  location: {
+                    ...item.editorTarget.location,
+                    rootGroupIndex: groupIndex,
+                    layerIndex,
+                    objectIndex: remainingItems.length + idx,
+                  },
+                }
+              : item.editorTarget,
+          })),
+        ],
+      };
+    });
+
+    return {
+      ...group,
+      layers: newLayers,
+    } as ScoreLayerGroupSnapshot;
+  });
 }
 
 function getScoreObjectIds(score: ScoreDocumentSnapshot | undefined): Set<string> {

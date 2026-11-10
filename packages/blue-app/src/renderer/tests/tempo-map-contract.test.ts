@@ -25,12 +25,14 @@ describe('Tempo map snapshot contract', () => {
     expect(transport.tempoMap.visible).toBe(true);
     expect(transport.tempoMap.points).toHaveLength(2);
     expect(transport.tempoMap.points[0]).toEqual({
+      pointId: expect.any(String),
       beat: 0,
       tempo: 60,
       curveType: 'constant',
       timeBase: TimeBase.BEATS,
     });
     expect(transport.tempoMap.points[1]).toEqual({
+      pointId: expect.any(String),
       beat: 4,
       tempo: 120,
       curveType: 'linear',

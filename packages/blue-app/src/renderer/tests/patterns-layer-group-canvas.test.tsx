@@ -37,6 +37,7 @@ const { mockProjectState } = vi.hoisted(() => ({
 vi.mock('../stores/project-store', () => ({
   useProjectStore: (selector: (state: typeof mockProjectState) => unknown) =>
     selector(mockProjectState),
+  getProjectDocumentId: () => 'test-doc',
 }));
 
 const ROW_HEIGHT = 44;
@@ -296,6 +297,48 @@ describe('PatternsLayerGroupCanvas', () => {
         ],
       },
     });
+  });
+
+  it('cancels cell painting on Escape without committing patch', () => {
+    render(makeGroup(4, [makeLayer('pl-1', 'A', [])]));
+    const canvas = canvasEl();
+    mouse(canvas, 'mousedown', 10, 10);
+    mouse(window, 'mousemove', 170, 10);
+
+    expect(canvas.querySelectorAll('[data-pattern-paint-cell]')).toHaveLength(3);
+
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+
+    mouse(window, 'mouseup', 170, 10);
+
+    expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
+    expect(canvas.querySelectorAll('[data-pattern-paint-cell]')).toHaveLength(0);
+  });
+
+  it('cancels cell painting on blur without committing patch', () => {
+    render(makeGroup(4, [makeLayer('pl-1', 'A', [])]));
+    const canvas = canvasEl();
+    mouse(canvas, 'mousedown', 10, 10);
+    mouse(window, 'mousemove', 170, 10);
+
+    expect(canvas.querySelectorAll('[data-pattern-paint-cell]')).toHaveLength(3);
+
+    act(() => {
+      window.dispatchEvent(new Event('blur'));
+    });
+
+    mouse(window, 'mouseup', 170, 10);
+
+    expect(mockProjectState.applyProjectDocumentPatch).not.toHaveBeenCalled();
+    expect(canvas.querySelectorAll('[data-pattern-paint-cell]')).toHaveLength(0);
   });
 
   it('opens cell-targeted context commands without creating an occurrence selection', () => {

@@ -18,13 +18,20 @@ import { useScoreSelectionStore } from '../../../../../stores/score-selection-st
 import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
 import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 import { useLibraryStore } from '../../../../../stores/library-store';
-import { getProjectDocumentRevision, useProjectStore } from '../../../../../stores/project-store';
+import {
+  getProjectDocumentId,
+  getProjectDocumentRevision,
+  useProjectStore,
+} from '../../../../../stores/project-store';
+import { registerHistoryEditorSettlement } from '../../../../../lib/history-scope-router';
 import { useMidiRoutingStore } from '../../../../../stores/midi-routing-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
+import { attachHostGesture } from '../../../../../lib/host-gesture';
 import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { createFrameSnapContext, snapBeatToGrid } from '../snap-grid-utils';
@@ -105,6 +112,9 @@ interface OriginalTrackItem {
 
 interface GestureState {
   mode: GestureMode;
+  gestureId: string;
+  documentId?: string;
+  sessionId?: number;
   startClientX: number;
   startClientY: number;
   startBeats: number;
@@ -263,6 +273,12 @@ export default function TrackLayerGroupCanvas({
   const addToSelection = useScoreSelectionStore((state) => state.addToSelection);
   const copySelected = useScoreSelectionStore((state) => state.copySelected);
   const setAudioDropGuideBeat = useScoreSelectionStore((state) => state.setAudioDropGuideBeat);
+  const setGestureProjection = useScoreSelectionStore((state) => state.setGestureProjection);
+  const clearGestureProjection = useScoreSelectionStore((state) => state.clearGestureProjection);
+  const setLiveSharedProperties = useScoreSelectionStore((state) => state.setLiveSharedProperties);
+  const clearLiveSharedProperties = useScoreSelectionStore(
+    (state) => state.clearLiveSharedProperties,
+  );
   const selectedLayerKeys = useLayerSelectionStore((state) => state.selectedKeys);
   const clearLayerSelection = useLayerSelectionStore((state) => state.clear);
   const captureScoreSoundObject = useLibraryStore((state) => state.captureScoreSoundObject);
@@ -363,6 +379,68 @@ export default function TrackLayerGroupCanvas({
 
   const clearPreview = useCallback(() => {
     setPreviewByObjectId({});
+  }, []);
+
+  const gestureDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+
+  const handleCancel = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureDisposerRef.current?.();
+    gestureDisposerRef.current = null;
+    if (gestureRef.current) {
+      clearGestureProjection(gestureRef.current.gestureId);
+    } else {
+      clearGestureProjection();
+    }
+    clearLiveSharedProperties();
+    clearPreview();
+    setAudioPreviewByObjectId({});
+    pendingMovePatchRef.current = [];
+    pendingSharedPropertyPatchRef.current.clear();
+    pendingFadePatchRef.current.clear();
+    pendingFileStartPatchRef.current.clear();
+    gestureRef.current = null;
+    setMarquee(null);
+    setCursorOverride(null);
+  }, [clearGestureProjection, clearLiveSharedProperties, clearPreview]);
+
+  const handleCancelRef = useRef(handleCancel);
+  handleCancelRef.current = handleCancel;
+
+  const beginGesture = useCallback((gesture: GestureState, targetElement?: HTMLElement | null) => {
+    gesture.documentId = getProjectDocumentId() ?? '';
+    gesture.sessionId = useProjectStore?.getState?.()?.sessionId;
+    gestureRef.current = gesture;
+    gestureDisposerRef.current?.();
+    const host = targetElement?.ownerDocument ?? containerRef.current?.ownerDocument ?? document;
+
+    unregisterSettlementRef.current = registerHistoryEditorSettlement(host, async () => {
+      unregisterSettlementRef.current?.();
+      unregisterSettlementRef.current = null;
+      handleMouseUpRef.current();
+      return useProjectStore?.getState?.()?.flushPendingPatches?.();
+    });
+
+    gestureDisposerRef.current = attachHostGesture({
+      host,
+      onMove: (e) => {
+        handleMouseMoveRef.current(e as MouseEvent);
+      },
+      onRelease: () => {
+        handleMouseUpRef.current();
+      },
+      onEscape: () => {
+        handleCancelRef.current();
+      },
+      onBlur: () => {
+        handleCancelRef.current();
+      },
+      onCancel: () => {
+        handleCancelRef.current();
+      },
+    });
   }, []);
 
   useEffect(() => {
@@ -923,21 +1001,25 @@ export default function TrackLayerGroupCanvas({
           clearSelection();
           clearLayerSelection();
         }
-        gestureRef.current = {
-          mode: 'marquee',
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-          startBeats: xBeats,
-          startLayerIndex:
-            findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT)?.layerIndex ?? 0,
-          startGlobalLayer: 0,
-          startGroupYOffset: 0,
-          minLayerAdjust: 0,
-          maxLayerAdjust: 0,
-          globalLayerMap: [],
-          additive: event.shiftKey,
-          originals: [],
-        };
+        beginGesture(
+          {
+            mode: 'marquee',
+            gestureId: `track-marquee-${crypto.randomUUID()}`,
+            startClientX: event.clientX,
+            startClientY: event.clientY,
+            startBeats: xBeats,
+            startLayerIndex:
+              findTimelineLayerAtY(group.layers, y, DEFAULT_ROW_HEIGHT)?.layerIndex ?? 0,
+            startGlobalLayer: 0,
+            startGroupYOffset: 0,
+            minLayerAdjust: 0,
+            maxLayerAdjust: 0,
+            globalLayerMap: [],
+            additive: event.shiftKey,
+            originals: [],
+          },
+          event.currentTarget,
+        );
         marqueeRef.current = null;
         setMarquee(null);
         return;
@@ -954,39 +1036,43 @@ export default function TrackLayerGroupCanvas({
 
       const displayItem = getDisplayItem(hit.item);
       if (event.altKey && displayItem.barRenderer.kind === 'audioClip') {
-        gestureRef.current = {
-          mode: 'slideFileStart',
-          startClientX: event.clientX,
-          startClientY: event.clientY,
-          startBeats: displayItem.startBeats,
-          startLayerIndex: hit.layerIndex,
-          startGlobalLayer: hit.layerIndex,
-          startGroupYOffset: 0,
-          minLayerAdjust: 0,
-          maxLayerAdjust: 0,
-          globalLayerMap: [],
-          activeObjectId: hit.item.objectId,
-          startFileStartBeats: displayItem.barRenderer.fileStartTimeBeats,
-          audioDurationBeats: displayItem.barRenderer.audioDurationBeats,
-          looping: displayItem.barRenderer.looping,
-          additive: false,
-          originals: [
-            {
-              objectId: hit.item.objectId,
-              objectType: hit.item.objectType,
-              groupId: group.groupId,
-              layerIndex: hit.layerIndex,
-              globalLayerIndex: hit.layerIndex,
-              startBeats: displayItem.startBeats,
-              durationBeats: displayItem.durationBeats,
-              startTimeBase: hit.item.startTimeBase,
-              durationTimeBase: hit.item.durationTimeBase,
-              fadeInBeats: displayItem.barRenderer.fadeInBeats,
-              fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
-              editorTarget: hit.item.editorTarget,
-            },
-          ],
-        };
+        beginGesture(
+          {
+            mode: 'slideFileStart',
+            gestureId: `track-slide-${crypto.randomUUID()}`,
+            startClientX: event.clientX,
+            startClientY: event.clientY,
+            startBeats: displayItem.startBeats,
+            startLayerIndex: hit.layerIndex,
+            startGlobalLayer: hit.layerIndex,
+            startGroupYOffset: 0,
+            minLayerAdjust: 0,
+            maxLayerAdjust: 0,
+            globalLayerMap: [],
+            activeObjectId: hit.item.objectId,
+            startFileStartBeats: displayItem.barRenderer.fileStartTimeBeats,
+            audioDurationBeats: displayItem.barRenderer.audioDurationBeats,
+            looping: displayItem.barRenderer.looping,
+            additive: false,
+            originals: [
+              {
+                objectId: hit.item.objectId,
+                objectType: hit.item.objectType,
+                groupId: group.groupId,
+                layerIndex: hit.layerIndex,
+                globalLayerIndex: hit.layerIndex,
+                startBeats: displayItem.startBeats,
+                durationBeats: displayItem.durationBeats,
+                startTimeBase: hit.item.startTimeBase,
+                durationTimeBase: hit.item.durationTimeBase,
+                fadeInBeats: displayItem.barRenderer.fadeInBeats,
+                fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
+                editorTarget: hit.item.editorTarget,
+              },
+            ],
+          },
+          event.currentTarget,
+        );
         return;
       }
 
@@ -1027,25 +1113,29 @@ export default function TrackLayerGroupCanvas({
         if (!Number.isFinite(maxLayerAdjust)) maxLayerAdjust = 0;
       }
 
-      gestureRef.current = {
-        mode: onLeftEdge ? 'resizeLeft' : onRightEdge ? 'resizeRight' : 'move',
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startBeats: xBeats,
-        startLayerIndex: hit.layerIndex,
-        startGlobalLayer: currentGroupStart + hit.layerIndex,
-        startGroupYOffset: currentGroupYOffset,
-        minLayerAdjust,
-        maxLayerAdjust,
-        globalLayerMap: globalData.layerMap.map(({ groupId, localIndex }) => ({
-          groupId,
-          localIndex,
-        })),
-        resizeReferenceStartBeats: displayItem.startBeats,
-        resizeReferenceDurationBeats: displayItem.durationBeats,
-        additive: false,
-        originals,
-      };
+      beginGesture(
+        {
+          mode: onLeftEdge ? 'resizeLeft' : onRightEdge ? 'resizeRight' : 'move',
+          gestureId: `track-gesture-${crypto.randomUUID()}`,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startBeats: xBeats,
+          startLayerIndex: hit.layerIndex,
+          startGlobalLayer: currentGroupStart + hit.layerIndex,
+          startGroupYOffset: currentGroupYOffset,
+          minLayerAdjust,
+          maxLayerAdjust,
+          globalLayerMap: globalData.layerMap.map(({ groupId, localIndex }) => ({
+            groupId,
+            localIndex,
+          })),
+          resizeReferenceStartBeats: displayItem.startBeats,
+          resizeReferenceDurationBeats: displayItem.durationBeats,
+          additive: false,
+          originals,
+        },
+        event.currentTarget,
+      );
     },
     [
       allLayerGroups,
@@ -1079,40 +1169,44 @@ export default function TrackLayerGroupCanvas({
       }
       const displayItem = getDisplayItem(item);
       if (displayItem.barRenderer.kind !== 'audioClip') return;
-      gestureRef.current = {
-        mode,
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startBeats: displayItem.startBeats,
-        startLayerIndex: layerIndex,
-        startGlobalLayer: layerIndex,
-        startGroupYOffset: 0,
-        minLayerAdjust: 0,
-        maxLayerAdjust: 0,
-        globalLayerMap: [],
-        activeObjectId: item.objectId,
-        startFadeBeats:
-          mode === 'fadeIn'
-            ? displayItem.barRenderer.fadeInBeats
-            : displayItem.barRenderer.fadeOutBeats,
-        additive: false,
-        originals: [
-          {
-            objectId: item.objectId,
-            objectType: item.objectType,
-            groupId: group.groupId,
-            layerIndex,
-            globalLayerIndex: layerIndex,
-            startBeats: displayItem.startBeats,
-            durationBeats: displayItem.durationBeats,
-            startTimeBase: item.startTimeBase,
-            durationTimeBase: item.durationTimeBase,
-            fadeInBeats: displayItem.barRenderer.fadeInBeats,
-            fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
-            editorTarget: item.editorTarget,
-          },
-        ],
-      };
+      beginGesture(
+        {
+          mode,
+          gestureId: `track-fade-${crypto.randomUUID()}`,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startBeats: displayItem.startBeats,
+          startLayerIndex: layerIndex,
+          startGlobalLayer: layerIndex,
+          startGroupYOffset: 0,
+          minLayerAdjust: 0,
+          maxLayerAdjust: 0,
+          globalLayerMap: [],
+          activeObjectId: item.objectId,
+          startFadeBeats:
+            mode === 'fadeIn'
+              ? displayItem.barRenderer.fadeInBeats
+              : displayItem.barRenderer.fadeOutBeats,
+          additive: false,
+          originals: [
+            {
+              objectId: item.objectId,
+              objectType: item.objectType,
+              groupId: group.groupId,
+              layerIndex,
+              globalLayerIndex: layerIndex,
+              startBeats: displayItem.startBeats,
+              durationBeats: displayItem.durationBeats,
+              startTimeBase: item.startTimeBase,
+              durationTimeBase: item.durationTimeBase,
+              fadeInBeats: displayItem.barRenderer.fadeInBeats,
+              fadeOutBeats: displayItem.barRenderer.fadeOutBeats,
+              editorTarget: item.editorTarget,
+            },
+          ],
+        },
+        event.currentTarget,
+      );
     },
     [getDisplayItem, group.groupId, select, selectedObjectIds],
   );
@@ -1155,6 +1249,17 @@ export default function TrackLayerGroupCanvas({
       }
 
       const { x, y } = toLocalXY(event.clientX, event.clientY);
+      const currentDocId = getProjectDocumentId() ?? '';
+      const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+      if (
+        (gesture.documentId && currentDocId && currentDocId !== gesture.documentId) ||
+        (gesture.sessionId !== undefined &&
+          currentSessionId !== undefined &&
+          currentSessionId !== gesture.sessionId)
+      ) {
+        handleCancel();
+        return;
+      }
       if (gesture.mode === 'marquee') {
         const start = toLocalXY(gesture.startClientX, gesture.startClientY);
         const next = { startX: start.x, startY: start.y, endX: x, endY: y };
@@ -1195,7 +1300,6 @@ export default function TrackLayerGroupCanvas({
             : [];
         });
         if (moves.length === 0) return;
-        moveScoreObjects(moves);
         setPreviewByObjectId(
           Object.fromEntries(
             moves.map((move) => {
@@ -1207,6 +1311,24 @@ export default function TrackLayerGroupCanvas({
             }),
           ),
         );
+        setGestureProjection({
+          gestureId: gesture.gestureId,
+          objects: Object.fromEntries(
+            moves.map((move) => {
+              const original = gesture.originals.find((entry) => entry.objectId === move.objectId)!;
+              return [
+                move.objectId,
+                {
+                  objectId: move.objectId,
+                  startBeats: move.targetStartBeats,
+                  durationBeats: original.durationBeats,
+                  targetGroupId: move.targetGroupId,
+                  targetLayerIndex: move.targetLayerIndex,
+                },
+              ];
+            }),
+          ),
+        });
         pendingMovePatchRef.current = moves.flatMap((move) => {
           const target = gesture.originals.find(
             (entry) => entry.objectId === move.objectId,
@@ -1267,7 +1389,6 @@ export default function TrackLayerGroupCanvas({
             targetDurationBeats: original.durationBeats - delta,
           }));
         }
-        resizeScoreObjects(resizes);
         setPreviewByObjectId(
           Object.fromEntries(
             resizes.map((resize) => [
@@ -1279,6 +1400,19 @@ export default function TrackLayerGroupCanvas({
             ]),
           ),
         );
+        setGestureProjection({
+          gestureId: gesture.gestureId,
+          objects: Object.fromEntries(
+            resizes.map((resize) => [
+              resize.objectId,
+              {
+                objectId: resize.objectId,
+                startBeats: resize.targetStartBeats,
+                durationBeats: resize.targetDurationBeats,
+              },
+            ]),
+          ),
+        });
         resizes.forEach((resize) =>
           pendingSharedPropertyPatchRef.current.set(resize.objectId, {
             startBeats: resize.targetStartBeats,
@@ -1358,8 +1492,27 @@ export default function TrackLayerGroupCanvas({
   );
 
   const handleMouseUp = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureDisposerRef.current?.();
+    gestureDisposerRef.current = null;
     const gesture = gestureRef.current;
     if (!gesture) return;
+    clearGestureProjection(gesture.gestureId);
+    clearPreview();
+    clearLiveSharedProperties();
+
+    const currentDocId = getProjectDocumentId() ?? '';
+    const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+    if (
+      (gesture.documentId && currentDocId && currentDocId !== gesture.documentId) ||
+      (gesture.sessionId !== undefined &&
+        currentSessionId !== undefined &&
+        currentSessionId !== gesture.sessionId)
+    ) {
+      handleCancel();
+      return;
+    }
     if (gesture.mode === 'marquee') {
       const activeMarquee = marqueeRef.current ?? marquee;
       if (activeMarquee) {
@@ -1407,34 +1560,49 @@ export default function TrackLayerGroupCanvas({
         else setSelection(entries);
       }
     } else if (gesture.mode === 'move' && pendingMovePatchRef.current.length > 0) {
-      void applyProjectDocumentPatch({
-        score: { type: 'moveScoreObjects', moves: pendingMovePatchRef.current },
-      });
+      const label =
+        pendingMovePatchRef.current.length > 1
+          ? `Move ${pendingMovePatchRef.current.length} Audio Clips`
+          : 'Move Audio Clip';
+      void applyProjectDocumentPatch(
+        {
+          score: { type: 'moveScoreObjects', moves: pendingMovePatchRef.current },
+        },
+        { label, gestureId: gesture.gestureId, phase: 'single' },
+      );
     } else if (
       (gesture.mode === 'resizeLeft' || gesture.mode === 'resizeRight') &&
       pendingSharedPropertyPatchRef.current.size > 0
     ) {
       const pending = Array.from(pendingSharedPropertyPatchRef.current.entries());
+      const total = pending.length;
+      const label = total > 1 ? `Resize ${total} Audio Clips` : 'Resize Audio Clip';
       void (async () => {
-        for (const [objectId, values] of pending) {
+        for (let i = 0; i < total; i++) {
+          const [objectId, values] = pending[i]!;
           const original = gesture.originals.find((entry) => entry.objectId === objectId);
           if (!original?.editorTarget) continue;
-          await applyProjectDocumentPatch({
-            score: {
-              type: 'updateSharedProperties',
-              target: original.editorTarget,
-              patch: {
-                startTime: {
-                  value: values.startBeats ?? original.startBeats,
-                  timeBase: original.startTimeBase,
-                },
-                subjectiveDuration: {
-                  value: values.durationBeats ?? original.durationBeats,
-                  timeBase: original.durationTimeBase,
+          const phase =
+            total === 1 ? 'single' : i === 0 ? 'begin' : i === total - 1 ? 'end' : 'update';
+          await applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'updateSharedProperties',
+                target: original.editorTarget,
+                patch: {
+                  startTime: {
+                    value: values.startBeats ?? original.startBeats,
+                    timeBase: original.startTimeBase,
+                  },
+                  subjectiveDuration: {
+                    value: values.durationBeats ?? original.durationBeats,
+                    timeBase: original.durationTimeBase,
+                  },
                 },
               },
             },
-          });
+            { label, gestureId: gesture.gestureId, phase },
+          );
         }
       })();
     } else if (
@@ -1442,43 +1610,59 @@ export default function TrackLayerGroupCanvas({
       pendingFadePatchRef.current.size > 0
     ) {
       const pending = Array.from(pendingFadePatchRef.current.entries());
+      const total = pending.length;
+      const label = 'Edit Audio Fade';
       void (async () => {
-        for (const [objectId, values] of pending) {
+        for (let i = 0; i < total; i++) {
+          const [objectId, values] = pending[i]!;
           const target = gesture.originals.find(
             (entry) => entry.objectId === objectId,
           )?.editorTarget;
           if (!target) continue;
-          await applyProjectDocumentPatch({
-            score: {
-              type: 'updateTypeSpecificEditor',
-              target,
-              patch: {
-                ...(values.fadeInBeats !== undefined
-                  ? { fadeIn: beatsToSeconds(values.fadeInBeats) }
-                  : {}),
-                ...(values.fadeOutBeats !== undefined
-                  ? { fadeOut: beatsToSeconds(values.fadeOutBeats) }
-                  : {}),
+          const phase =
+            total === 1 ? 'single' : i === 0 ? 'begin' : i === total - 1 ? 'end' : 'update';
+          await applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target,
+                patch: {
+                  ...(values.fadeInBeats !== undefined
+                    ? { fadeIn: beatsToSeconds(values.fadeInBeats) }
+                    : {}),
+                  ...(values.fadeOutBeats !== undefined
+                    ? { fadeOut: beatsToSeconds(values.fadeOutBeats) }
+                    : {}),
+                },
               },
             },
-          });
+            { label, gestureId: gesture.gestureId, phase },
+          );
         }
       })();
     } else if (gesture.mode === 'slideFileStart' && pendingFileStartPatchRef.current.size > 0) {
       const pending = Array.from(pendingFileStartPatchRef.current.entries());
+      const total = pending.length;
+      const label = 'Edit File Start Time';
       void (async () => {
-        for (const [objectId, values] of pending) {
+        for (let i = 0; i < total; i++) {
+          const [objectId, values] = pending[i]!;
           const target = gesture.originals.find(
             (entry) => entry.objectId === objectId,
           )?.editorTarget;
           if (!target) continue;
-          await applyProjectDocumentPatch({
-            score: {
-              type: 'updateTypeSpecificEditor',
-              target,
-              patch: { fileStartTime: beatsToSeconds(values.fileStartTimeBeats) },
+          const phase =
+            total === 1 ? 'single' : i === 0 ? 'begin' : i === total - 1 ? 'end' : 'update';
+          await applyProjectDocumentPatch(
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target,
+                patch: { fileStartTime: beatsToSeconds(values.fileStartTimeBeats) },
+              },
             },
-          });
+            { label, gestureId: gesture.gestureId, phase },
+          );
         }
       })();
     }
@@ -1497,6 +1681,8 @@ export default function TrackLayerGroupCanvas({
     allLayerGroups,
     applyProjectDocumentPatch,
     beatsToSeconds,
+    clearGestureProjection,
+    clearLiveSharedProperties,
     clearPreview,
     group.groupId,
     marquee,
@@ -1598,17 +1784,8 @@ export default function TrackLayerGroupCanvas({
   handleMouseUpRef.current = handleMouseUp;
 
   useEffect(() => {
-    const onMove = (event: MouseEvent) => {
-      if (gestureRef.current) handleMouseMoveRef.current(event);
-    };
-    const onUp = () => {
-      if (gestureRef.current) handleMouseUpRef.current();
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      handleCancelRef.current?.();
     };
   }, []);
 
@@ -1934,9 +2111,15 @@ export default function TrackLayerGroupCanvas({
                     tempoMap={tempoMap}
                     smpteFrameRate={smpteFrameRate}
                     mode={mode}
-                    onPatch={(patch: ScoreAutomationPatch) => {
+                    onPatch={(
+                      patch: ScoreAutomationPatch,
+                      metadata?: ProjectDocumentCommitMetadata,
+                    ) => {
                       void (async () => {
-                        await applyProjectDocumentPatch({ score: patch });
+                        await applyProjectDocumentPatch(
+                          { score: patch },
+                          metadata ?? { label: 'Edit Score Automation' },
+                        );
                         await flushPendingPatches();
                       })();
                     }}

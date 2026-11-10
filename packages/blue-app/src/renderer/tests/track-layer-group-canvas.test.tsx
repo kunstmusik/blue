@@ -339,12 +339,19 @@ describe('Track layer timeline gestures', () => {
       const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
         typeof vi.fn
       >;
-      expect(applyPatch).toHaveBeenCalledWith({
-        score: {
-          type: 'moveScoreObjects',
-          moves: [expect.objectContaining({ targetStartBeats: expect.closeTo(90.12, 10) })],
+      expect(applyPatch).toHaveBeenCalledWith(
+        {
+          score: {
+            type: 'moveScoreObjects',
+            moves: [expect.objectContaining({ targetStartBeats: expect.closeTo(90.12, 10) })],
+          },
         },
-      });
+        expect.objectContaining({
+          gestureId: expect.any(String),
+          label: 'Move Audio Clip',
+          phase: 'single',
+        }),
+      );
       applyPatch.mockClear();
       act(() => mouse(surface, 'contextmenu', 94.13 * 25, 15));
       clickContextMenuItem('Add SoundObject');
@@ -601,15 +608,194 @@ describe('Track layer timeline gestures', () => {
     const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
       typeof vi.fn
     >;
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'moveScoreObjects',
-        moves: expect.arrayContaining([
-          expect.objectContaining({ targetStartBeats: 2, targetGroupId: 'sound-group' }),
-          expect.objectContaining({ targetStartBeats: 3, targetGroupId: 'track-group' }),
-        ]),
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'moveScoreObjects',
+          moves: expect.arrayContaining([
+            expect.objectContaining({ targetStartBeats: 2, targetGroupId: 'sound-group' }),
+            expect.objectContaining({ targetStartBeats: 3, targetGroupId: 'track-group' }),
+          ]),
+        },
       },
+      expect.objectContaining({
+        gestureId: expect.any(String),
+        label: 'Move 2 Audio Clips',
+        phase: 'single',
+      }),
+    );
+    act(() => root.unmount());
+  });
+
+  it('leaves shared score and dirty state unchanged during drag move until commit, and clears projection on cancel', () => {
+    const track = makeTrackGroup([makeItem('track-object', 2, 2)]);
+    const { root, surface } = renderTrackCanvas(track, [track]);
+    act(() => {
+      useScoreSelectionStore
+        .getState()
+        .setSelection([
+          { objectId: 'track-object', editorTarget: track.layers[0]!.items[0]!.editorTarget },
+        ]);
     });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
+    applyPatch.mockClear();
+
+    // Start drag
+    act(() => {
+      mouse(surface, 'mousedown', 62, 20);
+      mouse(window, 'mousemove', 87, 20);
+    });
+
+    // During drag: gesture projection is active, but shared score patch has not been called
+    expect(useScoreSelectionStore.getState().gestureProjection).not.toBeNull();
+    expect(
+      useScoreSelectionStore.getState().gestureProjection?.objects['track-object']?.startBeats,
+    ).toBe(3);
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    // Cancel gesture via Escape
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    // Projection is cleared and patch was never committed
+    expect(useScoreSelectionStore.getState().gestureProjection).toBeNull();
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    // Drag again and commit on release
+    act(() => {
+      mouse(surface, 'mousedown', 62, 20);
+      mouse(window, 'mousemove', 87, 20);
+    });
+    expect(useScoreSelectionStore.getState().gestureProjection).not.toBeNull();
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    act(() => {
+      mouse(window, 'mouseup', 87, 20);
+    });
+
+    expect(useScoreSelectionStore.getState().gestureProjection).toBeNull();
+    expect(applyPatch).toHaveBeenCalledTimes(1);
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'moveScoreObjects',
+          moves: [expect.objectContaining({ targetStartBeats: 3, targetGroupId: 'track-group' })],
+        },
+      },
+      expect.objectContaining({
+        label: 'Move Audio Clip',
+        phase: 'single',
+      }),
+    );
+    act(() => root.unmount());
+  });
+
+  it('unmounts during active drag and discards local preview, clearing gesture projection (T039)', () => {
+    const track = makeTrackGroup([makeItem('track-object', 2, 2)]);
+    const { root, surface } = renderTrackCanvas(track, [track]);
+    act(() => {
+      useScoreSelectionStore
+        .getState()
+        .setSelection([
+          { objectId: 'track-object', editorTarget: track.layers[0]!.items[0]!.editorTarget },
+        ]);
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
+    applyPatch.mockClear();
+
+    // Start drag
+    act(() => {
+      mouse(surface, 'mousedown', 62, 20);
+      mouse(window, 'mousemove', 87, 20);
+    });
+
+    expect(useScoreSelectionStore.getState().gestureProjection).not.toBeNull();
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    // Editor closure / unmount
+    act(() => {
+      root.unmount();
+    });
+
+    // Projection is discarded and cleared without commit
+    expect(useScoreSelectionStore.getState().gestureProjection).toBeNull();
+    expect(applyPatch).not.toHaveBeenCalled();
+  });
+
+  it('cancels drag on pointercancel and discards projection without commit (T039)', () => {
+    const track = makeTrackGroup([makeItem('track-object', 2, 2)]);
+    const { root, surface } = renderTrackCanvas(track, [track]);
+    act(() => {
+      useScoreSelectionStore
+        .getState()
+        .setSelection([
+          { objectId: 'track-object', editorTarget: track.layers[0]!.items[0]!.editorTarget },
+        ]);
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
+    applyPatch.mockClear();
+
+    // Start drag
+    act(() => {
+      mouse(surface, 'mousedown', 62, 20);
+      mouse(window, 'mousemove', 87, 20);
+    });
+
+    expect(useScoreSelectionStore.getState().gestureProjection).not.toBeNull();
+
+    // Deliver pointercancel
+    act(() => {
+      window.dispatchEvent(new Event('pointercancel', { bubbles: true }));
+    });
+
+    expect(useScoreSelectionStore.getState().gestureProjection).toBeNull();
+    expect(applyPatch).not.toHaveBeenCalled();
+    act(() => root.unmount());
+  });
+
+  it('fences drag move and release on session mismatch (T035)', () => {
+    const track = makeTrackGroup([makeItem('track-object', 2, 2)]);
+    const { root, surface } = renderTrackCanvas(track, [track]);
+    act(() => {
+      useScoreSelectionStore
+        .getState()
+        .setSelection([
+          { objectId: 'track-object', editorTarget: track.layers[0]!.items[0]!.editorTarget },
+        ]);
+    });
+
+    const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
+      typeof vi.fn
+    >;
+    applyPatch.mockClear();
+
+    // Start drag
+    act(() => {
+      mouse(surface, 'mousedown', 62, 20);
+    });
+
+    const origSessionId = useProjectStore.getState().sessionId;
+    useProjectStore.setState({ sessionId: origSessionId + 10 });
+
+    act(() => {
+      mouse(window, 'mousemove', 100, 20);
+      mouse(window, 'mouseup', 100, 20);
+    });
+
+    expect(applyPatch).not.toHaveBeenCalled();
+    expect(useScoreSelectionStore.getState().gestureProjection).toBeNull();
+
+    useProjectStore.setState({ sessionId: origSessionId });
     act(() => root.unmount());
   });
 
@@ -650,13 +836,20 @@ describe('Track layer timeline gestures', () => {
     const applyPatch = useProjectStore.getState().applyProjectDocumentPatch as ReturnType<
       typeof vi.fn
     >;
-    expect(applyPatch).toHaveBeenCalledWith({
-      score: {
-        type: 'updateTypeSpecificEditor',
-        target: group.layers[0]!.items[0]!.editorTarget,
-        patch: { fadeIn: 0.75 },
+    expect(applyPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateTypeSpecificEditor',
+          target: group.layers[0]!.items[0]!.editorTarget,
+          patch: { fadeIn: 0.75 },
+        },
       },
-    });
+      expect.objectContaining({
+        gestureId: expect.any(String),
+        label: 'Edit Audio Fade',
+        phase: 'single',
+      }),
+    );
     act(() => root.unmount());
   });
 

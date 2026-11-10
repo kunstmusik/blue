@@ -42,7 +42,12 @@ import ColumnHeader from './score/ColumnHeader';
 import LayerPanel from './score/LayerPanel';
 import { useScorePathState } from './score/useScorePathState';
 import { useScoreWheelZoom, computePixelsPerBeat } from './score/useScoreWheelZoom';
-import { useScoreSelectionStore } from '../../../stores/score-selection-store';
+import type { ProjectDocumentCommitMetadata } from '../../../../shared/project-history';
+import {
+  useScoreSelectionStore,
+  projectScoreLayerGroupsWithGesture,
+} from '../../../stores/score-selection-store';
+import { attachHostGesture } from '../../../lib/host-gesture';
 import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
 import { useLayerSelectionStore } from '../../../stores/layer-selection-store';
 import { useScoreRulerSelection } from './score/useScoreRulerSelection';
@@ -426,7 +431,14 @@ export default function ScorePanel() {
     hostDocument,
   });
 
-  const displayLayerGroups = layerHeightResize.projectedLayerGroups;
+  const gestureProjection = useScoreSelectionStore((state) => state.gestureProjection);
+
+  const displayLayerGroups = useMemo(() => {
+    return projectScoreLayerGroupsWithGesture(
+      layerHeightResize.projectedLayerGroups,
+      gestureProjection,
+    );
+  }, [layerHeightResize.projectedLayerGroups, gestureProjection]);
 
   const visibleLayers = initialVisibleLayers;
 
@@ -567,6 +579,11 @@ export default function ScorePanel() {
   } | null>(null);
   const bgMarqueeRef = useRef(bgMarquee);
   bgMarqueeRef.current = bgMarquee;
+  const baselineSelectionRef = useRef<Array<{
+    objectId: string;
+    editorTarget?: ScoreRowObjectSnapshot['editorTarget'];
+  }> | null>(null);
+  const bgMarqueeDisposerRef = useRef<(() => void) | null>(null);
 
   const contentXY = useCallback(
     (clientX: number, clientY: number) => {
@@ -578,29 +595,22 @@ export default function ScorePanel() {
     [scrollContainerRef],
   );
 
-  const handleTimelineBackgroundMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) return;
-    if (e.metaKey || e.ctrlKey) return;
-    useLayerSelectionStore.getState().clear();
-    if (!e.shiftKey) {
-      useScoreSelectionStore.getState().clearSelection();
-    }
-    setBgMarquee({
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      endClientX: e.clientX,
-      endClientY: e.clientY,
-      additive: e.shiftKey,
-    });
-  }, []);
-
   const handleBgMarqueeMove = useCallback((clientX: number, clientY: number) => {
     setBgMarquee((prev) => (prev ? { ...prev, endClientX: clientX, endClientY: clientY } : prev));
+  }, []);
+
+  const handleBgMarqueeCancel = useCallback(() => {
+    setBgMarquee(null);
+    if (baselineSelectionRef.current) {
+      useScoreSelectionStore.getState().setSelection(baselineSelectionRef.current);
+      baselineSelectionRef.current = null;
+    }
   }, []);
 
   const handleBgMarqueeUp = useCallback(() => {
     const m = bgMarqueeRef.current;
     setBgMarquee(null);
+    baselineSelectionRef.current = null;
     if (!m) return;
     const start = contentXY(m.startClientX, m.startClientY);
     const end = contentXY(m.endClientX, m.endClientY);
@@ -618,7 +628,7 @@ export default function ScorePanel() {
       editorTarget: ScoreRowObjectSnapshot['editorTarget'];
     }> = [];
     let groupYOff = 0;
-    for (const lg of effectiveLayerGroups) {
+    for (const lg of displayLayerGroups) {
       for (const layer of lg.layers) {
         const h = layer.height || DEFAULT_ROW_HEIGHT;
         const layerTop = groupYOff;
@@ -648,26 +658,60 @@ export default function ScorePanel() {
     } else {
       store.setSelection(hitItems);
     }
-  }, [contentXY, effectiveLayerGroups, pixelsPerBeat]);
+  }, [contentXY, displayLayerGroups, pixelsPerBeat]);
 
-  // Capture-phase window listeners keep the marquee alive outside the panel and
-  // are not blocked by child canvases' stopPropagation.
-  const bgMarqueeMoveRef = useRef(handleBgMarqueeMove);
-  const bgMarqueeUpRef = useRef(handleBgMarqueeUp);
-  bgMarqueeMoveRef.current = handleBgMarqueeMove;
-  bgMarqueeUpRef.current = handleBgMarqueeUp;
-  const bgMarqueeActive = bgMarquee !== null;
-  useLayoutEffect(() => {
-    if (!bgMarqueeActive) return;
-    const onMove = (e: MouseEvent) => bgMarqueeMoveRef.current(e.clientX, e.clientY);
-    const onUp = () => bgMarqueeUpRef.current();
-    window.addEventListener('mousemove', onMove, true);
-    window.addEventListener('mouseup', onUp, true);
+  const handleTimelineBackgroundMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target !== e.currentTarget) return;
+      if (e.metaKey || e.ctrlKey) return;
+      useLayerSelectionStore.getState().clear();
+      const store = useScoreSelectionStore.getState();
+      const baseline = Array.from(store.selectedObjectIds).map((objectId) => ({
+        objectId,
+        editorTarget: store.selectedObjectTargets[objectId],
+      }));
+      baselineSelectionRef.current = baseline;
+      if (!e.shiftKey) {
+        store.clearSelection();
+      }
+      setBgMarquee({
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        endClientX: e.clientX,
+        endClientY: e.clientY,
+        additive: e.shiftKey,
+      });
+
+      const host = hostDocument ?? (e.currentTarget as HTMLElement).ownerDocument ?? document;
+      bgMarqueeDisposerRef.current?.();
+      bgMarqueeDisposerRef.current = attachHostGesture({
+        host,
+        capture: true,
+        onMove: (moveEvent) => {
+          handleBgMarqueeMove(moveEvent.clientX, moveEvent.clientY);
+        },
+        onRelease: () => {
+          handleBgMarqueeUp();
+        },
+        onEscape: () => {
+          handleBgMarqueeCancel();
+        },
+        onBlur: () => {
+          handleBgMarqueeCancel();
+        },
+        onCancel: () => {
+          handleBgMarqueeCancel();
+        },
+      });
+    },
+    [handleBgMarqueeMove, handleBgMarqueeUp, handleBgMarqueeCancel, hostDocument],
+  );
+
+  useEffect(() => {
     return () => {
-      window.removeEventListener('mousemove', onMove, true);
-      window.removeEventListener('mouseup', onUp, true);
+      bgMarqueeDisposerRef.current?.();
     };
-  }, [bgMarqueeActive]);
+  }, []);
 
   const handleTimelineHeaderScroll = useCallback(() => {
     const header = timelineHeaderRef.current;
@@ -720,9 +764,14 @@ export default function ScorePanel() {
     useProjectStore.getState().applyProjectDocumentPatch({ transport: { tempoMap: { visible } } });
   }, []);
 
-  const handleTempoPatch = useCallback((patch: TempoMapPatch) => {
-    useProjectStore.getState().applyProjectDocumentPatch({ transport: { tempoMapPatch: patch } });
-  }, []);
+  const handleTempoPatch = useCallback(
+    (patch: TempoMapPatch, metadata?: ProjectDocumentCommitMetadata) => {
+      useProjectStore
+        .getState()
+        .applyProjectDocumentPatch({ transport: { tempoMapPatch: patch } }, metadata);
+    },
+    [],
+  );
 
   const handleMeterPatch = useCallback((patch: MeterMapPatch) => {
     useProjectStore.getState().applyProjectDocumentPatch({ transport: { meterMapPatch: patch } });

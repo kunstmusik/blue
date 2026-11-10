@@ -22,8 +22,15 @@ import {
   rangeEdgeNear,
 } from './automation-line-utils';
 import { snapValueToBeats, type SnapValueName } from '@blue/data';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
 import { cn } from '../../../../../lib/cn';
+import { attachHostGesture } from '../../../../../lib/host-gesture';
+import {
+  finishProjectGesture,
+  registerHistoryEditorSettlement,
+} from '../../../../../lib/history-scope-router';
+import { getProjectDocumentId, useProjectStore } from '../../../../../stores/project-store';
 
 interface Props {
   automation: ScoreLayerAutomationSnapshot;
@@ -35,7 +42,7 @@ interface Props {
   tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
   mode: 'score' | 'singleLine' | 'multiLine';
-  onPatch: (patch: ScoreAutomationPatch) => void;
+  onPatch: (patch: ScoreAutomationPatch, metadata?: ProjectDocumentCommitMetadata) => void;
 }
 
 /**
@@ -122,9 +129,96 @@ export default function AutomationLayerOverlay({
   const setRangeSelection = useScoreAutomationStore((state) => state.setRangeSelection);
   const multiLinePreview = useScoreAutomationStore((state) => state.multiLinePreview);
 
+  const hostGestureDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const gestureIdentityRef = useRef<{
+    documentId: string;
+    sessionId: number;
+    layerId: string;
+    parameterId: string;
+  } | null>(null);
+  const liveGestureRef = useRef<{
+    gestureId: string;
+    label: string;
+    documentId: string;
+    sessionId: number;
+    hasMoved: boolean;
+  } | null>(null);
+
+  const previewRef = useRef(preview);
+  previewRef.current = preview;
+  const dragStateRef = useRef(dragState);
+  dragStateRef.current = dragState;
+
+  const clearGesture = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    hostGestureDisposerRef.current?.();
+    hostGestureDisposerRef.current = null;
+    gestureIdentityRef.current = null;
+    liveGestureRef.current = null;
+    previewRef.current = null;
+    dragStateRef.current = { kind: 'none' };
+    setPreview(null);
+    setDragState({ kind: 'none' });
+    setSelectedPoint(null);
+    setHoveredPointIndex(null);
+  }, [setSelectedPoint]);
+
+  useEffect(() => {
+    return () => {
+      unregisterSettlementRef.current?.();
+      unregisterSettlementRef.current = null;
+      hostGestureDisposerRef.current?.();
+      hostGestureDisposerRef.current = null;
+      if (liveGestureRef.current?.hasMoved) {
+        const live = liveGestureRef.current;
+        liveGestureRef.current = null;
+        void finishProjectGesture({
+          documentId: live.documentId,
+          sessionId: live.sessionId,
+          gestureId: live.gestureId,
+          label: live.label,
+          phase: 'end',
+        });
+      }
+      clearGesture();
+    };
+  }, [clearGesture]);
+
   const selectedParam = automation.parameters.find(
     (p) => p.parameterId === automation.selectedParameterId,
   );
+
+  const latestTargetRef = useRef({
+    layerId: automation.layerId,
+    parameterId: selectedParam?.parameterId,
+  });
+  latestTargetRef.current = {
+    layerId: automation.layerId,
+    parameterId: selectedParam?.parameterId,
+  };
+
+  useEffect(() => {
+    const identity = gestureIdentityRef.current;
+    if (
+      !identity ||
+      (mode === 'singleLine' &&
+        identity.layerId === automation.layerId &&
+        identity.parameterId === selectedParam?.parameterId)
+    )
+      return;
+    const live = liveGestureRef.current;
+    clearGesture();
+    if (live?.hasMoved)
+      void finishProjectGesture({
+        documentId: live.documentId,
+        sessionId: live.sessionId,
+        gestureId: live.gestureId,
+        label: live.label,
+        phase: 'end',
+      });
+  }, [automation.layerId, selectedParam?.parameterId, mode, clearGesture]);
 
   // Drop stale hover when leaving single-line mode or switching the active
   // parameter, so the readout never points at a now-irrelevant point.
@@ -183,14 +277,80 @@ export default function AutomationLayerOverlay({
     };
   }, []);
 
+  const dragMoveRef = useRef<(clientX: number, clientY: number) => void>(() => {});
+  const mouseUpRef = useRef<() => void>(() => {});
+  const cancelRef = useRef<() => void>(() => {});
+
+  const commitPreview = useCallback(
+    (
+      currentDrag: DragState,
+      currentPreview: { parameterId: string; points: AutomationPointSnapshot[] },
+    ) => {
+      if (currentDrag.kind === 'rangeMove') {
+        const beatDelta = computeRangeMoveDelta(currentDrag, currentPreview.points);
+        onPatch(
+          {
+            type: 'moveAutomationRange',
+            range: {
+              startBeat: currentDrag.startBeat,
+              endBeat: currentDrag.endBeat,
+              layerIds: [automation.layerId],
+              parameterIdsByLayer: { [automation.layerId]: [currentDrag.parameterId] },
+            },
+            beatDelta,
+          },
+          { label: 'Move Automation Range', phase: 'single' },
+        );
+        setRangeSelection(null);
+      } else if (currentDrag.kind === 'rangeScale') {
+        const { anchorBeat, scaleFactor } = computeRangeScale(currentDrag, currentPreview.points);
+        onPatch(
+          {
+            type: 'scaleAutomationRange',
+            range: {
+              startBeat: currentDrag.startBeat,
+              endBeat: currentDrag.endBeat,
+              layerIds: [automation.layerId],
+              parameterIdsByLayer: { [automation.layerId]: [currentDrag.parameterId] },
+            },
+            anchorBeat,
+            scaleFactor,
+          },
+          { label: 'Scale Automation Range', phase: 'single' },
+        );
+        setRangeSelection(null);
+      } else if (currentDrag.kind === 'valueShift') {
+        onPatch(
+          {
+            type: 'setAutomationPoints',
+            parameterId: currentDrag.parameterId,
+            points: currentPreview.points,
+          },
+          { label: 'Shift Automation Values', phase: 'single' },
+        );
+      }
+    },
+    [automation.layerId, onPatch, setRangeSelection],
+  );
+
+  const handleCancel = useCallback(() => {
+    const live = liveGestureRef.current;
+    if (live && live.hasMoved) {
+      void finishProjectGesture({
+        documentId: live.documentId,
+        sessionId: live.sessionId,
+        gestureId: live.gestureId,
+        label: live.label,
+        phase: 'cancel',
+      });
+    }
+    clearGesture();
+  }, [clearGesture]);
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (mode !== 'singleLine') return;
       if (!selectedParam) return;
-      // Only the primary (left) button inserts/moves points; right-click is
-      // handled by onContextMenu (delete). Without this guard a right-click in
-      // empty space would insert a point via mousedown before the contextmenu
-      // delete runs.
       if (e.button !== 0) return;
       e.stopPropagation();
 
@@ -205,15 +365,90 @@ export default function AutomationLayerOverlay({
         selectedParam.resolution,
       );
 
+      const beginGesture = (
+        state: DragState,
+        liveInfo: {
+          gestureId: string;
+          label: string;
+          documentId: string;
+          sessionId: number;
+          hasMoved: boolean;
+        } | null,
+      ) => {
+        gestureIdentityRef.current = {
+          documentId:
+            typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '',
+          sessionId: useProjectStore.getState().sessionId,
+          layerId: automation.layerId,
+          parameterId: selectedParam.parameterId,
+        };
+        liveGestureRef.current = liveInfo;
+        setDragState(state);
+        dragStateRef.current = state;
+
+        unregisterSettlementRef.current?.();
+        if (typeof registerHistoryEditorSettlement === 'function') {
+          const hostDoc = (e.currentTarget as Element)?.ownerDocument ?? document;
+          unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+            const live = liveGestureRef.current;
+            const identity = gestureIdentityRef.current;
+            const state = dragStateRef.current;
+            const draft = previewRef.current;
+            clearGesture();
+            if (
+              !identity ||
+              identity.documentId !== (getProjectDocumentId() ?? '') ||
+              identity.sessionId !== useProjectStore.getState().sessionId ||
+              identity.layerId !== latestTargetRef.current.layerId ||
+              identity.parameterId !== latestTargetRef.current.parameterId
+            )
+              return;
+            if (live && live.hasMoved) {
+              await finishProjectGesture({
+                documentId: live.documentId,
+                sessionId: live.sessionId,
+                gestureId: live.gestureId,
+                label: live.label,
+                phase: 'end',
+              });
+            } else if (state && draft) {
+              commitPreview(state, draft);
+            }
+            return useProjectStore.getState().flushPendingPatches?.();
+          });
+        }
+
+        hostGestureDisposerRef.current?.();
+        hostGestureDisposerRef.current = attachHostGesture({
+          host: e.currentTarget,
+          capture: true,
+          onMove: (moveEvent) => {
+            dragMoveRef.current(moveEvent.clientX, moveEvent.clientY);
+          },
+          onRelease: () => {
+            mouseUpRef.current();
+          },
+          onEscape: () => {
+            cancelRef.current();
+          },
+          onBlur: () => {
+            cancelRef.current();
+          },
+          onCancel: () => {
+            cancelRef.current();
+          },
+        });
+      };
+
       // Shift-drag creates a single-line time-range selection.
       if (e.shiftKey) {
         setSelectedPoint(null);
         setSingleParamRange(snappedBeat, snappedBeat);
-        setDragState({ kind: 'rangeCreate', anchorBeat: snappedBeat });
+        beginGesture({ kind: 'rangeCreate', anchorBeat: snappedBeat }, null);
         return;
       }
 
-      // Near an existing point → move it (plain) or vertical-shift the selection (ctrl/cmd).
+      // Near an existing point → move it.
       const nearIdx = findPointNear(
         selectedParam.points,
         snappedBeat,
@@ -231,13 +466,26 @@ export default function AutomationLayerOverlay({
           pointIndex: nearIdx,
         });
         const nearBoundaries = dragTimeBoundaries(selectedParam.points, nearIdx);
-        setDragState({
-          kind: 'move',
-          parameterId: selectedParam.parameterId,
-          pointIndex: nearIdx,
-          minTime: nearBoundaries.minTime,
-          maxTime: nearBoundaries.maxTime,
-        });
+        const gestureId = `automation-${crypto.randomUUID()}`;
+        const documentId = getProjectDocumentId() ?? '';
+        const sessionId = useProjectStore.getState().sessionId;
+
+        beginGesture(
+          {
+            kind: 'move',
+            parameterId: selectedParam.parameterId,
+            pointIndex: nearIdx,
+            minTime: nearBoundaries.minTime,
+            maxTime: nearBoundaries.maxTime,
+          },
+          {
+            gestureId,
+            label: 'Move Automation Point',
+            documentId,
+            sessionId,
+            hasMoved: false,
+          },
+        );
         return;
       }
 
@@ -246,48 +494,52 @@ export default function AutomationLayerOverlay({
         const edge = rangeEdgeNear(singleLineRange, snappedBeat, pixelsPerBeat, EDGE_THRESHOLD_PX);
         if (edge) {
           const anchorBeat = edge === 'left' ? singleLineRange.endBeat : singleLineRange.startBeat;
-          setDragState({
-            kind: 'rangeScale',
-            parameterId: selectedParam.parameterId,
-            startBeat: singleLineRange.startBeat,
-            endBeat: singleLineRange.endBeat,
-            edge,
-            anchorBeat,
-            originBeat: snappedBeat,
-            startPoints: selectedParam.points,
-          });
-          return;
-        }
-        if (snappedBeat >= singleLineRange.startBeat && snappedBeat <= singleLineRange.endBeat) {
-          // Ctrl/cmd-drag inside the range vertically shifts selected values.
-          if (e.ctrlKey || e.metaKey) {
-            setDragState({
-              kind: 'valueShift',
+          beginGesture(
+            {
+              kind: 'rangeScale',
               parameterId: selectedParam.parameterId,
               startBeat: singleLineRange.startBeat,
               endBeat: singleLineRange.endBeat,
-              originValue: value,
+              edge,
+              anchorBeat,
+              originBeat: snappedBeat,
               startPoints: selectedParam.points,
-            });
+            },
+            null,
+          );
+          return;
+        }
+        if (snappedBeat >= singleLineRange.startBeat && snappedBeat <= singleLineRange.endBeat) {
+          if (e.ctrlKey || e.metaKey) {
+            beginGesture(
+              {
+                kind: 'valueShift',
+                parameterId: selectedParam.parameterId,
+                startBeat: singleLineRange.startBeat,
+                endBeat: singleLineRange.endBeat,
+                originValue: value,
+                startPoints: selectedParam.points,
+              },
+              null,
+            );
             return;
           }
-          setDragState({
-            kind: 'rangeMove',
-            parameterId: selectedParam.parameterId,
-            startBeat: singleLineRange.startBeat,
-            endBeat: singleLineRange.endBeat,
-            originBeat: snappedBeat,
-            startPoints: selectedParam.points,
-          });
+          beginGesture(
+            {
+              kind: 'rangeMove',
+              parameterId: selectedParam.parameterId,
+              startBeat: singleLineRange.startBeat,
+              endBeat: singleLineRange.endBeat,
+              originBeat: snappedBeat,
+              startPoints: selectedParam.points,
+            },
+            null,
+          );
           return;
         }
       }
 
-      // Otherwise insert a new point at the cursor and immediately begin
-      // dragging it, matching Java Blue (mousePressed sets
-      // selectedPoint = insertGraphPoint(...)). The new index is derived from
-      // the backend's time-sorted insertion so the following move patches track
-      // the freshly inserted point.
+      // Otherwise insert a new point at the cursor and immediately begin dragging it.
       setRangeSelection(null);
       const insertIdx = insertionIndexForTime(selectedParam.points, snappedBeat);
       const { minTime, maxTime } = insertDragTimeBoundaries(selectedParam.points, insertIdx);
@@ -297,18 +549,36 @@ export default function AutomationLayerOverlay({
         pointIndex: insertIdx,
       });
       setHoveredPointIndex(insertIdx);
-      onPatch({
-        type: 'insertAutomationPoint',
-        parameterId: selectedParam.parameterId,
-        point: { time: snappedBeat, value },
-      });
-      setDragState({
-        kind: 'move',
-        parameterId: selectedParam.parameterId,
-        pointIndex: insertIdx,
-        minTime,
-        maxTime,
-      });
+
+      const gestureId = `automation-${crypto.randomUUID()}`;
+      const documentId = getProjectDocumentId() ?? '';
+      const sessionId = useProjectStore.getState().sessionId;
+
+      onPatch(
+        {
+          type: 'insertAutomationPoint',
+          parameterId: selectedParam.parameterId,
+          point: { time: snappedBeat, value },
+        },
+        { label: 'Add Automation Point', gestureId, phase: 'begin' },
+      );
+
+      beginGesture(
+        {
+          kind: 'move',
+          parameterId: selectedParam.parameterId,
+          pointIndex: insertIdx,
+          minTime,
+          maxTime,
+        },
+        {
+          gestureId,
+          label: 'Add Automation Point',
+          documentId,
+          sessionId,
+          hasMoved: true,
+        },
+      );
     },
     [
       automation.layerId,
@@ -367,6 +637,27 @@ export default function AutomationLayerOverlay({
       if (dragState.kind === 'none') return;
       if (mode !== 'singleLine' || !selectedParam) return;
 
+      const currentDocId =
+        typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+      const currentSessionId = useProjectStore.getState().sessionId;
+      const identity = gestureIdentityRef.current;
+      if (
+        !identity ||
+        currentDocId !== identity.documentId ||
+        currentSessionId !== identity.sessionId ||
+        automation.layerId !== identity.layerId ||
+        selectedParam.parameterId !== identity.parameterId
+      ) {
+        hostGestureDisposerRef.current?.();
+        clearGesture();
+        return;
+      }
+      if (dragState.kind === 'move' && dragState.pointIndex >= selectedParam.points.length) {
+        hostGestureDisposerRef.current?.();
+        clearGesture();
+        return;
+      }
+
       const { localX, localY, height } = localCoords(clientX, clientY);
       const beat = xToBeat(localX, pixelsPerBeat);
       const snappedBeat = snapBeatForMouse(beat);
@@ -388,12 +679,21 @@ export default function AutomationLayerOverlay({
         // start (Java ParameterLinePanel parity), so the point can never cross
         // a neighbor and reorder/swap indices.
         const clampedBeat = Math.min(dragState.maxTime, Math.max(dragState.minTime, snappedBeat));
-        onPatch({
-          type: 'moveAutomationPoint',
-          parameterId: dragState.parameterId,
-          pointIndex: dragState.pointIndex,
-          point: { time: clampedBeat, value },
-        });
+        const phase = liveGestureRef.current?.hasMoved ? 'update' : 'begin';
+        if (liveGestureRef.current) {
+          liveGestureRef.current.hasMoved = true;
+        }
+        const gestureId = liveGestureRef.current?.gestureId;
+        const label = liveGestureRef.current?.label ?? 'Move Automation Point';
+        onPatch(
+          {
+            type: 'moveAutomationPoint',
+            parameterId: dragState.parameterId,
+            pointIndex: dragState.pointIndex,
+            point: { time: clampedBeat, value },
+          },
+          { label, gestureId, phase },
+        );
         // Re-derive the hovered index from the cursor so the readout stays on
         // the dragged point even if the points array re-sorts around it.
         const idx = findPointNear(
@@ -488,89 +788,57 @@ export default function AutomationLayerOverlay({
     ],
   );
 
-  // Keep the latest drag/release handlers reachable from the window listeners
-  // (which are attached once per drag, not on every dragState change). The
-  // .current assignments live just below handleMouseUp to avoid a TDZ reference.
-  const dragMoveRef = useRef<(clientX: number, clientY: number) => void>(() => {});
-  const mouseUpRef = useRef<() => void>(() => {});
-
   const handleMouseUp = useCallback(() => {
+    const live = liveGestureRef.current;
+    const identity = gestureIdentityRef.current;
+    const currentDocId =
+      typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+    const currentSessionId = useProjectStore.getState().sessionId;
+    if (
+      !identity ||
+      currentDocId !== identity.documentId ||
+      currentSessionId !== identity.sessionId ||
+      automation.layerId !== identity.layerId ||
+      selectedParam?.parameterId !== identity.parameterId
+    ) {
+      clearGesture();
+      return;
+    }
+
     if (dragState.kind === 'move') {
-      // Release ends the click-selection so the point isn't left stuck selected
-      // (which would keep it red and pin the readout even after the cursor
-      // moves away). Hover re-highlights it via hoveredPointIndex while the
-      // cursor remains over the point.
-      setSelectedPoint(null);
-      setDragState({ kind: 'none' });
+      if (live && live.hasMoved) {
+        void finishProjectGesture({
+          documentId: live.documentId,
+          sessionId: live.sessionId,
+          gestureId: live.gestureId,
+          label: live.label,
+          phase: 'end',
+        });
+      }
+      clearGesture();
       return;
     }
     if (dragState.kind === 'rangeCreate') {
-      setDragState({ kind: 'none' });
+      clearGesture();
       return;
     }
-    if (dragState.kind === 'rangeMove' && preview) {
-      const beatDelta = computeRangeMoveDelta(dragState, preview.points);
-      onPatch({
-        type: 'moveAutomationRange',
-        range: {
-          startBeat: dragState.startBeat,
-          endBeat: dragState.endBeat,
-          layerIds: [automation.layerId],
-          parameterIdsByLayer: { [automation.layerId]: [dragState.parameterId] },
-        },
-        beatDelta,
-      });
-      // Points moved to new times — clear the (now stale) range, matching Java.
-      setRangeSelection(null);
-    } else if (dragState.kind === 'rangeScale' && preview) {
-      const { anchorBeat, scaleFactor } = computeRangeScale(dragState, preview.points);
-      onPatch({
-        type: 'scaleAutomationRange',
-        range: {
-          startBeat: dragState.startBeat,
-          endBeat: dragState.endBeat,
-          layerIds: [automation.layerId],
-          parameterIdsByLayer: { [automation.layerId]: [dragState.parameterId] },
-        },
-        anchorBeat,
-        scaleFactor,
-      });
-      setRangeSelection(null);
-    } else if (dragState.kind === 'valueShift' && preview) {
-      onPatch({
-        type: 'setAutomationPoints',
-        parameterId: dragState.parameterId,
-        points: preview.points,
-      });
+    if (preview) {
+      commitPreview(dragState, preview);
     }
-    setPreview(null);
-    setDragState({ kind: 'none' });
-  }, [automation.layerId, dragState, onPatch, preview, setRangeSelection, setSelectedPoint]);
+    clearGesture();
+  }, [
+    automation.layerId,
+    clearGesture,
+    commitPreview,
+    dragState,
+    handleCancel,
+    preview,
+    selectedParam,
+  ]);
 
-  // Point the window-listener refs at the latest handlers (declared above), then
-  // capture mousemove/mouseup at the window for the lifetime of a drag so the
-  // gesture keeps tracking even after the cursor leaves the panel (Java Swing
-  // parity: mouseDragged is delivered to the press target until release).
   dragMoveRef.current = handleDragMove;
   mouseUpRef.current = handleMouseUp;
-  const isDragging = dragState.kind !== 'none';
-  useLayoutEffect(() => {
-    if (!isDragging) return;
-    const onMove = (e: MouseEvent) => dragMoveRef.current(e.clientX, e.clientY);
-    const onUp = () => mouseUpRef.current();
-    // Capture phase: these fire before the target element's handlers and before
-    // any bubble-phase stopPropagation. This matters because other (inactive)
-    // automation overlays are still pointer-events-auto in single-line mode and
-    // their onMouseMove calls stopPropagation, which would otherwise block a
-    // bubble-phase window listener and freeze the drag while the cursor is over
-    // another panel.
-    window.addEventListener('mousemove', onMove, true);
-    window.addEventListener('mouseup', onUp, true);
-    return () => {
-      window.removeEventListener('mousemove', onMove, true);
-      window.removeEventListener('mouseup', onUp, true);
-    };
-  }, [isDragging]);
+  cancelRef.current = handleCancel;
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {
@@ -633,16 +901,16 @@ export default function AutomationLayerOverlay({
       // Pin the readout to the grabbed point so it shows during the drag even
       // before the next mousemove lands.
       setHoveredPointIndex(pointIndex);
-      const { minTime, maxTime } = dragTimeBoundaries(parameter.points, pointIndex);
-      setDragState({
-        kind: 'move',
-        parameterId: parameter.parameterId,
-        pointIndex,
-        minTime,
-        maxTime,
-      });
+      handleMouseDown(event);
     },
-    [automation.layerId, mode, selectedParam?.parameterId, setRangeSelection, setSelectedPoint],
+    [
+      automation.layerId,
+      mode,
+      selectedParam?.parameterId,
+      setRangeSelection,
+      setSelectedPoint,
+      handleMouseDown,
+    ],
   );
 
   const handlePointContextMenu = useCallback(

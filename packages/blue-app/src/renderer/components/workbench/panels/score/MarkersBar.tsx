@@ -3,14 +3,46 @@ import type { TempoMapSnapshot } from '../../../../../shared/project-editor';
 import { useMemo, useRef, useCallback, useState, useEffect, type RefObject } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import type { MarkerSnapshot, MeterMapSnapshot } from '../../../../../shared/project-editor';
-import { useProjectStore } from '../../../../stores/project-store';
+import { getProjectDocumentId, useProjectStore } from '../../../../stores/project-store';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';
 import { createFrameSnapContext, snapBeatToGrid } from './snap-grid-utils';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
+import { attachHostGesture } from '../../../../lib/host-gesture';
+import {
+  finishProjectGesture,
+  registerHistoryEditorSettlement,
+} from '../../../../lib/history-scope-router';
 
 const AUTO_SCROLL_EDGE_THRESHOLD = 24;
 const AUTO_SCROLL_MAX_STEP = 32;
+
+function sameMarker(left: MarkerSnapshot | undefined, right: MarkerSnapshot | undefined): boolean {
+  return Boolean(
+    left &&
+    right &&
+    left.markerId === right.markerId &&
+    left.name === right.name &&
+    left.timeBase === right.timeBase &&
+    Math.abs(left.time - right.time) < 1e-7,
+  );
+}
+
+function sameMarkerTarget(
+  expectedMarkers: MarkerSnapshot[],
+  currentMarkers: MarkerSnapshot[],
+  index: number,
+  target: MarkerSnapshot | undefined,
+): boolean {
+  if (!sameMarker(target, currentMarkers[index])) return false;
+  const matches = (markers: MarkerSnapshot[]) =>
+    markers.flatMap((marker, i) => (sameMarker(marker, target) ? [i] : []));
+  const expectedMatches = matches(expectedMarkers);
+  return (
+    expectedMatches.length < 2 ||
+    JSON.stringify(matches(currentMarkers)) === JSON.stringify(expectedMatches)
+  );
+}
 
 interface Props {
   markers: MarkerSnapshot[];
@@ -125,75 +157,191 @@ export default function MarkersBar({
   );
 
   const clearDrag = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    activeLiveGroupRef.current = null;
     dragStateRef.current = null;
     setDraggingSourceIndex(null);
   }, []);
 
-  const applyDragUpdate = useCallback(
-    (clientX: number, shiftHeld: boolean) => {
-      const dragState = dragStateRef.current;
-      if (!dragState || !rootTimelineOnly) return;
-
-      autoScroll(clientX);
-
-      if (dragState.type === 'marker') {
-        const currentMouseBeats = xToBeats(clientX);
-        const draggedBeats =
-          dragState.startMarkerBeats + (currentMouseBeats - dragState.startMouseBeats);
-        const beats = Math.max(0, snapBeats(draggedBeats, shiftHeld));
-        applyPatch({
-          score: {
-            type: 'updateMarker',
-            sourceIndex: dragState.sourceIndex,
-            patch: { timeBeats: beats },
-          },
-        });
-        return;
-      }
-
-      const beats = Math.max(0, snapBeats(xToBeats(clientX), shiftHeld));
-
-      applyPatch({
-        transport: { renderStartTime: beats, renderEndTime: -1 },
-      });
-    },
-    [rootTimelineOnly, autoScroll, snapBeats, xToBeats, applyPatch],
-  );
+  const hostGestureDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const activeLiveGroupRef = useRef<{
+    documentId: string;
+    sessionId: number;
+    gestureId: string;
+    label: string;
+  } | null>(null);
 
   useEffect(() => {
-    const onMouseMove = (event: MouseEvent) => {
-      if (dragStateRef.current) {
-        applyDragUpdate(event.clientX, event.shiftKey);
-      }
-    };
-
-    const onMouseUp = () => {
-      if (dragStateRef.current) {
-        clearDrag();
-      }
-    };
-
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      unregisterSettlementRef.current?.();
+      unregisterSettlementRef.current = null;
+      hostGestureDisposerRef.current?.();
+      hostGestureDisposerRef.current = null;
+      if (activeLiveGroupRef.current) {
+        const { documentId, sessionId, gestureId, label } = activeLiveGroupRef.current;
+        activeLiveGroupRef.current = null;
+        void finishProjectGesture({
+          documentId,
+          sessionId,
+          gestureId,
+          label,
+          phase: 'end',
+        });
+      }
+      clearDrag();
     };
-  }, [applyDragUpdate, clearDrag]);
+  }, [clearDrag]);
 
   const startMarkerDrag = useCallback(
-    (sourceIndex: number, clientX: number, startMarkerBeats: number) => {
+    (sourceIndex: number, clientX: number, startMarkerBeats: number, host?: EventTarget | null) => {
       if (!rootTimelineOnly) return;
+      hostGestureDisposerRef.current?.();
+
+      const gestureId = `marker-${crypto.randomUUID()}`;
+      const documentId = getProjectDocumentId() ?? '';
+      const sessionId = useProjectStore.getState().sessionId;
+      const startMouseBeats = xToBeats(clientX);
+      let hasStartedLiveGroup = false;
+      let expectedMarker = markers.find((marker) => marker.sourceIndex === sourceIndex);
+      let expectedMarkers = useProjectStore.getState().score.markers;
+      const ownsTarget = () =>
+        sameMarkerTarget(
+          expectedMarkers,
+          useProjectStore.getState().score.markers,
+          sourceIndex,
+          expectedMarker,
+        );
+
       dragStateRef.current = {
         type: 'marker',
         sourceIndex,
-        startMouseBeats: xToBeats(clientX),
+        startMouseBeats,
         startMarkerBeats,
       };
       setDraggingSourceIndex(sourceIndex);
+
+      const hostEl = (host as HTMLElement) ?? rowRef.current;
+      const hostDoc = hostEl?.ownerDocument ?? document;
+      if (typeof registerHistoryEditorSettlement === 'function') {
+        unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current?.();
+          hostGestureDisposerRef.current = null;
+          if (hasStartedLiveGroup && ownsTarget()) {
+            activeLiveGroupRef.current = null;
+            await finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Move Marker',
+              phase: 'end',
+            });
+          }
+          clearDrag();
+          return useProjectStore?.getState?.()?.flushPendingPatches?.();
+        });
+      }
+
+      hostGestureDisposerRef.current = attachHostGesture({
+        host: hostEl,
+        onMove: (moveEvent) => {
+          const currentDocId = getProjectDocumentId() ?? '';
+          const currentSessionId = useProjectStore.getState().sessionId;
+          if (documentId !== currentDocId || sessionId !== currentSessionId || !ownsTarget()) {
+            hostGestureDisposerRef.current?.();
+            clearDrag();
+            return;
+          }
+          autoScroll(moveEvent.clientX);
+          const currentMouseBeats = xToBeats(moveEvent.clientX);
+          const draggedBeats = startMarkerBeats + (currentMouseBeats - startMouseBeats);
+          const beats = Math.max(0, snapBeats(draggedBeats, moveEvent.shiftKey));
+          const phase = hasStartedLiveGroup ? 'update' : 'begin';
+          hasStartedLiveGroup = true;
+          activeLiveGroupRef.current = { documentId, sessionId, gestureId, label: 'Move Marker' };
+          applyPatch(
+            {
+              score: {
+                type: 'updateMarker',
+                sourceIndex,
+                patch: { timeBeats: beats },
+              },
+            },
+            { label: 'Move Marker', gestureId, phase },
+          );
+          expectedMarkers = useProjectStore.getState().score.markers;
+          expectedMarker = expectedMarkers[sourceIndex];
+        },
+        onRelease: () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current = null;
+          if (hasStartedLiveGroup && ownsTarget()) {
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Move Marker',
+              phase: 'end',
+            });
+          }
+          clearDrag();
+        },
+        onEscape: () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current = null;
+          if (hasStartedLiveGroup && ownsTarget()) {
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Move Marker',
+              phase: 'cancel',
+            });
+          }
+          clearDrag();
+        },
+        onBlur: () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current = null;
+          if (hasStartedLiveGroup && ownsTarget()) {
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Move Marker',
+              phase: 'cancel',
+            });
+          }
+          clearDrag();
+        },
+        onCancel: () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current = null;
+          if (hasStartedLiveGroup && ownsTarget()) {
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Move Marker',
+              phase: 'cancel',
+            });
+          }
+          clearDrag();
+        },
+      });
     },
-    [rootTimelineOnly, xToBeats],
+    [rootTimelineOnly, xToBeats, autoScroll, snapBeats, applyPatch, clearDrag, markers],
   );
 
   const handleMouseDown = useCallback(
@@ -201,13 +349,32 @@ export default function MarkersBar({
       if (!rootTimelineOnly || e.button !== 0) return;
 
       e.preventDefault();
+      hostGestureDisposerRef.current?.();
 
       if (e.shiftKey) {
+        const gestureId = `marker-${crypto.randomUUID()}`;
+        const documentId = getProjectDocumentId() ?? '';
+        const sessionId = useProjectStore.getState().sessionId;
         const beats = Math.max(0, snapBeats(xToBeats(e.clientX), false));
         const sourceIndex = markers.length;
-        applyPatch({
-          score: { type: 'addMarker', timeBeats: beats },
-        });
+
+        applyPatch(
+          {
+            score: { type: 'addMarker', timeBeats: beats },
+          },
+          { label: 'Add Marker', gestureId, phase: 'begin' },
+        );
+        let expectedMarkers = useProjectStore.getState().score.markers;
+        let expectedMarker = expectedMarkers[sourceIndex];
+        const ownsTarget = () =>
+          sameMarkerTarget(
+            expectedMarkers,
+            useProjectStore.getState().score.markers,
+            sourceIndex,
+            expectedMarker,
+          );
+
+        activeLiveGroupRef.current = { documentId, sessionId, gestureId, label: 'Add Marker' };
         dragStateRef.current = {
           type: 'marker',
           sourceIndex,
@@ -215,15 +382,235 @@ export default function MarkersBar({
           startMarkerBeats: beats,
         };
         setDraggingSourceIndex(sourceIndex);
-      } else {
-        const beats = Math.max(0, snapBeats(xToBeats(e.clientX), e.shiftKey));
-        applyPatch({
-          transport: { renderStartTime: beats, renderEndTime: -1 },
+
+        const hostDoc = e.currentTarget.ownerDocument ?? document;
+        if (typeof registerHistoryEditorSettlement === 'function') {
+          unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            hostGestureDisposerRef.current?.();
+            hostGestureDisposerRef.current = null;
+            activeLiveGroupRef.current = null;
+            if (ownsTarget()) {
+              await finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Add Marker',
+                phase: 'end',
+              });
+            }
+            clearDrag();
+            return useProjectStore?.getState?.()?.flushPendingPatches?.();
+          });
+        }
+
+        hostGestureDisposerRef.current = attachHostGesture({
+          host: e.currentTarget,
+          onMove: (moveEvent) => {
+            const currentDocId = getProjectDocumentId() ?? '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (documentId !== currentDocId || sessionId !== currentSessionId || !ownsTarget()) {
+              hostGestureDisposerRef.current?.();
+              clearDrag();
+              return;
+            }
+            autoScroll(moveEvent.clientX);
+            const currentMouseBeats = xToBeats(moveEvent.clientX);
+            const draggedBeats = beats + (currentMouseBeats - beats);
+            const nextBeats = Math.max(0, snapBeats(draggedBeats, moveEvent.shiftKey));
+            applyPatch(
+              {
+                score: {
+                  type: 'updateMarker',
+                  sourceIndex,
+                  patch: { timeBeats: nextBeats },
+                },
+              },
+              { label: 'Add Marker', gestureId, phase: 'update' },
+            );
+            expectedMarkers = useProjectStore.getState().score.markers;
+            expectedMarker = expectedMarkers[sourceIndex];
+          },
+          onRelease: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            if (ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Add Marker',
+                phase: 'end',
+              });
+            }
+            clearDrag();
+          },
+          onEscape: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            if (ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Add Marker',
+                phase: 'cancel',
+              });
+            }
+            clearDrag();
+          },
+          onBlur: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            if (ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Add Marker',
+                phase: 'cancel',
+              });
+            }
+            clearDrag();
+          },
+          onCancel: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            if (ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Add Marker',
+                phase: 'cancel',
+              });
+            }
+            clearDrag();
+          },
         });
+      } else {
+        const gestureId = `render-start-${crypto.randomUUID()}`;
+        const documentId = getProjectDocumentId() ?? '';
+        const sessionId = useProjectStore.getState().sessionId;
+        const beats = Math.max(0, snapBeats(xToBeats(e.clientX), e.shiftKey));
+
+        applyPatch(
+          {
+            transport: { renderStartTime: beats, renderEndTime: -1 },
+          },
+          { label: 'Set Render Start Time', gestureId, phase: 'begin' },
+        );
+        activeLiveGroupRef.current = {
+          documentId,
+          sessionId,
+          gestureId,
+          label: 'Set Render Start Time',
+        };
         dragStateRef.current = { type: 'render-start' };
+
+        const hostDoc = e.currentTarget.ownerDocument ?? document;
+        if (typeof registerHistoryEditorSettlement === 'function') {
+          unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            hostGestureDisposerRef.current?.();
+            hostGestureDisposerRef.current = null;
+            activeLiveGroupRef.current = null;
+            await finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Set Render Start Time',
+              phase: 'end',
+            });
+            clearDrag();
+            return useProjectStore?.getState?.()?.flushPendingPatches?.();
+          });
+        }
+
+        hostGestureDisposerRef.current = attachHostGesture({
+          host: e.currentTarget,
+          onMove: (moveEvent) => {
+            const currentDocId = getProjectDocumentId() ?? '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (documentId !== currentDocId || sessionId !== currentSessionId) {
+              hostGestureDisposerRef.current?.();
+              clearDrag();
+              return;
+            }
+            autoScroll(moveEvent.clientX);
+            const nextBeats = Math.max(
+              0,
+              snapBeats(xToBeats(moveEvent.clientX), moveEvent.shiftKey),
+            );
+            applyPatch(
+              {
+                transport: { renderStartTime: nextBeats, renderEndTime: -1 },
+              },
+              { label: 'Set Render Start Time', gestureId, phase: 'update' },
+            );
+          },
+          onRelease: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Set Render Start Time',
+              phase: 'end',
+            });
+            clearDrag();
+          },
+          onEscape: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Set Render Start Time',
+              phase: 'cancel',
+            });
+            clearDrag();
+          },
+          onBlur: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Set Render Start Time',
+              phase: 'cancel',
+            });
+            clearDrag();
+          },
+          onCancel: () => {
+            unregisterSettlementRef.current?.();
+            unregisterSettlementRef.current = null;
+            activeLiveGroupRef.current = null;
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Set Render Start Time',
+              phase: 'cancel',
+            });
+            clearDrag();
+          },
+        });
       }
     },
-    [rootTimelineOnly, snapBeats, xToBeats, markers.length, applyPatch],
+    [rootTimelineOnly, snapBeats, xToBeats, markers.length, applyPatch, autoScroll, clearDrag],
   );
 
   if (!rowVisible) return null;
@@ -271,7 +658,12 @@ function MarkerWidget({
   marker: MarkerSnapshot;
   sourceIndex: number;
   pixelsPerBeat: number;
-  onStartDrag: (sourceIndex: number, clientX: number, startMarkerBeats: number) => void;
+  onStartDrag: (
+    sourceIndex: number,
+    clientX: number,
+    startMarkerBeats: number,
+    host?: EventTarget | null,
+  ) => void;
   isDragging: boolean;
   timeLabel: string;
 }) {
@@ -286,7 +678,7 @@ function MarkerWidget({
       if (e.button !== 0) return;
       e.stopPropagation();
       e.preventDefault();
-      onStartDrag(sourceIndex, e.clientX, marker.time);
+      onStartDrag(sourceIndex, e.clientX, marker.time, e.currentTarget);
     },
     [onStartDrag, sourceIndex, marker.time],
   );

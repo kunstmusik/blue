@@ -682,28 +682,53 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     ]);
 
     const { root, surface } = renderCanvas(soundGroup, [soundGroup, audioGroup]);
-    const resizeScoreObjects = useProjectStore.getState()
-      .resizeScoreObjects as unknown as ReturnType<typeof vi.fn>;
+    const applyProjectDocumentPatch = useProjectStore.getState()
+      .applyProjectDocumentPatch as unknown as ReturnType<typeof vi.fn>;
 
     await act(async () => {
       dispatchMouseEvent(surface, 'mousedown', 49, 10);
       dispatchMouseEvent(window, 'mousemove', 74, 10);
+    });
+
+    expect(applyProjectDocumentPatch).not.toHaveBeenCalled();
+
+    await act(async () => {
       dispatchMouseEvent(window, 'mouseup', 74, 10);
       await Promise.resolve();
     });
 
-    expect(resizeScoreObjects).toHaveBeenCalledWith([
+    expect(applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateSharedProperties',
+          target: soundGroup.layers[0]!.items[0]!.editorTarget,
+          patch: {
+            startTime: { value: 0, timeBase: 'BEATS' },
+            subjectiveDuration: { value: 3, timeBase: 'BEATS' },
+          },
+        },
+      },
       expect.objectContaining({
-        objectId: 'sound-1',
-        targetStartBeats: 0,
-        targetDurationBeats: 3,
+        label: 'Resize 2 Score Objects',
+        phase: 'begin',
       }),
+    );
+    expect(applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateSharedProperties',
+          target: audioGroup.layers[0]!.items[0]!.editorTarget,
+          patch: {
+            startTime: { value: 1, timeBase: 'BEATS' },
+            subjectiveDuration: { value: 3, timeBase: 'BEATS' },
+          },
+        },
+      },
       expect.objectContaining({
-        objectId: 'audio-1',
-        targetStartBeats: 1,
-        targetDurationBeats: 3,
+        label: 'Resize 2 Score Objects',
+        phase: 'end',
       }),
-    ]);
+    );
 
     act(() => {
       root.unmount();
@@ -720,28 +745,53 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     ]);
 
     const { root, surface } = renderCanvas(soundGroup, [soundGroup, audioGroup]);
-    const resizeScoreObjects = useProjectStore.getState()
-      .resizeScoreObjects as unknown as ReturnType<typeof vi.fn>;
+    const applyProjectDocumentPatch = useProjectStore.getState()
+      .applyProjectDocumentPatch as unknown as ReturnType<typeof vi.fn>;
 
     await act(async () => {
       dispatchMouseEvent(surface, 'mousedown', 26, 10);
       dispatchMouseEvent(window, 'mousemove', -50, 10);
+    });
+
+    expect(applyProjectDocumentPatch).not.toHaveBeenCalled();
+
+    await act(async () => {
       dispatchMouseEvent(window, 'mouseup', -50, 10);
       await Promise.resolve();
     });
 
-    expect(resizeScoreObjects).toHaveBeenCalledWith([
+    expect(applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateSharedProperties',
+          target: soundGroup.layers[0]!.items[0]!.editorTarget,
+          patch: {
+            startTime: { value: 0, timeBase: 'BEATS' },
+            subjectiveDuration: { value: 3, timeBase: 'BEATS' },
+          },
+        },
+      },
       expect.objectContaining({
-        objectId: 'sound-1',
-        targetStartBeats: 0,
-        targetDurationBeats: 3,
+        label: 'Resize 2 Score Objects',
+        phase: 'begin',
       }),
+    );
+    expect(applyProjectDocumentPatch).toHaveBeenCalledWith(
+      {
+        score: {
+          type: 'updateSharedProperties',
+          target: audioGroup.layers[0]!.items[0]!.editorTarget,
+          patch: {
+            startTime: { value: 2, timeBase: 'BEATS' },
+            subjectiveDuration: { value: 3, timeBase: 'BEATS' },
+          },
+        },
+      },
       expect.objectContaining({
-        objectId: 'audio-1',
-        targetStartBeats: 2,
-        targetDurationBeats: 3,
+        label: 'Resize 2 Score Objects',
+        phase: 'end',
       }),
-    ]);
+    );
 
     act(() => {
       root.unmount();

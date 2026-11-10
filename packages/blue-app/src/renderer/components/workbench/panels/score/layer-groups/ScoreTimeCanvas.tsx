@@ -18,12 +18,19 @@ import {
 } from '../../../../../stores/score-selection-store';
 import { useLayerSelectionStore } from '../../../../../stores/layer-selection-store';
 import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
-import { getProjectDocumentRevision, useProjectStore } from '../../../../../stores/project-store';
+import {
+  getProjectDocumentId,
+  getProjectDocumentRevision,
+  useProjectStore,
+} from '../../../../../stores/project-store';
+import { registerHistoryEditorSettlement } from '../../../../../lib/history-scope-router';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
 import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import { useScoreAutomationStore } from '../../../../../stores/score-automation-store';
 import { useLibraryStore } from '../../../../../stores/library-store';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
+import { attachHostGesture } from '../../../../../lib/host-gesture';
 import {
   getLibraryTransferSourceType,
   type LibraryExactTransferTarget,
@@ -321,6 +328,8 @@ export default function ScoreTimeCanvas({
   const addToSelection = useScoreSelectionStore((s) => s.addToSelection);
   const setLiveSharedProperties = useScoreSelectionStore((s) => s.setLiveSharedProperties);
   const clearLiveSharedProperties = useScoreSelectionStore((s) => s.clearLiveSharedProperties);
+  const setGestureProjection = useScoreSelectionStore((s) => s.setGestureProjection);
+  const clearGestureProjection = useScoreSelectionStore((s) => s.clearGestureProjection);
   const copySelected = useScoreSelectionStore((s) => s.copySelected);
   const clipboard = useScoreSelectionStore((s) => s.clipboard);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
@@ -375,6 +384,8 @@ export default function ScoreTimeCanvas({
   const gestureRef = useRef<{
     mode: GestureMode;
     gestureId: string;
+    documentId?: string;
+    sessionId?: number;
     startClientX: number;
     startClientY: number;
     startBeats: number;
@@ -396,6 +407,30 @@ export default function ScoreTimeCanvas({
       editorTarget?: ScoreObjectEditorTargetSnapshot;
     }>;
   } | null>(null);
+  const gestureDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+
+  const handleCancel = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureDisposerRef.current?.();
+    gestureDisposerRef.current = null;
+    if (gestureRef.current) {
+      clearGestureProjection(gestureRef.current.gestureId);
+    } else {
+      clearGestureProjection();
+    }
+    clearLiveSharedProperties();
+    setPreviewByObjectId({});
+    pendingSharedPropertyPatchRef.current.clear();
+    pendingMovePatchRef.current = [];
+    gestureRef.current = null;
+    setMarquee(null);
+    setCursorOverride(null);
+  }, [clearGestureProjection, clearLiveSharedProperties]);
+
+  const handleCancelRef = useRef(handleCancel);
+  handleCancelRef.current = handleCancel;
   const pendingSharedPropertyPatchRef = useRef<
     Map<string, { startBeats?: number; durationBeats?: number }>
   >(new Map());
@@ -656,6 +691,8 @@ export default function ScoreTimeCanvas({
         gestureRef.current = {
           mode: 'marquee',
           gestureId: `score-gesture-${gestureIdCounterRef.current}`,
+          documentId: getProjectDocumentId() ?? '',
+          sessionId: useProjectStore.getState().sessionId,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: 0,
@@ -769,6 +806,8 @@ export default function ScoreTimeCanvas({
         gestureRef.current = {
           mode: onLeftEdge ? 'resizeLeft' : 'resizeRight',
           gestureId: `score-gesture-${gestureIdCounterRef.current}`,
+          documentId: getProjectDocumentId() ?? '',
+          sessionId: useProjectStore.getState().sessionId,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: xBeats,
@@ -787,6 +826,8 @@ export default function ScoreTimeCanvas({
         gestureRef.current = {
           mode: 'move',
           gestureId: `score-gesture-${gestureIdCounterRef.current}`,
+          documentId: getProjectDocumentId() ?? '',
+          sessionId: useProjectStore.getState().sessionId,
           startClientX: e.clientX,
           startClientY: e.clientY,
           startBeats: xBeats,
@@ -798,6 +839,37 @@ export default function ScoreTimeCanvas({
           globalLayerMap,
           originalPositions: origPositions,
         };
+      }
+
+      if (gestureRef.current) {
+        gestureDisposerRef.current?.();
+        const host = containerRef.current?.ownerDocument ?? document;
+
+        unregisterSettlementRef.current = registerHistoryEditorSettlement(host, async () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          handleMouseUpRef.current();
+          return useProjectStore?.getState?.()?.flushPendingPatches?.();
+        });
+
+        gestureDisposerRef.current = attachHostGesture({
+          host,
+          onMove: (event) => {
+            handleMouseMoveRef.current(event as unknown as React.MouseEvent);
+          },
+          onRelease: () => {
+            handleMouseUpRef.current();
+          },
+          onEscape: () => {
+            handleCancelRef.current();
+          },
+          onBlur: () => {
+            handleCancelRef.current();
+          },
+          onCancel: () => {
+            handleCancelRef.current();
+          },
+        });
       }
     },
     [
@@ -858,6 +930,17 @@ export default function ScoreTimeCanvas({
         return;
       }
       const g = gestureRef.current;
+      const currentDocId = getProjectDocumentId() ?? '';
+      const currentSessionId = useProjectStore.getState().sessionId;
+      if (
+        (g.documentId && currentDocId && currentDocId !== g.documentId) ||
+        (g.sessionId !== undefined &&
+          currentSessionId !== undefined &&
+          currentSessionId !== g.sessionId)
+      ) {
+        handleCancel();
+        return;
+      }
 
       if (g.mode === 'marquee') {
         const start = toLocalXY(g.startClientX, g.startClientY);
@@ -915,9 +998,6 @@ export default function ScoreTimeCanvas({
           );
 
         if (moves.length === 0) return;
-        if (!isNestedView) {
-          moveScoreObjects(moves);
-        }
         pendingMovePatchRef.current = moves
           .map((move) => {
             const original = g.originalPositions.find((pos) => pos.objectId === move.objectId);
@@ -954,16 +1034,24 @@ export default function ScoreTimeCanvas({
           }
           return next;
         });
-        setLiveSharedProperties(
-          moves.map((move) => {
-            const original = g.originalPositions.find((pos) => pos.objectId === move.objectId);
-            return {
-              objectId: move.objectId,
-              startBeats: move.targetStartBeats,
-              durationBeats: original?.durationBeats,
-            };
-          }),
-        );
+        setGestureProjection({
+          gestureId: g.gestureId,
+          objects: Object.fromEntries(
+            moves.map((move) => {
+              const original = g.originalPositions.find((pos) => pos.objectId === move.objectId);
+              return [
+                move.objectId,
+                {
+                  objectId: move.objectId,
+                  startBeats: move.targetStartBeats,
+                  durationBeats: original?.durationBeats ?? 0,
+                  targetGroupId: move.targetGroupId,
+                  targetLayerIndex: move.targetLayerIndex,
+                },
+              ];
+            }),
+          ),
+        });
       } else if (g.mode === 'resizeRight' || g.mode === 'resizeLeft') {
         if (g.originalPositions.length === 0) return;
         const { x } = toLocalXY(e.clientX, e.clientY);
@@ -988,9 +1076,6 @@ export default function ScoreTimeCanvas({
               targetDurationBeats: targetEnd - pos.startBeats,
             };
           });
-          if (!isNestedView) {
-            resizeScoreObjects(resizes);
-          }
           setPreviewByObjectId((prev) => {
             const next = { ...prev };
             for (const resize of resizes) {
@@ -1007,13 +1092,19 @@ export default function ScoreTimeCanvas({
               durationBeats: resize.targetDurationBeats,
             });
           }
-          setLiveSharedProperties(
-            resizes.map((resize) => ({
-              objectId: resize.objectId,
-              startBeats: resize.targetStartBeats,
-              durationBeats: resize.targetDurationBeats,
-            })),
-          );
+          setGestureProjection({
+            gestureId: g.gestureId,
+            objects: Object.fromEntries(
+              resizes.map((resize) => [
+                resize.objectId,
+                {
+                  objectId: resize.objectId,
+                  startBeats: resize.targetStartBeats,
+                  durationBeats: resize.targetDurationBeats,
+                },
+              ]),
+            ),
+          });
         } else {
           const referenceStart = g.resizeReferenceStartBeats ?? g.originalPositions[0]!.startBeats;
           const targetReferenceStart = snapBeatValueMove(referenceStart + rawDelta);
@@ -1034,9 +1125,6 @@ export default function ScoreTimeCanvas({
               targetDurationBeats: pos.startBeats + pos.durationBeats - targetStart,
             };
           });
-          if (!isNestedView) {
-            resizeScoreObjects(resizes);
-          }
           setPreviewByObjectId((prev) => {
             const next = { ...prev };
             for (const resize of resizes) {
@@ -1053,13 +1141,19 @@ export default function ScoreTimeCanvas({
               durationBeats: resize.targetDurationBeats,
             });
           }
-          setLiveSharedProperties(
-            resizes.map((resize) => ({
-              objectId: resize.objectId,
-              startBeats: resize.targetStartBeats,
-              durationBeats: resize.targetDurationBeats,
-            })),
-          );
+          setGestureProjection({
+            gestureId: g.gestureId,
+            objects: Object.fromEntries(
+              resizes.map((resize) => [
+                resize.objectId,
+                {
+                  objectId: resize.objectId,
+                  startBeats: resize.targetStartBeats,
+                  durationBeats: resize.targetDurationBeats,
+                },
+              ]),
+            ),
+          });
         }
       }
     },
@@ -1084,11 +1178,30 @@ export default function ScoreTimeCanvas({
   );
 
   const handleMouseUp = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    gestureDisposerRef.current?.();
+    gestureDisposerRef.current = null;
     if (!gestureRef.current) {
       setMarquee(null);
       return;
     }
     const g = gestureRef.current;
+    clearGestureProjection(g.gestureId);
+    clearLiveSharedProperties();
+    setPreviewByObjectId({});
+
+    const currentDocId = getProjectDocumentId() ?? '';
+    const currentSessionId = useProjectStore.getState().sessionId;
+    if (
+      (g.documentId && currentDocId && currentDocId !== g.documentId) ||
+      (g.sessionId !== undefined &&
+        currentSessionId !== undefined &&
+        currentSessionId !== g.sessionId)
+    ) {
+      handleCancel();
+      return;
+    }
 
     if (g.mode === 'marquee' && marquee) {
       const left = Math.min(marquee.startX, marquee.endX);
@@ -1178,7 +1291,7 @@ export default function ScoreTimeCanvas({
               ? `Move ${pendingMovePatch.length} Score Objects`
               : 'Move Score Object',
           gestureId: g.gestureId,
-          phase: 'end',
+          phase: 'single',
         },
       );
     }
@@ -1191,6 +1304,14 @@ export default function ScoreTimeCanvas({
             targetByObjectId.set(pos.objectId, pos.editorTarget);
           }
         }
+
+        const validPatches: Array<{
+          target: ScoreObjectEditorTargetSnapshot;
+          patch: {
+            startTime?: { value: number; timeBase: string };
+            subjectiveDuration?: { value: number; timeBase: string };
+          };
+        }> = [];
 
         for (const [objectId, values] of pendingPatches) {
           const target = targetByObjectId.get(objectId) ?? findEditorTarget(objectId);
@@ -1213,6 +1334,15 @@ export default function ScoreTimeCanvas({
             };
           }
           if (Object.keys(patch).length === 0) continue;
+          validPatches.push({ target, patch });
+        }
+
+        const total = validPatches.length;
+        const label = total > 1 ? `Resize ${total} Score Objects` : 'Resize Score Object';
+        for (let i = 0; i < total; i++) {
+          const { target, patch } = validPatches[i]!;
+          const phase =
+            total === 1 ? 'single' : i === 0 ? 'begin' : i === total - 1 ? 'end' : 'update';
           await applyProjectDocumentPatch(
             {
               score: {
@@ -1222,9 +1352,9 @@ export default function ScoreTimeCanvas({
               },
             },
             {
-              label: 'Resize Score Object',
+              label,
               gestureId: g.gestureId,
-              phase: 'end',
+              phase,
             },
           );
         }
@@ -1239,6 +1369,8 @@ export default function ScoreTimeCanvas({
     group.groupId,
     interactionLayerGroups,
     clearSelection,
+    clearGestureProjection,
+    clearLiveSharedProperties,
     setSelection,
     addToSelection,
     applyProjectDocumentPatch,
@@ -2003,21 +2135,8 @@ export default function ScoreTimeCanvas({
   handleMouseMoveRef.current = handleMouseMove;
 
   useEffect(() => {
-    const onMouseUp = () => {
-      if (gestureRef.current) {
-        handleMouseUpRef.current();
-      }
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (gestureRef.current) {
-        handleMouseMoveRef.current(e as unknown as React.MouseEvent);
-      }
-    };
-    window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('mousemove', onMouseMove);
     return () => {
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('mousemove', onMouseMove);
+      handleCancelRef.current?.();
     };
   }, []);
 
@@ -2175,11 +2294,14 @@ export default function ScoreTimeCanvas({
                     tempoMap={tempoMap}
                     smpteFrameRate={smpteFrameRate}
                     mode={mode}
-                    onPatch={(patch: ScoreAutomationPatch) => {
+                    onPatch={(
+                      patch: ScoreAutomationPatch,
+                      metadata?: ProjectDocumentCommitMetadata,
+                    ) => {
                       void (async () => {
                         await applyProjectDocumentPatch(
                           { score: patch },
-                          { label: 'Edit Score Automation' },
+                          metadata ?? { label: 'Edit Score Automation' },
                         );
                         await flushPendingPatches();
                       })();

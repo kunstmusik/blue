@@ -1,10 +1,15 @@
 import type { TempoMapSnapshot } from '../../../../../shared/project-editor';
 import { useMemo, useRef, useCallback, useState, useEffect, type RefObject } from 'react';
-import { useProjectStore } from '../../../../stores/project-store';
+import { getProjectDocumentId, useProjectStore } from '../../../../stores/project-store';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';
 import type { MeterMapSnapshot } from '../../../../../shared/project-editor';
 import { createFrameSnapContext, snapBeatToGrid } from './snap-grid-utils';
+import { attachHostGesture } from '../../../../lib/host-gesture';
+import {
+  finishProjectGesture,
+  registerHistoryEditorSettlement,
+} from '../../../../lib/history-scope-router';
 
 const DRAG_THRESHOLD = 5;
 const AUTO_SCROLL_EDGE_THRESHOLD = 24;
@@ -114,7 +119,19 @@ export function useScoreRulerSelection({
     [scrollContainerRef],
   );
 
+  const hostGestureDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const activeLiveGroupRef = useRef<{
+    documentId: string;
+    sessionId: number;
+    gestureId: string;
+    label: string;
+  } | null>(null);
+
   const clearDrag = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    activeLiveGroupRef.current = null;
     dragStartX.current = -1;
     dragStartBeats.current = -1;
     dragElementRef.current = null;
@@ -122,92 +139,182 @@ export function useScoreRulerSelection({
     setDragging(false);
   }, []);
 
-  const handleDragMove = useCallback(
-    (clientX: number, shiftHeld: boolean) => {
-      if (dragStartX.current < 0 || !rootTimelineOnly) return;
-
-      const dragElement = dragElementRef.current;
-      if (!dragElement) return;
-
-      autoScroll(clientX);
-
-      if (!draggingRef.current && Math.abs(clientX - dragStartX.current) > DRAG_THRESHOLD) {
-        draggingRef.current = true;
-        setDragging(true);
+  useEffect(() => {
+    return () => {
+      unregisterSettlementRef.current?.();
+      unregisterSettlementRef.current = null;
+      hostGestureDisposerRef.current?.();
+      hostGestureDisposerRef.current = null;
+      if (activeLiveGroupRef.current) {
+        const { documentId, sessionId, gestureId, label } = activeLiveGroupRef.current;
+        activeLiveGroupRef.current = null;
+        void finishProjectGesture({
+          documentId,
+          sessionId,
+          gestureId,
+          label,
+          phase: 'end',
+        });
       }
-
-      if (!draggingRef.current) return;
-
-      const beats = snapBeats(xToBeats(clientX, dragElement), shiftHeld);
-      const start = Math.min(dragStartBeats.current, beats);
-      const end = Math.max(dragStartBeats.current, beats);
-      applyPatch({
-        transport: {
-          renderStartTime: Math.max(0, start),
-          renderEndTime: Math.max(0, end),
-        },
-      });
-    },
-    [rootTimelineOnly, autoScroll, snapBeats, xToBeats, applyPatch],
-  );
-
-  const handleDragEnd = useCallback(() => {
-    if (dragStartX.current < 0 || !rootTimelineOnly) {
       clearDrag();
-      return;
-    }
-
-    if (!draggingRef.current && dragStartBeats.current >= 0) {
-      applyPatch({
-        transport: {
-          renderStartTime: Math.max(0, dragStartBeats.current),
-          renderEndTime: -1,
-        },
-      });
-    }
-
-    clearDrag();
-  }, [rootTimelineOnly, applyPatch, clearDrag]);
+    };
+  }, [clearDrag]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!rootTimelineOnly || e.button !== 0) return;
 
-      // Pressing the ruler is explicit horizontal navigation on the root
-      // timeline; suspend active follow before any drag or auto-scroll runs.
       onUserNavigationRef.current?.();
+      hostGestureDisposerRef.current?.();
 
-      dragElementRef.current = e.currentTarget;
-      const beats = snapBeats(xToBeats(e.clientX, e.currentTarget), e.shiftKey);
+      const dragElement = e.currentTarget;
+      dragElementRef.current = dragElement;
+      const beats = snapBeats(xToBeats(e.clientX, dragElement), e.shiftKey);
       dragStartX.current = e.clientX;
       dragStartBeats.current = beats;
       draggingRef.current = false;
       setDragging(false);
+
+      const gestureId = `ruler-${crypto.randomUUID()}`;
+      const documentId =
+        typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+      const sessionId = useProjectStore.getState().sessionId;
+      let hasStartedRangeGroup = false;
+
+      unregisterSettlementRef.current?.();
+      if (typeof registerHistoryEditorSettlement === 'function') {
+        const hostDoc = dragElement.ownerDocument ?? document;
+        unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+          if (hasStartedRangeGroup) {
+            await finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Select Render Range',
+              phase: 'end',
+            });
+          }
+          clearDrag();
+          return useProjectStore.getState().flushPendingPatches?.();
+        });
+      }
+
+      hostGestureDisposerRef.current = attachHostGesture({
+        host: dragElement,
+        onMove: (moveEvent) => {
+          const currentDocId =
+            typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+          const currentSessionId = useProjectStore.getState().sessionId;
+          if (currentDocId !== documentId || currentSessionId !== sessionId) {
+            hostGestureDisposerRef.current?.();
+            clearDrag();
+            return;
+          }
+
+          autoScroll(moveEvent.clientX);
+
+          if (
+            !draggingRef.current &&
+            Math.abs(moveEvent.clientX - dragStartX.current) > DRAG_THRESHOLD
+          ) {
+            draggingRef.current = true;
+            setDragging(true);
+          }
+
+          if (!draggingRef.current) return;
+
+          const currentBeats = snapBeats(
+            xToBeats(moveEvent.clientX, dragElement),
+            moveEvent.shiftKey,
+          );
+          const start = Math.min(dragStartBeats.current, currentBeats);
+          const end = Math.max(dragStartBeats.current, currentBeats);
+          const phase = hasStartedRangeGroup ? 'update' : 'begin';
+          hasStartedRangeGroup = true;
+          activeLiveGroupRef.current = {
+            documentId,
+            sessionId,
+            gestureId,
+            label: 'Select Render Range',
+          };
+
+          applyPatch(
+            {
+              transport: {
+                renderStartTime: Math.max(0, start),
+                renderEndTime: Math.max(0, end),
+              },
+            },
+            { label: 'Select Render Range', gestureId, phase },
+          );
+        },
+        onRelease: () => {
+          const currentDocId =
+            typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+          const currentSessionId = useProjectStore.getState().sessionId;
+          if (currentDocId === documentId && currentSessionId === sessionId) {
+            if (hasStartedRangeGroup) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Select Render Range',
+                phase: 'end',
+              });
+            } else if (dragStartBeats.current >= 0) {
+              applyPatch(
+                {
+                  transport: {
+                    renderStartTime: Math.max(0, dragStartBeats.current),
+                    renderEndTime: -1,
+                  },
+                },
+                { label: 'Set Render Start Time', phase: 'single' },
+              );
+            }
+          }
+          clearDrag();
+        },
+        onEscape: () => {
+          if (hasStartedRangeGroup) {
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Select Render Range',
+              phase: 'cancel',
+            });
+          }
+          clearDrag();
+        },
+        onBlur: () => {
+          if (hasStartedRangeGroup) {
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Select Render Range',
+              phase: 'cancel',
+            });
+          }
+          clearDrag();
+        },
+        onCancel: () => {
+          if (hasStartedRangeGroup) {
+            void finishProjectGesture({
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Select Render Range',
+              phase: 'cancel',
+            });
+          }
+          clearDrag();
+        },
+      });
     },
-    [rootTimelineOnly, snapBeats, xToBeats],
+    [rootTimelineOnly, snapBeats, xToBeats, autoScroll, applyPatch, clearDrag],
   );
-
-  useEffect(() => {
-    const onMouseMove = (event: MouseEvent) => {
-      if (dragStartX.current >= 0) {
-        handleDragMove(event.clientX, event.shiftKey);
-      }
-    };
-
-    const onMouseUp = () => {
-      if (dragStartX.current >= 0) {
-        handleDragEnd();
-      }
-    };
-
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [handleDragMove, handleDragEnd]);
 
   return {
     handleMouseDown,

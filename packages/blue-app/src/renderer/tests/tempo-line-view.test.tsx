@@ -3,17 +3,32 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TempoMapPatch, TempoMapSnapshot } from '../../shared/project-editor';
 import TempoLineView from '../components/workbench/panels/score/TempoLineView';
 import {
   TEMPO_LINE_VIEW_HEIGHT,
   tempoToScreenY,
 } from '../components/workbench/panels/score/tempo-map-utils';
+import { useProjectStore } from '../stores/project-store';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+
+const { mockFinishProjectGesture } = vi.hoisted(() => ({
+  mockFinishProjectGesture: vi.fn(async () => ({
+    status: 'committed',
+    operationId: 'op-1',
+    documentId: 'doc-1',
+    revision: 1,
+  })),
+}));
+
+vi.mock('../lib/history-scope-router', () => ({
+  finishProjectGesture: (...args: unknown[]) => mockFinishProjectGesture(...args),
+  registerHistoryEditorSettlement: vi.fn(() => vi.fn()),
+}));
 
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
@@ -24,6 +39,13 @@ const BASE_TEMPO_MAP: TempoMapSnapshot = {
     { beat: 8, tempo: 90, curveType: 'linear' },
   ],
 };
+
+let originalTransport: ReturnType<typeof useProjectStore.getState>['transport'];
+
+beforeEach(() => {
+  originalTransport = useProjectStore.getState().transport;
+  useProjectStore.setState({ transport: { ...originalTransport, tempoMap: BASE_TEMPO_MAP } });
+});
 
 function renderTempoLineView(options?: {
   tempoMap?: TempoMapSnapshot;
@@ -87,6 +109,7 @@ function changeMenuItem(label: string): HTMLElement {
 }
 
 afterEach(() => {
+  useProjectStore.setState({ transport: originalTransport });
   document.body.innerHTML = '';
 });
 
@@ -187,14 +210,21 @@ describe('TempoLineView', () => {
       );
     });
 
-    expect(onTempoPatch).toHaveBeenLastCalledWith({
-      type: 'updateTempoPoint',
-      index: 1,
-      patch: {
-        beat: 5.5,
-        tempo: 120,
+    expect(onTempoPatch).toHaveBeenLastCalledWith(
+      {
+        type: 'updateTempoPoint',
+        index: 1,
+        patch: {
+          beat: 5.5,
+          tempo: 120,
+        },
       },
-    });
+      expect.objectContaining({
+        label: 'Edit Tempo Point',
+        gestureId: expect.any(String),
+        phase: 'begin',
+      }),
+    );
 
     act(() => {
       root.unmount();
@@ -321,5 +351,242 @@ describe('TempoLineView', () => {
     act(() => {
       root.unmount();
     });
+  });
+
+  it('adds a tempo point on empty-space click with phase single', () => {
+    const { svg, onTempoPatch, root } = renderTempoLineView();
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 50,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onTempoPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'addTempoPoint',
+        point: expect.objectContaining({ beat: 2.5 }),
+      }),
+      expect.objectContaining({
+        label: 'Add Tempo Point',
+        phase: 'single',
+      }),
+    );
+    act(() => root.unmount());
+  });
+
+  it('drags tempo point with phase begin, then update, and finishes with phase end on release', () => {
+    const { svg, onTempoPatch, root } = renderTempoLineView();
+    const pointX = 4 * 20;
+    const pointY = tempoToScreenY(120, TEMPO_LINE_VIEW_HEIGHT);
+
+    // Mousedown on point 1 (beat 4, tempo 120)
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: pointX,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    expect(onTempoPatch).not.toHaveBeenCalled();
+
+    // First move (phase: begin)
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: pointX + 10,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    expect(onTempoPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'updateTempoPoint' }),
+      expect.objectContaining({ label: 'Edit Tempo Point', phase: 'begin' }),
+    );
+
+    // Second move (phase: update)
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: pointX + 20,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    expect(onTempoPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'updateTempoPoint' }),
+      expect.objectContaining({ label: 'Edit Tempo Point', phase: 'update' }),
+    );
+
+    // Release mouse
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          clientX: pointX + 20,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Edit Tempo Point',
+        phase: 'end',
+      }),
+    );
+
+    act(() => root.unmount());
+  });
+
+  it('cancels tempo point drag with Escape by calling finishProjectGesture with phase cancel', () => {
+    const { svg, onTempoPatch, root } = renderTempoLineView();
+    const pointX = 4 * 20;
+    const pointY = tempoToScreenY(120, TEMPO_LINE_VIEW_HEIGHT);
+
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: pointX,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: pointX + 10,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    expect(onTempoPatch).toHaveBeenCalledTimes(1);
+
+    // Escape
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Edit Tempo Point',
+        phase: 'cancel',
+      }),
+    );
+
+    act(() => root.unmount());
+  });
+
+  it('settles already-applied live tempo group on editor unmount/closure (T039)', () => {
+    const onTempoPatch = vi.fn();
+    const { container, root } = renderTempoLineView({ totalBeats: 16 });
+    const svg = container.querySelector('svg')!;
+
+    // Point 1 is at beat 4, tempo 120. (X = 4 * 20 = 80, Y = tempoToScreenY(120, 60))
+    const pointX = 80;
+    const pointY = tempoToScreenY(120, TEMPO_LINE_VIEW_HEIGHT);
+
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: pointX,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: pointX + 10,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    mockFinishProjectGesture.mockClear();
+
+    // Closure / unmount
+    act(() => {
+      root.unmount();
+    });
+
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Edit Tempo Point',
+        phase: 'end',
+      }),
+    );
+  });
+
+  it('fences gesture movement on project replacement / session mismatch (T035)', () => {
+    const onTempoPatch = vi.fn();
+    const { container, root } = renderTempoLineView({ totalBeats: 16 });
+    const svg = container.querySelector('svg')!;
+
+    const pointX = 80;
+    const pointY = tempoToScreenY(120, TEMPO_LINE_VIEW_HEIGHT);
+
+    act(() => {
+      svg.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: pointX,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    // Simulate project replacement
+    const origSessionId = useProjectStore.getState().sessionId;
+    useProjectStore.setState({ sessionId: origSessionId + 100 });
+    mockFinishProjectGesture.mockClear();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: pointX + 20,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          clientX: pointX + 20,
+          clientY: pointY,
+        }),
+      );
+    });
+
+    expect(mockFinishProjectGesture).not.toHaveBeenCalled();
+
+    // Restore sessionId
+    useProjectStore.setState({ sessionId: origSessionId });
+    act(() => root.unmount());
   });
 });

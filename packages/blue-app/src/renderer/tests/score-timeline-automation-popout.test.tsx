@@ -7,18 +7,39 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import AutomationTargetMenu from '../components/workbench/panels/score/automation/AutomationTargetMenu';
 import AutomationLineView from '../components/workbench/panels/score/automation/AutomationLineView';
+import AutomationLayerOverlay from '../components/workbench/panels/score/automation/AutomationLayerOverlay';
+import { useScoreAutomationStore } from '../stores/score-automation-store';
+import { useProjectStore } from '../stores/project-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import type {
   AutomationParameterSnapshot,
   AutomationTargetGroupSnapshot,
   AutomationTargetSnapshot,
   ScoreAutomationLayerRef,
+  ScoreAutomationPatch,
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
+
+const { mockFinishProjectGesture, mockRegisterHistoryEditorSettlement } = vi.hoisted(() => ({
+  mockRegisterHistoryEditorSettlement: vi.fn((_doc: Document, _settle: () => Promise<unknown>) =>
+    vi.fn(),
+  ),
+  mockFinishProjectGesture: vi.fn(async (..._args: unknown[]) => ({
+    status: 'committed',
+    operationId: 'op-1',
+    documentId: 'doc-1',
+    revision: 1,
+  })),
+}));
+
+vi.mock('../lib/history-scope-router', () => ({
+  finishProjectGesture: (...args: unknown[]) => mockFinishProjectGesture(...args),
+  registerHistoryEditorSettlement: mockRegisterHistoryEditorSettlement,
+}));
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
@@ -153,8 +174,12 @@ describe('AutomationTargetMenu in a floated panel', () => {
   });
 });
 
+const resizeObservers = new Map<Element, ResizeObserverCallback>();
 class MockResizeObserver {
-  observe(): void {}
+  constructor(private callback: ResizeObserverCallback) {}
+  observe(target: Element): void {
+    resizeObservers.set(target, this.callback);
+  }
   unobserve(): void {}
   disconnect(): void {}
 }
@@ -314,5 +339,525 @@ describe('AutomationLineView point readout (spec 090)', () => {
     act(() => root.unmount());
     expect(popoutDoc.body.querySelector('[data-host-surface]')).toBeNull();
     expect(document.body.querySelector('[data-host-surface]')).toBeNull();
+  });
+});
+
+describe('AutomationLayerOverlay hosted gestures and regressions (T007, T017)', () => {
+  let host: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    mockFinishProjectGesture.mockReset();
+    useScoreAutomationStore.setState({
+      selectedPoint: null,
+      rangeSelection: null,
+      multiLinePreview: null,
+      multiLineObjectPreview: null,
+    });
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    host.remove();
+    useScoreAutomationStore.setState({
+      selectedPoint: null,
+      rangeSelection: null,
+      multiLinePreview: null,
+      multiLineObjectPreview: null,
+    });
+  });
+
+  function renderOverlay(onPatch = vi.fn(), layerId = 'layer-1') {
+    const param: AutomationParameterSnapshot = {
+      parameterId: 'p-freq',
+      name: 'Frequency',
+      label: 'Frequency',
+      minimum: 0,
+      maximum: 10,
+      resolution: 0.1,
+      points: [
+        { time: 1, value: 2 },
+        { time: 5, value: 8 },
+      ],
+    };
+
+    const autoSnap: ScoreLayerAutomationSnapshot = {
+      layerId,
+      layerKind: 'soundObject',
+      parameterIds: ['p-freq'],
+      selectedParameterId: 'p-freq',
+      parameters: [param],
+      targetGroups: [],
+      missingParameterIds: [],
+    };
+
+    act(() => {
+      root.render(
+        <AutomationLayerOverlay
+          automation={autoSnap}
+          pixelsPerBeat={20}
+          totalBeats={16}
+          snapEnabled={false}
+          snapValue="BEAT"
+          tempo={60}
+          smpteFrameRate={24}
+          mode="singleLine"
+          onPatch={onPatch}
+        />,
+      );
+    });
+
+    const overlay = host.firstElementChild as HTMLElement;
+    const overlayRect = () => ({
+      left: 0,
+      top: 0,
+      right: 320,
+      bottom: 80,
+      width: 320,
+      height: 80,
+      x: 0,
+      y: 0,
+      toJSON: () => undefined,
+    });
+    Object.defineProperty(overlay, 'getBoundingClientRect', {
+      configurable: true,
+      value: overlayRect,
+    });
+
+    act(() =>
+      resizeObservers.get(overlay)?.(
+        [{ target: overlay, contentRect: overlayRect() } as ResizeObserverEntry],
+        {} as ResizeObserver,
+      ),
+    );
+    return { overlay, onPatch };
+  }
+
+  it.each(['mouseup', 'Escape', 'blur'])(
+    'owns rendered-circle movement and %s termination (T049)',
+    (terminal) => {
+      const { overlay, onPatch } = renderOverlay();
+      const circle = overlay.querySelector('circle')!;
+      expect(circle).toBeTruthy();
+      act(() =>
+        circle.dispatchEvent(
+          new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 20, clientY: 64 }),
+        ),
+      );
+      act(() => window.dispatchEvent(new MouseEvent('mousemove', { clientX: 40, clientY: 50 })));
+      expect(onPatch).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'moveAutomationPoint' }),
+        expect.objectContaining({ phase: 'begin' }),
+      );
+      act(() =>
+        window.dispatchEvent(
+          terminal === 'Escape'
+            ? new KeyboardEvent('keydown', { key: 'Escape', cancelable: true })
+            : new Event(terminal),
+        ),
+      );
+      expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+        expect.objectContaining({ phase: terminal === 'mouseup' ? 'end' : 'cancel' }),
+      );
+    },
+  );
+
+  it('settles a circle gesture when its layer is replaced (T049)', () => {
+    const { overlay, onPatch } = renderOverlay();
+    act(() =>
+      overlay
+        .querySelector('circle')!
+        .dispatchEvent(
+          new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 20, clientY: 64 }),
+        ),
+    );
+    act(() => window.dispatchEvent(new MouseEvent('mousemove', { clientX: 40, clientY: 50 })));
+    renderOverlay(onPatch, 'replacement');
+    const count = onPatch.mock.calls.length;
+    act(() => window.dispatchEvent(new MouseEvent('mousemove', { clientX: 60, clientY: 20 })));
+    expect(onPatch).toHaveBeenCalledTimes(count);
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({ phase: 'end' }),
+    );
+  });
+
+  it('revokes automation input before awaiting settlement (T050)', async () => {
+    let resolve!: (value: any) => void;
+    mockFinishProjectGesture.mockReturnValueOnce(
+      new Promise((done) => {
+        resolve = done;
+      }),
+    );
+    const { overlay, onPatch } = renderOverlay();
+    act(() =>
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 60, clientY: 40 }),
+      ),
+    );
+    const settle = mockRegisterHistoryEditorSettlement.mock.calls.at(-1)![1];
+    let completion!: Promise<unknown>;
+    act(() => {
+      completion = settle();
+    });
+    const count = onPatch.mock.calls.length;
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 90, clientY: 20 }));
+      window.dispatchEvent(new MouseEvent('mouseup'));
+      window.dispatchEvent(escape);
+    });
+    expect(onPatch).toHaveBeenCalledTimes(count);
+    expect(escape.defaultPrevented).toBe(false);
+    // A receipt from the old gesture must not clear a newer owner.
+    act(() =>
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 60, clientY: 40 }),
+      ),
+    );
+    await act(async () => {
+      resolve({ status: 'committed' });
+      await completion;
+    });
+    const newerCount = onPatch.mock.calls.length;
+    act(() => window.dispatchEvent(new MouseEvent('mousemove', { clientX: 90, clientY: 20 })));
+    expect(onPatch.mock.calls.length).toBeGreaterThan(newerCount);
+  });
+
+  it('inserts point on press with phase begin, updates during drag, and finishes with phase end on release', () => {
+    const onPatch = vi.fn();
+    const { overlay } = renderOverlay(onPatch);
+
+    // Mousedown in empty area at clientX: 60 (beat 3), clientY: 40 (value 5)
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenCalledWith(
+      {
+        type: 'insertAutomationPoint',
+        parameterId: 'p-freq',
+        point: { time: 3, value: 5 },
+      },
+      expect.objectContaining({
+        label: 'Add Automation Point',
+        gestureId: expect.any(String),
+        phase: 'begin',
+      }),
+    );
+
+    // Mousemove during drag
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 70,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'moveAutomationPoint',
+        parameterId: 'p-freq',
+        pointIndex: 1,
+        point: { time: 3.5, value: 5 },
+      }),
+      expect.objectContaining({
+        label: 'Add Automation Point',
+        phase: 'update',
+      }),
+    );
+
+    // Release mouse
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          clientX: 70,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Add Automation Point',
+        phase: 'end',
+      }),
+    );
+  });
+
+  it('cancels press-time point insertion with Escape by calling finishProjectGesture with phase cancel', () => {
+    const onPatch = vi.fn();
+    const { overlay } = renderOverlay(onPatch);
+
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'insertAutomationPoint' }),
+      expect.objectContaining({ label: 'Add Automation Point', phase: 'begin' }),
+    );
+
+    // Escape
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Add Automation Point',
+        phase: 'cancel',
+      }),
+    );
+  });
+
+  it('keeps range transform draft local during drag, cancels on Escape without committing, and commits once on release', () => {
+    const onPatch = vi.fn();
+    const { overlay } = renderOverlay(onPatch);
+
+    act(() => {
+      useScoreAutomationStore.getState().setRangeSelection({
+        startBeat: 0,
+        endBeat: 6,
+        layerIds: ['layer-1'],
+        parameterIdsByLayer: { 'layer-1': ['p-freq'] },
+      });
+    });
+
+    // Mousedown inside range at clientX: 60 (beat 3)
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    // Mousemove moves range draft
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 80,
+          clientY: 40,
+        }),
+      );
+    });
+
+    // No patch was dispatched during drag preview!
+    expect(onPatch).not.toHaveBeenCalled();
+
+    // Escape cancels draft
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(onPatch).not.toHaveBeenCalled();
+
+    // Re-select and drag again, this time releasing
+    act(() => {
+      useScoreAutomationStore.getState().setRangeSelection({
+        startBeat: 0,
+        endBeat: 6,
+        layerIds: ['layer-1'],
+        parameterIdsByLayer: { 'layer-1': ['p-freq'] },
+      });
+    });
+
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 80,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onPatch).not.toHaveBeenCalled();
+
+    // Release mouse commits once with phase single
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          clientX: 80,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenCalledTimes(1);
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'moveAutomationRange',
+        beatDelta: 1,
+      }),
+      expect.objectContaining({
+        label: 'Move Automation Range',
+        phase: 'single',
+      }),
+    );
+  });
+
+  it('settles already-applied live automation point group on unmount/closure (T039)', () => {
+    const onPatch = vi.fn();
+    const { overlay } = renderOverlay(onPatch);
+
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'insertAutomationPoint' }),
+      expect.objectContaining({ label: 'Add Automation Point', phase: 'begin' }),
+    );
+
+    mockFinishProjectGesture.mockClear();
+
+    // Closure / unmount
+    act(() => {
+      root.unmount();
+    });
+
+    expect(mockFinishProjectGesture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'Add Automation Point',
+        phase: 'end',
+      }),
+    );
+  });
+
+  it('discards range transform local draft on unmount/closure without committing (T039)', () => {
+    const onPatch = vi.fn();
+    const { overlay } = renderOverlay(onPatch);
+
+    act(() => {
+      useScoreAutomationStore.getState().setRangeSelection({
+        startBeat: 0,
+        endBeat: 6,
+        layerIds: ['layer-1'],
+        parameterIdsByLayer: { 'layer-1': ['p-freq'] },
+      });
+    });
+
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 80,
+          clientY: 40,
+        }),
+      );
+    });
+
+    onPatch.mockClear();
+
+    // Closure / unmount
+    act(() => {
+      root.unmount();
+    });
+
+    // Local drafts are discarded on unmount
+    expect(onPatch).not.toHaveBeenCalled();
+  });
+
+  it('fences automation gestures on project replacement / session mismatch (T035)', () => {
+    const onPatch = vi.fn();
+    const { overlay } = renderOverlay(onPatch);
+
+    act(() => {
+      overlay.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: 60,
+          clientY: 40,
+        }),
+      );
+    });
+
+    const origSessionId = useProjectStore.getState().sessionId;
+    useProjectStore.setState({ sessionId: origSessionId + 100 });
+    onPatch.mockClear();
+    mockFinishProjectGesture.mockClear();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 100,
+          clientY: 50,
+        }),
+      );
+    });
+
+    expect(onPatch).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          bubbles: true,
+          clientX: 100,
+          clientY: 50,
+        }),
+      );
+    });
+
+    expect(mockFinishProjectGesture).not.toHaveBeenCalled();
+
+    useProjectStore.setState({ sessionId: origSessionId });
   });
 });

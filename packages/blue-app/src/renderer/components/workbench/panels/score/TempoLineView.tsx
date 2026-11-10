@@ -5,7 +5,9 @@ import type {
   MeterMapSnapshot,
   TempoMapSnapshot,
   TempoMapPatch,
+  TempoPointSnapshot,
 } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import { type SnapValueName, snapValueToBeats } from '@blue/data';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { deriveSnapLineBeats } from './snap-grid-utils';
@@ -21,8 +23,29 @@ import {
 } from './tempo-map-utils';
 import { PopoutContextMenuPortal, portalEventIsolationProps } from '../../../../hooks/host-portals';
 import { cn } from '../../../../lib/cn';
+import { attachHostGesture } from '../../../../lib/host-gesture';
+import {
+  finishProjectGesture,
+  registerHistoryEditorSettlement,
+} from '../../../../lib/history-scope-router';
+import { getProjectDocumentId, useProjectStore } from '../../../../stores/project-store';
 
 const BEAT_EPSILON = 0.001;
+
+function sameTempoPoint(
+  left: TempoPointSnapshot | undefined,
+  right: TempoPointSnapshot | undefined,
+): boolean {
+  return Boolean(
+    left &&
+    right &&
+    left.pointId === right.pointId &&
+    Math.abs(left.beat - right.beat) < 1e-7 &&
+    Math.abs(left.tempo - right.tempo) < 1e-7 &&
+    left.curveType === right.curveType &&
+    left.timeBase === right.timeBase,
+  );
+}
 
 interface TempoLineViewProps {
   tempoMap: TempoMapSnapshot;
@@ -35,7 +58,7 @@ interface TempoLineViewProps {
   sampleRate?: number;
   rootTimelineOnly: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
-  onTempoPatch: (patch: TempoMapPatch) => void;
+  onTempoPatch: (patch: TempoMapPatch, metadata?: ProjectDocumentCommitMetadata) => void;
 }
 
 interface DragState {
@@ -76,6 +99,35 @@ export default function TempoLineView({
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [contextMenuTarget, setContextMenuTarget] = useState<ContextMenuTarget>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const hostGestureDisposerRef = useRef<(() => void) | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
+  const activeLiveGroupRef = useRef<{
+    documentId: string;
+    sessionId: number;
+    gestureId: string;
+    label: string;
+  } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      unregisterSettlementRef.current?.();
+      unregisterSettlementRef.current = null;
+      hostGestureDisposerRef.current?.();
+      hostGestureDisposerRef.current = null;
+      if (activeLiveGroupRef.current) {
+        const { documentId, sessionId, gestureId, label } = activeLiveGroupRef.current;
+        activeLiveGroupRef.current = null;
+        void finishProjectGesture({
+          documentId,
+          sessionId,
+          gestureId,
+          label,
+          phase: 'end',
+        });
+      }
+      setDragState(null);
+    };
+  }, []);
 
   const hitRadius = 4;
 
@@ -126,6 +178,26 @@ export default function TempoLineView({
         const leftBound = isFirst ? 0 : points[pointIdx - 1].beat + 0.001;
         const rightBound =
           pointIdx < points.length - 1 ? points[pointIdx + 1].beat - 0.001 : totalBeats;
+
+        const gestureId = `tempo-${crypto.randomUUID()}`;
+        const documentId =
+          typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+        const sessionId = useProjectStore.getState().sessionId;
+        let hasMoved = false;
+        let expectedPoint = points[pointIdx];
+        const ownsTarget = () =>
+          sameTempoPoint(
+            expectedPoint,
+            useProjectStore.getState().transport.tempoMap.points[pointIdx],
+          );
+
+        const clearDrag = () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          activeLiveGroupRef.current = null;
+          setDragState(null);
+        };
+
         setDragState({
           pointIndex: pointIdx,
           startBeat: points[pointIdx].beat,
@@ -135,6 +207,148 @@ export default function TempoLineView({
           leftBound,
           rightBound,
           constrained: 'none',
+        });
+
+        hostGestureDisposerRef.current?.();
+        unregisterSettlementRef.current?.();
+        if (typeof registerHistoryEditorSettlement === 'function') {
+          const hostDoc = (e.currentTarget as Element)?.ownerDocument ?? document;
+          unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+            if (hasMoved && ownsTarget()) {
+              await finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Edit Tempo Point',
+                phase: 'end',
+              });
+            }
+            clearDrag();
+            return useProjectStore.getState().flushPendingPatches?.();
+          });
+        }
+
+        hostGestureDisposerRef.current = attachHostGesture({
+          host: e.currentTarget,
+          onMove: (moveEvent) => {
+            const currentDocId =
+              typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (currentDocId !== documentId || currentSessionId !== sessionId) {
+              hostGestureDisposerRef.current?.();
+              clearDrag();
+              return;
+            }
+            if (!ownsTarget()) {
+              hostGestureDisposerRef.current?.();
+              clearDrag();
+              return;
+            }
+
+            const { x: rawX, y: rawY } = getContentPoint(moveEvent.clientX, moveEvent.clientY);
+
+            let newBeat = screenXToBeat(rawX, pixelsPerBeat);
+            let newTempo = screenYToTempo(rawY, TEMPO_LINE_VIEW_HEIGHT);
+
+            const ctrlHeld = moveEvent.ctrlKey || moveEvent.metaKey;
+            if (ctrlHeld) {
+              const deltaX = Math.abs(moveEvent.clientX - e.clientX);
+              const deltaY = Math.abs(moveEvent.clientY - e.clientY);
+              if (deltaX >= deltaY) {
+                newTempo = points[pointIdx].tempo;
+              } else {
+                newBeat = points[pointIdx].beat;
+              }
+            }
+
+            if (!moveEvent.shiftKey && snapEnabled) {
+              newBeat = snapBeat(
+                newBeat,
+                true,
+                snapValue,
+                pixelsPerBeat,
+                points[0]?.tempo ?? 60,
+                smpteFrameRate,
+                sampleRate,
+                meterMap,
+                frameSnapContext,
+              );
+            }
+
+            newBeat = Math.max(leftBound, Math.min(rightBound, newBeat));
+            newTempo = Math.max(TEMPO_MIN_BPM, Math.min(TEMPO_MAX_BPM, newTempo));
+
+            const phase = hasMoved ? 'update' : 'begin';
+            hasMoved = true;
+            activeLiveGroupRef.current = {
+              documentId,
+              sessionId,
+              gestureId,
+              label: 'Edit Tempo Point',
+            };
+            onTempoPatch(
+              {
+                type: 'updateTempoPoint',
+                index: pointIdx,
+                patch: { beat: newBeat, tempo: newTempo },
+              },
+              { label: 'Edit Tempo Point', gestureId, phase },
+            );
+            expectedPoint = useProjectStore.getState().transport.tempoMap.points[pointIdx];
+          },
+          onRelease: () => {
+            const currentDocId =
+              typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+            const currentSessionId = useProjectStore.getState().sessionId;
+            if (currentDocId === documentId && currentSessionId === sessionId && ownsTarget()) {
+              if (hasMoved) {
+                void finishProjectGesture({
+                  documentId,
+                  sessionId,
+                  gestureId,
+                  label: 'Edit Tempo Point',
+                  phase: 'end',
+                });
+              }
+            }
+            clearDrag();
+          },
+          onEscape: () => {
+            if (hasMoved && ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Edit Tempo Point',
+                phase: 'cancel',
+              });
+            }
+            clearDrag();
+          },
+          onBlur: () => {
+            if (hasMoved && ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Edit Tempo Point',
+                phase: 'cancel',
+              });
+            }
+            clearDrag();
+          },
+          onCancel: () => {
+            if (hasMoved && ownsTarget()) {
+              void finishProjectGesture({
+                documentId,
+                sessionId,
+                gestureId,
+                label: 'Edit Tempo Point',
+                phase: 'cancel',
+              });
+            }
+            clearDrag();
+          },
         });
         return;
       }
@@ -152,10 +366,13 @@ export default function TempoLineView({
           frameSnapContext,
         );
         const tempo = screenYToTempo(y, TEMPO_LINE_VIEW_HEIGHT);
-        onTempoPatch({
-          type: 'addTempoPoint',
-          point: { beat: snappedBeat, tempo, curveType: 'constant' },
-        });
+        onTempoPatch(
+          {
+            type: 'addTempoPoint',
+            point: { beat: snappedBeat, tempo, curveType: 'constant' },
+          },
+          { label: 'Add Tempo Point', phase: 'single' },
+        );
         setSelectedPoint(null);
       }
     },
@@ -179,82 +396,16 @@ export default function TempoLineView({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (!dragState) {
-        const { x, y } = getContentPoint(e.clientX, e.clientY);
-        const idx = findPointAt(x, y);
-        if (idx >= 0) {
-          setSelectedPoint(idx);
-        } else if (selectedPoint !== null) {
-          setSelectedPoint(null);
-        }
-        return;
+      if (dragState) return;
+      const { x, y } = getContentPoint(e.clientX, e.clientY);
+      const idx = findPointAt(x, y);
+      if (idx >= 0) {
+        setSelectedPoint(idx);
+      } else if (selectedPoint !== null) {
+        setSelectedPoint(null);
       }
-
-      const { x: rawX, y: rawY } = getContentPoint(e.clientX, e.clientY);
-
-      let newBeat = screenXToBeat(rawX, pixelsPerBeat);
-      let newTempo = screenYToTempo(rawY, TEMPO_LINE_VIEW_HEIGHT);
-
-      const ctrlHeld = e.ctrlKey || e.metaKey;
-      let constrained = dragState.constrained;
-      if (ctrlHeld) {
-        if (constrained === 'none') {
-          const deltaX = Math.abs(e.clientX - dragState.startClientX);
-          const deltaY = Math.abs(e.clientY - dragState.startClientY);
-          constrained = deltaX >= deltaY ? 'horizontal' : 'vertical';
-        }
-      } else if (constrained !== 'none') {
-        constrained = 'none';
-      }
-
-      if (constrained !== dragState.constrained) {
-        setDragState((prev) => (prev ? { ...prev, constrained } : prev));
-      }
-
-      if (constrained === 'horizontal') {
-        newTempo = dragState.startTempo;
-      } else if (constrained === 'vertical') {
-        newBeat = dragState.startBeat;
-      }
-
-      if (!e.shiftKey && snapEnabled) {
-        newBeat = snapBeat(
-          newBeat,
-          true,
-          snapValue,
-          pixelsPerBeat,
-          points[0]?.tempo ?? 60,
-          smpteFrameRate,
-          sampleRate,
-          meterMap,
-          frameSnapContext,
-        );
-      }
-
-      newBeat = Math.max(dragState.leftBound, Math.min(dragState.rightBound, newBeat));
-      newTempo = Math.max(TEMPO_MIN_BPM, Math.min(TEMPO_MAX_BPM, newTempo));
-
-      onTempoPatch({
-        type: 'updateTempoPoint',
-        index: dragState.pointIndex,
-        patch: { beat: newBeat, tempo: newTempo },
-      });
     },
-    [
-      dragState,
-      pixelsPerBeat,
-      snapEnabled,
-      snapValue,
-      meterMap,
-      smpteFrameRate,
-      sampleRate,
-      frameSnapContext,
-      points,
-      findPointAt,
-      getContentPoint,
-      selectedPoint,
-      onTempoPatch,
-    ],
+    [dragState, findPointAt, getContentPoint, selectedPoint],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -284,13 +435,6 @@ export default function TempoLineView({
     },
     [enabled, rootTimelineOnly, findPointAt, findSegmentAt, getContentPoint, pixelsPerBeat],
   );
-
-  useEffect(() => {
-    if (!dragState) return;
-    const handleUp = () => setDragState(null);
-    window.addEventListener('mouseup', handleUp);
-    return () => window.removeEventListener('mouseup', handleUp);
-  }, [dragState]);
 
   const buildPath = useCallback((): string => {
     if (points.length === 0) return '';

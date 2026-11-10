@@ -11,6 +11,7 @@ import type {
   TempoMapPatch,
   MeterMapPatch,
 } from '../../../../../shared/project-editor';
+import type { ProjectDocumentCommitMetadata } from '../../../../../shared/project-history';
 import {
   TimeBase,
   resolveSmpteRate,
@@ -45,7 +46,7 @@ interface Props {
   rootTimelineOnly: boolean;
   tempo: number;
   rulerMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
-  onTempoPatch: (patch: TempoMapPatch) => void;
+  onTempoPatch: (patch: TempoMapPatch, metadata?: ProjectDocumentCommitMetadata) => void;
   onMeterPatch: (patch: MeterMapPatch) => void;
 }
 

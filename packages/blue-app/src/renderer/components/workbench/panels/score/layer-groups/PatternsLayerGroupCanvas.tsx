@@ -10,9 +10,11 @@ import type { SnapValueName } from '@blue/data';
 import type { MeterMapSnapshot } from '../../../../../../shared/project-editor';
 import type { PatternCellEdit, PatternsLayerGroupSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT } from '../types';
-import { useProjectStore } from '../../../../../stores/project-store';
+import { getProjectDocumentId, useProjectStore } from '../../../../../stores/project-store';
 import { useScoreSelectionStore } from '../../../../../stores/score-selection-store';
 import { useWorkbenchStore } from '../../../../../stores/workbench-store';
+import { attachHostGesture, type HostGestureDisposer } from '../../../../../lib/host-gesture';
+import { registerHistoryEditorSettlement } from '../../../../../lib/history-scope-router';
 import {
   PopoutContextMenuPortal,
   portalEventIsolationProps,
@@ -49,6 +51,9 @@ interface PatternCellTarget {
 
 interface PaintGesture {
   layerId: string;
+  groupId: string;
+  documentId: string;
+  sessionId: number;
   active: boolean;
   lastCellIndex: number;
   changes: Map<number, boolean>;
@@ -67,10 +72,22 @@ export default function PatternsLayerGroupCanvas({ group, totalBeats, pixelsPerB
   const copyPatternShape = useScoreSelectionStore((state) => state.copyPatternShape);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const hostGestureDisposerRef = useRef<HostGestureDisposer | null>(null);
+  const unregisterSettlementRef = useRef<(() => void) | null>(null);
   const gestureRef = useRef<PaintGesture | null>(null);
-  const [gestureActive, setGestureActive] = useState(false);
   const [paintPreview, setPaintPreview] = useState<PaintPreviewCell[]>([]);
   const [contextTarget, setContextTarget] = useState<PatternCellTarget | null>(null);
+
+  const endHostGesture = useCallback(() => {
+    unregisterSettlementRef.current?.();
+    unregisterSettlementRef.current = null;
+    if (hostGestureDisposerRef.current) {
+      hostGestureDisposerRef.current();
+      hostGestureDisposerRef.current = null;
+    }
+    gestureRef.current = null;
+    setPaintPreview([]);
+  }, []);
 
   const scale = safePixelsPerBeat(pixelsPerBeat);
   const stepBeats =
@@ -132,72 +149,153 @@ export default function PatternsLayerGroupCanvas({ group, totalBeats, pixelsPerB
       const layer = group.layers.find((candidate) => candidate.layerId === target.layerId);
       if (!layer) return;
 
+      endHostGesture();
+
+      const docId =
+        typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
+      const sessionId = useProjectStore?.getState?.()?.sessionId ?? 0;
       const active = !layer.activeCellIndices.includes(target.cellIndex);
       const gesture: PaintGesture = {
         layerId: target.layerId,
+        groupId: group.groupId,
+        documentId: docId,
+        sessionId,
         active,
         lastCellIndex: target.cellIndex,
         changes: new Map([[target.cellIndex, active]]),
       };
       gestureRef.current = gesture;
       setPreviewForGesture(gesture);
-      setGestureActive(true);
       event.preventDefault();
+
+      const host = containerRef.current;
+      const hostDoc = host?.ownerDocument ?? document;
+      unregisterSettlementRef.current = registerHistoryEditorSettlement(hostDoc, async () => {
+        unregisterSettlementRef.current?.();
+        unregisterSettlementRef.current = null;
+        if (hostGestureDisposerRef.current) {
+          hostGestureDisposerRef.current();
+          hostGestureDisposerRef.current = null;
+        }
+        const g = gestureRef.current;
+        gestureRef.current = null;
+        setPaintPreview([]);
+        if (!g) return;
+        const currentDocId = getProjectDocumentId() ?? '';
+        const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+        if (
+          g.documentId !== currentDocId ||
+          (currentSessionId !== undefined && g.sessionId !== currentSessionId)
+        ) {
+          return;
+        }
+        const targetLayer = group.layers.find((candidate) => candidate.layerId === g.layerId);
+        const actualChanges: PatternCellEdit[] = [];
+        for (const [cellIndex, activeVal] of g.changes.entries()) {
+          const currentlyActive = targetLayer?.activeCellIndices.includes(cellIndex) ?? false;
+          if (currentlyActive !== activeVal) {
+            actualChanges.push({ layerId: g.layerId, cellIndex, active: activeVal });
+          }
+        }
+        if (actualChanges.length > 0) {
+          actualChanges.sort((a, b) => a.cellIndex - b.cellIndex);
+          commitPatternPatch(actualChanges);
+        }
+        return useProjectStore?.getState?.()?.flushPendingPatches?.();
+      });
+
+      const disposer = attachHostGesture({
+        host,
+        onMove: (moveEvent) => {
+          const g = gestureRef.current;
+          if (!g) return;
+          const currentDocId = getProjectDocumentId() ?? '';
+          const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+          if (
+            g.documentId !== currentDocId ||
+            (currentSessionId !== undefined && g.sessionId !== currentSessionId)
+          ) {
+            endHostGesture();
+            gestureRef.current = null;
+            setPaintPreview([]);
+            return;
+          }
+          const { x } = toLocalXY(
+            (moveEvent as MouseEvent).clientX,
+            (moveEvent as MouseEvent).clientY,
+          );
+          const cellIndex = cellIndexAtBeat(pixelXToBeat(x, scale), stepBeats);
+          if (cellIndex === g.lastCellIndex) return;
+
+          for (const traversedCell of cellsBetween(g.lastCellIndex, cellIndex)) {
+            g.changes.set(traversedCell, g.active);
+          }
+          g.lastCellIndex = cellIndex;
+          setPreviewForGesture(g);
+        },
+        onRelease: () => {
+          unregisterSettlementRef.current?.();
+          unregisterSettlementRef.current = null;
+          hostGestureDisposerRef.current = null;
+          const g = gestureRef.current;
+          gestureRef.current = null;
+          setPaintPreview([]);
+          if (!g) return;
+
+          const currentDocId = getProjectDocumentId() ?? '';
+          const currentSessionId = useProjectStore?.getState?.()?.sessionId;
+          if (
+            g.documentId !== currentDocId ||
+            (currentSessionId !== undefined && g.sessionId !== currentSessionId)
+          ) {
+            return;
+          }
+
+          const targetLayer = group.layers.find((candidate) => candidate.layerId === g.layerId);
+          const actualChanges: PatternCellEdit[] = [];
+          for (const [cellIndex, activeVal] of g.changes.entries()) {
+            const currentlyActive = targetLayer?.activeCellIndices.includes(cellIndex) ?? false;
+            if (currentlyActive !== activeVal) {
+              actualChanges.push({ layerId: g.layerId, cellIndex, active: activeVal });
+            }
+          }
+          if (actualChanges.length > 0) {
+            actualChanges.sort((a, b) => a.cellIndex - b.cellIndex);
+            commitPatternPatch(actualChanges);
+          }
+        },
+        onEscape: () => {
+          endHostGesture();
+        },
+        onBlur: () => {
+          endHostGesture();
+        },
+        onCancel: () => {
+          endHostGesture();
+        },
+      });
+      hostGestureDisposerRef.current = disposer;
     },
-    [cellTargetAtPoint, group.layers, setPreviewForGesture],
+    [
+      cellTargetAtPoint,
+      commitPatternPatch,
+      endHostGesture,
+      group.layers,
+      scale,
+      setPreviewForGesture,
+      stepBeats,
+      toLocalXY,
+    ],
   );
-
-  const handleWindowMouseMove = useCallback(
-    (event: MouseEvent) => {
-      const gesture = gestureRef.current;
-      if (!gesture) return;
-      const { x } = toLocalXY(event.clientX, event.clientY);
-      const cellIndex = cellIndexAtBeat(pixelXToBeat(x, scale), stepBeats);
-      if (cellIndex === gesture.lastCellIndex) return;
-
-      for (const traversedCell of cellsBetween(gesture.lastCellIndex, cellIndex)) {
-        gesture.changes.set(traversedCell, gesture.active);
-      }
-      gesture.lastCellIndex = cellIndex;
-      setPreviewForGesture(gesture);
-    },
-    [scale, setPreviewForGesture, stepBeats, toLocalXY],
-  );
-
-  const handleWindowMouseUp = useCallback(() => {
-    const gesture = gestureRef.current;
-    gestureRef.current = null;
-    setGestureActive(false);
-    setPaintPreview([]);
-    if (!gesture) return;
-
-    commitPatternPatch(
-      [...gesture.changes.entries()]
-        .sort(([left], [right]) => left - right)
-        .map(([cellIndex, active]) => ({
-          layerId: gesture.layerId,
-          cellIndex,
-          active,
-        })),
-    );
-  }, [commitPatternPatch]);
 
   useEffect(() => {
-    if (!gestureActive) return;
-    window.addEventListener('mousemove', handleWindowMouseMove);
-    window.addEventListener('mouseup', handleWindowMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleWindowMouseMove);
-      window.removeEventListener('mouseup', handleWindowMouseUp);
+      endHostGesture();
+      gestureRef.current = null;
+      setPaintPreview([]);
+      setContextTarget(null);
     };
-  }, [gestureActive, handleWindowMouseMove, handleWindowMouseUp]);
-
-  useEffect(() => {
-    gestureRef.current = null;
-    setGestureActive(false);
-    setPaintPreview([]);
-    setContextTarget(null);
-  }, [group.groupId]);
+  }, [endHostGesture, group.groupId]);
 
   const handleContextMenu = useCallback(
     (event: ReactMouseEvent<HTMLDivElement>) => {

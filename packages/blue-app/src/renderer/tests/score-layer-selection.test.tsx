@@ -356,4 +356,56 @@ describe('Score layer selection visual and accessible state (US1)', () => {
       trackHeaders.map((header) => header?.style.height),
     );
   });
+
+  it('restores baseline selection and leaves dirty state clean when background marquee is cancelled with Escape', () => {
+    seedProjectWithAllLayerTypes();
+    act(() => {
+      root.render(<ScorePanel />);
+    });
+
+    const scrollContainer = container.querySelector<HTMLElement>('.score-timeline-scroll')!;
+    expect(scrollContainer).toBeTruthy();
+
+    const initialTarget = {
+      selectionId: 'initial-obj',
+      selectedObjectType: 'GenericScore',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'timeline',
+      displayContext: 'timeline',
+      location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      supportsTimeBehavior: false,
+      supportsRepeatPoint: false,
+      supportsNoteProcessorChain: false,
+    };
+
+    act(() => {
+      useScoreSelectionStore
+        .getState()
+        .setSelection([{ objectId: 'initial-obj', editorTarget: initialTarget }]);
+    });
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['initial-obj']);
+
+    // Mouse down on scrollContainer starts marquee and clears non-shift selection
+    act(() => {
+      scrollContainer.dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          clientX: 50,
+          clientY: 50,
+        }),
+      );
+    });
+
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual([]);
+    expect(useProjectStore.getState().isDirty).toBe(false);
+
+    // Cancel gesture via Escape key
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    // Baseline selection is restored and project is not dirty
+    expect([...useScoreSelectionStore.getState().selectedObjectIds]).toEqual(['initial-obj']);
+    expect(useProjectStore.getState().isDirty).toBe(false);
+  });
 });

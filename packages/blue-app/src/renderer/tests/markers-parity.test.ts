@@ -20,7 +20,13 @@ describe('Marker parity with Java Blue', () => {
     const snapshot = createProjectEditorSnapshot(data, '/test.blue');
 
     expect(snapshot.score.markers).toEqual([
-      { name: 'Intro B', time: 64, timeBase: 'BEATS', sourceIndex: 0 },
+      {
+        markerId: expect.any(String),
+        name: 'Intro B',
+        time: 64,
+        timeBase: 'BEATS',
+        sourceIndex: 0,
+      },
     ]);
   });
 
