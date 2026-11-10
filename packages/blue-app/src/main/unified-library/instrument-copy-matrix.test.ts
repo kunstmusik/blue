@@ -95,6 +95,7 @@ function normalizeSnapshot(instrument: BlueSynthBuilder): InstrumentSnapshot {
   let widgetIndex = 0;
   const normalizeWidget = (widget: typeof snapshot.widgetTree): void => {
     widget.id = `widget-${widgetIndex++}`;
+    delete widget.gestureTargetId;
     for (const child of widget.children ?? []) normalizeWidget(child);
   };
   normalizeWidget(snapshot.widgetTree);
@@ -149,6 +150,13 @@ function expectCompleteIndependentCopy(
   expectFreshOwnedIds = true,
 ): void {
   expect(copy).not.toBe(source);
+  const sourceSnapshot = createInstrumentSnapshot('', source, source.isEnabled());
+  const copySnapshot = createInstrumentSnapshot('', copy, copy.isEnabled());
+  if (sourceSnapshot.type === 'blueSynthBuilder' && copySnapshot.type === 'blueSynthBuilder') {
+    expect(copySnapshot.widgetTree.gestureTargetId).not.toBe(
+      sourceSnapshot.widgetTree.gestureTargetId,
+    );
+  }
   expect(normalizeSnapshot(copy)).toEqual(normalizeSnapshot(source));
   if (expectFreshOwnedIds) {
     const sourceIds = copyOwnedIds(source);

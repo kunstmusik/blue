@@ -152,7 +152,11 @@ function canJoinPendingTransaction(
   metadata: ProjectDocumentCommitMetadata | undefined,
 ): boolean {
   if (metadata?.phase === 'begin' || metadata?.phase === 'single') return false;
-  if (transaction.metadata?.phase === 'end' || transaction.metadata?.phase === 'single') {
+  if (
+    transaction.metadata?.phase === 'end' ||
+    transaction.metadata?.phase === 'single' ||
+    transaction.metadata?.phase === 'cancel'
+  ) {
     return false;
   }
 
@@ -176,6 +180,9 @@ function mergePendingMetadata(
     }
     if (previous.phase === 'begin' && next.phase === 'end') {
       return { ...next, phase: 'single' };
+    }
+    if (previous.phase === 'begin' && next.phase === 'cancel') {
+      return { ...next, phase: 'cancel' };
     }
   }
   return next;

@@ -360,6 +360,7 @@ import {
   getArrangementInstrumentOwnerIdentity,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
+  getTempoPointSnapshotId,
   getTrackInstrumentOwnerIdentity,
   getClojureProjectEntrySnapshotIds,
   setClojureProjectEntrySnapshotIds,
@@ -793,6 +794,7 @@ export function createTempoMapSnapshot(tempoMap: TempoMap): TempoMapSnapshot {
     enabled: tempoMap.isEnabled(),
     visible: tempoMap.isVisible(),
     points: tempoMap.getTempoPoints().map((point) => ({
+      pointId: getTempoPointSnapshotId(point),
       beat: point.beat,
       tempo: point.tempo,
       curveType: point.curveType === 'CONSTANT' ? 'constant' : 'linear',

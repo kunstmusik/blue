@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BlueData, BlueX7, Channel, PolyObject, TrackLayerGroup } from '@blue/data';
 import { AutomationCurveCode } from '@blue/engine-client';
+import type { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
+import { ProjectHistory } from './project-history';
+import { ProjectSession } from './project-session';
+import { MockHistoryContext } from './project-history-test-support';
 import { EngineBridge } from './engine-bridge';
 import {
   collectAffectedProjectScoreAutomationParameterIds,
@@ -138,6 +142,107 @@ function lastPoints(call: unknown[]): Array<{ time: number; value: number }> {
 }
 
 describe('EngineBridge automation sync', () => {
+  it.each(['oversize growth', 'changed net-zero end', 'empty net-zero end'])(
+    'reconciles concrete automation points after %s (T047/T057)',
+    async (terminal) => {
+      const project = createRuntimeProject();
+      const param = project.params[0]!;
+      enableAutomation(param);
+      assignToLayer(project);
+      const session = new ProjectSession();
+      session.replace(project.data, '/tmp/runtime.blue');
+      const reconciliation: Pick<
+        ProjectRuntimeReconciliation,
+        'drainPreviews' | 'reconcileCommit'
+      > = {
+        drainPreviews: async () => {},
+        reconcileCommit: async ({ patches }) => {
+          const data = session.read().data!;
+          const ids = new Set<string>();
+          for (const patch of patches)
+            for (const id of collectAffectedProjectScoreAutomationParameterIds(data, patch))
+              ids.add(id);
+          await syncScoreAutomationParametersToEngine(
+            data,
+            ids,
+            {
+              syncAutomationParameter: (parameter, context) =>
+                project.bridge.syncAutomationParameter(parameter, context, { coalesce: false }),
+            },
+            timing,
+          );
+          return [];
+        },
+      };
+      const history = new ProjectHistory({
+        session,
+        retainedBytesLimit: 100000,
+        reconciliation: reconciliation as ProjectRuntimeReconciliation,
+      });
+      history.checkpointSave();
+      const context = new MockHistoryContext('runtime');
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Automation',
+          [
+            {
+              score: {
+                type: 'moveAutomationPoint',
+                parameterId: param.getUniqueId(),
+                pointIndex: 1,
+                point: { time: 8, value: 0.5 },
+              },
+            },
+          ],
+          { gestureId: 'automation', phase: 'begin' },
+        ),
+      );
+      expect(project.client.updateAutomation).toHaveBeenCalledTimes(1);
+      const baselinePatch: ProjectDocumentPatch = {
+        score: {
+          type: 'setAutomationPoints',
+          parameterId: param.getUniqueId(),
+          points: [
+            { time: 2, value: 0.2 },
+            { time: 6, value: 0.8 },
+          ],
+        },
+      };
+      if (terminal === 'empty net-zero end') {
+        await history.commit(
+          context.nextCommitRequest(docId, session.read().revision, 'Automation', [baselinePatch], {
+            gestureId: 'automation',
+            phase: 'update',
+          }),
+        );
+      }
+      const result = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'Automation',
+          terminal === 'oversize growth'
+            ? [{ globalOrc: 'x'.repeat(200000) }]
+            : terminal === 'changed net-zero end'
+              ? [baselinePatch]
+              : [],
+          { gestureId: 'automation', phase: terminal === 'oversize growth' ? 'update' : 'end' },
+        ),
+      );
+      expect(result.status).toBe(terminal === 'oversize growth' ? 'oversize' : 'unchanged');
+      expect(project.client.updateAutomation).toHaveBeenCalledTimes(
+        terminal === 'empty net-zero end' ? 3 : 2,
+      );
+      expect(lastPoints(project.client.updateAutomation.mock.calls.at(-1)!)).toEqual(
+        expect.arrayContaining([expect.objectContaining({ value: 0.8 })]),
+      );
+      expect(history.isDirty()).toBe(false);
+    },
+  );
+
   it('resolves arrangement and Track BlueX7 Parameters through the owner-aware catalog', async () => {
     const data = new BlueData();
     data.getScore().length = 0;
@@ -536,5 +641,139 @@ describe('EngineBridge automation sync', () => {
     expect(project.client.createAutomation).not.toHaveBeenCalled();
     expect(project.client.deleteAutomation).not.toHaveBeenCalled();
     expect(project.client.setChannel).not.toHaveBeenCalled();
+  });
+
+  it('synchronizes compound automation point and resolution payloads for multiple parameters (T034)', async () => {
+    const project = createRuntimeProject(2);
+    enableAutomation(project.params[0]!, [
+      { time: 2, value: 0.1 },
+      { time: 6, value: 0.1 },
+    ]);
+    project.params[0]!.setResolutionText('0.1');
+    assignToLayer(project, 0);
+
+    enableAutomation(project.params[1]!, [
+      { time: 2, value: 0.2 },
+      { time: 6, value: 0.2 },
+    ]);
+    project.params[1]!.setResolutionText('0.2');
+    assignToLayer(project, 1);
+
+    project.client.updateAutomation.mockClear();
+
+    const param1Id = project.params[0]!.getUniqueId();
+    const param2Id = project.params[1]!.getUniqueId();
+
+    // Compound forward payload (as applied during Redo)
+    applyProjectDocumentPatch(project.data, {
+      score: {
+        type: 'setAutomationPoints',
+        parameterId: param1Id,
+        points: [
+          { time: 2, value: 0.5 },
+          { time: 6, value: 0.5 },
+        ],
+      },
+    });
+    applyProjectDocumentPatch(project.data, {
+      score: {
+        type: 'setAutomationResolution',
+        parameterId: param1Id,
+        resolutionDecimal: '0.01',
+      },
+    });
+    applyProjectDocumentPatch(project.data, {
+      score: {
+        type: 'setAutomationPoints',
+        parameterId: param2Id,
+        points: [
+          { time: 2, value: 0.8 },
+          { time: 6, value: 0.8 },
+        ],
+      },
+    });
+
+    await syncScoreAutomationParametersToEngine(
+      project.data,
+      [param1Id, param2Id],
+      project.bridge,
+      timing,
+    );
+
+    // Param 1 updated with new points (0.5) and resolution (0.01)
+    expect(project.client.updateAutomation).toHaveBeenCalledWith(
+      'gk_blue_auto0',
+      AutomationCurveCode.LINEAR,
+      true,
+      '0.01',
+      expect.any(Array),
+    );
+    // Param 2 updated with new points (0.8) and resolution (0.2)
+    expect(project.client.updateAutomation).toHaveBeenCalledWith(
+      'gk_blue_auto1',
+      AutomationCurveCode.LINEAR,
+      true,
+      '0.2',
+      expect.any(Array),
+    );
+
+    project.client.updateAutomation.mockClear();
+    (
+      project.bridge as unknown as {
+        lastAutomationSyncAt: Map<string, number>;
+      }
+    ).lastAutomationSyncAt.clear();
+
+    // Baseline inverse payload (as applied during Undo or Cancel)
+    applyProjectDocumentPatch(project.data, {
+      score: {
+        type: 'setAutomationPoints',
+        parameterId: param1Id,
+        points: [
+          { time: 2, value: 0.1 },
+          { time: 6, value: 0.1 },
+        ],
+      },
+    });
+    applyProjectDocumentPatch(project.data, {
+      score: {
+        type: 'setAutomationResolution',
+        parameterId: param1Id,
+        resolutionDecimal: '0.1',
+      },
+    });
+    applyProjectDocumentPatch(project.data, {
+      score: {
+        type: 'setAutomationPoints',
+        parameterId: param2Id,
+        points: [
+          { time: 2, value: 0.2 },
+          { time: 6, value: 0.2 },
+        ],
+      },
+    });
+
+    await syncScoreAutomationParametersToEngine(
+      project.data,
+      [param1Id, param2Id],
+      project.bridge,
+      timing,
+    );
+
+    // Both parameters restored to baseline points and resolution
+    expect(project.client.updateAutomation).toHaveBeenCalledWith(
+      'gk_blue_auto0',
+      AutomationCurveCode.LINEAR,
+      true,
+      '0.1',
+      expect.any(Array),
+    );
+    expect(project.client.updateAutomation).toHaveBeenCalledWith(
+      'gk_blue_auto1',
+      AutomationCurveCode.LINEAR,
+      true,
+      '0.2',
+      expect.any(Array),
+    );
   });
 });

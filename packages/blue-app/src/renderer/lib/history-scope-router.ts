@@ -3,6 +3,8 @@ import { undo as cmUndo, redo as cmRedo, undoDepth, redoDepth } from '@codemirro
 import { toast } from 'sonner';
 import type {
   FocusedHistoryAvailability,
+  ProjectHistoryCommitRequest,
+  ProjectHistoryResponse,
   ProjectHistoryStateProjection,
 } from '../../shared/project-history';
 import {
@@ -39,9 +41,15 @@ export function registerHostDocument(doc: Document): () => void {
 
 /** Registers pending editor input that must settle before a project command. */
 export function registerHistoryEditorSettlement(
-  doc: Document,
-  settle: () => Promise<void> | void,
+  docOrSettle: Document | (() => Promise<void> | void),
+  settleOrDoc?: (() => Promise<void> | void) | Document,
 ): () => void {
+  const doc =
+    (typeof docOrSettle === 'function' ? (settleOrDoc as Document) : docOrSettle) ??
+    (typeof document !== 'undefined' ? document : (null as unknown as Document));
+  const settle =
+    typeof docOrSettle === 'function' ? docOrSettle : (settleOrDoc as () => Promise<void> | void);
+  if (!doc || typeof settle !== 'function') return () => {};
   let settlements = editorSettlements.get(doc);
   if (!settlements) {
     settlements = new Set();
@@ -56,16 +64,29 @@ export function registerHistoryEditorSettlement(
 
 /** Waits for registered editors in the selected host document to settle. */
 export async function settleHistoryEditors(preferredDocument?: Document): Promise<void> {
-  const documents = preferredDocument
-    ? [preferredDocument]
-    : [
-        ...new Set([
-          ...(typeof document === 'undefined' ? [] : [document]),
-          ...registeredHostDocuments,
-        ]),
-      ];
+  const documents = [
+    ...new Set([
+      ...(preferredDocument ? [preferredDocument] : []),
+      ...(typeof document === 'undefined' ? [] : [document]),
+      ...registeredHostDocuments,
+      ...editorSettlements.keys(),
+    ]),
+  ];
   const settlements = documents.flatMap((doc) => [...(editorSettlements.get(doc) ?? [])]);
   await Promise.all(settlements.map((settle) => settle()));
+}
+
+/**
+ * Routes a project command through editor settlement so active gestures
+ * settle their latest valid edits before the command runs.
+ */
+export async function executeProjectCommand<T>(
+  command: () => Promise<T> | T,
+  hostDocument?: Document,
+): Promise<T> {
+  await settleHistoryEditors(hostDocument);
+  flushFocusedProjectEditor(hostDocument);
+  return await command();
 }
 
 /**
@@ -180,6 +201,80 @@ export async function executeProjectRedo(hostDocument?: Document): Promise<void>
     acceptProjectDocumentRevision(sessionId, response.revision);
   }
   reportHistoryCommandFailure('redo', response);
+}
+
+export interface FinishProjectGestureOptions {
+  readonly documentId: string;
+  readonly sessionId: number;
+  readonly gestureId?: string;
+  readonly fieldId?: string;
+  readonly phase?: 'end' | 'cancel';
+  readonly label?: string;
+  readonly originViewId?: string;
+}
+
+/**
+ * Commits a terminal gesture boundary (metadata-only end or cancel).
+ *
+ * Flushes pending local draft patches, revalidates document and session authority,
+ * submits an empty-patch commit envelope to main, and reconciles the returned revision.
+ */
+export async function finishProjectGesture(
+  options: FinishProjectGestureOptions,
+): Promise<ProjectHistoryResponse> {
+  await useProjectStore.getState().flushPendingPatches();
+
+  const currentDocId = getProjectDocumentId();
+  const currentSessionId = useProjectStore.getState().sessionId;
+  const operationId = `${options.phase ?? 'end'}-${crypto.randomUUID()}`;
+
+  if (
+    !currentDocId ||
+    currentDocId !== options.documentId ||
+    currentSessionId !== options.sessionId
+  ) {
+    return {
+      status: 'invalid',
+      operationId,
+      documentId: options.documentId,
+      reason: 'Document or session authority mismatch',
+    };
+  }
+
+  if (!window.blueAPI?.commitProjectHistory) {
+    return {
+      status: 'failed',
+      operationId,
+      documentId: options.documentId,
+      error: 'commitProjectHistory IPC not available',
+    };
+  }
+
+  const request: ProjectHistoryCommitRequest = {
+    documentId: options.documentId,
+    operationId,
+    expectedRevision: getProjectDocumentRevision(),
+    contextSequence: reserveProjectHistoryContextSequence(),
+    label: options.label ?? '',
+    gestureId: options.gestureId,
+    fieldId: options.fieldId,
+    phase: options.phase ?? 'end',
+    patches: [],
+    origin: {
+      contextId: getProjectHistoryParticipantContextId(),
+      viewId: options.originViewId ?? 'workbench',
+    },
+  };
+
+  const response = await window.blueAPI.commitProjectHistory(request);
+
+  if (response.status === 'committed' || response.status === 'unchanged') {
+    acceptProjectDocumentRevision(options.sessionId, response.revision);
+  } else if (response.status === 'stale') {
+    acceptProjectDocumentRevision(options.sessionId, response.currentRevision);
+  }
+
+  return response;
 }
 
 /**

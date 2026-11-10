@@ -1,3 +1,4 @@
+import { getBsbGestureTargetId } from './identity';
 import {
   BlueData,
   Channel,
@@ -406,6 +407,7 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
   const baseSize = getWidgetSnapshotFallbackSize(record);
   const snapshot: BsbWidgetNodeSnapshot = {
     id,
+    gestureTargetId: getBsbGestureTargetId(widget),
     type: ctorName,
     objectName: typeof record.objectName === 'string' ? record.objectName : '',
     x: typeof record.x === 'number' ? record.x : 0,
@@ -490,6 +492,7 @@ export function buildWidgetTreeSnapshotFromGraphicInterface(graphicInterface: {
 
   return {
     id: rootGroup.id || 'root',
+    gestureTargetId: getBsbGestureTargetId(rootGroup),
     type: 'BSBRootGroup',
     objectName: '',
     x: 0,
@@ -642,6 +645,7 @@ export function buildWidgetTreeSnapshot(bsb: BlueSynthBuilder): BsbWidgetNodeSna
 
   return {
     id: rootGroup.id || 'root',
+    gestureTargetId: getBsbGestureTargetId(rootGroup),
     type: 'BSBRootGroup',
     objectName: '',
     x: 0,

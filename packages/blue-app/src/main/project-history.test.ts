@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BSBKnob,
   BlueData,
   BlueSynthBuilder,
   BlueX7,
+  Channel,
   Effect,
   Parameter,
   ScoreTrack,
@@ -17,12 +18,23 @@ import {
   DEFAULT_RETAINED_BYTES_LIMIT,
   computeStructuralInversePatches,
 } from './project-history';
-import { MockHistoryContext, FakePublicationRecorder } from './project-history-test-support';
+import { estimateBlueDataBytes } from './project-history-memento';
+import {
+  MockHistoryContext,
+  FakePublicationRecorder,
+  createDeferred,
+} from './project-history-test-support';
+import type { ProjectDocumentPatch } from '../shared/project-editor';
 import type { BlueX7Patch } from '../shared/project-editor/contract';
-import { getMixerEntrySnapshotId } from '../shared/project-editor/identity';
+import {
+  getMixerChannelSnapshotId,
+  getMixerEntrySnapshotId,
+} from '../shared/project-editor/identity';
 
 describe('ProjectHistory coordinator', () => {
-  function setupHistory(options: { entryLimit?: number; bytesLimit?: number } = {}) {
+  function setupHistory(
+    options: { entryLimit?: number; bytesLimit?: number; reconciliation?: any } = {},
+  ) {
     const session = new ProjectSession();
     const data = new BlueData();
     data.getProjectProperties().title = 'Initial Title';
@@ -35,6 +47,7 @@ describe('ProjectHistory coordinator', () => {
       publishUpdated: (evt) => recorder.record(evt),
       retainedEntryLimit: options.entryLimit,
       retainedBytesLimit: options.bytesLimit,
+      reconciliation: options.reconciliation,
     });
 
     const context = new MockHistoryContext('ctx-1');
@@ -42,6 +55,307 @@ describe('ProjectHistory coordinator', () => {
   }
 
   describe('commit, undo, redo, and read', () => {
+    it.each(['changed end', 'empty end'])(
+      'restores runtime automation and waits for acknowledgement on net-zero %s (T057)',
+      async (terminal) => {
+        const acknowledgement = createDeferred<void>();
+        const restoring = createDeferred<void>();
+        let holdAcknowledgement = false;
+        const reconciliation = {
+          drainPreviews: vi.fn(async () => {}),
+          reconcileCommit: vi.fn(async (_commit: { patches: readonly ProjectDocumentPatch[] }) => {
+            if (holdAcknowledgement) {
+              restoring.resolve();
+              await acknowledgement.promise;
+            }
+            return [];
+          }),
+        };
+        const { session, history, context, recorder } = setupHistory({ reconciliation });
+        const channel = new Channel();
+        channel.setName('Net-zero automation');
+        const parameter = channel.getLevelParameter();
+        parameter.setUniqueId('net-zero-parameter');
+        parameter.setMinimum(0);
+        parameter.setMaximum(10);
+        const baseline = [
+          { time: 0, value: 1 },
+          { time: 4, value: 2 },
+        ];
+        parameter.setPoints(baseline.map((point) => ({ ...point })));
+        session.read().data!.getMixer().getChannels().push(channel);
+        history.checkpointSave();
+        const documentId = session.read().documentId!;
+        const baselineStateId = session.read().stateId;
+        const patch = (points: typeof baseline): ProjectDocumentPatch => ({
+          score: { type: 'setAutomationPoints', parameterId: parameter.getUniqueId(), points },
+        });
+        const commit = (patches: ProjectDocumentPatch[], phase: 'begin' | 'update' | 'end') =>
+          history.commit(
+            context.nextCommitRequest(
+              documentId,
+              session.read().revision,
+              'Edit Automation',
+              patches,
+              { gestureId: 'net-zero-runtime', phase },
+            ),
+          );
+        await commit(
+          [
+            patch([
+              { time: 0, value: 5 },
+              { time: 4, value: 2 },
+            ]),
+          ],
+          'begin',
+        );
+        if (terminal === 'empty end') await commit([patch(baseline)], 'update');
+        holdAcknowledgement = true;
+        let completed = false;
+        const ending = commit(terminal === 'changed end' ? [patch(baseline)] : [], 'end').then(
+          (result) => {
+            completed = true;
+            return result;
+          },
+        );
+        try {
+          await Promise.race([
+            restoring.promise,
+            ending.then(() => {
+              throw new Error('Net-zero receipt completed without runtime reconciliation');
+            }),
+          ]);
+          expect(completed).toBe(false);
+          expect(reconciliation.reconcileCommit).toHaveBeenLastCalledWith({
+            documentId,
+            revision: session.read().revision,
+            patches: [patch(baseline)],
+          });
+        } finally {
+          acknowledgement.resolve();
+        }
+        const result = await ending;
+        expect(result.status).toBe('unchanged');
+        expect(history.read().length).toBe(0);
+        expect(history.isDirty()).toBe(false);
+        expect(session.read().stateId).toBe(baselineStateId);
+        const restored = session.read().data!.getMixer().getChannels()[0]!.getLevelParameter();
+        expect(restored.getUniqueId()).toBe(parameter.getUniqueId());
+        expect(restored.getPoints().map(({ time, value }) => ({ time, value }))).toEqual(baseline);
+        expect(recorder.events.at(-1)?.isDirty).toBe(false);
+      },
+    );
+
+    it('publishes and reconciles rollback when live growth exceeds the byte budget (T047)', async () => {
+      const reconciliation = {
+        drainPreviews: vi.fn(async () => {}),
+        reconcileCommit: vi.fn(async (_commit: { patches: readonly ProjectDocumentPatch[] }) => []),
+      };
+      const { session, history, recorder, context } = setupHistory({
+        bytesLimit: 100000,
+        reconciliation,
+      });
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Live', [{ projectProperties: { title: 'Preview' } }], {
+          gestureId: 'live',
+          phase: 'begin',
+        }),
+      );
+      const rejected = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'Live',
+          [{ projectProperties: { title: 'x'.repeat(200000) } }],
+          { gestureId: 'live', phase: 'update' },
+        ),
+      );
+      expect(rejected.status).toBe('oversize');
+      const late = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'Live',
+          [{ projectProperties: { title: 'Late movement' } }],
+          { gestureId: 'live', phase: 'update' },
+        ),
+      );
+      expect(late.status).toBe('invalid');
+      expect(session.read().data!.getProjectProperties().title).toBe('Initial Title');
+      expect(recorder.events).toHaveLength(2);
+      expect(recorder.latest()!.revision).toBe(session.read().revision);
+      expect(recorder.latest()!.history.length).toBe(0);
+      expect(reconciliation.reconcileCommit).toHaveBeenCalledTimes(2);
+      expect(reconciliation.reconcileCommit.mock.calls[1]![0].patches).toEqual([
+        { projectProperties: { title: 'Initial Title' } },
+      ]);
+    });
+    it('keeps a completed single action when the next live gesture is cancelled (T046)', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'A',
+          [{ projectProperties: { title: 'Author edit' } }],
+          { gestureId: 'A', phase: 'single' },
+        ),
+      );
+      const saved = history.read();
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'B',
+          [{ projectProperties: { title: 'Preview' } }],
+          { gestureId: 'B', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(docId, session.read().revision, 'B', [], {
+          gestureId: 'B',
+          phase: 'cancel',
+        }),
+      );
+      expect(session.read().data!.getProjectProperties().title).toBe('Author edit');
+      expect(history.read()).toMatchObject({
+        length: saved.length,
+        cursor: saved.cursor,
+        undoLabel: 'A',
+      });
+      expect(history.isDirty()).toBe(true);
+      await history.undo(context.nextUndoRequest(docId, session.read().revision));
+      expect(session.read().data!.getProjectProperties().title).toBe('Initial Title');
+      await history.redo(context.nextRedoRequest(docId, session.read().revision));
+      expect(session.read().data!.getProjectProperties().title).toBe('Author edit');
+    });
+    it('admits consecutive singles without retaining a project rollback baseline (T046)', async () => {
+      const { session, history, context } = setupHistory({ bytesLimit: 30000 });
+      session.read().data!.getGlobalOrcSco().setGlobalOrc('x'.repeat(40000));
+      const data = session.read().data!;
+      const docId = session.read().documentId!;
+      for (let i = 0; i < 3; i++) {
+        const result = await history.commit(
+          context.nextCommitRequest(
+            docId,
+            session.read().revision,
+            `Single ${i}`,
+            [{ projectProperties: { title: `Title ${i}` } }],
+            { gestureId: `single-${i}`, phase: 'single' },
+          ),
+        );
+        expect(result.status).toBe('committed');
+        expect(session.read().data).toBe(data);
+      }
+      expect(history.read().length).toBe(3);
+      await history.undo(context.nextUndoRequest(docId, session.read().revision));
+      expect(session.read().data!.getProjectProperties().title).toBe('Title 1');
+    });
+
+    it.each([3, 200])(
+      'restores the exact pre-B ledger when B supersedes A at limit %i (T055)',
+      async (entryLimit) => {
+        const reconciliation = {
+          drainPreviews: vi.fn(async () => {}),
+          reconcileCommit: vi.fn(
+            async (_commit: { patches: readonly ProjectDocumentPatch[] }) => [],
+          ),
+        };
+        const { session, history, context } = setupHistory({ entryLimit, reconciliation });
+        const docId = session.read().documentId!;
+        const channel = new Channel();
+        session.read().data!.getMixer().getChannels().push(channel);
+        const identity = getMixerChannelSnapshotId(channel);
+        for (let i = 1; i < entryLimit; i++)
+          await history.commit(
+            context.nextCommitRequest(docId, session.read().revision, `Old ${i}`, [
+              { projectProperties: { title: `Old ${i}` } },
+            ]),
+          );
+        await history.commit(
+          context.nextCommitRequest(
+            docId,
+            session.read().revision,
+            'A',
+            [{ projectProperties: { title: 'A' } }],
+            { gestureId: 'A', phase: 'begin' },
+          ),
+        );
+        const ledger = history.readEntries();
+        await history.commit(
+          context.nextCommitRequest(
+            docId,
+            session.read().revision,
+            'B',
+            [{ projectProperties: { title: 'B' } }],
+            { gestureId: 'B', phase: 'begin' },
+          ),
+        );
+        await history.commit(
+          context.nextCommitRequest(docId, session.read().revision, 'A', [], {
+            gestureId: 'A',
+            phase: 'cancel',
+          }),
+        );
+        await history.commit(
+          context.nextCommitRequest(docId, session.read().revision, 'B', [], {
+            gestureId: 'B',
+            phase: 'cancel',
+          }),
+        );
+        expect(history.readEntries().entries).toEqual(ledger.entries);
+        expect(history.readEntries().cursor).toBe(ledger.cursor);
+        expect(session.read().data!.getProjectProperties().title).toBe('A');
+        expect(getMixerChannelSnapshotId(session.read().data!.getMixer().getChannels()[0]!)).toBe(
+          identity,
+        );
+        expect(history.isDirty()).toBe(true);
+        expect(reconciliation.reconcileCommit.mock.calls.at(-1)![0].patches).toEqual([
+          { projectProperties: { title: 'A' } },
+        ]);
+        await history.undo(context.nextUndoRequest(docId, session.read().revision));
+        expect(session.read().data!.getProjectProperties().title).toBe(`Old ${entryLimit - 1}`);
+        await history.redo(context.nextRedoRequest(docId, session.read().revision));
+        expect(session.read().data!.getProjectProperties().title).toBe('A');
+        expect(history.isDirty()).toBe(true);
+      },
+    );
+
+    it('admits B using its own retained baseline rather than A rollback data (T055)', async () => {
+      const { session, history, context } = setupHistory({ bytesLimit: 230000 });
+      session.read().data!.getGlobalOrcSco().setGlobalOrc('x'.repeat(50000));
+      const docId = session.read().documentId!;
+      const a = await history.commit(
+        context.nextCommitRequest(docId, 0, 'A', [{ globalOrc: '' }], {
+          gestureId: 'A',
+          phase: 'begin',
+        }),
+      );
+      expect(a.status).toBe('committed');
+      const ledger = history.readEntries();
+      const b = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'B',
+          [{ projectProperties: { title: 'B'.repeat(20000) } }],
+          { gestureId: 'B', phase: 'begin' },
+        ),
+      );
+      expect(b.status).toBe('committed');
+      await history.commit(
+        context.nextCommitRequest(docId, session.read().revision, 'B', [], {
+          gestureId: 'B',
+          phase: 'cancel',
+        }),
+      );
+      expect(history.readEntries().entries).toEqual(ledger.entries);
+      expect(session.read().data!.getGlobalOrcSco().getGlobalOrc()).toBe('');
+      expect(session.read().data!.getProjectProperties().title).toBe('Initial Title');
+    });
+
     it('commits scalar edits and enables undo and redo with monotonic revision', async () => {
       const { session, history, recorder, context } = setupHistory();
       const docId = session.read().documentId!;
@@ -655,6 +969,781 @@ describe('ProjectHistory coordinator', () => {
       expect(session.read().data?.getProjectProperties().title).toBe('After Structure');
       expect(session.read().data?.getArrangement().size()).toBe(1);
       expect(session.read().data!.saveToString()).toBe(finalXml);
+    });
+
+    it('metadata-only end closes matching group without extra action or mutation', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Drag',
+          [{ projectProperties: { title: 'First Move' } }],
+          { gestureId: 'g-meta-end', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Drag',
+          [{ projectProperties: { title: 'Second Move' } }],
+          { gestureId: 'g-meta-end', phase: 'update' },
+        ),
+      );
+      expect(history.read().length).toBe(1);
+
+      // Metadata-only end
+      const endRes = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Drag', [], { gestureId: 'g-meta-end', phase: 'end' }),
+      );
+      expect(endRes.status).toBe('unchanged');
+      expect(history.read().length).toBe(1);
+      expect(session.read().data?.getProjectProperties().title).toBe('Second Move');
+
+      // Subsequent commit does not group with closed gesture
+      await history.commit(
+        context.nextCommitRequest(docId, 2, 'Subsequent', [
+          { projectProperties: { title: 'After End' } },
+        ]),
+      );
+      expect(history.read().length).toBe(2);
+    });
+
+    it('net-zero live release restores baseline, dirty state, and redo branch', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+
+      // Mark clean initially
+      history.markClean();
+      expect(history.isDirty()).toBe(false);
+
+      // Begin gesture
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Drag Move',
+          [{ projectProperties: { title: 'Temporary Title' } }],
+          { gestureId: 'g-net-zero', phase: 'begin' },
+        ),
+      );
+      expect(history.isDirty()).toBe(true);
+
+      // Move back to initial baseline
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Drag Move',
+          [{ projectProperties: { title: 'Initial Title' } }],
+          { gestureId: 'g-net-zero', phase: 'update' },
+        ),
+      );
+
+      // End with metadata-only
+      const endRes = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Drag Move', [], {
+          gestureId: 'g-net-zero',
+          phase: 'end',
+        }),
+      );
+
+      expect(endRes.status).toBe('unchanged');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(history.read().length).toBe(0);
+      expect(history.isDirty()).toBe(false);
+    });
+
+    it('cancelling active gesture restores existing redo branch', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+
+      // Commit an edit
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Initial Edit', [
+          { projectProperties: { title: 'Committed Title' } },
+        ]),
+      );
+      expect(history.read().length).toBe(1);
+      expect(history.read().canUndo).toBe(true);
+      expect(history.read().canRedo).toBe(false);
+
+      // Undo the edit
+      const undoRes = await history.undo({
+        documentId: docId,
+        operationId: 'undo-1',
+        expectedRevision: 1,
+        contextSequence: 2,
+      });
+      expect(undoRes.status).toBe('committed');
+      expect(history.read().canRedo).toBe(true);
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+
+      // Begin a live gesture and update
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          2,
+          'Live Drag',
+          [{ projectProperties: { title: 'Dragging Title 1' } }],
+          { gestureId: 'g-redo-branch', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          3,
+          'Live Drag',
+          [{ projectProperties: { title: 'Dragging Title 2' } }],
+          { gestureId: 'g-redo-branch', phase: 'update' },
+        ),
+      );
+
+      // Cancel the live gesture
+      const cancelRes = await history.commit(
+        context.nextCommitRequest(docId, 4, 'Live Drag', [], {
+          gestureId: 'g-redo-branch',
+          phase: 'cancel',
+        }),
+      );
+      expect(cancelRes.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+
+      // Redo branch must still be intact!
+      expect(history.read().canRedo).toBe(true);
+      expect(history.read().redoLabel).toBe('Initial Edit');
+
+      // Executing redo should apply the original redo branch
+      const redoRes = await history.redo({
+        documentId: docId,
+        operationId: 'redo-after-cancel',
+        expectedRevision: 5,
+        contextSequence: 6,
+      });
+      expect(redoRes.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Committed Title');
+    });
+
+    it('restores dirty-state across cancellation for initially clean and dirty projects', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+
+      // 1. Initially clean
+      history.markClean();
+      expect(history.isDirty()).toBe(false);
+
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Clean Drag',
+          [{ projectProperties: { title: 'In-Flight 1' } }],
+          { gestureId: 'g-clean-test', phase: 'begin' },
+        ),
+      );
+      expect(history.isDirty()).toBe(true);
+
+      await history.commit(
+        context.nextCommitRequest(docId, 1, 'Clean Drag', [], {
+          gestureId: 'g-clean-test',
+          phase: 'cancel',
+        }),
+      );
+      expect(history.isDirty()).toBe(false);
+
+      // 2. Initially dirty
+      await history.commit(
+        context.nextCommitRequest(docId, 2, 'Committed Mutation', [
+          { projectProperties: { title: 'Dirty Baseline' } },
+        ]),
+      );
+      expect(history.isDirty()).toBe(true);
+
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          3,
+          'Dirty Drag',
+          [{ projectProperties: { title: 'In-Flight 2' } }],
+          { gestureId: 'g-dirty-test', phase: 'begin' },
+        ),
+      );
+      expect(history.isDirty()).toBe(true);
+
+      await history.commit(
+        context.nextCommitRequest(docId, 4, 'Dirty Drag', [], {
+          gestureId: 'g-dirty-test',
+          phase: 'cancel',
+        }),
+      );
+      expect(session.read().data?.getProjectProperties().title).toBe('Dirty Baseline');
+      expect(history.isDirty()).toBe(true);
+    });
+
+    it('restores evicted entries on cancel when gesture starts at retained entry capacity', async () => {
+      const entryLimit = 5;
+      const { session, history, context } = setupHistory({ entryLimit });
+      const docId = session.read().documentId!;
+
+      // Fill up to entry limit
+      for (let i = 0; i < entryLimit; i++) {
+        await history.commit(
+          context.nextCommitRequest(docId, i, `Action ${i}`, [
+            { projectProperties: { title: `Committed ${i}` } },
+          ]),
+        );
+      }
+      expect(history.read().length).toBe(entryLimit);
+      const entriesBefore = history.readEntries().entries;
+      const oldestEntryBefore = entriesBefore[0]!;
+
+      // Begin live gesture at capacity (evicts oldest entry)
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          entryLimit,
+          'Capacity Drag',
+          [{ projectProperties: { title: 'Drag Mid' } }],
+          { gestureId: 'g-capacity', phase: 'begin' },
+        ),
+      );
+      expect(history.read().length).toBe(entryLimit);
+      expect(history.readEntries().entries[0]?.label).not.toBe(oldestEntryBefore.label);
+
+      // Cancel live gesture
+      await history.commit(
+        context.nextCommitRequest(docId, entryLimit + 1, 'Capacity Drag', [], {
+          gestureId: 'g-capacity',
+          phase: 'cancel',
+        }),
+      );
+
+      // Evicted entry is restored!
+      expect(history.read().length).toBe(entryLimit);
+      expect(history.readEntries().entries[0]?.label).toBe(oldestEntryBefore.label);
+      expect(session.read().data?.getProjectProperties().title).toBe(`Committed ${entryLimit - 1}`);
+    });
+
+    it('rejects live edit exceeding byte budget and rolls back to checkpoint', async () => {
+      const bytesLimit = 30000;
+      const { session, history, context } = setupHistory({ bytesLimit });
+      const docId = session.read().documentId!;
+
+      // Begin live gesture with small edit
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Live Drag',
+          [{ projectProperties: { title: 'Drag 1' } }],
+          { gestureId: 'g-oversize', phase: 'begin' },
+        ),
+      );
+      expect(session.read().data?.getProjectProperties().title).toBe('Drag 1');
+
+      // Update with large payload exceeding byte budget
+      const hugeOrc = 'a'.repeat(bytesLimit + 5000);
+      const oversizeRes = await history.commit(
+        context.nextCommitRequest(docId, 1, 'Live Drag', [{ globalOrc: hugeOrc }], {
+          gestureId: 'g-oversize',
+          phase: 'update',
+        }),
+      );
+
+      expect(oversizeRes.status).toBe('oversize');
+      // Rolled back to baseline!
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(history.read().length).toBe(0);
+    });
+
+    it('reproduces begin B -> stale cancel/end A -> cancel B and verifies B restores baseline (T032)', async () => {
+      const { session, history, context } = setupHistory();
+      const docId = session.read().documentId!;
+
+      // Initial unrelated action
+      await history.commit(
+        context.nextCommitRequest(docId, 0, 'Prior Action', [
+          { projectProperties: { title: 'Baseline Title' } },
+        ]),
+      );
+      history.markClean();
+      expect(history.isDirty()).toBe(false);
+      expect(session.read().data?.getProjectProperties().title).toBe('Baseline Title');
+
+      // 1. Begin gesture B
+      const beginBRes = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Gesture B',
+          [{ projectProperties: { title: 'B Mid Drag' } }],
+          { gestureId: 'gesture-B', phase: 'begin' },
+        ),
+      );
+      expect(beginBRes.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('B Mid Drag');
+      expect(history.isDirty()).toBe(true);
+
+      // 2. Stale cancel A arrives (gesture-A !== gesture-B)
+      const staleCancelARes = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Stale Cancel A', [], {
+          gestureId: 'gesture-A',
+          phase: 'cancel',
+        }),
+      );
+      expect(staleCancelARes.status).toBe('unchanged');
+      // Gesture B state must be preserved!
+      expect(session.read().data?.getProjectProperties().title).toBe('B Mid Drag');
+      expect(history.isDirty()).toBe(true);
+
+      // 3. Stale end A arrives
+      const staleEndARes = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Stale End A', [], {
+          gestureId: 'gesture-A',
+          phase: 'end',
+        }),
+      );
+      expect(staleEndARes.status).toBe('unchanged');
+      expect(session.read().data?.getProjectProperties().title).toBe('B Mid Drag');
+      expect(history.isDirty()).toBe(true);
+
+      // 4. Cancel B arrives
+      const cancelBRes = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Gesture B', [], {
+          gestureId: 'gesture-B',
+          phase: 'cancel',
+        }),
+      );
+      expect(cancelBRes.status).toBe('committed');
+      // B restores its baseline!
+      expect(session.read().data?.getProjectProperties().title).toBe('Baseline Title');
+      expect(history.isDirty()).toBe(false);
+      // Prior work is intact (length 1, Prior Action)
+      expect(history.read().length).toBe(1);
+      expect(history.read().undoLabel).toBe('Prior Action');
+
+      // Undoing Prior Action still works
+      await history.undo({
+        documentId: docId,
+        operationId: 'undo-prior',
+        expectedRevision: 3,
+        contextSequence: 6,
+      });
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+    });
+
+    it('finalizes net-zero when structural changes return to baseline on the changed end patch (T033)', async () => {
+      const { session, history, context, recorder } = setupHistory();
+      const docId = session.read().documentId!;
+      history.markClean();
+      expect(history.isDirty()).toBe(false);
+
+      // Begin gesture: adds a marker
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Add Marker Drag',
+          [{ score: { type: 'addMarker', timeBeats: 5, name: 'Marker 1' } }],
+          { gestureId: 'g-marker-netzero', phase: 'begin' },
+        ),
+      );
+      expect(session.read().data?.getMarkersList().size()).toBe(1);
+      expect(history.isDirty()).toBe(true);
+      expect(history.read().length).toBe(1);
+
+      // End gesture: removes the marker (changed end patch returns document to baseline!)
+      const endRes = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Add Marker Drag',
+          [{ score: { type: 'removeMarker', sourceIndex: 0 } }],
+          { gestureId: 'g-marker-netzero', phase: 'end' },
+        ),
+      );
+      expect(endRes.status).toBe('unchanged');
+      expect(session.read().data?.getMarkersList().size()).toBe(0);
+      // Net-zero action removed from ledger, dirty state restored to clean
+      expect(history.read().length).toBe(0);
+      expect(history.isDirty()).toBe(false);
+
+      // Canonical publication to renderer participants occurred
+      const lastEvent = recorder.events.slice(-1)[0];
+      expect(lastEvent).toBeDefined();
+      expect(lastEvent!.isDirty).toBe(false);
+      expect(lastEvent!.history.length).toBe(0);
+    });
+
+    it('restores exact prior ledger, cursor, redo, and dirty state on empty terminal envelope at retained entry limit (T033)', async () => {
+      const entryLimit = 3;
+      const { session, history, context, recorder } = setupHistory({ entryLimit });
+      const docId = session.read().documentId!;
+
+      // Commit 3 actions to fill capacity
+      for (let i = 0; i < 3; i++) {
+        await history.commit(
+          context.nextCommitRequest(docId, i, `Action ${i + 1}`, [
+            { projectProperties: { title: `Committed ${i + 1}` } },
+          ]),
+        );
+      }
+      history.markClean();
+      expect(history.read().length).toBe(3);
+      expect(history.read().cursor).toBe(3);
+      expect(history.read().canRedo).toBe(false);
+      expect(history.isDirty()).toBe(false);
+
+      // Begin live gesture: changes title to 'Drag Mid' (evicts Action 1)
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          3,
+          'Capacity Drag',
+          [{ projectProperties: { title: 'Drag Mid' } }],
+          { gestureId: 'g-cap-netzero', phase: 'begin' },
+        ),
+      );
+      expect(history.isDirty()).toBe(true);
+
+      // Update gesture: moves back to baseline 'Committed 3'
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          4,
+          'Capacity Drag',
+          [{ projectProperties: { title: 'Committed 3' } }],
+          { gestureId: 'g-cap-netzero', phase: 'update' },
+        ),
+      );
+
+      // Empty terminal envelope at baseline
+      const endRes = await history.commit(
+        context.nextCommitRequest(docId, 5, 'Capacity Drag', [], {
+          gestureId: 'g-cap-netzero',
+          phase: 'end',
+        }),
+      );
+      expect(endRes.status).toBe('unchanged');
+
+      // Verify exact 3-entry ledger is restored without phantom redo entry!
+      expect(history.read().length).toBe(3);
+      expect(history.read().cursor).toBe(3);
+      expect(history.read().canRedo).toBe(false);
+      expect(history.isDirty()).toBe(false);
+      const labels = history.readEntries().entries.map((e) => e.label);
+      expect(labels).toEqual(['Action 1', 'Action 2', 'Action 3']);
+
+      // Canonical publication to renderer participants occurred
+      const lastEvent = recorder.events.slice(-1)[0];
+      expect(lastEvent).toBeDefined();
+      expect(lastEvent!.isDirty).toBe(false);
+      expect(lastEvent!.history.length).toBe(3);
+      expect(lastEvent!.history.canRedo).toBe(false);
+    });
+
+    it('accumulates concrete grouped automation inverses across multiple parameters and resolution changes (T034)', async () => {
+      const reconcileCommit = vi.fn(async (_details?: unknown) => []);
+      const mockReconciliation = {
+        reconcileCommit,
+        drainPreviews: vi.fn(async () => {}),
+      };
+      const { session, history, context } = setupHistory({ reconciliation: mockReconciliation });
+      const docId = session.read().documentId!;
+      const data = session.read().data!;
+
+      // Setup 2 channels with automation parameters
+      const ch1 = new Channel();
+      ch1.setName('Chan 1');
+      const param1 = ch1.getLevelParameter();
+      param1.setUniqueId('param-auto-1');
+      param1.setFixedValue(0.1);
+      param1.setResolutionText('0.1');
+      param1.setPoints([
+        { time: 0, value: 0.1 },
+        { time: 4, value: 0.1 },
+      ]);
+      data.getMixer().getChannels().push(ch1);
+
+      const ch2 = new Channel();
+      ch2.setName('Chan 2');
+      const param2 = ch2.getLevelParameter();
+      param2.setUniqueId('param-auto-2');
+      param2.setFixedValue(0.2);
+      param2.setResolutionText('0.2');
+      param2.setPoints([
+        { time: 0, value: 0.2 },
+        { time: 4, value: 0.2 },
+      ]);
+      data.getMixer().getChannels().push(ch2);
+
+      const param1Id = 'param-auto-1';
+      const param2Id = 'param-auto-2';
+
+      // Compound gesture:
+      // Step 1: modifies points of param1
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Compound Automation',
+          [
+            {
+              score: {
+                type: 'setAutomationPoints',
+                parameterId: param1Id,
+                points: [
+                  { time: 0, value: 0.5 },
+                  { time: 4, value: 0.5 },
+                ],
+              },
+            },
+          ],
+          { gestureId: 'g-compound-auto', phase: 'begin' },
+        ),
+      );
+
+      // Step 2: modifies resolution of param1 AND points of param2
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Compound Automation',
+          [
+            {
+              score: {
+                type: 'setAutomationResolution',
+                parameterId: param1Id,
+                resolutionDecimal: '0.01',
+              },
+            },
+            {
+              score: {
+                type: 'setAutomationPoints',
+                parameterId: param2Id,
+                points: [
+                  { time: 0, value: 0.8 },
+                  { time: 4, value: 0.8 },
+                ],
+              },
+            },
+          ],
+          { gestureId: 'g-compound-auto', phase: 'update' },
+        ),
+      );
+
+      // Step 3: end gesture
+      await history.commit(
+        context.nextCommitRequest(docId, 2, 'Compound Automation', [], {
+          gestureId: 'g-compound-auto',
+          phase: 'end',
+        }),
+      );
+
+      expect(history.read().length).toBe(1);
+
+      // Verify that inversePatches retains earliest baseline for param1 points (0.1), param1 resolution (0.1), and param2 points (0.2)
+      reconcileCommit.mockClear();
+
+      // Undo compound gesture
+      const undoRes = await history.undo({
+        documentId: docId,
+        operationId: 'undo-auto',
+        expectedRevision: 2,
+        contextSequence: 10,
+      });
+      expect(undoRes.status).toBe('committed');
+
+      expect(reconcileCommit).toHaveBeenCalled();
+      const undoCall = reconcileCommit.mock.calls[0]![0] as unknown as { patches: any[] };
+      expect(undoCall.patches).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            score: expect.objectContaining({
+              type: 'setAutomationPoints',
+              parameterId: param1Id,
+              points: [
+                { time: 0, value: 0.1 },
+                { time: 4, value: 0.1 },
+              ],
+            }),
+          }),
+          expect.objectContaining({
+            score: expect.objectContaining({
+              type: 'setAutomationResolution',
+              parameterId: param1Id,
+              resolutionDecimal: '0.1',
+            }),
+          }),
+          expect.objectContaining({
+            score: expect.objectContaining({
+              type: 'setAutomationPoints',
+              parameterId: param2Id,
+              points: [
+                { time: 0, value: 0.2 },
+                { time: 4, value: 0.2 },
+              ],
+            }),
+          }),
+        ]),
+      );
+
+      // Redo compound gesture
+      reconcileCommit.mockClear();
+      const redoRes = await history.redo({
+        documentId: docId,
+        operationId: 'redo-auto',
+        expectedRevision: 3,
+        contextSequence: 11,
+      });
+      expect(redoRes.status).toBe('committed');
+
+      expect(reconcileCommit).toHaveBeenCalled();
+      const redoCall = reconcileCommit.mock.calls[0]![0] as unknown as { patches: any[] };
+      expect(redoCall.patches).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            score: expect.objectContaining({
+              type: 'setAutomationPoints',
+              parameterId: param1Id,
+              points: [
+                { time: 0, value: 0.5 },
+                { time: 4, value: 0.5 },
+              ],
+            }),
+          }),
+          expect.objectContaining({
+            score: expect.objectContaining({
+              type: 'setAutomationResolution',
+              parameterId: param1Id,
+              resolutionDecimal: '0.01',
+            }),
+          }),
+          expect.objectContaining({
+            score: expect.objectContaining({
+              type: 'setAutomationPoints',
+              parameterId: param2Id,
+              points: [
+                { time: 0, value: 0.8 },
+                { time: 4, value: 0.8 },
+              ],
+            }),
+          }),
+        ]),
+      );
+    });
+
+    it('rejects live edit when baseline beforeData causes candidate retained bytes to exceed budget (T037)', async () => {
+      const { data } = setupHistory();
+      const baseBytes = estimateBlueDataBytes(data);
+      // Budget is set smaller than the baseline memento size itself
+      const bytesLimit = Math.max(1024, baseBytes - 500);
+      const { session: sess, history, context } = setupHistory({ bytesLimit });
+      const docId = sess.read().documentId!;
+
+      const res = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Exceeds Base Budget',
+          [{ projectProperties: { title: 'X' } }],
+          { gestureId: 'g-oversize-base', phase: 'begin' },
+        ),
+      );
+
+      expect(res.status).toBe('oversize');
+      // Rejected safely before mutating
+      expect(sess.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(history.read().length).toBe(0);
+    });
+
+    it('rejects and rolls back safely when cumulative growth of merged records exceeds byte budget (T037)', async () => {
+      const { data } = setupHistory();
+      const baseBytes = estimateBlueDataBytes(data);
+      // Give enough budget for baseline (~10K) + 1 small edit (~400 bytes), but not 10 edits
+      const bytesLimit = baseBytes + 800;
+      const { session, history, context } = setupHistory({ bytesLimit });
+      const docId = session.read().documentId!;
+
+      // 1. Begin with small edit (fits)
+      const res1 = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Cumulative Drag',
+          [{ projectProperties: { title: 'T1' } }],
+          { gestureId: 'g-cumul', phase: 'begin' },
+        ),
+      );
+      expect(res1.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('T1');
+
+      // 2. Multiple updates grow the merged record cumulatively until it exceeds the budget
+      let exceeded = false;
+      for (let i = 2; i <= 10; i++) {
+        const res = await history.commit(
+          context.nextCommitRequest(
+            docId,
+            i - 1,
+            'Cumulative Drag',
+            [{ projectProperties: { title: `T${i}` } }],
+            { gestureId: 'g-cumul', phase: 'update' },
+          ),
+        );
+        if (res.status === 'oversize') {
+          exceeded = true;
+          break;
+        }
+      }
+
+      expect(exceeded).toBe(true);
+      // Rolled back safely to baseline!
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+      expect(history.read().length).toBe(0);
+    });
+
+    it('retains small-gesture behavior and rollback at the 200-action limit (T037)', async () => {
+      const { session, history, context } = setupHistory({ entryLimit: 200 });
+      const docId = session.read().documentId!;
+
+      // Commit 200 small actions
+      for (let i = 0; i < 200; i++) {
+        await history.commit(
+          context.nextCommitRequest(docId, i, `Action ${i + 1}`, [
+            { projectProperties: { title: `Edit ${i + 1}` } },
+          ]),
+        );
+      }
+      expect(history.read().length).toBe(200);
+
+      // Begin a small live gesture at the 200 limit
+      const beginRes = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          200,
+          'Live Drag at 200',
+          [{ projectProperties: { title: 'Drag 200 Mid' } }],
+          { gestureId: 'g-200-limit', phase: 'begin' },
+        ),
+      );
+      expect(beginRes.status).toBe('committed');
+      expect(history.read().length).toBe(200);
+
+      // Cancel the gesture
+      const cancelRes = await history.commit(
+        context.nextCommitRequest(docId, 201, 'Live Drag at 200', [], {
+          gestureId: 'g-200-limit',
+          phase: 'cancel',
+        }),
+      );
+      expect(cancelRes.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Edit 200');
+      expect(history.read().length).toBe(200);
+      expect(history.readEntries().entries[0]?.label).toBe('Action 1');
+      expect(history.readEntries().entries[199]?.label).toBe('Action 200');
     });
   });
 
@@ -1482,6 +2571,172 @@ describe('ProjectHistory coordinator', () => {
           },
         },
       });
+    });
+
+    it('inverts score automation point modifications to setAutomationPoints with pre-mutation points', () => {
+      const data = new BlueData();
+      const channel = new Channel();
+      channel.setName('Test Channel');
+      data.getMixer().getChannels().push(channel);
+      const param = channel.getLevelParameter();
+      param.setMinimum(0);
+      param.setMaximum(10);
+      param.setResolutionText('0.1');
+      param.setUniqueId('param-auto-1');
+      param.setPoints([
+        { time: 0, value: 2 },
+        { time: 5, value: 8 },
+      ]);
+
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          score: {
+            type: 'insertAutomationPoint',
+            parameterId: 'param-auto-1',
+            point: { time: 2.5, value: 6 },
+          },
+        },
+      ]);
+
+      expect(inverse).toEqual([
+        {
+          score: {
+            type: 'setAutomationPoints',
+            parameterId: 'param-auto-1',
+            points: [
+              { time: 0, value: 2 },
+              { time: 5, value: 8 },
+            ],
+          },
+        },
+      ]);
+    });
+
+    it('inverts setAutomationResolution to pre-mutation resolutionDecimal', () => {
+      const data = new BlueData();
+      const channel = new Channel();
+      channel.setName('Test Channel');
+      data.getMixer().getChannels().push(channel);
+      const param = channel.getLevelParameter();
+      param.setUniqueId('param-auto-res');
+      param.setResolutionText('0.05');
+
+      const inverse = computeStructuralInversePatches(data, [
+        {
+          score: {
+            type: 'setAutomationResolution',
+            parameterId: 'param-auto-res',
+            resolutionDecimal: '0.1',
+          },
+        },
+      ]);
+
+      expect(inverse).toEqual([
+        {
+          score: {
+            type: 'setAutomationResolution',
+            parameterId: 'param-auto-res',
+            resolutionDecimal: '0.05',
+          },
+        },
+      ]);
+    });
+
+    it('preserves earliest grouped baseline across updates and sends final forward points on redo', async () => {
+      const { session, history, context } = setupHistory();
+      const data = session.read().data!;
+
+      const channel = new Channel();
+      channel.setName('Test Channel');
+      data.getMixer().getChannels().push(channel);
+      const param = channel.getLevelParameter();
+      param.setMinimum(0);
+      param.setMaximum(1000);
+      param.setResolutionText('1');
+      param.setUniqueId('param-live-1');
+      param.setPoints([
+        { time: 0, value: 100 },
+        { time: 10, value: 500 },
+      ]);
+      const docId = session.read().documentId!;
+
+      // Begin gesture: insert point at time 2
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          0,
+          'Edit Automation',
+          [
+            {
+              score: {
+                type: 'insertAutomationPoint',
+                parameterId: 'param-live-1',
+                point: { time: 2, value: 200 },
+              },
+            },
+          ],
+          { gestureId: 'g-auto-live', phase: 'begin' },
+        ),
+      );
+
+      // Update gesture: move point at time 2 to time 4, value 350
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          1,
+          'Edit Automation',
+          [
+            {
+              score: {
+                type: 'moveAutomationPoint',
+                parameterId: 'param-live-1',
+                pointIndex: 1,
+                point: { time: 4, value: 350 },
+              },
+            },
+          ],
+          { gestureId: 'g-auto-live', phase: 'update' },
+        ),
+      );
+
+      // End gesture
+      await history.commit(
+        context.nextCommitRequest(docId, 2, 'Edit Automation', [], {
+          gestureId: 'g-auto-live',
+          phase: 'end',
+        }),
+      );
+
+      expect(history.read().length).toBe(1);
+
+      // Undo should restore the earliest baseline (points [100, 500])
+      const undoRes = await history.undo({
+        documentId: docId,
+        operationId: 'undo-auto',
+        expectedRevision: session.read().revision,
+        contextSequence: 4,
+      });
+      expect(undoRes.status).toBe('committed');
+      const restoredParam = session.read().data?.getMixer().getChannels()[0]?.getLevelParameter();
+      expect(restoredParam?.getPoints().map((p) => ({ time: p.time, value: p.value }))).toEqual([
+        { time: 0, value: 100 },
+        { time: 10, value: 500 },
+      ]);
+
+      // Redo should apply the consolidated final forward points
+      const redoRes = await history.redo({
+        documentId: docId,
+        operationId: 'redo-auto',
+        expectedRevision: session.read().revision,
+        contextSequence: 5,
+      });
+      expect(redoRes.status).toBe('committed');
+      const redoneParam = session.read().data?.getMixer().getChannels()[0]?.getLevelParameter();
+      expect(redoneParam?.getPoints().map((p) => ({ time: p.time, value: p.value }))).toEqual([
+        { time: 0, value: 100 },
+        { time: 4, value: 350 },
+        { time: 10, value: 500 },
+      ]);
     });
   });
 });

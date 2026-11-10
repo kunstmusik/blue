@@ -816,3 +816,16 @@ export function restoreStructuralMemento(
   transferProjectEditorIdentities(memento, restored);
   return session.publishCommittedDocument(restored, options);
 }
+
+/**
+ * Estimates the byte size of a BlueData memento based on its XML string length.
+ */
+export function estimateBlueDataBytes(data: BlueData): number {
+  try {
+    const transientIdentityCount =
+      data.getMarkersList().size() + data.getScore().getTimeContext().getTempoMap().size();
+    return 1024 + data.saveToString().length * 2 + transientIdentityCount * 128;
+  } catch {
+    return 8192;
+  }
+}

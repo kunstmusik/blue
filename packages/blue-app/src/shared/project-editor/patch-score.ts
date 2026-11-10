@@ -346,6 +346,9 @@ import {
   getScoreObjectId,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
+  appendMarkerSnapshotId,
+  removeMarkerSnapshotId,
+  getTempoPointSnapshotId,
 } from './identity';
 import { applyBsbInterfacePatch, applyEmbeddedOpcodeListPatch, parseSoundBSB } from './bsb-widgets';
 import {
@@ -2836,12 +2839,13 @@ export function applyScoreObjectPatch(
   }
 
   if (patch.type === 'addMarker') {
-    const name = patch.name ?? `Marker ${data.getMarkersList().size() + 1}`;
+    const markers = data.getMarkersList();
+    const name = patch.name ?? `Marker ${markers.size() + 1}`;
     const context = data.getScore().getTimeContext();
     const targetBase = data.getScore().getTimeState().getTimeDisplay();
-    data
-      .getMarkersList()
-      .addMarkerPosition(name, beatsToTimePosition(patch.timeBeats, targetBase, context));
+    const position = beatsToTimePosition(patch.timeBeats, targetBase, context);
+    appendMarkerSnapshotId(markers, patch.markerId);
+    markers.addMarkerPosition(name, position);
     return true;
   }
 
@@ -2868,7 +2872,11 @@ export function applyScoreObjectPatch(
   }
 
   if (patch.type === 'removeMarker') {
-    data.getMarkersList().removeMarker(patch.sourceIndex);
+    const markers = data.getMarkersList();
+    if (patch.sourceIndex >= 0 && patch.sourceIndex < markers.size()) {
+      removeMarkerSnapshotId(markers, patch.sourceIndex);
+    }
+    markers.removeMarker(patch.sourceIndex);
     return true;
   }
 
@@ -4027,12 +4035,19 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
       const existing = tempoMap.getTempoPoints();
       for (const ep of existing) {
         if (Math.abs(ep.beat - p.beat) < 0.001) return false;
+        if (p.pointId && getTempoPointSnapshotId(ep) === p.pointId)
+          throw new Error('Tempo point identity must be unique.');
       }
+      if (p.pointId !== undefined && (typeof p.pointId !== 'string' || !p.pointId.trim()))
+        throw new Error('Tempo point identity must be nonempty.');
       const ct = p.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR;
-      tempoMap.addTempoPoint(
-        new TempoPoint(beatsToTimePosition(p.beat, tempoPointTimeBase(p), context), p.tempo, ct),
-        context,
+      const point = new TempoPoint(
+        beatsToTimePosition(p.beat, tempoPointTimeBase(p), context),
+        p.tempo,
+        ct,
       );
+      getTempoPointSnapshotId(point, p.pointId);
+      tempoMap.addTempoPoint(point, context);
       return true;
     }
     case 'updateTempoPoint': {
@@ -4040,6 +4055,7 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
       if (idx < 0 || idx >= tempoMap.size()) return false;
       const pt = tempoPatch.patch;
       const current = tempoMap.getTempoPoint(idx);
+      const pointId = getTempoPointSnapshotId(current);
       const newBeat = pt.beat ?? current.beat;
       const newTempo = pt.tempo ?? current.tempo;
       const newCurve = pt.curveType
@@ -4070,6 +4086,7 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
         newCurve,
         context,
       );
+      getTempoPointSnapshotId(tempoMap.getTempoPoint(idx), pointId);
       return true;
     }
     case 'setTempoCurveType': {
@@ -4078,7 +4095,9 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
       const newCurve = tempoPatch.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR;
       if (tempoMap.getCurveType(idx) === newCurve) return false;
       const pt = tempoMap.getTempoPoint(idx);
+      const pointId = getTempoPointSnapshotId(pt);
       tempoMap.setTempoPoint(idx, pt.position, pt.tempo, newCurve, context);
+      getTempoPointSnapshotId(tempoMap.getTempoPoint(idx), pointId);
       return true;
     }
     case 'removeTempoPoint': {
@@ -4095,19 +4114,32 @@ export function applyTempoMapPatch(data: BlueData, tempoPatch: TempoMapPatch): b
       source.setEnabled(tempoPatch.map.enabled);
       source.setVisible(tempoPatch.map.visible);
       source.reset();
-      const points = tempoPatch.map.points.map(
-        (p) =>
-          new TempoPoint(
-            beatsToTimePosition(p.beat, tempoPointTimeBase(p), context),
-            p.tempo,
-            p.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR,
-          ),
-      );
-      source.setTempoPoint(0, points[0].position, points[0].tempo, points[0].curveType, context);
+      const pointIds = new Set<string>();
+      const points = tempoPatch.map.points.map((p) => {
+        if (
+          p.pointId !== undefined &&
+          (typeof p.pointId !== 'string' || !p.pointId.trim() || pointIds.has(p.pointId))
+        )
+          throw new Error('Tempo point identity must be unique and nonempty.');
+        const point = new TempoPoint(
+          beatsToTimePosition(p.beat, tempoPointTimeBase(p), context),
+          p.tempo,
+          p.curveType === 'constant' ? CurveType.CONSTANT : CurveType.LINEAR,
+        );
+        pointIds.add(getTempoPointSnapshotId(point, p.pointId));
+        return point;
+      });
+      source.setTempoPoint(0, points[0]);
       for (let i = 1; i < points.length; i++) {
         source.addTempoPoint(points[i], context);
       }
       tempoMap.replaceAll(source);
+      for (let i = 0; i < source.size(); i++) {
+        getTempoPointSnapshotId(
+          tempoMap.getTempoPoint(i),
+          getTempoPointSnapshotId(source.getTempoPoint(i)),
+        );
+      }
       tempoMap.recalculateBeatPositions(context);
       return true;
     }

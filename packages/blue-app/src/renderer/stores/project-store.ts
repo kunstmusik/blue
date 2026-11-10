@@ -401,12 +401,50 @@ function normalizeMixerPatchIdentifiers(patch: MixerPatch): MixerPatch {
 }
 
 function normalizeProjectDocumentPatch(patch: ProjectDocumentPatch): ProjectDocumentPatch {
-  if (!patch.mixer) {
-    return patch;
+  let normalized = patch;
+  if (normalized.score?.type === 'addMarker' && !normalized.score.markerId) {
+    normalized = {
+      ...normalized,
+      score: { ...normalized.score, markerId: `marker-${crypto.randomUUID()}` },
+    };
   }
-
-  const mixer = normalizeMixerPatchIdentifiers(patch.mixer);
-  return mixer === patch.mixer ? patch : { ...patch, mixer };
+  const tempoPatch = normalized.transport?.tempoMapPatch;
+  if (tempoPatch?.type === 'addTempoPoint' && !tempoPatch.point.pointId) {
+    normalized = {
+      ...normalized,
+      transport: {
+        ...normalized.transport,
+        tempoMapPatch: {
+          ...tempoPatch,
+          point: { ...tempoPatch.point, pointId: `tempo-${crypto.randomUUID()}` },
+        },
+      },
+    };
+  }
+  if (
+    tempoPatch?.type === 'replaceTempoMap' &&
+    tempoPatch.map.points.some((point) => !point.pointId)
+  ) {
+    normalized = {
+      ...normalized,
+      transport: {
+        ...normalized.transport,
+        tempoMapPatch: {
+          ...tempoPatch,
+          map: {
+            ...tempoPatch.map,
+            points: tempoPatch.map.points.map((point) => ({
+              ...point,
+              pointId: point.pointId ?? `tempo-${crypto.randomUUID()}`,
+            })),
+          },
+        },
+      },
+    };
+  }
+  if (!normalized.mixer) return normalized;
+  const mixer = normalizeMixerPatchIdentifiers(normalized.mixer);
+  return mixer === normalized.mixer ? normalized : { ...normalized, mixer };
 }
 
 function createLocalScoreObjectId(objectType: string): string {
@@ -2665,6 +2703,7 @@ function applyScorePatchToSnapshot(
   if (patch.type === 'addMarker') {
     const name = patch.name ?? `Marker ${score.markers.length + 1}`;
     const newMarker: MarkerSnapshot = {
+      markerId: patch.markerId,
       name,
       time: patch.timeBeats,
       timeBase: score.timeState.primaryTimeDisplay,

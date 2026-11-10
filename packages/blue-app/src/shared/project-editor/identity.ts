@@ -109,6 +109,56 @@ let nextPatternLayerId = 1;
 const LAYER_SELECTION_ID_MAP = new WeakMap<object, string>();
 let nextLayerSelectionId = 1;
 
+// Markers are exposed by the data model as detached XML, so their runtime
+// identities follow the owning list rather than those temporary elements.
+const MARKER_IDS = new WeakMap<object, string[]>();
+const TEMPO_POINT_IDS = new WeakMap<object, string>();
+
+function validTransientId(id: string, prefix: 'marker' | 'tempo'): boolean {
+  return new RegExp(
+    `^${prefix}-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`,
+    'i',
+  ).test(id);
+}
+
+export function getMarkerSnapshotIds(list: ReturnType<BlueData['getMarkersList']>): string[] {
+  let ids = MARKER_IDS.get(list);
+  if (!ids) {
+    ids = Array.from({ length: list.size() }, () => `marker-${crypto.randomUUID()}`);
+    MARKER_IDS.set(list, ids);
+  }
+  return ids;
+}
+
+export function appendMarkerSnapshotId(
+  list: ReturnType<BlueData['getMarkersList']>,
+  id?: string,
+): void {
+  const ids = getMarkerSnapshotIds(list);
+  const nextId = id ?? `marker-${crypto.randomUUID()}`;
+  if (typeof nextId !== 'string' || !validTransientId(nextId, 'marker') || ids.includes(nextId))
+    throw new Error('Marker identity must be a unique marker UUID.');
+  ids.push(nextId);
+}
+
+export function removeMarkerSnapshotId(
+  list: ReturnType<BlueData['getMarkersList']>,
+  index: number,
+): void {
+  getMarkerSnapshotIds(list).splice(index, 1);
+}
+
+export function getTempoPointSnapshotId(point: object, preferredId?: string): string {
+  let id = TEMPO_POINT_IDS.get(point);
+  if (!id) {
+    id = preferredId ?? `tempo-${crypto.randomUUID()}`;
+    if (typeof id !== 'string' || !validTransientId(id, 'tempo'))
+      throw new Error('Tempo point identity must be a tempo UUID.');
+    TEMPO_POINT_IDS.set(point, id);
+  }
+  return id;
+}
+
 export function assignLayerSelectionId(obj: object): string {
   const existing = LAYER_SELECTION_ID_MAP.get(obj);
   if (existing) return existing;
@@ -195,6 +245,19 @@ export function assignExplicitParameterSnapshotId(param: object, id: string): vo
 
 export function getParameterSnapshotId(param: object): string | undefined {
   return PARAMETER_ID_MAP.get(param);
+}
+
+const BSB_GESTURE_TARGET_IDS = new WeakMap<object, string>();
+let nextBsbGestureTargetId = 1;
+
+/** Transient incarnation identity: replacing a widget may reuse its serialized ID. */
+export function getBsbGestureTargetId(widget: object): string {
+  let id = BSB_GESTURE_TARGET_IDS.get(widget);
+  if (!id) {
+    id = `bsb-target-${nextBsbGestureTargetId++}`;
+    BSB_GESTURE_TARGET_IDS.set(widget, id);
+  }
+  return id;
 }
 
 const BSB_WIDGET_ID_MAP = new WeakMap<object, string>();
@@ -374,6 +437,10 @@ export function transferProjectEditorIdentities(
       LAYER_SELECTION_ID_MAP.set(tgt, LAYER_SELECTION_ID_MAP.get(src)!);
       transferredCount++;
     }
+    if (TEMPO_POINT_IDS.has(src)) {
+      TEMPO_POINT_IDS.set(tgt, TEMPO_POINT_IDS.get(src)!);
+      transferredCount++;
+    }
     if (MIXER_CHANNEL_IDS.has(src)) {
       MIXER_CHANNEL_IDS.set(tgt, MIXER_CHANNEL_IDS.get(src)!);
       transferredCount++;
@@ -384,6 +451,10 @@ export function transferProjectEditorIdentities(
     }
     if (PARAMETER_ID_MAP.has(src)) {
       PARAMETER_ID_MAP.set(tgt, PARAMETER_ID_MAP.get(src)!);
+      transferredCount++;
+    }
+    if (BSB_GESTURE_TARGET_IDS.has(src)) {
+      BSB_GESTURE_TARGET_IDS.set(tgt, BSB_GESTURE_TARGET_IDS.get(src)!);
       transferredCount++;
     }
     if (BSB_WIDGET_ID_MAP.has(src)) {
@@ -406,6 +477,15 @@ export function transferProjectEditorIdentities(
       CLOJURE_LIBRARY_ENTRY_ID_MAP.set(tgt, CLOJURE_LIBRARY_ENTRY_ID_MAP.get(src)!);
       transferredCount++;
     }
+  }
+
+  const sourceMarkerIds = getMarkerSnapshotIds(source.getMarkersList());
+  MARKER_IDS.set(target.getMarkersList(), [...sourceMarkerIds]);
+  const sourceTempoPoints = source.getScore().getTimeContext().getTempoMap().getTempoPoints();
+  const targetTempoPoints = target.getScore().getTimeContext().getTempoMap().getTempoPoints();
+  for (let i = 0; i < Math.min(sourceTempoPoints.length, targetTempoPoints.length); i++) {
+    getTempoPointSnapshotId(sourceTempoPoints[i]!);
+    pair(sourceTempoPoints[i], targetTempoPoints[i]);
   }
 
   function pairParameter(

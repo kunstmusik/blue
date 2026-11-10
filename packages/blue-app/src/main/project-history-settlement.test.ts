@@ -592,6 +592,125 @@ describe('Project history settlement barrier (T015)', () => {
       expect(undo2.status).toBe('committed');
       expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
     });
+
+    it('cancels an active gesture as barrier prefix before the undo executes and restores baseline', async () => {
+      const { session, history, prepareEvents, contextA, contextB } = setupTest(200);
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+      history.registerParticipant({
+        contextId: contextB.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      // Context B starts a drag gesture
+      await history.commit(
+        contextB.nextCommitRequest(
+          docId,
+          0,
+          'Drag Title',
+          [{ projectProperties: { title: 'In-Flight Drag' } }],
+          { gestureId: 'g-cancel-barrier', phase: 'begin' },
+        ),
+      );
+      expect(session.read().data?.getProjectProperties().title).toBe('In-Flight Drag');
+
+      const undoPromise = history.undo(contextA.nextUndoRequest(docId, 1));
+      await new Promise((r) => setTimeout(r, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      // Context B cancels the drag gesture during barrier drainage.
+      // Because undo already closed the forming group, the cancel authority is
+      // revoked and returns unchanged rather than restoring an obsolete memento.
+      const cancelRes = await history.commit(
+        contextB.nextCommitRequest(docId, 1, 'Cancel Drag', [], {
+          gestureId: 'g-cancel-barrier',
+          phase: 'cancel',
+          barrierId,
+        }),
+      );
+      expect(cancelRes.status).toBe('unchanged');
+
+      // Acknowledge barrier
+      history.acknowledgeBoundary(contextB.acknowledgeBarrier(barrierId, 1, 0));
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 1, 0));
+
+      // Undo then undoes the initial drag commit that was closed by the barrier
+      const undoRes = await undoPromise;
+      expect(undoRes.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Initial Title');
+    });
+
+    it('settles a metadata-only end as barrier prefix before the undo executes', async () => {
+      const { session, history, prepareEvents, contextA, contextB } = setupTest(200);
+      const docId = session.read().documentId!;
+
+      history.registerParticipant({
+        contextId: contextA.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+      history.registerParticipant({
+        contextId: contextB.contextId,
+        documentId: docId,
+        acceptedRevision: 0,
+      });
+
+      // Context B commits a prior edit
+      await history.commit(
+        contextB.nextCommitRequest(docId, 0, 'Prior Edit', [
+          { projectProperties: { title: 'Prior Title' } },
+        ]),
+      );
+
+      // Context B starts and updates a drag
+      await history.commit(
+        contextB.nextCommitRequest(
+          docId,
+          1,
+          'Drag Action',
+          [{ projectProperties: { title: 'Drag Mid' } }],
+          { gestureId: 'g-meta-barrier', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        contextB.nextCommitRequest(
+          docId,
+          2,
+          'Drag Action',
+          [{ projectProperties: { title: 'Drag Final' } }],
+          { gestureId: 'g-meta-barrier', phase: 'update' },
+        ),
+      );
+      expect(history.read().length).toBe(2);
+
+      const undoPromise = history.undo(contextA.nextUndoRequest(docId, 3));
+      await new Promise((r) => setTimeout(r, 5));
+      const barrierId = prepareEvents[0]!.barrierId;
+
+      // Metadata-only end with barrierId
+      const endRes = await history.commit(
+        contextB.nextCommitRequest(docId, 3, 'Drag Action', [], {
+          gestureId: 'g-meta-barrier',
+          phase: 'end',
+          barrierId,
+        }),
+      );
+      expect(endRes.status).toBe('unchanged');
+      expect(history.read().length).toBe(2);
+
+      history.acknowledgeBoundary(contextB.acknowledgeBarrier(barrierId, 3, 0));
+      history.acknowledgeBoundary(contextA.acknowledgeBarrier(barrierId, 3, 0));
+
+      const undoRes = await undoPromise;
+      expect(undoRes.status).toBe('committed');
+      expect(session.read().data?.getProjectProperties().title).toBe('Prior Title');
+    });
   });
 
   describe('Bounded stale retry during barrier drainage', () => {

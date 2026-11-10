@@ -13,6 +13,7 @@ import {
   Effect,
   Instrument,
   TrackLayerGroup,
+  getProjectParameterCatalog,
   type BlueData,
   type MeterProfileKey,
 } from '@blue/data';
@@ -56,16 +57,20 @@ import type {
 import {
   getKnownMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
+  getMarkerSnapshotIds,
+  getTempoPointSnapshotId,
   transferProjectEditorIdentities,
 } from '../shared/project-editor/identity';
 import type { ProjectSession, ProjectSessionSnapshot } from './project-session';
 import type { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
+import { collectAffectedScoreAutomationParameterIds } from './score-automation-runtime-sync';
 import {
   prepareTransaction,
   restoreStructuralMemento,
   rollbackScalarRecords,
   applyScalarFieldRecord,
   validatePreconditions,
+  estimateBlueDataBytes,
   type PreparedTransaction,
   type PreparedScalarTransaction,
   type ScalarFieldRecord,
@@ -185,6 +190,149 @@ export interface ActiveGroupState {
   readonly fieldId?: string;
   readonly sourceContextId?: string;
   readonly lastTimestamp: number;
+}
+
+export interface ActiveRollbackCheckpoint {
+  readonly gestureId?: string;
+  readonly fieldId?: string;
+  readonly baseCursor: number;
+  readonly redoEntries: readonly HistoryEntry[];
+  readonly evictedEntries: HistoryEntry[];
+  readonly beforeData: BlueData;
+  readonly beforeStateId: string;
+  readonly wasDirty: boolean;
+  readonly savedStateId: string | null;
+  activeEntryId?: string;
+}
+
+export function matchesActiveGroup(
+  group: ActiveGroupState | null,
+  request: { gestureId?: string; fieldId?: string; origin?: { contextId?: string } },
+): boolean {
+  if (!group) return false;
+  if (request.gestureId !== undefined) {
+    if (group.gestureId !== request.gestureId) return false;
+  } else if (request.fieldId !== undefined) {
+    if (group.fieldId !== request.fieldId) return false;
+  } else {
+    return false;
+  }
+  if (
+    request.origin?.contextId !== undefined &&
+    group.sourceContextId !== undefined &&
+    group.sourceContextId !== request.origin.contextId
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function verifyStableIdentities(baseline: BlueData, current: BlueData): boolean {
+  const baselineMarkers = getMarkerSnapshotIds(baseline.getMarkersList());
+  const currentMarkers = getMarkerSnapshotIds(current.getMarkersList());
+  if (
+    baselineMarkers.length !== currentMarkers.length ||
+    baselineMarkers.some((id, i) => id !== currentMarkers[i])
+  )
+    return false;
+  const baselineTempo = baseline.getScore().getTimeContext().getTempoMap().getTempoPoints();
+  const currentTempo = current.getScore().getTimeContext().getTempoMap().getTempoPoints();
+  if (
+    baselineTempo.length !== currentTempo.length ||
+    baselineTempo.some(
+      (point, i) => getTempoPointSnapshotId(point) !== getTempoPointSnapshotId(currentTempo[i]!),
+    )
+  )
+    return false;
+  const baselineCatalog = getProjectParameterCatalog(baseline);
+  const currentCatalog = getProjectParameterCatalog(current);
+  if (baselineCatalog.length !== currentCatalog.length) return false;
+  for (let i = 0; i < baselineCatalog.length; i++) {
+    if (
+      baselineCatalog[i]!.parameter.getUniqueId() !== currentCatalog[i]!.parameter.getUniqueId()
+    ) {
+      return false;
+    }
+  }
+
+  const baseArr = baseline.getArrangement();
+  const currArr = current.getArrangement();
+  if (baseArr.size() !== currArr.size()) return false;
+  for (let i = 0; i < baseArr.size(); i++) {
+    if (baseArr.getInstrumentId(i) !== currArr.getInstrumentId(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function isNetZeroProjectState(baseline: BlueData, current: BlueData): boolean {
+  if (baseline.saveToString() !== current.saveToString()) {
+    return false;
+  }
+  return verifyStableIdentities(baseline, current);
+}
+
+function consolidateForwardPatchesForRedo(
+  forwardPatches: readonly ProjectDocumentPatch[],
+  afterMemento: BlueData,
+): readonly ProjectDocumentPatch[] {
+  const result: ProjectDocumentPatch[] = [];
+  const handledAutomationMembers = new Set<string>();
+  const catalog = getProjectParameterCatalog(afterMemento);
+
+  for (let i = forwardPatches.length - 1; i >= 0; i--) {
+    const patch = forwardPatches[i]!;
+    const score = patch.score;
+    if (
+      score &&
+      (score.type === 'setAutomationPoints' ||
+        score.type === 'insertAutomationPoint' ||
+        score.type === 'deleteAutomationPoint' ||
+        score.type === 'moveAutomationPoint' ||
+        score.type === 'setAutomationResolution' ||
+        score.type === 'moveAutomationRange' ||
+        score.type === 'scaleAutomationRange')
+    ) {
+      const affectedIds = collectAffectedScoreAutomationParameterIds(afterMemento, score);
+      for (const parameterId of affectedIds) {
+        const memberKey =
+          score.type === 'setAutomationResolution'
+            ? `${parameterId}:resolution`
+            : `${parameterId}:points`;
+        if (!handledAutomationMembers.has(memberKey)) {
+          handledAutomationMembers.add(memberKey);
+          const entry = catalog.find((c) => c.parameter.getUniqueId() === parameterId);
+          if (entry) {
+            if (score.type === 'setAutomationResolution') {
+              result.unshift({
+                score: {
+                  type: 'setAutomationResolution',
+                  parameterId,
+                  resolutionDecimal: entry.parameter.getResolutionText(),
+                },
+              });
+            } else {
+              result.unshift({
+                score: {
+                  type: 'setAutomationPoints',
+                  parameterId,
+                  points: entry.parameter
+                    .getPoints()
+                    .map((p) => ({ time: p.time, value: p.value })),
+                },
+              });
+            }
+          }
+        }
+      }
+    } else {
+      result.unshift(patch);
+    }
+  }
+
+  return result;
 }
 
 export interface HistoryParticipantInfo {
@@ -362,6 +510,71 @@ export function hasConcreteInversePatches(
     patches.length === 1 &&
     (patches[0].orchestra as unknown as { type?: string })?.type === 'structuralChange'
   );
+}
+
+function getInverseMemberKey(patch: ProjectDocumentPatch): string | null {
+  if (patch.score) {
+    const s = patch.score;
+    if (s.type === 'setAutomationPoints') {
+      return `score:automationPoints:${s.parameterId}`;
+    }
+    if (s.type === 'setAutomationResolution') {
+      return `score:automationResolution:${s.parameterId}`;
+    }
+    if (s.type === 'updateTrackInstrument') {
+      return `score:trackInstrument:${s.track}`;
+    }
+  }
+  if (patch.orchestra) {
+    const o = patch.orchestra;
+    if (o.type === 'updateInstrument') {
+      return `orchestra:instrument:${o.assignmentId}`;
+    }
+    if (o.type === 'updateInstrumentComment') {
+      return `orchestra:comment:${o.assignmentId}`;
+    }
+  }
+  if (patch.mixer) {
+    const m = patch.mixer;
+    if (m.type === 'updateEffect') {
+      return `mixer:effect:${m.channelId}:${m.chain}:${m.entryId}`;
+    }
+  }
+  return null;
+}
+
+export function accumulateConcreteInversePatches(
+  priorInverses: readonly ProjectDocumentPatch[] | undefined,
+  newInverses: readonly ProjectDocumentPatch[] | null,
+): readonly ProjectDocumentPatch[] | null {
+  if (!priorInverses || !hasConcreteInversePatches(priorInverses)) {
+    return newInverses && hasConcreteInversePatches(newInverses) ? newInverses : null;
+  }
+  if (!newInverses || !hasConcreteInversePatches(newInverses)) {
+    return null;
+  }
+
+  const result: ProjectDocumentPatch[] = [...priorInverses];
+  const existingKeys = new Set<string>();
+  for (const p of priorInverses) {
+    const key = getInverseMemberKey(p);
+    if (key) existingKeys.add(key);
+  }
+
+  for (const p of newInverses) {
+    const key = getInverseMemberKey(p);
+    if (key) {
+      if (!existingKeys.has(key)) {
+        existingKeys.add(key);
+        result.push(p);
+      }
+      // If already present, preserve earliest baseline from priorInverses
+    } else {
+      result.push(p);
+    }
+  }
+
+  return result;
 }
 
 interface BsbEditableOwner {
@@ -633,33 +846,78 @@ export function computeStructuralInversePatches(
 
   for (const patch of patches) {
     const scorePatch = patch.score;
-    if (scorePatch?.type === 'updateTrackInstrument') {
-      const group = data
-        .getScore()
-        .find(
-          (candidate): candidate is TrackLayerGroup =>
-            candidate instanceof TrackLayerGroup &&
-            candidate.getUniqueId() === scorePatch.track.rootGroupId,
+    if (scorePatch) {
+      if (scorePatch.type === 'updateTrackInstrument') {
+        const group = data
+          .getScore()
+          .find(
+            (candidate): candidate is TrackLayerGroup =>
+              candidate instanceof TrackLayerGroup &&
+              candidate.getUniqueId() === scorePatch.track.rootGroupId,
+          );
+        const track = group?.find(
+          (candidate) => candidate.getUniqueId() === scorePatch.track.trackId,
         );
-      const track = group?.find(
-        (candidate) => candidate.getUniqueId() === scorePatch.track.trackId,
-      );
-      const instrument = track?.getInstrument();
-      if (!instrument) return null;
+        const instrument = track?.getInstrument();
+        if (!instrument) return null;
 
-      const subPatch = scorePatch.patch;
-      const invertedInstrumentPatches = invertEditableInstrumentPatches(instrument, subPatch);
-      if (!invertedInstrumentPatches) return null;
-      for (const invertedInstrumentPatch of invertedInstrumentPatches) {
-        inverse.push({
-          score: {
-            type: 'updateTrackInstrument',
-            track: scorePatch.track,
-            patch: invertedInstrumentPatch,
-          },
-        });
+        const subPatch = scorePatch.patch;
+        const invertedInstrumentPatches = invertEditableInstrumentPatches(instrument, subPatch);
+        if (!invertedInstrumentPatches) return null;
+        for (const invertedInstrumentPatch of invertedInstrumentPatches) {
+          inverse.push({
+            score: {
+              type: 'updateTrackInstrument',
+              track: scorePatch.track,
+              patch: invertedInstrumentPatch,
+            },
+          });
+        }
+        continue;
       }
-      continue;
+
+      const isAutomationPatch =
+        scorePatch.type === 'setAutomationPoints' ||
+        scorePatch.type === 'insertAutomationPoint' ||
+        scorePatch.type === 'deleteAutomationPoint' ||
+        scorePatch.type === 'moveAutomationPoint' ||
+        scorePatch.type === 'setAutomationResolution' ||
+        scorePatch.type === 'moveAutomationRange' ||
+        scorePatch.type === 'scaleAutomationRange';
+
+      if (isAutomationPatch) {
+        const affectedIds = collectAffectedScoreAutomationParameterIds(data, scorePatch);
+        const catalog = getProjectParameterCatalog(data);
+        let handled = false;
+        for (const parameterId of affectedIds) {
+          const entry = catalog.find((c) => c.parameter.getUniqueId() === parameterId);
+          if (entry) {
+            handled = true;
+            if (scorePatch.type === 'setAutomationResolution') {
+              inverse.push({
+                score: {
+                  type: 'setAutomationResolution',
+                  parameterId,
+                  resolutionDecimal: entry.parameter.getResolutionText(),
+                },
+              });
+            } else {
+              inverse.push({
+                score: {
+                  type: 'setAutomationPoints',
+                  parameterId,
+                  points: entry.parameter
+                    .getPoints()
+                    .map((p) => ({ time: p.time, value: p.value })),
+                },
+              });
+            }
+          }
+        }
+        if (handled) {
+          continue;
+        }
+      }
     }
 
     const orchestraPatch = patch.orchestra;
@@ -738,17 +996,11 @@ function estimateEntryBytes(record: HistoryRecord): number {
     }
     return bytes;
   } else {
-    // Structure: estimate via XML string representations
-    let beforeBytes = 1024;
-    let afterBytes = 1024;
-    try {
-      beforeBytes += record.beforeMemento.saveToString().length * 2;
-      afterBytes += record.afterMemento.saveToString().length * 2;
-    } catch {
-      beforeBytes += 8192;
-      afterBytes += 8192;
-    }
-    return baseOverhead + beforeBytes + afterBytes;
+    return (
+      baseOverhead +
+      estimateBlueDataBytes(record.beforeMemento) +
+      estimateBlueDataBytes(record.afterMemento)
+    );
   }
 }
 
@@ -772,12 +1024,15 @@ export class ProjectHistory {
   private cursor = 0;
   private savedStateId: string | null = null;
   private activeGroup: ActiveGroupState | null = null;
+  private activeCheckpoint: ActiveRollbackCheckpoint | null = null;
   private receiptCache = new Map<string, ProjectHistoryResponse>();
   private receiptFingerprints = new Map<string, string>();
   private inFlightOperations = new Map<
     string,
     { fingerprint: string; promise: Promise<ProjectHistoryResponse> }
   >();
+  // Bounded like operation receipts; delayed input cannot revive rejected live work.
+  private rejectedGestures = new Set<string>();
   private pendingOversizeProposal: {
     token: string;
     documentId: string;
@@ -902,6 +1157,7 @@ export class ProjectHistory {
     this.entries = [];
     this.cursor = 0;
     this.activeGroup = null;
+    this.activeCheckpoint = null;
     this.receiptCache.clear();
     this.receiptFingerprints.clear();
     this.pendingOversizeProposal = null;
@@ -910,6 +1166,131 @@ export class ProjectHistory {
 
   closeGroup(): void {
     this.activeGroup = null;
+    this.activeCheckpoint = null;
+  }
+
+  private getRetainedBytesWithCheckpoint(
+    candidateExtraBytes = 0,
+    includeCheckpoint = true,
+  ): number {
+    let bytes = 0;
+    for (const e of this.entries) {
+      bytes += e.retainedBytes;
+    }
+    if (includeCheckpoint && this.activeCheckpoint) {
+      bytes += estimateBlueDataBytes(this.activeCheckpoint.beforeData);
+      for (const e of this.activeCheckpoint.redoEntries) {
+        bytes += e.retainedBytes;
+      }
+      for (const e of this.activeCheckpoint.evictedEntries) {
+        bytes += e.retainedBytes;
+      }
+    }
+    return bytes + candidateExtraBytes;
+  }
+
+  private async finalizeNetZero(
+    request: ProjectHistoryCommitRequest,
+    documentId: string,
+    gestureIdToDrain?: string,
+  ): Promise<ProjectHistoryResponse> {
+    if (!this.activeCheckpoint) {
+      const snap = this.session.read();
+      return {
+        status: 'unchanged',
+        operationId: request.operationId,
+        documentId,
+        revision: snap.revision,
+        stateId: snap.stateId ?? '',
+        isDirty: this.isDirty(),
+        history: this.read(),
+        receipt: {
+          revision: snap.revision,
+          sessionId: snap.sessionId,
+          changed: false,
+          patchChanged: [],
+          patchAccepted: [],
+          documentId,
+          stateId: snap.stateId ?? '',
+        },
+      };
+    }
+
+    let entry: HistoryEntry | undefined;
+    if (this.activeCheckpoint.activeEntryId) {
+      const idx = this.entries.findIndex((e) => e.entryId === this.activeCheckpoint!.activeEntryId);
+      if (idx !== -1) {
+        entry = this.entries.splice(idx, 1)[0];
+      }
+    }
+    this.entries.unshift(...this.activeCheckpoint.evictedEntries);
+    this.entries.push(...this.activeCheckpoint.redoEntries);
+    this.cursor = this.activeCheckpoint.baseCursor;
+    this.savedStateId = this.activeCheckpoint.savedStateId;
+
+    restoreStructuralMemento(this.session, this.activeCheckpoint.beforeData, {
+      stateId: this.activeCheckpoint.beforeStateId,
+    });
+
+    if (this.reconciliation && gestureIdToDrain) {
+      await this.reconciliation.drainPreviews(gestureIdToDrain);
+    }
+
+    this.activeGroup = null;
+    this.activeCheckpoint = null;
+
+    const updatedSnap = this.session.read();
+    const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot();
+
+    const inversePatches =
+      entry?.inversePatches ??
+      (entry?.record.kind === 'values'
+        ? scalarRecordsToInversePatches(entry.record.records)
+        : [{ orchestra: { type: 'structuralChange' } as never }]);
+    const reconciliationPromise = this.reconciliation?.reconcileCommit({
+      documentId: updatedSnap.documentId!,
+      revision: updatedSnap.revision,
+      patches: inversePatches,
+    });
+
+    const updatedEvent: ProjectDocumentUpdatedEvent = {
+      documentId: updatedSnap.documentId!,
+      sessionId: updatedSnap.sessionId,
+      revision: updatedSnap.revision,
+      stateId: updatedSnap.stateId!,
+      isDirty: publishedIsDirty,
+      history: projection,
+      acceptedOperationIds: [request.operationId],
+      sourceSequence: request.contextSequence,
+      snapshot: publishedSnapshot,
+      originViewId: request.origin?.viewId,
+      originContextId: request.origin?.contextId,
+    };
+    await this.publishUpdated?.(updatedEvent);
+    await reconciliationPromise;
+
+    const resp: ProjectHistoryUnchangedResponse = {
+      status: 'unchanged',
+      operationId: request.operationId,
+      documentId: updatedSnap.documentId ?? documentId,
+      revision: updatedSnap.revision,
+      stateId: updatedSnap.stateId ?? '',
+      isDirty: publishedIsDirty,
+      history: projection,
+      receipt: {
+        revision: updatedSnap.revision,
+        sessionId: updatedSnap.sessionId,
+        changed: false,
+        patchChanged: [],
+        patchAccepted: [],
+        documentId: updatedSnap.documentId ?? documentId,
+        stateId: updatedSnap.stateId ?? '',
+      },
+    };
+    this.cacheReceipt(request.operationId, resp);
+    return resp;
   }
 
   read(request?: ProjectHistoryReadRequest): ProjectHistoryStateProjection {
@@ -1086,6 +1467,9 @@ export class ProjectHistory {
     ) {
       const evicted = this.entries.shift()!;
       totalBytes -= evicted.retainedBytes;
+      if (this.activeCheckpoint) {
+        this.activeCheckpoint.evictedEntries.push(evicted);
+      }
       this.cursor = Math.max(0, this.cursor - 1);
     }
   }
@@ -1482,6 +1866,20 @@ export class ProjectHistory {
       ? this.participants.get(request.origin.contextId)
       : undefined;
 
+    const gestureKey = JSON.stringify([
+      request.documentId,
+      request.origin?.contextId,
+      request.gestureId,
+    ]);
+    if (request.gestureId && !request.proposalToken && this.rejectedGestures.has(gestureKey)) {
+      return {
+        status: 'invalid',
+        operationId: request.operationId,
+        documentId: current.documentId,
+        reason: 'Gesture was rolled back after exceeding the history limit',
+      };
+    }
+
     // Monotonic sequence high-watermark check per context
     if (participant && request.contextSequence < participant.lastSequence) {
       const resp: ProjectHistoryUnchangedResponse = {
@@ -1523,29 +1921,49 @@ export class ProjectHistory {
 
     // Handle gesture cancellation
     if (request.phase === 'cancel') {
-      if (
-        this.activeGroup &&
-        this.cursor > 0 &&
-        this.cursor === this.entries.length &&
-        ((request.gestureId && this.activeGroup.gestureId === request.gestureId) ||
-          (request.fieldId && this.activeGroup.fieldId === request.fieldId))
-      ) {
-        const entry = this.entries.pop()!;
-        this.cursor--;
-        this.activeGroup = null;
+      const isMatchingGroup = matchesActiveGroup(this.activeGroup, request);
 
-        if (this.reconciliation && entry.gestureId) {
-          await this.reconciliation.drainPreviews(entry.gestureId);
+      if (isMatchingGroup) {
+        let entry: HistoryEntry | undefined;
+        if (this.activeCheckpoint?.activeEntryId) {
+          const idx = this.entries.findIndex(
+            (e) => e.entryId === this.activeCheckpoint!.activeEntryId,
+          );
+          if (idx !== -1) {
+            entry = this.entries.splice(idx, 1)[0];
+          }
+        } else if (this.cursor > 0 && this.cursor === this.entries.length) {
+          entry = this.entries.pop();
+          this.cursor--;
         }
 
-        if (entry.record.kind === 'values') {
-          rollbackScalarRecords(current.data, entry.record.records);
-          this.session.recordMutation({ changed: true, stateId: entry.beforeStateId });
-        } else {
-          restoreStructuralMemento(this.session, entry.record.beforeMemento, {
-            stateId: entry.beforeStateId,
+        const gestureIdToDrain = request.gestureId ?? this.activeGroup?.gestureId;
+        if (this.reconciliation && gestureIdToDrain) {
+          await this.reconciliation.drainPreviews(gestureIdToDrain);
+        }
+
+        if (this.activeCheckpoint) {
+          this.entries.unshift(...this.activeCheckpoint.evictedEntries);
+          this.entries.push(...this.activeCheckpoint.redoEntries);
+          this.cursor = this.activeCheckpoint.baseCursor;
+          this.savedStateId = this.activeCheckpoint.savedStateId;
+
+          restoreStructuralMemento(this.session, this.activeCheckpoint.beforeData, {
+            stateId: this.activeCheckpoint.beforeStateId,
           });
+        } else if (entry) {
+          if (entry.record.kind === 'values') {
+            rollbackScalarRecords(current.data, entry.record.records);
+            this.session.recordMutation({ changed: true, stateId: entry.beforeStateId });
+          } else {
+            restoreStructuralMemento(this.session, entry.record.beforeMemento, {
+              stateId: entry.beforeStateId,
+            });
+          }
         }
+
+        this.activeGroup = null;
+        this.activeCheckpoint = null;
 
         const updatedSnap = this.session.read();
         const projection = this.read();
@@ -1553,8 +1971,8 @@ export class ProjectHistory {
         const publishedSnapshot = this.capturePublishedSnapshot();
 
         const inversePatches =
-          entry.inversePatches ??
-          (entry.record.kind === 'values'
+          entry?.inversePatches ??
+          (entry?.record.kind === 'values'
             ? scalarRecordsToInversePatches(entry.record.records)
             : [{ orchestra: { type: 'structuralChange' } as never }]);
 
@@ -1591,11 +2009,20 @@ export class ProjectHistory {
           isDirty: publishedIsDirty,
           history: projection,
           runtimeOutcomes,
+          receipt: {
+            revision: updatedSnap.revision,
+            sessionId: updatedSnap.sessionId,
+            changed: true,
+            patchChanged: [],
+            patchAccepted: [],
+            documentId: updatedSnap.documentId!,
+            stateId: updatedSnap.stateId!,
+          },
         };
         this.cacheReceipt(request.operationId, resp);
         return resp;
       } else {
-        this.closeGroup();
+        // Obsolete or unmatched cancel must not close active group or rollback unrelated work
         const resp: ProjectHistoryUnchangedResponse = {
           status: 'unchanged',
           operationId: request.operationId,
@@ -1604,10 +2031,50 @@ export class ProjectHistory {
           stateId: current.stateId ?? '',
           isDirty: this.isDirty(),
           history: this.read(),
+          receipt: {
+            revision: current.revision,
+            sessionId: current.sessionId,
+            changed: false,
+            patchChanged: [],
+            patchAccepted: [],
+            documentId: current.documentId,
+            stateId: current.stateId ?? '',
+          },
         };
         this.cacheReceipt(request.operationId, resp);
         return resp;
       }
+    }
+
+    // Explicit gestures close on end or another action; only implicit field edits time out.
+    const now = Date.now();
+    const canGroup =
+      request.phase !== 'begin' &&
+      request.phase !== 'single' &&
+      this.activeGroup !== null &&
+      this.cursor > 0 &&
+      ((request.gestureId !== undefined && this.activeGroup.gestureId === request.gestureId) ||
+        (request.fieldId !== undefined &&
+          now - this.activeGroup.lastTimestamp <= GESTURE_GROUPING_TIMEOUT_MS &&
+          this.activeGroup.fieldId === request.fieldId &&
+          (request.origin?.contextId === undefined ||
+            this.activeGroup.sourceContextId === undefined ||
+            this.activeGroup.sourceContextId === request.origin.contextId)));
+
+    const isLiveGesture = request.phase === 'begin' || request.phase === 'update';
+
+    const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
+    let baselineBeforeData: BlueData | null = null;
+    let baselineBaseCursor = this.cursor;
+    let baselineRedoEntries: readonly HistoryEntry[] = [];
+    let baselineBeforeStateId = beforeStateId;
+    let baselineWasDirty = this.isDirty();
+    let baselineSavedStateId = this.savedStateId;
+
+    if (isLiveGesture && !canGroup) {
+      baselineBeforeData = current.data.historyCopy();
+      transferProjectEditorIdentities(current.data, baselineBeforeData);
+      baselineRedoEntries = this.entries.slice(this.cursor);
     }
 
     // Prepare transaction
@@ -1647,6 +2114,51 @@ export class ProjectHistory {
 
     // Unchanged / empty transaction
     if (transaction.kind === 'empty' || !transaction.changed) {
+      if (request.phase === 'end') {
+        const isMatchingGroup = matchesActiveGroup(this.activeGroup, request);
+
+        if (isMatchingGroup) {
+          if (
+            this.activeCheckpoint &&
+            isNetZeroProjectState(this.activeCheckpoint.beforeData, current.data)
+          ) {
+            return await this.finalizeNetZero(
+              request,
+              current.documentId,
+              this.activeGroup?.gestureId,
+            );
+          }
+
+          this.closeGroup();
+          this.enforceLimits();
+
+          const resp: ProjectHistoryUnchangedResponse = {
+            status: 'unchanged',
+            operationId: request.operationId,
+            documentId: current.documentId,
+            revision: current.revision,
+            stateId: current.stateId ?? '',
+            isDirty: this.isDirty(),
+            history: this.read(),
+            receipt: {
+              revision: current.revision,
+              sessionId: current.sessionId,
+              changed: false,
+              patchChanged: transaction.patchChanged
+                ? [...transaction.patchChanged]
+                : (request.patches?.map(() => false) ?? []),
+              patchAccepted: transaction.patchAccepted
+                ? [...transaction.patchAccepted]
+                : (request.patches?.map(() => true) ?? []),
+              documentId: current.documentId,
+              stateId: current.stateId ?? '',
+            },
+          };
+          this.cacheReceipt(request.operationId, resp);
+          return resp;
+        }
+      }
+
       const resp: ProjectHistoryUnchangedResponse = {
         status: 'unchanged',
         operationId: request.operationId,
@@ -1674,7 +2186,6 @@ export class ProjectHistory {
     }
 
     // Check oversize limit for structural transaction
-    const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
     const nextStateId = `state-${randomUUID()}`;
 
     let historyRecord: HistoryRecord;
@@ -1692,6 +2203,47 @@ export class ProjectHistory {
     }
 
     const estimatedBytes = estimateEntryBytes(historyRecord);
+
+    let candidateMergedRecord: HistoryRecord | null = null;
+    let candidateExtraBytes = 0;
+
+    if (canGroup) {
+      const top = this.entries[this.cursor - 1]!;
+      if (top.record.kind === 'values' && historyRecord.kind === 'values') {
+        candidateMergedRecord = {
+          kind: 'values',
+          records: [...top.record.records, ...historyRecord.records],
+        };
+      } else {
+        const beforeMem =
+          top.record.kind === 'structure' ? top.record.beforeMemento : current.data.historyCopy();
+        if (top.record.kind === 'values') {
+          transferProjectEditorIdentities(current.data, beforeMem);
+          rollbackScalarRecords(beforeMem, top.record.records);
+        }
+        const afterMem =
+          historyRecord.kind === 'structure'
+            ? historyRecord.afterMemento
+            : current.data.historyCopy();
+        if (historyRecord.kind === 'values') {
+          transferProjectEditorIdentities(current.data, afterMem);
+        }
+        candidateMergedRecord = {
+          kind: 'structure',
+          beforeMemento: beforeMem,
+          afterMemento: afterMem,
+        };
+      }
+      const candidateBytes = estimateEntryBytes(candidateMergedRecord);
+      candidateExtraBytes = Math.max(0, candidateBytes - top.retainedBytes);
+    } else {
+      candidateExtraBytes = estimatedBytes;
+      if (baselineBeforeData) {
+        candidateExtraBytes += estimateBlueDataBytes(baselineBeforeData);
+      }
+    }
+
+    const totalRetainedBytes = this.getRetainedBytesWithCheckpoint(candidateExtraBytes, canGroup);
 
     // Oversize proposal handling
     if (request.proposalToken) {
@@ -1732,28 +2284,63 @@ export class ProjectHistory {
           reason: 'Oversize proposal token is invalid or already consumed',
         };
       }
-    } else if (estimatedBytes > this.retainedBytesLimit) {
+    } else if (totalRetainedBytes > this.retainedBytesLimit) {
+      if (transaction.kind === 'scalar') transaction.rollback();
+      if (this.activeCheckpoint && matchesActiveGroup(this.activeGroup, request)) {
+        await this.commitInternal({
+          ...request,
+          operationId: `${request.operationId}-rollback`,
+          phase: 'cancel',
+          patches: [],
+        });
+      }
+
+      if (request.gestureId) {
+        if (this.rejectedGestures.size >= RECEIPT_CACHE_LIMIT) {
+          this.rejectedGestures.delete(this.rejectedGestures.values().next().value!);
+        }
+        this.rejectedGestures.add(gestureKey);
+      }
       const token = `oversize-${randomUUID()}`;
       this.pendingOversizeProposal = {
         token,
         documentId: current.documentId,
-        expectedRevision: request.expectedRevision,
+        expectedRevision: this.session.read().revision,
         payloadFingerprint: JSON.stringify(request.patches),
       };
+      const oversizeEstimated = candidateMergedRecord
+        ? estimateEntryBytes(candidateMergedRecord)
+        : estimatedBytes;
       const resp: ProjectHistoryOversizeResponse = {
         status: 'oversize',
         operationId: request.operationId,
         documentId: current.documentId,
         proposalToken: token,
-        estimatedBytes,
+        estimatedBytes: oversizeEstimated,
         limitBytes: this.retainedBytesLimit,
-        explanation: `Action of ${Math.round(estimatedBytes / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
+        explanation: `Action of ${Math.round(oversizeEstimated / (1024 * 1024))} MiB exceeds the ${Math.round(this.retainedBytesLimit / (1024 * 1024))} MiB history limit`,
       };
-      // Rollback scalar transaction if it was applied
-      if (transaction.kind === 'scalar') {
-        transaction.rollback();
-      }
+      this.cacheReceipt(request.operationId, resp);
       return resp;
+    }
+
+    if (!canGroup && this.activeGroup !== null) {
+      this.closeGroup();
+    }
+
+    // Capture active rollback checkpoint if beginning live group
+    if (baselineBeforeData && isLiveGesture && this.activeCheckpoint === null && !canGroup) {
+      this.activeCheckpoint = {
+        gestureId: request.gestureId,
+        fieldId: request.fieldId,
+        baseCursor: baselineBaseCursor,
+        redoEntries: baselineRedoEntries,
+        evictedEntries: [],
+        beforeData: baselineBeforeData,
+        beforeStateId: baselineBeforeStateId,
+        wasDirty: baselineWasDirty,
+        savedStateId: baselineSavedStateId,
+      };
     }
 
     // Truncate redo stack on new commit (chronological branch semantics)
@@ -1762,56 +2349,23 @@ export class ProjectHistory {
     }
 
     const forwardPatches = request.patches ? [...request.patches] : [];
-    const inversePatches =
+    const computedInverses =
       historyRecord.kind === 'values'
         ? scalarRecordsToInversePatches(historyRecord.records)
         : (computeStructuralInversePatches(current.data, request.patches) ?? [
             { orchestra: { type: 'structuralChange' } as never },
           ]);
 
-    // Explicit gestures close on end or another action; only implicit field edits time out.
-    const now = Date.now();
-    const canGroup =
-      request.phase !== 'begin' &&
-      request.phase !== 'single' &&
-      this.activeGroup !== null &&
-      this.cursor > 0 &&
-      ((request.gestureId !== undefined && this.activeGroup.gestureId === request.gestureId) ||
-        (request.fieldId !== undefined &&
-          now - this.activeGroup.lastTimestamp <= GESTURE_GROUPING_TIMEOUT_MS &&
-          this.activeGroup.fieldId === request.fieldId &&
-          this.activeGroup.sourceContextId === request.origin?.contextId));
-
     if (canGroup) {
       // Merge with top entry: keep original before-state, update after-state
       const top = this.entries[this.cursor - 1]!;
-      let mergedRecord: HistoryRecord;
-
-      if (top.record.kind === 'values' && historyRecord.kind === 'values') {
-        mergedRecord = {
-          kind: 'values',
-          records: [...top.record.records, ...historyRecord.records],
-        };
-      } else {
-        const beforeMem =
-          top.record.kind === 'structure' ? top.record.beforeMemento : current.data.historyCopy();
-        if (top.record.kind === 'values') {
-          transferProjectEditorIdentities(current.data, beforeMem);
-          rollbackScalarRecords(beforeMem, top.record.records);
-        }
-        const afterMem =
-          historyRecord.kind === 'structure'
-            ? historyRecord.afterMemento
-            : current.data.historyCopy();
-        if (historyRecord.kind === 'values') {
-          transferProjectEditorIdentities(current.data, afterMem);
-        }
-        mergedRecord = {
-          kind: 'structure',
-          beforeMemento: beforeMem,
-          afterMemento: afterMem,
-        };
-      }
+      const mergedRecord = candidateMergedRecord!;
+      const accumulatedInverses =
+        mergedRecord.kind === 'values'
+          ? scalarRecordsToInversePatches(mergedRecord.records)
+          : (accumulateConcreteInversePatches(top.inversePatches, computedInverses) ?? [
+              { orchestra: { type: 'structuralChange' } as never },
+            ]);
 
       const mergedEntry: HistoryEntry = {
         entryId: top.entryId,
@@ -1834,15 +2388,7 @@ export class ProjectHistory {
           ]),
         ],
         forwardPatches: [...(top.forwardPatches ?? []), ...forwardPatches],
-        inversePatches:
-          mergedRecord.kind === 'values'
-            ? scalarRecordsToInversePatches(mergedRecord.records)
-            : hasConcreteInversePatches(top.inversePatches)
-              ? top.inversePatches
-              : (computeStructuralInversePatches(
-                  top.record.kind === 'structure' ? top.record.beforeMemento : current.data,
-                  request.patches,
-                ) ?? [{ orchestra: { type: 'structuralChange' } as never }]),
+        inversePatches: accumulatedInverses,
       };
 
       this.entries[this.cursor - 1] = mergedEntry;
@@ -1870,11 +2416,23 @@ export class ProjectHistory {
         record: historyRecord,
         changedTargets: collectChangedTargets(request.patches ?? []),
         forwardPatches,
-        inversePatches,
+        inversePatches: computedInverses,
       };
 
       this.entries.push(newEntry);
       this.cursor = this.entries.length;
+
+      if (this.activeCheckpoint) {
+        this.activeCheckpoint.activeEntryId = newEntry.entryId;
+      }
+
+      while (this.entries.length > this.retainedEntryLimit) {
+        const evicted = this.entries.shift()!;
+        if (this.activeCheckpoint) {
+          this.activeCheckpoint.evictedEntries.push(evicted);
+        }
+        this.cursor = Math.max(0, this.cursor - 1);
+      }
 
       if (request.phase === 'begin' || request.phase === 'update') {
         this.activeGroup = {
@@ -1901,6 +2459,18 @@ export class ProjectHistory {
     }
 
     if (request.phase === 'end') {
+      const isMatchingGroup = matchesActiveGroup(this.activeGroup, request);
+
+      if (isMatchingGroup && this.activeCheckpoint) {
+        const finalDocument = this.session.read().data!;
+        if (isNetZeroProjectState(this.activeCheckpoint.beforeData, finalDocument)) {
+          return await this.finalizeNetZero(
+            request,
+            current.documentId,
+            this.activeGroup?.gestureId,
+          );
+        }
+      }
       this.closeGroup();
     }
 
@@ -2675,11 +3245,15 @@ export class ProjectHistory {
     const publishedIsDirty = this.isDirty();
     const publishedSnapshot = this.capturePublishedSnapshot();
 
-    const forwardPatches =
-      entry.forwardPatches ??
-      (entry.record.kind === 'values'
-        ? scalarRecordsToForwardPatches(entry.record.records)
-        : [{ orchestra: { type: 'structuralChange' } as never }]);
+    let forwardPatches = entry.forwardPatches;
+    if (!forwardPatches || forwardPatches.length === 0) {
+      forwardPatches =
+        entry.record.kind === 'values'
+          ? scalarRecordsToForwardPatches(entry.record.records)
+          : [{ orchestra: { type: 'structuralChange' } as never }];
+    } else if (entry.record.kind === 'structure') {
+      forwardPatches = consolidateForwardPatchesForRedo(forwardPatches, entry.record.afterMemento);
+    }
 
     const reconciliationPromise = this.reconciliation
       ? this.reconciliation.reconcileCommit({

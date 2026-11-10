@@ -143,6 +143,7 @@ export interface ScoreTimeStateSnapshot {
 }
 
 export interface MarkerSnapshot {
+  markerId?: string;
   name: string;
   time: number;
   timeBase: string;
@@ -951,7 +952,7 @@ export type ScorePatch =
       };
     }
   | { type: 'renameLayer'; groupId: string; layerIndex: number; name: string }
-  | { type: 'addMarker'; timeBeats: number; name?: string }
+  | { type: 'addMarker'; timeBeats: number; name?: string; markerId?: string }
   | {
       type: 'updateMarker';
       sourceIndex: number;
@@ -1150,6 +1151,7 @@ export type ScoreAutomationPatch =
 export type TempoCurveTypeSnapshot = 'constant' | 'linear';
 
 export interface TempoPointSnapshot {
+  pointId?: string;
   beat: number;
   tempo: number;
   curveType: TempoCurveTypeSnapshot;
@@ -2821,6 +2823,8 @@ export interface GridSettingsSnapshot {
 
 export interface BsbWidgetNodeSnapshot {
   id: string;
+  /** Transient canonical incarnation, preserved by history and absent from XML. */
+  gestureTargetId?: string;
   type: string;
   objectName: string;
   x: number;

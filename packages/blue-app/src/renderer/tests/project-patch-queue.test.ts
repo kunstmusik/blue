@@ -1201,6 +1201,66 @@ describe('ProjectPatchQueue', () => {
       expect.objectContaining({ expectedRevision: 4 }),
     );
   });
+
+  it('merges begin and cancel with matching gestureId into a cancel phase transaction before flush', async () => {
+    const dependencies = makeDependencies();
+    const queue = createProjectPatchQueue(dependencies);
+    queue.acceptRevision(1, 1);
+
+    const patch1 = { projectProperties: { title: 'First' } };
+    const patch2 = { projectProperties: { title: 'Second' } };
+    queue.enqueue(patch1, false, { gestureId: 'g-cancel-test', phase: 'begin' });
+    queue.enqueue(patch2, false, { gestureId: 'g-cancel-test', phase: 'cancel' });
+
+    await queue.flush();
+
+    expect(dependencies.commit).toHaveBeenCalledTimes(1);
+    expect(dependencies.commit).toHaveBeenCalledWith(
+      [patch1, patch2],
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          gestureId: 'g-cancel-test',
+          phase: 'cancel',
+        }),
+      }),
+    );
+  });
+
+  it('isolates a cancel transaction so subsequent edits do not join after cancel', async () => {
+    const dependencies = makeDependencies();
+    const queue = createProjectPatchQueue(dependencies);
+    queue.acceptRevision(1, 1);
+
+    const cancelPatch = { projectProperties: { title: 'Cancel' } };
+    const subsequentPatch = { projectProperties: { title: 'Subsequent' } };
+
+    queue.enqueue(cancelPatch, false, { gestureId: 'g-iso', phase: 'cancel' });
+    queue.enqueue(subsequentPatch, false, { gestureId: 'g-iso', phase: 'update' });
+
+    await queue.flush();
+
+    expect(dependencies.commit).toHaveBeenCalledTimes(2);
+    expect(dependencies.commit).toHaveBeenNthCalledWith(
+      1,
+      [cancelPatch],
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          gestureId: 'g-iso',
+          phase: 'cancel',
+        }),
+      }),
+    );
+    expect(dependencies.commit).toHaveBeenNthCalledWith(
+      2,
+      [subsequentPatch],
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          gestureId: 'g-iso',
+          phase: 'update',
+        }),
+      }),
+    );
+  });
 });
 
 describe('ProjectPatchQueue settlement boundary participant (T016)', () => {

@@ -332,6 +332,7 @@ import {
   assignPatternLayerId,
   assignScoreObjectId,
   getScoreObjectId,
+  getMarkerSnapshotIds,
   getTrackInstrumentOwnerIdentity,
 } from './identity';
 import { buildSoundAutomationParameters, parseSoundBSB } from './bsb-widgets';
@@ -715,13 +716,20 @@ function createMarkerSnapshots(data: BlueData): MarkerSnapshot[] {
   if (!markersList) return markers;
   const context = data.getScore().getTimeContext();
   const elements = markersList.getMarkers();
+  const markerIds = getMarkerSnapshotIds(markersList);
   for (let i = 0; i < elements.length; i++) {
     const elem = elements[i];
     if (!elem) continue;
     const name = elem.getAttribute('name') ?? elem.getName() ?? '';
     const position = markersList.getMarkerTimePosition(i);
     const time = position.toBeats(context);
-    markers.push({ name, time, timeBase: position.getTimeBase(), sourceIndex: i });
+    markers.push({
+      markerId: markerIds[i],
+      name,
+      time,
+      timeBase: position.getTimeBase(),
+      sourceIndex: i,
+    });
   }
   return markers;
 }
