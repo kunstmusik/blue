@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { decodeMeterFrame, encodeMeterFrame } from '../src/meter-codec';
 
 describe('meter-codec', () => {
+  it('owns plain arrays independently of the source bytes and later frames', () => {
+    const bytes = encodeMeterFrame({
+      sequence: 1,
+      nchnls: 2,
+      channels: [{ csdKey: 'a', rms: [0.1, 0.2], peak: [0.3, 0.4] }],
+    });
+    const first = decodeMeterFrame(bytes);
+    const second = decodeMeterFrame(bytes);
+    expect(Array.isArray(first.channels[0].rms)).toBe(true);
+    expect(Array.isArray(first.channels[0].peak)).toBe(true);
+    expect(first.channels[0].rms).not.toBe(second.channels[0].rms);
+    expect(first.channels[0].peak).not.toBe(second.channels[0].peak);
+    bytes.fill(0);
+    expect(first.channels[0]).toEqual({ csdKey: 'a', rms: [0.1, 0.2], peak: [0.3, 0.4] });
+  });
   it('encodes and decodes stereo meter frames round-trip', () => {
     const frame = {
       sequence: 42,

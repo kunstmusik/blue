@@ -112,13 +112,13 @@ export function decodeMeterFrame(buf: Buffer): DecodedMeterFrame {
     const csdKey = buf.toString('utf-8', offset, keyEnd);
 
     let valOffset = offset + CSD_KEY_SIZE;
-    const rms = new Float64Array(nchnls);
+    const rms = new Array<number>(nchnls);
     for (let c = 0; c < nchnls; c++) {
       rms[c] = sanitizeFloat(buf.readDoubleLE(valOffset));
       valOffset += 8;
     }
 
-    const peak = new Float64Array(nchnls);
+    const peak = new Array<number>(nchnls);
     for (let c = 0; c < nchnls; c++) {
       peak[c] = sanitizeFloat(buf.readDoubleLE(valOffset));
       valOffset += 8;
@@ -126,8 +126,8 @@ export function decodeMeterFrame(buf: Buffer): DecodedMeterFrame {
 
     channels[i] = {
       csdKey,
-      rms: Array.from(rms),
-      peak: Array.from(peak),
+      rms,
+      peak,
     };
 
     offset += entrySize;
