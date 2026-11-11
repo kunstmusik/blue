@@ -14,6 +14,8 @@ type ScoreMode = 'score' | 'singleLine' | 'multiLine';
 
 interface Props {
   layerGroups: ScoreLayerGroupSnapshot[];
+  visibleStartBeats?: number;
+  visibleEndBeats?: number;
   onOpenNested: (
     groupId: string,
     label: string,
@@ -37,6 +39,8 @@ interface Props {
 
 export default memo(function LayerPanel({
   layerGroups,
+  visibleStartBeats,
+  visibleEndBeats,
   onOpenNested,
   projectSessionId,
   projectRevision,
@@ -154,6 +158,8 @@ export default memo(function LayerPanel({
               <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <TrackLayerGroupCanvas
                   group={group}
+                  visibleStartBeats={visibleStartBeats}
+                  visibleEndBeats={visibleEndBeats}
                   allLayerGroups={visibleGroups}
                   projectSessionId={projectSessionId}
                   projectRevision={projectRevision}

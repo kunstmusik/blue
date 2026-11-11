@@ -927,6 +927,14 @@ export default function ScorePanel() {
                 >
                   <LayerPanel
                     layerGroups={displayLayerGroups}
+                    visibleStartBeats={
+                      containerWidth > 0 ? (scrollOverlayLeft - 128) / pixelsPerBeat : undefined
+                    }
+                    visibleEndBeats={
+                      containerWidth > 0
+                        ? (scrollOverlayLeft + containerWidth + 128) / pixelsPerBeat
+                        : undefined
+                    }
                     onOpenNested={navigateToGroup}
                     projectSessionId={sessionId}
                     projectRevision={getProjectDocumentRevision()}

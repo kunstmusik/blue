@@ -304,6 +304,45 @@ afterEach(() => {
 });
 
 describe('Track layer timeline gestures', () => {
+  it('mounts only bars intersecting the visible interval and updates them on scrolling', () => {
+    const group = makeTrackGroup(
+      Array.from({ length: 1000 }, (_, i) => makeItem(`clip-${i}`, i * 10, 1)),
+    );
+    group.layers[0]!.items.push(makeItem('minimum-width', 9.9, 0));
+    const { host, root, render } = renderTrackCanvas(group, [group], {
+      visibleStartBeats: 10,
+      visibleEndBeats: 20,
+    });
+    expect(host.querySelectorAll('.absolute.overflow-hidden')).toHaveLength(3);
+    expect(host.textContent).toContain('minimum-width');
+    expect(host.textContent).not.toContain('clip-500');
+    render({ visibleStartBeats: 5000, visibleEndBeats: 5010 });
+    expect(host.querySelectorAll('.absolute.overflow-hidden')).toHaveLength(2);
+    expect(host.textContent).toContain('clip-500');
+    expect(group.layers[0]!.items).toHaveLength(1001);
+    act(() => root.unmount());
+  });
+
+  it('keeps an active drag mounted outside the viewport and cancels without a durable edit', () => {
+    const group = makeTrackGroup([makeItem('dragged', 2, 2), makeItem('distant', 500, 2)]);
+    const { host, root, surface, render } = renderTrackCanvas(group, [group], {
+      totalBeats: 1000,
+      visibleStartBeats: 0,
+      visibleEndBeats: 20,
+    });
+    act(() => {
+      mouse(surface, 'mousedown', 62, 20);
+      mouse(window, 'mousemove', 87, 20);
+    });
+    render({ visibleStartBeats: 490, visibleEndBeats: 520 });
+    expect(host.textContent).toContain('dragged');
+    expect(host.textContent).toContain('distant');
+    act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(host.textContent).not.toContain('dragged');
+    expect(useScoreSelectionStore.getState().gestureProjection).toBeNull();
+    expect(useProjectStore.getState().applyProjectDocumentPatch).not.toHaveBeenCalled();
+    act(() => root.unmount());
+  });
   it('refreshes physical frame snapping when only later tempo points change', async () => {
     const group = makeTrackGroup([makeItem('track-object', 90, 2)]);
     const meterMap = { entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }] };

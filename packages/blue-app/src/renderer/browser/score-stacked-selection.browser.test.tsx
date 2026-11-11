@@ -6,6 +6,7 @@ import LayerPanel from '../components/workbench/panels/score/LayerPanel';
 import type {
   PolyObjectLayerGroupSnapshot,
   ScoreRowObjectSnapshot,
+  TrackLayerGroupSnapshot,
 } from '../components/workbench/panels/score/types';
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
@@ -108,6 +109,74 @@ describe('stacked Score timeline selection', () => {
     container.remove();
     useProjectStore.setState({ score: originalScore });
     useScoreSelectionStore.getState().clearSelection();
+  });
+
+  it('culls horizontal Track bars without changing model hit testing in the browser', () => {
+    const group: TrackLayerGroupSnapshot = {
+      groupId: 'track',
+      groupType: 'track',
+      name: 'Track',
+      layerCount: 1,
+      defaultHeightIndex: 0,
+      isOpenableContainer: false,
+      layers: [
+        {
+          layerId: 'track-layer',
+          layerKind: 'track',
+          name: 'Track',
+          height: 44,
+          muted: false,
+          solo: false,
+          instrument: null,
+          items: Array.from({ length: 1000 }, (_, i) => ({
+            ...createItem(`clip-${i}`, 0),
+            startBeats: i * 10,
+          })),
+        },
+      ],
+    };
+    useProjectStore.setState({ score: { ...originalScore, layerGroups: [group] } });
+    const render = (start: number) =>
+      act(() =>
+        root.render(
+          <div style={{ position: 'relative', width: 400, height: 100, overflow: 'auto' }}>
+            <LayerPanel
+              layerGroups={[group]}
+              visibleStartBeats={start}
+              visibleEndBeats={start + 16}
+              onOpenNested={() => {}}
+              projectSessionId={1}
+              projectRevision={1}
+              pixelsPerBeat={25}
+              totalBeats={10000}
+              snapEnabled={false}
+              snapValue="BEAT"
+              tempo={120}
+              tempoMap={{
+                enabled: false,
+                visible: false,
+                points: [{ beat: 0, tempo: 60, curveType: 'constant' }],
+              }}
+              smpteFrameRate={24}
+              meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+            />
+          </div>,
+        ),
+      );
+    render(0);
+    expect(container.querySelectorAll('.absolute.overflow-hidden')).toHaveLength(2);
+    render(5000);
+    const scroller = container.firstElementChild as HTMLDivElement;
+    scroller.scrollLeft = 125000;
+    expect(container.querySelectorAll('.absolute.overflow-hidden')).toHaveLength(2);
+    const canvas = container.querySelector('[data-track-layer-group="true"]') as HTMLDivElement;
+    const rect = canvas.getBoundingClientRect();
+    act(() => {
+      dispatchPrimaryMouseEvent(canvas, 'mousedown', rect.left + 125025, rect.top + 20);
+      dispatchPrimaryMouseEvent(window, 'mouseup', rect.left + 125025, rect.top + 20);
+    });
+    expect(useScoreSelectionStore.getState().selectedObjectIds.has('clip-500')).toBe(true);
+    expect(group.layers[0]!.items).toHaveLength(1000);
   });
 
   it('selects a visible object in a lower layer group without scrolling the timeline', () => {

@@ -70,6 +70,8 @@ import {
 
 interface Props {
   group: TrackLayerGroupSnapshot;
+  visibleStartBeats?: number;
+  visibleEndBeats?: number;
   allLayerGroups?: ScoreLayerGroupSnapshot[];
   projectSessionId: number;
   projectRevision: number;
@@ -196,6 +198,8 @@ function clampBeat(value: number, totalBeats: number): number {
 
 export default function TrackLayerGroupCanvas({
   group,
+  visibleStartBeats,
+  visibleEndBeats,
   allLayerGroups = [group],
   projectSessionId,
   projectRevision,
@@ -2019,6 +2023,20 @@ export default function TrackLayerGroupCanvas({
                   const displayItem = getDisplayItem(item);
                   const width = Math.max(4, displayItem.durationBeats * pixelsPerBeat);
                   const left = displayItem.startBeats * pixelsPerBeat;
+                  const pinned =
+                    (gestureRef.current &&
+                      (gestureRef.current.activeObjectId === item.objectId ||
+                        selectedObjectIds.has(item.objectId))) ||
+                    contextMenuObjectId === item.objectId ||
+                    fadeContextMenu?.objectId === item.objectId;
+                  if (
+                    !pinned &&
+                    visibleStartBeats !== undefined &&
+                    visibleEndBeats !== undefined &&
+                    (left + width < visibleStartBeats * pixelsPerBeat ||
+                      left > visibleEndBeats * pixelsPerBeat)
+                  )
+                    return null;
                   const audioBar =
                     displayItem.barRenderer.kind === 'audioClip' ? displayItem.barRenderer : null;
                   const showFadeHandles = Boolean(
