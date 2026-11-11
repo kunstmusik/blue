@@ -12,6 +12,7 @@ export async function browseProjectLibraryNodes(
   scope: ProjectLibraryScope,
   libraryType: LibraryType,
   projectSessionId: number,
+  isCancelled: () => boolean = () => false,
 ): Promise<LibraryBrowseNode[]> {
   const children: LibraryBrowseNode[] = [];
   const seen = new Set<string>();
@@ -25,6 +26,7 @@ export async function browseProjectLibraryNodes(
       limit: 500,
       ...(contentRevision === undefined ? {} : { expectedContentRevision: contentRevision }),
     });
+    if (isCancelled()) return [];
     if (!result.ok) throw new Error(result.error.message);
     contentRevision ??= result.value.contentRevision;
     for (const child of result.value.children) {
@@ -57,12 +59,29 @@ export function useProjectLibraryNodes(
       return;
     }
     let active = true;
+    let refreshing = false;
+    let requested = false;
     const refresh = async (): Promise<void> => {
+      requested = true;
+      if (refreshing) return;
+      refreshing = true;
       try {
-        const next = await browseProjectLibraryNodes(scope, libraryType, projectSessionId);
-        if (active) setNodes(next);
-      } catch {
-        if (active) setNodes([]);
+        while (active && requested) {
+          requested = false;
+          try {
+            const next = await browseProjectLibraryNodes(
+              scope,
+              libraryType,
+              projectSessionId,
+              () => !active || requested,
+            );
+            if (active && !requested) setNodes(next);
+          } catch {
+            if (active && !requested) setNodes([]);
+          }
+        }
+      } finally {
+        refreshing = false;
       }
     };
     void refresh();

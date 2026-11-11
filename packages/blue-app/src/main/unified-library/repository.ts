@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync, type StatementSync } from 'node:sqlite';
 import type { LibrarySupportStatus, LibraryType } from '../../shared/unified-library';
 import { initializeUnifiedLibrarySchema } from './schema';
 import {
@@ -175,6 +175,7 @@ function mapNode(row: Record<string, unknown>): RepositoryNode {
 
 export class UnifiedLibraryRepository {
   private closed = false;
+  private readonly readStatements = new Map<string, StatementSync>();
 
   private constructor(private readonly database: DatabaseSync) {}
 
@@ -198,6 +199,7 @@ export class UnifiedLibraryRepository {
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    this.readStatements.clear();
     this.database.close();
   }
 
@@ -292,30 +294,29 @@ export class UnifiedLibraryRepository {
 
   getRoot(libraryType: LibraryType): RepositoryNode {
     this.assertOpen();
-    const row = this.database
-      .prepare("SELECT * FROM library_nodes WHERE library_type = ? AND node_kind = 'root'")
-      .get(libraryType);
+    const row = this.readStatement(
+      "SELECT * FROM library_nodes WHERE library_type = ? AND node_kind = 'root'",
+    ).get(libraryType);
     if (!row) throw new Error(`Library root not found: ${libraryType}`);
     return mapNode(row);
   }
 
   getNode(nodeId: string): RepositoryNode {
     this.assertOpen();
-    const row = this.database.prepare('SELECT * FROM library_nodes WHERE id = ?').get(nodeId);
+    const row = this.readStatement('SELECT * FROM library_nodes WHERE id = ?').get(nodeId);
     if (!row) throw new Error(`Library node not found: ${nodeId}`);
     return mapNode(row);
   }
 
   listChildren(parentId: string): RepositoryNode[] {
     this.assertOpen();
-    return this.database
-      .prepare(
-        `
+    return this.readStatement(
+      `
         SELECT * FROM library_nodes
         WHERE parent_id = ?
         ORDER BY CASE node_kind WHEN 'folder' THEN 0 ELSE 1 END, sort_index, id
       `,
-      )
+    )
       .all(parentId)
       .map(mapNode);
   }
@@ -324,16 +325,14 @@ export class UnifiedLibraryRepository {
     this.assertOpen();
     const boundedLimit = Math.max(1, Math.min(limit, 500));
     const boundedOffset = Math.max(0, Math.trunc(offset));
-    const rows = this.database
-      .prepare(
-        `
+    const rows = this.readStatement(
+      `
         SELECT * FROM library_nodes
         WHERE parent_id = ?
         ORDER BY CASE node_kind WHEN 'folder' THEN 0 ELSE 1 END, sort_index, id
         LIMIT ? OFFSET ?
       `,
-      )
-      .all(parentId, boundedLimit + 1, boundedOffset);
+    ).all(parentId, boundedLimit + 1, boundedOffset);
     return {
       nodes: rows.slice(0, boundedLimit).map(mapNode),
       hasMore: rows.length > boundedLimit,
@@ -343,29 +342,40 @@ export class UnifiedLibraryRepository {
   hasChildren(nodeId: string): boolean {
     this.assertOpen();
     return Boolean(
-      this.database
-        .prepare('SELECT 1 AS found FROM library_nodes WHERE parent_id = ? LIMIT 1')
-        .get(nodeId),
+      this.readStatement('SELECT 1 AS found FROM library_nodes WHERE parent_id = ? LIMIT 1').get(
+        nodeId,
+      ),
     );
   }
 
   getBreadcrumb(nodeId: string): string[] {
     this.assertOpen();
-    const rows = this.database
-      .prepare(
-        `
-        WITH RECURSIVE ancestors(id, parent_id, display_name, depth) AS (
-          SELECT id, parent_id, display_name, 0 FROM library_nodes WHERE id = ?
-          UNION ALL
-          SELECT parent.id, parent.parent_id, parent.display_name, ancestors.depth + 1
-          FROM library_nodes parent
-          JOIN ancestors ON ancestors.parent_id = parent.id
-        )
-        SELECT display_name FROM ancestors ORDER BY depth DESC
-      `,
+    return this.readBreadcrumbs([nodeId]).get(nodeId) ?? [];
+  }
+
+  private readBreadcrumbs(nodeIds: string[]): Map<string, string[]> {
+    const breadcrumbs = new Map<string, string[]>();
+    if (nodeIds.length === 0) return breadcrumbs;
+    const rows = this.readStatement(
+      `
+      WITH RECURSIVE ancestors(origin_id, id, parent_id, display_name, depth) AS (
+        SELECT id, id, parent_id, display_name, 0 FROM library_nodes
+        WHERE id IN (SELECT value FROM json_each(?))
+        UNION ALL
+        SELECT ancestors.origin_id, parent.id, parent.parent_id, parent.display_name, ancestors.depth + 1
+        FROM library_nodes parent
+        JOIN ancestors ON ancestors.parent_id = parent.id
       )
-      .all(nodeId);
-    return rows.map((row) => String(row.display_name));
+      SELECT origin_id, display_name FROM ancestors ORDER BY origin_id, depth DESC
+    `,
+    ).all(JSON.stringify(nodeIds));
+    for (const row of rows) {
+      const id = String(row.origin_id);
+      const breadcrumb = breadcrumbs.get(id) ?? [];
+      breadcrumb.push(String(row.display_name));
+      breadcrumbs.set(id, breadcrumb);
+    }
+    return breadcrumbs;
   }
 
   searchItems(
@@ -394,7 +404,7 @@ export class UnifiedLibraryRepository {
       libraryType === 'all'
         ? [`%${escaped}%`, boundedLimit + 1, boundedOffset]
         : [`%${escaped}%`, libraryType, boundedLimit + 1, boundedOffset];
-    const rows = this.database.prepare(sql).all(...args);
+    const rows = this.readStatement(sql).all(...args);
     const countSql = `
       SELECT COUNT(*) AS count
       FROM library_nodes nodes
@@ -403,13 +413,15 @@ export class UnifiedLibraryRepository {
         ${libraryType === 'all' ? '' : 'AND nodes.library_type = ?'}
     `;
     const countArgs = libraryType === 'all' ? [`%${escaped}%`] : [`%${escaped}%`, libraryType];
-    const count = this.database.prepare(countSql).get(...countArgs);
+    const count = this.readStatement(countSql).get(...countArgs);
+    const page = rows.slice(0, boundedLimit);
+    const breadcrumbs = this.readBreadcrumbs(page.map((row) => String(row.id)));
     return {
-      items: rows.slice(0, boundedLimit).map((row) => ({
+      items: page.map((row) => ({
         node: mapNode(row),
         objectType: String(row.object_type),
         supportStatus: row.support_status === 'supported' ? 'supported' : 'unsupported',
-        breadcrumb: this.getBreadcrumb(String(row.id)),
+        breadcrumb: breadcrumbs.get(String(row.id)) ?? [],
       })),
       hasMore: rows.length > boundedLimit,
       total: Number(count?.count ?? 0),
@@ -1318,6 +1330,17 @@ export class UnifiedLibraryRepository {
       this.database.exec('ROLLBACK');
       throw error;
     }
+  }
+
+  // Only fixed-shape browse/search queries belong in this per-connection cache.
+  private readStatement(sql: string): StatementSync {
+    this.assertOpen();
+    let statement = this.readStatements.get(sql);
+    if (!statement) {
+      statement = this.database.prepare(sql);
+      this.readStatements.set(sql, statement);
+    }
+    return statement;
   }
 
   private assertOpen(): void {

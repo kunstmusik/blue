@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { DatabaseSync } from 'node:sqlite';
 import { classifyLibraryPayload, parseRawXmlDocument, stableTextHash } from '@blue/data';
 import { UnifiedLibraryRepository } from './repository';
 import { createUnifiedLibraryTestDirectory } from './test-helpers';
@@ -19,6 +20,66 @@ const ITEM_PAYLOAD = {
 };
 
 describe('UnifiedLibraryRepository foundation', () => {
+  it('uses three cached queries per search page and preserves nested breadcrumbs', () => {
+    const repository = UnifiedLibraryRepository.open(':memory:');
+    const root = repository.getRoot('instrument');
+    const folder = repository.createFolder({
+      libraryType: 'instrument',
+      parentId: root.id,
+      displayName: 'Folder',
+    });
+    const nested = repository.createFolder({
+      libraryType: 'instrument',
+      parentId: folder.id,
+      displayName: 'Nested',
+    });
+    for (let i = 0; i < 25; i++)
+      repository.createItem({
+        libraryType: 'instrument',
+        parentId: nested.id,
+        displayName: `Pad ${String(i).padStart(2, '0')}`,
+        payload: ITEM_PAYLOAD,
+      });
+    let executed = 0;
+    const original = DatabaseSync.prototype.prepare;
+    const prepare = vi.spyOn(DatabaseSync.prototype, 'prepare').mockImplementation(function (
+      this: DatabaseSync,
+      sql,
+    ) {
+      const statement = original.call(this, sql);
+      const all = statement.all.bind(statement);
+      const get = statement.get.bind(statement);
+      vi.spyOn(statement, 'all').mockImplementation((...args) => {
+        executed++;
+        return all(...args);
+      });
+      vi.spyOn(statement, 'get').mockImplementation((...args) => {
+        executed++;
+        return get(...args);
+      });
+      return statement;
+    });
+    try {
+      const first = repository.searchItems('Pad', 'instrument', 0, 20);
+      expect(first.items).toHaveLength(20);
+      expect(first.hasMore).toBe(true);
+      expect(first.total).toBe(25);
+      expect(first.items.map((item) => item.breadcrumb)).toEqual(
+        first.items.map((item) => [root.displayName, 'Folder', 'Nested', item.node.displayName]),
+      );
+      expect(executed).toBe(3);
+      const prepared = prepare.mock.calls.length;
+      executed = 0;
+      const second = repository.searchItems('Pad', 'instrument', 20, 20);
+      expect(second.items).toHaveLength(5);
+      expect(second.hasMore).toBe(false);
+      expect(executed).toBe(3);
+      expect(prepare).toHaveBeenCalledTimes(prepared);
+    } finally {
+      repository.close();
+      vi.restoreAllMocks();
+    }
+  });
   it('retains stable UUID identity across rename while duplicate gets a new identity', () => {
     const repository = UnifiedLibraryRepository.open(':memory:');
     try {
