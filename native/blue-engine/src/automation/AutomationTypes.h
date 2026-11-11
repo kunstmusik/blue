@@ -50,7 +50,8 @@ struct AutomationDef {
     uint32_t id = 0;                       // Unique automation ID
     std::string channelName;               // Target channel (key)
     AutomationCurve curve = AutomationCurve::LINEAR;
-    std::vector<AutomationPoint> points;   // Envelope points (ordered by time)
+    std::vector<AutomationPoint> points;   // Authored order, including historical unordered input
+    bool pointsOrdered = false;           // Prepared on the control thread
     bool enabled = true;
     std::string resolutionDecimal;         // validated canonical text
     double resolutionDouble = 0.0;         // prepared Java doubleValue()
@@ -62,7 +63,7 @@ struct AutomationDef {
 // Immutable container for all active automations
 struct AutomationList {
     // Map channel name -> AutomationDef; each channel has at most one automation
-    std::map<std::string, AutomationDef> automations;
+    std::map<std::string, std::shared_ptr<const AutomationDef>> automations;
     uint64_t revision = 0;
 
     AutomationList() = default;
@@ -72,7 +73,7 @@ struct AutomationList {
 // Runtime state maintained by the performance thread: small fixed data plus
 // preallocated diagnostic counters; no owned allocations.
 struct AutomationState {
-    size_t currentIndex;          // Current segment hint (completion bookkeeping)
+    size_t currentIndex;          // Ordered upper-bound endpoint in [1, points.size()]
     bool completed;               // Has reached the end
     double* channelPointer;
     double lastElapsed;

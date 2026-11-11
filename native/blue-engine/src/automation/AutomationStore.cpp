@@ -88,6 +88,8 @@ AutomationPrepareError prepareAutomationDef(uint32_t id,
     out.channelName = channel;
     out.curve = curve;
     out.points = points;
+    out.pointsOrdered = std::is_sorted(points.begin(), points.end(),
+        [](const AutomationPoint& a, const AutomationPoint& b) { return a.time < b.time; });
     out.enabled = enabled;
     out.resolutionDecimal = resolution.canonicalText();
     out.resolutionDouble = resolutionDouble;
@@ -130,7 +132,7 @@ AutomationPrepareError AutomationStore::createAutomation(
 
     nextId_ += 1;
     updateList([&](AutomationList& list) {
-        list.automations[channelName] = std::move(def);
+        list.automations[channelName] = std::make_shared<const AutomationDef>(std::move(def));
     });
 
     if (outId) *outId = autoId;
@@ -151,8 +153,8 @@ AutomationPrepareError AutomationStore::updateAutomation(
         return AutomationPrepareError::NotFound;
     }
 
-    const uint32_t existingId = it->second.id;
-    const uint64_t nextDefRev = it->second.definitionRevision + 1;
+    const uint32_t existingId = it->second->id;
+    const uint64_t nextDefRev = it->second->definitionRevision + 1;
 
     AutomationDef def;
     const auto status = prepareAutomationDef(existingId, channelName, curve, points, enabled,
@@ -162,7 +164,7 @@ AutomationPrepareError AutomationStore::updateAutomation(
     }
 
     updateList([&](AutomationList& list) {
-        list.automations[channelName] = std::move(def);
+        list.automations[channelName] = std::make_shared<const AutomationDef>(std::move(def));
     });
 
     return AutomationPrepareError::Ok;
@@ -193,13 +195,13 @@ bool AutomationStore::setEnabled(const std::string& channelName, bool enabled) {
         return false;
     }
 
-    uint64_t nextDefRev = it->second.definitionRevision + 1;
+    uint64_t nextDefRev = it->second->definitionRevision + 1;
 
     updateList([&](AutomationList& list) {
-        AutomationDef newDef = list.automations[channelName];
+        AutomationDef newDef = *list.automations.at(channelName);
         newDef.enabled = enabled;
         newDef.definitionRevision = nextDefRev;
-        list.automations[channelName] = std::move(newDef);
+        list.automations[channelName] = std::make_shared<const AutomationDef>(std::move(newDef));
     });
 
     return true;
@@ -224,7 +226,7 @@ std::vector<AutomationDef> AutomationStore::listAutomations() const {
 
     result.reserve(current->automations.size());
     for (const auto& [channelName, def] : current->automations) {
-        result.push_back(def);
+        result.push_back(*def);
     }
 
     return result;

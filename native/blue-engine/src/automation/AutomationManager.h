@@ -54,6 +54,7 @@ public:
     // the integer sample boundary above; fixture times are arbitrary binary64
     // values and cannot all be represented as int64 samples at one rate.
     void processAtElapsedTimeForTesting(double elapsed);
+    size_t lookupComparisonsForTesting() const { return lookupComparisonsForTesting_; }
 #endif
 
     // Reset state (called when engine starts or restarts)
@@ -73,6 +74,7 @@ private:
     static constexpr size_t kMaxActiveAutomations = 256;
 
     struct ActiveAutomation {
+        uint32_t id = 0;
         const std::string* channelName = nullptr;
         const AutomationDef* def = nullptr;
         AutomationState state{};
@@ -97,9 +99,12 @@ private:
     uint64_t cachedSnapshotRevision_ = 0;
     std::array<ActiveAutomation, kMaxActiveAutomations> activeAutomations_{};
     std::array<AutomationState, kMaxActiveAutomations> previousStates_{};
-    std::array<const std::string*, kMaxActiveAutomations> previousChannelNames_{};
+    std::array<uint32_t, kMaxActiveAutomations> previousIds_{};
     size_t activeAutomationCount_ = 0;
     uint64_t totalInvalidEvaluationCount_ = 0;
+#ifdef BLUE_ENGINE_TESTING
+    size_t lookupComparisonsForTesting_ = 0;
+#endif
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     size_t activePointCount_ = 0;

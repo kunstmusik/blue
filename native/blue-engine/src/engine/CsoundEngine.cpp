@@ -1785,7 +1785,7 @@ bool CsoundEngine::hasActiveAutomation(const std::string &name) const {
   }
 
   auto it = list->automations.find(name);
-  return it != list->automations.end() && it->second.enabled;
+  return it != list->automations.end() && it->second->enabled;
 }
 
 } // namespace blue

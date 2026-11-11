@@ -43,6 +43,9 @@ void AutomationManager::processAtElapsedTimeForTesting(double elapsed) {
 #endif
 
 void AutomationManager::processElapsed(double elapsed) {
+#ifdef BLUE_ENGINE_TESTING
+    lookupComparisonsForTesting_ = 0;
+#endif
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
     lastProcessDiagnostics_ = ProcessDiagnostics{};
     snapshotChangedThisCycle_ = false;
@@ -60,9 +63,8 @@ void AutomationManager::processElapsed(double elapsed) {
         }
 
         auto nextSnapshot = store_ ? store_->getList() : nullptr;
-        // Build the fixed runtime slots after the old snapshot has been handed
-        // to a reclamation slot. The slot keeps all referenced strings alive
-        // while the audio-thread state is rebuilt.
+        // Rebuilding reads only prior numeric IDs/state: retirement may reclaim
+        // the old map's strings and definitions immediately on the control thread.
         rebuildActiveAutomations(nextSnapshot);
         activeListSnapshot_ = std::move(nextSnapshot);
         cachedSnapshotRevision_ = storeRev;
@@ -194,28 +196,56 @@ double AutomationManager::evaluate(const AutomationDef& def, AutomationState& st
 
     size_t aIndex = 0;
     std::ptrdiff_t bIndex = -1;
-    for (size_t i = 1; i < size; i++) {
-        const AutomationPoint& candidate = points[i];
-        if (candidate.time == elapsed) {
-            if (i == size - 1) {
-                return candidate.value;
-            }
-            // last point of the same-time run wins
-            while (i < size) {
-                const AutomationPoint& temp = points[i];
-                if (temp.time != elapsed) {
-                    break;
-                }
-                bIndex = static_cast<std::ptrdiff_t>(i);
-                i++;
-            }
-            return points[static_cast<size_t>(bIndex)].value;
+    if (def.pointsOrdered && std::isfinite(elapsed)) {
+        const auto beforePoint = [&](double time, const AutomationPoint& point) {
+#ifdef BLUE_ENGINE_TESTING
+            ++lookupComparisonsForTesting_;
+#endif
+            return time < point.time;
+        };
+        size_t upper = state.currentIndex;
+        if (upper < 1 || upper > size ||
+            (upper > 1 && beforePoint(elapsed, points[upper - 1])) ||
+            (upper < size && !beforePoint(elapsed, points[upper]))) {
+            // Point zero is special in Java; only the tail participates in lookup.
+            upper = static_cast<size_t>(std::upper_bound(
+                points.begin() + 1, points.end(), elapsed, beforePoint) - points.begin());
         }
-        if (candidate.time < elapsed) {
-            aIndex = i;
-        } else {
-            bIndex = static_cast<std::ptrdiff_t>(i);
-            break;
+        state.currentIndex = upper;
+        if (upper > 1 && points[upper - 1].time == elapsed) return points[upper - 1].value;
+        if (upper == size) return points.back().value;
+        aIndex = upper - 1;
+        bIndex = static_cast<std::ptrdiff_t>(upper);
+    } else {
+        for (size_t i = 1; i < size; i++) {
+#ifdef BLUE_ENGINE_TESTING
+            ++lookupComparisonsForTesting_;
+#endif
+            const AutomationPoint& candidate = points[i];
+            if (candidate.time == elapsed) {
+                if (i == size - 1) {
+                    return candidate.value;
+                }
+                // last point of the same-time run wins
+                while (i < size) {
+#ifdef BLUE_ENGINE_TESTING
+                    ++lookupComparisonsForTesting_;
+#endif
+                    const AutomationPoint& temp = points[i];
+                    if (temp.time != elapsed) {
+                        break;
+                    }
+                    bIndex = static_cast<std::ptrdiff_t>(i);
+                    i++;
+                }
+                return points[static_cast<size_t>(bIndex)].value;
+            }
+            if (candidate.time < elapsed) {
+                aIndex = i;
+            } else {
+                bIndex = static_cast<std::ptrdiff_t>(i);
+                break;
+            }
         }
     }
     if (bIndex == -1) {
@@ -291,7 +321,7 @@ void AutomationManager::rebuildActiveAutomations(const std::shared_ptr<const Aut
     const size_t previousCount = activeAutomationCount_;
     for (size_t i = 0; i < previousCount; ++i) {
         previousStates_[i] = activeAutomations_[i].state;
-        previousChannelNames_[i] = activeAutomations_[i].channelName;
+        previousIds_[i] = activeAutomations_[i].id;
     }
     activeAutomationCount_ = 0;
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
@@ -302,7 +332,8 @@ void AutomationManager::rebuildActiveAutomations(const std::shared_ptr<const Aut
         return;
     }
 
-    for (const auto& [channelName, def] : list->automations) {
+    for (const auto& [channelName, definition] : list->automations) {
+        const auto& def = *definition;
         if (!def.enabled || def.points.empty()) {
             continue;
         }
@@ -317,8 +348,7 @@ void AutomationManager::rebuildActiveAutomations(const std::shared_ptr<const Aut
 
         AutomationState state;
         for (size_t previousIndex = 0; previousIndex < previousCount; ++previousIndex) {
-            const auto* previousName = previousChannelNames_[previousIndex];
-            if (previousName && *previousName == channelName) {
+            if (previousIds_[previousIndex] == def.id) {
                 state = previousStates_[previousIndex];
                 break;
             }
@@ -337,7 +367,7 @@ void AutomationManager::rebuildActiveAutomations(const std::shared_ptr<const Aut
         }
         state.cachedDefRevision = def.definitionRevision;
         activeAutomations_[activeAutomationCount_] = ActiveAutomation{
-            &channelName, &def, state};
+            def.id, &channelName, &def, state};
         activeAutomationCount_ += 1;
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING
         activePointCount_ += def.points.size();

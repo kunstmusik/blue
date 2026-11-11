@@ -11,6 +11,121 @@
 
 namespace {
 
+void testUnchangedDefinitionsAreSharedAndSnapshotsStayImmutable() {
+    using namespace blue;
+    auto store = std::make_shared<AutomationStore>();
+    std::vector<AutomationPoint> points(10000, AutomationPoint{0, 0.5});
+    assert(store->createAutomation("a", AutomationCurve::LINEAR, points, true, "-1") == AutomationPrepareError::Ok);
+    const auto before = store->getList();
+    const auto original = before->automations.at("a");
+    const auto* pointBuffer = original->points.data();
+    const auto* segments = original->segments.data();
+    assert(store->createAutomation("b", AutomationCurve::STEP, {{0, 1}, {1, 2}}, true, "-1") == AutomationPrepareError::Ok);
+    assert(store->getList()->automations.at("a") == original);
+    assert(store->updateAutomation("b", AutomationCurve::LINEAR, {{0, 3}, {1, 4}}, true, "-1") == AutomationPrepareError::Ok);
+    assert(store->setEnabled("b", false));
+    assert(store->getList()->automations.at("a") == original);
+    assert(original->points.data() == pointBuffer);
+    assert(original->segments.data() == segments);
+    assert(store->setEnabled("a", false));
+    assert(original->enabled);
+    assert(!store->getList()->automations.at("a")->enabled);
+    assert(before->automations.size() == 1);
+    const auto listed = store->listAutomations();
+    assert(listed.size() == 2);
+    assert(!listed.front().enabled);
+    assert(store->deleteAutomation("a"));
+    store->clear();
+    assert(original->points.data() == pointBuffer);
+    assert(original->points.back().value == 0.5);
+}
+
+void testSameNameReplacementDoesNotInheritCompletedState() {
+    using namespace blue;
+    auto store = std::make_shared<AutomationStore>();
+    assert(store->createAutomation("gain", AutomationCurve::LINEAR, {{0, 0}, {1, 1}}, true, "-1") == AutomationPrepareError::Ok);
+    double value = -1;
+    AutomationManager manager(store, [&](const std::string&, double next) { value = next; });
+    manager.processAtElapsedTimeForTesting(2);
+    assert(value == 1);
+    assert(store->createAutomation("gain", AutomationCurve::LINEAR, {{0, 10}, {1, 20}}, true, "-1") == AutomationPrepareError::Ok);
+    manager.processAtElapsedTimeForTesting(2);
+    assert(value == 20);
+}
+
+void testDenseLookupWorkAndSeeks() {
+    using namespace blue;
+    auto store = std::make_shared<AutomationStore>();
+    std::vector<AutomationPoint> points;
+    for (int i = 0; i < 10000; ++i) points.emplace_back(i, i);
+    assert(store->createAutomation("dense", AutomationCurve::LINEAR, points, true, "-1") == AutomationPrepareError::Ok);
+    double value = -1;
+    AutomationManager manager(store, [&](const std::string&, double next) { value = next; });
+    manager.processAtElapsedTimeForTesting(9000.25);
+    assert(value == 9000.25);
+    assert(manager.lookupComparisonsForTesting() <= 20);
+    for (int i = 0; i < 100; ++i) {
+        const double time = 9000.25 + i * 0.001;
+        manager.processAtElapsedTimeForTesting(time);
+        assert(value == time);
+        assert(manager.lookupComparisonsForTesting() <= 3);
+    }
+    for (double time : {10.5, 9998.5, 150.5, -0.5, 10000.0, 5.5}) {
+        manager.processAtElapsedTimeForTesting(time);
+        assert(value == (time > 9999 ? 9999 : time));
+        assert(manager.lookupComparisonsForTesting() <= 20);
+    }
+    manager.processAtElapsedTimeForTesting(std::numeric_limits<double>::quiet_NaN());
+    assert(std::isnan(value));
+
+    points.assign(10000, AutomationPoint{1, 7});
+    points.front() = {0, 0};
+    points.emplace_back(2, 9);
+    assert(store->updateAutomation("dense", AutomationCurve::LINEAR, points, true, "-1") == AutomationPrepareError::Ok);
+    manager.processAtElapsedTimeForTesting(1);
+    assert(value == 7);
+    assert(manager.lookupComparisonsForTesting() <= 20);
+    manager.processAtElapsedTimeForTesting(1);
+    assert(value == 7);
+    assert(manager.lookupComparisonsForTesting() <= 3);
+}
+
+void testOrderedEdgeRulesAndUnorderedFallback() {
+    using namespace blue;
+    for (auto curve : {AutomationCurve::LINEAR, AutomationCurve::STEP, AutomationCurve::EXPONENTIAL}) {
+        auto store = std::make_shared<AutomationStore>();
+        assert(store->createAutomation("edge", curve,
+            {{-2, 1}, {0, 2}, {0, 3}, {2, 5}, {2, 7}, {4, 9}}, true, "-1") == AutomationPrepareError::Ok);
+        double value = -1;
+        AutomationManager manager(store, [&](const std::string&, double next) { value = next; });
+        const std::vector<std::pair<double, double>> cases = {
+            {-3, curve == AutomationCurve::LINEAR ? 0.5 : 1},
+            {-0.0, 1}, {0, 1},
+            {1, curve == AutomationCurve::LINEAR ? 4 : curve == AutomationCurve::STEP ? 3 : std::sqrt(15.0)},
+            {2, 7}, {2, 7},
+            {3, curve == AutomationCurve::LINEAR ? 8 : curve == AutomationCurve::STEP ? 7 : std::sqrt(63.0)},
+            {4, 9}, {5, 9},
+            {-1, curve == AutomationCurve::LINEAR ? 1.5 : curve == AutomationCurve::STEP ? 1 : std::sqrt(2.0)},
+        };
+        for (const auto& [time, expected] : cases) {
+            manager.processAtElapsedTimeForTesting(time);
+            assert(std::abs(value - expected) < 1e-12);
+        }
+    }
+    auto store = std::make_shared<AutomationStore>();
+    assert(store->createAutomation("unordered", AutomationCurve::LINEAR,
+        {{0, 0}, {3, 3}, {1, 10}, {5, 5}}, true, "-1") == AutomationPrepareError::Ok);
+    double value = -1;
+    AutomationManager manager(store, [&](const std::string&, double next) { value = next; });
+    for (const auto& [time, expected] : std::vector<std::pair<double, double>>{
+             {2, 2}, {3, 3}, {4, 6.25}, {1, 1}, {6, 5}, {4, 6.25}}) {
+        manager.processAtElapsedTimeForTesting(time);
+        assert(value == expected);
+    }
+    manager.processAtElapsedTimeForTesting(std::numeric_limits<double>::quiet_NaN());
+    assert(std::isnan(value));
+}
+
 void testShrinkingActiveAutomationResetsCachedSegment() {
     using namespace blue;
 
@@ -273,6 +388,10 @@ void testInvalidDefinitionKeepsPreviousRevision() {
 } // namespace
 
 int main() {
+    testUnchangedDefinitionsAreSharedAndSnapshotsStayImmutable();
+    testSameNameReplacementDoesNotInheritCompletedState();
+    testOrderedEdgeRulesAndUnorderedFallback();
+    testDenseLookupWorkAndSeeks();
     std::cout << "Starting test 1..." << std::endl;
     testShrinkingActiveAutomationResetsCachedSegment();
     std::cout << "Starting test 2..." << std::endl;

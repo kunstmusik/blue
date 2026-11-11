@@ -81,6 +81,7 @@ add_executable(test_automation_manager
 )
 target_include_directories(test_automation_manager PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(test_automation_manager PRIVATE Boost::boost)
+target_compile_definitions(test_automation_manager PRIVATE BLUE_ENGINE_TESTING=1)
 set_target_properties(test_automation_manager PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 add_test(NAME AutomationManagerTests COMMAND test_automation_manager)
 
