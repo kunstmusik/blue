@@ -258,7 +258,6 @@ describe('PianoRoll editor parity helpers', () => {
     expect(updated.fieldDefinitions).toHaveLength(2);
     expect(updated.notes[0]!.fieldValues).toEqual([0.5, 5]);
   });
-
 });
 
 describe('NoteCanvasMouseListener', () => {
