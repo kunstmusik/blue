@@ -6,7 +6,12 @@
  * After stop (or natural completion), the engine session is shut down.
  * A playback lock prevents concurrent operations.
  */
-import { EngineClient, AutomationCurveCode, type EngineStateSnapshot } from '@blue/engine-client';
+import {
+  EngineClient,
+  AutomationCurveCode,
+  MAX_BATCH_CHANNELS,
+  type EngineStateSnapshot,
+} from '@blue/engine-client';
 import { BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -221,6 +226,7 @@ export class EngineBridge {
   private playbackLock = false;
   private playbackSessionId = 0;
   private statePollingTimer: ReturnType<typeof setInterval> | null = null;
+  private statePollInFlight: symbol | null = null;
   private outputCallback: EngineOutputCallback | null = null;
   private playbackCompleteCallback: PlaybackCompleteCallback | null = null;
   private playbackErrorWarningCallback: PlaybackErrorWarningCallback | null = null;
@@ -351,6 +357,7 @@ export class EngineBridge {
   }
 
   private clearStatePolling(): void {
+    this.statePollInFlight = null;
     if (this.statePollingTimer) {
       clearInterval(this.statePollingTimer);
       this.statePollingTimer = null;
@@ -374,22 +381,38 @@ export class EngineBridge {
   }
 
   private async pollEngineState(sessionId: number): Promise<void> {
-    const client = this.activeSession?.getClient();
-    if (sessionId !== this.playbackSessionId || !client || !this.awaitingPlaybackTerminalState) {
+    const session = this.activeSession;
+    const client = session?.getClient();
+    if (
+      sessionId !== this.playbackSessionId ||
+      !client ||
+      !this.awaitingPlaybackTerminalState ||
+      this.statePollInFlight !== null
+    ) {
       return;
     }
 
+    const token = Symbol();
+    this.statePollInFlight = token;
+    const isCurrent = () =>
+      this.statePollInFlight === token &&
+      sessionId === this.playbackSessionId &&
+      session === this.activeSession &&
+      client === session?.getClient() &&
+      this.awaitingPlaybackTerminalState;
     try {
       const resp = await client.getEngineState();
-      if (resp.ok && resp.state) {
+      if (isCurrent() && resp.ok && resp.state) {
         await this.handleEngineState(resp.state, 'poll');
       }
     } catch (error: unknown) {
-      if (sessionId === this.playbackSessionId && this.awaitingPlaybackTerminalState) {
+      if (isCurrent()) {
         console.warn(
           `[EngineBridge] getEngineState poll failed: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
+    } finally {
+      if (this.statePollInFlight === token) this.statePollInFlight = null;
     }
   }
 
@@ -1102,16 +1125,41 @@ export class EngineBridge {
       );
     }
 
+    let fixedChannels: { name: string; value: number }[] = [];
+    const flushFixedChannels = async () => {
+      if (fixedChannels.length === 0) return;
+      const entries = fixedChannels;
+      fixedChannels = [];
+      try {
+        if ((await client.setChannels(entries)).ok) return;
+      } catch {
+        // Startup retains legacy per-channel recovery for unsupported or rejected batches.
+      }
+      for (const { name, value } of entries) {
+        try {
+          const response = await client.createChannel(name, value);
+          if (!response.ok) await client.setChannel(name, value);
+        } catch (err) {
+          console.warn(
+            `[EngineBridge] createChannel(${name}) error: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+    };
     for (const param of parameters) {
       const varName = param.getCompilationVarName();
       if (!varName) continue;
 
-      const points = getEngineAutomationPoints(
-        param,
-        automationTiming?.renderStartTime ?? 0,
-        automationTiming?.tempoMap,
-      );
+      const points =
+        param.isAutomationEnabled() && param.getPoints().length >= 2
+          ? getEngineAutomationPoints(
+              param,
+              automationTiming?.renderStartTime ?? 0,
+              automationTiming?.tempoMap,
+            )
+          : [];
       if (param.isAutomationEnabled() && param.getPoints().length >= 2 && points.length >= 2) {
+        await flushFixedChannels();
         const curveCode = mapAutomationCurve(param.getCurve());
 
         try {
@@ -1132,11 +1180,11 @@ export class EngineBridge {
         }
       } else {
         try {
-          const fixedVal = getRuntimeFixedChannelValue(param, automationTiming);
-          const resp = await client.createChannel(varName, fixedVal);
-          if (!resp.ok) {
-            await client.setChannel(varName, fixedVal);
-          }
+          fixedChannels.push({
+            name: varName,
+            value: getRuntimeFixedChannelValue(param, automationTiming),
+          });
+          if (fixedChannels.length === MAX_BATCH_CHANNELS) await flushFixedChannels();
         } catch (err) {
           console.warn(
             `[EngineBridge] createChannel(${varName}) error: ${err instanceof Error ? err.message : String(err)}`,
@@ -1144,6 +1192,7 @@ export class EngineBridge {
         }
       }
     }
+    await flushFixedChannels();
 
     console.log(`[EngineBridge] Sent ${parameters.length} parameter definitions`);
   }

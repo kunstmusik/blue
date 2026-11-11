@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EngineStateSnapshot } from '@blue/engine-client';
+import { Parameter } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 import type { EngineRuntimeService } from './engine-runtime';
 import { EngineSession, type EngineSessionCreationRequest } from './engine-session';
@@ -25,6 +26,165 @@ function windowStub() {
 
 describe('EngineBridge runtime selection and lifecycle', () => {
   beforeEach(() => showErrorBox.mockClear());
+
+  it('flushes fixed startup values before automation definitions in authored order', async () => {
+    const parameters = ['first', 'automated', 'last'].map((name) => {
+      const parameter = new Parameter();
+      parameter.setCompilationVarName(name);
+      parameter.setFixedValue(0.5);
+      return parameter;
+    });
+    parameters[1]!.setPoints([
+      { time: 0, value: 0.1 },
+      { time: 4, value: 0.9 },
+    ]);
+    parameters[1]!.setAutomationEnabled(true);
+    const inactivePoints = vi.spyOn(parameters[0]!, 'getPoints');
+    const order: string[] = [];
+    const client = {
+      clearAutomations: async () => ({ ok: true, message: '' }),
+      setChannels: async (entries: readonly { name: string; value: number }[]) => {
+        order.push(...entries.map((entry) => entry.name));
+        return { ok: true, message: '' };
+      },
+      createAutomation: async (name: string) => {
+        order.push(name);
+        return { ok: true, message: '' };
+      },
+    };
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    await (
+      bridge as unknown as {
+        sendAutomationDefinitions(client: unknown, parameters: Parameter[]): Promise<void>;
+      }
+    ).sendAutomationDefinitions(client, parameters);
+    expect(order).toEqual(['first', 'automated', 'last']);
+    expect(inactivePoints).not.toHaveBeenCalled();
+    inactivePoints.mockRestore();
+  });
+
+  it.each([true, false])(
+    'batches fixed startup channels with legacy fallback (batch succeeds: %s)',
+    async (batchOk) => {
+      const bridge = new EngineBridge(windowStub(), 'blue-engine');
+      const parameters = Array.from({ length: 300 }, (_, i) => {
+        const parameter = new Parameter();
+        parameter.setCompilationVarName(`channel_${i}`);
+        parameter.setFixedValue(i / 300);
+        return parameter;
+      });
+      const client = {
+        clearAutomations: vi.fn(async () => ({ ok: true, message: '' })),
+        setChannels: vi.fn(async (_entries: readonly { name: string; value: number }[]) => ({
+          ok: batchOk,
+          message: batchOk ? '' : 'unsupported',
+        })),
+        createChannel: vi.fn(async () => ({ ok: true, message: '' })),
+        setChannel: vi.fn(async () => ({ ok: true, message: '' })),
+      };
+      await (
+        bridge as unknown as {
+          sendAutomationDefinitions(client: unknown, parameters: Parameter[]): Promise<void>;
+        }
+      ).sendAutomationDefinitions(client, parameters);
+      expect(client.setChannels.mock.calls.map(([entries]) => entries.length)).toEqual([256, 44]);
+      expect(client.createChannel).toHaveBeenCalledTimes(batchOk ? 0 : 300);
+      expect(client.setChannel).not.toHaveBeenCalled();
+      expect(
+        client.setChannels.mock.calls.flatMap(([entries]) => entries).map((entry) => entry.name),
+      ).toEqual(parameters.map((p) => p.getCompilationVarName()));
+    },
+  );
+
+  it('keeps one health poll outstanding and resumes after failure', async () => {
+    vi.useFakeTimers();
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    const internals = bridge as unknown as {
+      activeSession: { getClient(): typeof client };
+      playbackSessionId: number;
+      awaitingPlaybackTerminalState: boolean;
+      startStatePolling(id: number): void;
+      clearStatePolling(): void;
+    };
+    let reject!: (error: Error) => void;
+    const client = {
+      getEngineState: vi.fn(() => new Promise<never>((_resolve, fail) => (reject = fail))),
+    };
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      internals.activeSession = { getClient: () => client };
+      internals.playbackSessionId = 1;
+      internals.awaitingPlaybackTerminalState = true;
+      internals.startStatePolling(1);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(client.getEngineState).toHaveBeenCalledOnce();
+      reject(new Error('slow transport failed'));
+      await vi.advanceTimersByTimeAsync(250);
+      expect(client.getEngineState).toHaveBeenCalledTimes(2);
+      expect(warning).toHaveBeenCalledOnce();
+      internals.clearStatePolling();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(client.getEngineState).toHaveBeenCalledTimes(2);
+    } finally {
+      internals.clearStatePolling();
+      warning.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(['success', 'failure'] as const)(
+    'ignores an old poll %s without releasing the replacement poll',
+    async (outcome) => {
+      vi.useFakeTimers();
+      const bridge = new EngineBridge(windowStub(), 'blue-engine');
+      let resolve!: (value: unknown) => void;
+      let reject!: (error: Error) => void;
+      const oldClient = {
+        getEngineState: vi.fn(
+          () =>
+            new Promise((ok, fail) => {
+              resolve = ok;
+              reject = fail;
+            }),
+        ),
+      };
+      const nextClient = { getEngineState: vi.fn(() => new Promise(() => {})) };
+      const internals = bridge as unknown as {
+        activeSession: { getClient(): unknown };
+        playbackSessionId: number;
+        awaitingPlaybackTerminalState: boolean;
+        startStatePolling(id: number): void;
+        clearStatePolling(): void;
+        handleEngineState: ReturnType<typeof vi.fn>;
+      };
+      const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      internals.handleEngineState = vi.fn();
+      try {
+        internals.activeSession = { getClient: () => oldClient };
+        internals.playbackSessionId = 1;
+        internals.awaitingPlaybackTerminalState = true;
+        internals.startStatePolling(1);
+        await vi.advanceTimersByTimeAsync(250);
+        expect(oldClient.getEngineState).toHaveBeenCalledOnce();
+        internals.clearStatePolling();
+        internals.activeSession = { getClient: () => nextClient };
+        internals.playbackSessionId = 2;
+        internals.startStatePolling(2);
+        await vi.advanceTimersByTimeAsync(250);
+        expect(nextClient.getEngineState).toHaveBeenCalledOnce();
+        if (outcome === 'success') resolve({ ok: true, state: { state: 'stopped' } });
+        else reject(new Error('old transport failed'));
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(internals.handleEngineState).not.toHaveBeenCalled();
+        expect(warning).not.toHaveBeenCalled();
+        expect(nextClient.getEngineState).toHaveBeenCalledOnce();
+      } finally {
+        internals.clearStatePolling();
+        warning.mockRestore();
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it('counts channel control commands and entries without sampling the engine', async () => {
     const bridge = new EngineBridge(windowStub(), 'blue-engine');
