@@ -1,0 +1,1015 @@
+
+ RUN  v4.1.11 /Users/stevenyi/work/blue3/packages/blue-app
+
+stdout | src/main/optimization-diagnostic.test.ts > collects structural preparation and projection diagnostics
+ENVIRONMENT {"platform":"darwin","os":"27.0.0","arch":"arm64","cpu":"Apple M3 Pro","versions":{"node":"22.23.1","acorn":"8.16.0","ada":"2.9.2","amaro":"1.1.8","ares":"1.34.6","brotli":"1.1.0","cjs_module_lexer":"2.2.0","cldr":"48.0","icu":"78.2","llhttp":"9.4.2","modules":"127","napi":"10","nbytes":"0.1.3","ncrypto":"0.0.1","nghttp2":"1.69.0","openssl":"3.5.7","simdjson":"4.5.0","simdutf":"6.4.2","sqlite":"3.51.3","tz":"2026a","undici":"6.27.0","unicode":"17.0","uv":"1.51.0","uvwasi":"0.0.23","v8":"12.4.254.21-node.56","zlib":"1.3.1-e00f703","zstd":"1.5.7"},"fixture":"1000 clips / 32 generic instruments","warmups":5,"samples":30,"classification":"diagnostic only; power/display/competing apps not controlled"}
+BLUE_PERFORMANCE {"metric":"structural-prepare","unit":"ms","samples":[61.437875000000076,68.97183300000006,81.94237500000008,72.93254200000001,75.42287499999975,64.46308399999998,59.306540999999925,61.600916000000325,109.86479099999997,69.43954100000019,60.015707999999904,59.78254099999958,62.89041700000007,68.92029200000025,72.00462500000003,69.57329100000015,63.17920800000002,59.77387499999986,59.014916000000085,60.513958,59.30387500000006,59.878541999999925,75.49066600000015,64.49695800000018,57.55662499999971,61.520500000000084,61.34212499999967,59.27424999999994,60.13000000000011,61.09949999999981],"p50":61.520500000000084,"p95":81.94237500000008,"max":109.86479099999997}
+BLUE_PERFORMANCE {"metric":"editor-projection","unit":"ms","samples":[11.853500000000167,7.150666999999885,7.99895800000013,7.5802920000000995,7.318499999999858,7.332875000000058,6.881541999999627,8.448500000000422,6.853165999999874,6.890249999999924,6.91820800000005,7.731000000000222,7.6807080000003225,6.6418749999998,7.207582999999886,6.954917000000023,8.52062500000011,7.0088330000003225,7.252124999999978,6.868332999999893,6.734875000000102,6.9052090000000135,6.61725000000024,6.601458999999977,6.6052920000001905,6.632790999999997,8.634000000000015,6.557166999999936,6.75170799999978,8.247249999999894],"p50":6.954917000000023,"p95":8.634000000000015,"max":11.853500000000167}
+
+ ❯ src/main/optimization-diagnostic.test.ts (1 test | 1 failed) 2733ms
+   × collects structural preparation and projection diagnostics 2732ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main/optimization-diagnostic.test.ts > collects structural preparation and projection diagnostics
+AssertionError: expected '<blueData version="2.10.1">\n  <proje…' to be '<blueData version="2.10.1">\n  <proje…' // Object.is equality
+
+- Expected
++ Received
+
+@@ -3559,11 +3559,973 @@
+    </arrangement>
+    <mixer panningEnabled="true" panLawDb="-3" panOffCenterBoost="false">
+      <enabled>true</enabled>
+      <enableMeters>true</enableMeters>
+      <meterProfile>peak-rms-mixing-plus-6</meterProfile>
+-     <channelList listName="Orchestra" list="channels"/>
++     <channelListGroups>
++       <channelList association="526c1478-02bc-4fc4-a4d5-6226f77c424f" listName="Track Layer Group">
++         <channel association="206aa76f-4033-4ddc-95ad-0b7010077c58">
++           <name></name>
++           <outChannel>Master</outChannel>
++           <level>0.0</level>
++           <pan>0.5</pan>
++           <stereoPanMode>balance</stereoPanMode>
++           <panWidth>1.0</panWidth>
++           <dualPanLeft>0.0</dualPanLeft>
++           <dualPanRight>1.0</dualPanRight>
++           <muted>false</muted>
++           <solo>false</solo>
++           <effectsChain bin="pre"/>
++           <effectsChain bin="post"/>
++           <parameter uniqueId="param-5239d3b2-4646-473c-8972-4845977483db" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++             <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++           </parameter>
++           <parameter uniqueId="param-74f3341b-750e-4e54-aa2f-d53bacff1142" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++             <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++           </parameter>
++           <parameter uniqueId="param-5fd105fb-a7cc-4bd6-9a4f-94772d15efd6" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++             <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++           </parameter>
++           <parameter uniqueId="param-eaf8e0f9-7a9d-4d8c-9613-ba29b754fdeb" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++             <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++           </parameter>
++           <parameter uniqueId="param-e3cdb614-a347-4536-aa38-7cffa0fce29c" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++             <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++           </parameter>
++         </channel>
++       </channelList>
++     </channelListGroups>
++     <channelList listName="Orchestra" list="channels">
++       <channel association="1">
++         <name>Instrument 0</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-0e39c4e5-d92a-4f28-8d88-6d4f2d15375e" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-f08af9a2-6f51-47d0-a6fa-41a3c6613b14" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-8085384d-a2b5-455a-bb63-8b280f74fa1f" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-668649f9-fe98-4dc5-babe-c9e955f0e7b4" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-40e1e759-6cf4-4f43-a42d-0e8684153ab1" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="2">
++         <name>Instrument 1</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-3312e79a-8751-4f43-8cc3-707834c1e88e" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-52570e21-11bc-42cb-bb75-a6b87c03a336" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-26bb5442-721d-4152-b8c7-734d14bb7ea9" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-99cff430-ee2a-404e-97fb-a6cba28e7867" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-c59d0d55-e1dc-43a2-b6bf-e2ba989e70bb" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="3">
++         <name>Instrument 2</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-28c29907-98d7-44d9-bd85-bbcfe790efec" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-fa3fb2e2-0da9-4628-9a86-e636b680d8e0" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-33f63e6c-aaa2-4c04-b92a-cb3cacec4a81" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-4614c553-45f6-40de-be08-76c744c15b45" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-f8ef23b3-2a7f-4100-8e34-20ebe55598ce" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="4">
++         <name>Instrument 3</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-c2757a61-6b47-457a-92d7-8eb139fdd58a" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-252d0998-fc53-4bd1-ac0a-c2427dc74784" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-ccadf723-8301-482f-9607-88cafbeae4de" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-2de334b9-f5b6-47bd-b7f9-c91e8b542458" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-8d7469d1-19f7-416c-bca3-7aece93482d1" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="5">
++         <name>Instrument 4</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-65abfac6-045b-4dc6-a019-692378df8422" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-224084bd-6d14-44d7-9e33-bb36adde8b33" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-cb06e32b-251c-4437-b3dc-6a922a0c7ec1" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-4924435d-0987-45ea-bae9-f75a3981d886" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-f9461399-5d89-4f18-8be4-292128eac3e6" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="6">
++         <name>Instrument 5</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-660b773f-bbfe-4e48-aa6e-e5f2f1e8f822" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-32c37eab-e627-4cfb-91a3-a5343cdf8c39" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-3e0632aa-54b2-4dab-ba0f-6a3eb4993cf5" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-353036eb-d37f-4dab-abf5-af3c0fe3f541" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-c69ce8f5-c6c6-4eab-b023-00dfc0a86a8e" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="7">
++         <name>Instrument 6</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-d42448dc-358d-4a00-aad8-09286bac66f6" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-a75bf56e-d92d-41cc-b84d-aa1fcb3985f5" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-95e79a00-b5d5-4d80-ab45-a0539b13608d" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-54a0229b-ed5b-4e78-b7f7-337bb443e48d" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-7c641f1a-0ec5-40cd-9473-ca7f1789677d" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="8">
++         <name>Instrument 7</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-793e4027-bc62-47e1-a6a2-6b7970658ed0" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-a18684f2-cea0-4c8c-a396-3c1ad44eb65f" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-19ce8f67-ace4-4c19-91fc-b662f00bc565" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-2fcf8145-a78c-43f7-9d36-a41a2747c200" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-76589fb4-c91f-456a-a332-49f3da3b3031" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="9">
++         <name>Instrument 8</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-9084da1e-f199-4b04-b140-67f8602afa18" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-fa75e375-36eb-4765-994a-53731e9c2046" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-a9aa0b9d-c23e-4252-b118-b49d691554f2" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-456cc27d-97e2-4ee8-832d-1bcb48df2d70" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-45551358-e590-456d-951a-f57b4e7db6ce" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="10">
++         <name>Instrument 9</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-93cbb6cc-e8ba-4eb5-8ffc-bc4bf0776951" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-67a3f96d-0489-4a45-8e1b-31be8d5ee921" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-92694382-407f-4de7-8c0e-b13ea761863d" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-a3c86f24-d3a7-471a-8d98-ae08275e724a" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-550197bf-4149-435f-9437-47e088ccec22" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="11">
++         <name>Instrument 10</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-2e89bc66-7c2f-43be-a660-87e336155f33" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-82a7a15d-0112-41ab-94d9-7f89cc7e09cd" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-17935741-7ee8-4918-bece-0c903f90b27f" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-418b9f62-2736-434e-b4fa-b4e30cb6c873" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-ccbd916f-bad7-4b01-852d-1bf85e8f58da" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="12">
++         <name>Instrument 11</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-3b586d1c-0ceb-42d3-914d-f04d3483f7b5" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-6832fa46-77ee-4387-9278-94bc7f94fdbd" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-90b1b66d-4ec4-495b-9564-80549222be59" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-802d77d8-7c4d-4bd4-8cf1-bec791e0fe8a" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-bc2605d4-bba1-4dea-b892-7135a7688a36" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="13">
++         <name>Instrument 12</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-c842a583-2950-49dc-8f3d-99d29e52ea74" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-2ba62f3c-aeab-4d54-b7fc-a90c224825e8" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-fb55ccaa-7aca-46d1-8457-34ede0de3a2a" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-b118fd9e-7303-4e16-bf40-86668f2a063b" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-6de46691-61e4-4d21-8858-40b465897e73" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="14">
++         <name>Instrument 13</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-371fe47f-c06f-43b9-b040-80aaabee8868" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-13749119-b517-4a2a-b7ad-ed3322318688" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-85015d1a-0199-4b6b-b30e-4874970ea43c" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-f8edb1f0-2081-4e91-a8cd-6bc381e14179" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-eed26b80-99b4-4798-830d-b560c2dad4a0" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="15">
++         <name>Instrument 14</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-0bc7ded7-5ee2-4ee9-adbd-f5e4c6b16c04" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-90f5d63f-0a46-47e8-9b00-02f5ccea4d52" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-c92aab3d-2d57-4569-8ee2-b97fe2311beb" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-1ff55dea-2782-465b-bfe8-d6fac468c11f" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-45b5093f-4df0-4d3e-aeaf-327247f766a3" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="16">
++         <name>Instrument 15</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-130c40a2-a867-47b7-b030-dcfbff56879c" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-f870eeb5-0757-46e6-995e-7bec7764a300" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-51e38a52-4fe1-420a-bfa5-a85e39d643b9" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-4762b066-a48a-4371-970a-01c5215a8e29" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-8cbb1f76-cfa9-49aa-bfa0-d6c02718661a" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="17">
++         <name>Instrument 16</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-6362d9ca-392f-4ae8-85b2-91f052989549" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-8f1747e9-9888-4623-ae1d-3b0692115866" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-9f863b04-e3fb-499a-ba73-3ec84a30f906" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-b75aa436-6ef4-43ec-8589-526d7e08b6d5" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-894b6e33-1c20-42ef-853a-2913018c12ec" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="18">
++         <name>Instrument 17</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-2a539fab-4bb5-4d13-84d8-f8ff2408293a" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-19ce14fe-1b08-4f79-9aac-41675376622e" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-9f23cf3f-ed00-47f9-9cfb-f8a223463883" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-ab42f6fa-dc60-4e8d-a4e4-4e1dba496efc" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-c4a6575e-4020-482a-a59c-ad4ed17c660a" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="19">
++         <name>Instrument 18</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-ae423311-0934-4f99-9ddf-8bb297829452" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-e80cd07e-c29e-4a75-aa83-62e3477af368" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-544c74f4-7f01-4cbc-8ac5-bae77c6f60f4" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-9ec8c37c-a05f-4e8a-bad5-53d31f33b400" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-1740860b-f44d-43d1-9a6e-1a8343e5c033" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="20">
++         <name>Instrument 19</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-b76cb35f-6930-4d74-9c84-303bf295ac0a" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-0a8d9d2b-32a5-4068-b7da-a62dcf6bff75" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-9e203df3-cca9-42b1-9283-83c9a27cd0c5" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-cdb18246-af82-4dc4-a007-26a2dedbba4a" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-70e85445-3cc5-413b-a0bf-d3010fce3cfd" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="21">
++         <name>Instrument 20</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-2125f80e-7bc6-4a35-88af-769c2d99d37a" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-b8427606-9b0b-42be-a204-72004185823a" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-708f3579-7b9f-4a26-b96b-754e1fd70427" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-3609ead1-958e-4ef4-970d-c3172f69ffa1" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-86c207aa-1b6c-4e81-8cf6-0d1f519984c6" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="22">
++         <name>Instrument 21</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-c1e75a3f-d5d2-4ba1-9fb8-36fc2fcad22d" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-718b6e86-cec1-45a2-8194-546957183493" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-ee6a1dac-03b6-4940-aca3-28589716d9f3" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-d9e0cdb6-5657-4317-b95d-132e1edd1ffa" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-4769414a-cfb3-4b15-8457-0f5be2d4d79c" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="23">
++         <name>Instrument 22</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-1fe3feb7-aa94-477c-9bb6-5f9b8c09bfd7" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-420a11b4-7a5c-411e-bb0a-00a9827d502f" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-874516f0-11ed-4498-ac36-003939115675" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-9d2ea01d-ff39-4f1e-976c-e9e54685d760" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-01ce4787-4312-4023-8860-fd1f65b0dba7" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="24">
++         <name>Instrument 23</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-2bf229a4-5c42-4a7a-b0d9-b7be3224ed34" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-95029a74-9cad-4fda-a8bf-2e977cfc91f2" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-0b9ea330-444d-48d7-b91c-62040cf41801" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-0d0d4b51-497e-4827-b5c5-b6cecc3c937c" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-12d95230-b9e2-4395-9c78-2d7dcf37c1e1" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="25">
++         <name>Instrument 24</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-d29849cf-c79a-468a-85e1-70035042667b" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-5ccdc57c-68b7-4cfa-93df-d4669c3a4083" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-86811363-6a17-45cc-9d2e-1802b15c45d9" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-baa35ca5-79bd-494b-9f51-9f2ce737dc41" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-ba3d68d0-de17-4a1e-87d8-a69acbaf922c" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="26">
++         <name>Instrument 25</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-1fefde86-9996-48a6-81ca-a67926ffcd60" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-455652d7-5adf-4e87-b15d-be83f52880d5" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-92983762-f037-4b5a-8270-53162e24a9a9" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-304257a3-b763-48de-b3f5-942356b653e4" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-3b0cf3f1-7cef-4750-8258-6154e39cabf9" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="27">
++         <name>Instrument 26</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-be0914e4-6e58-454e-8e08-9f2dd701324a" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-2b9c7af7-c44d-4989-afd5-936097c9d3f4" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-c9376220-457f-4e64-9b16-899362a283c1" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-53a0cb44-f6df-4cb6-9d16-a2a6b1a657bd" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-e71365bb-8fec-4a00-ae8a-0a6096e85e7d" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="28">
++         <name>Instrument 27</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-9e2ad52e-785f-47aa-9d4f-ed04f3ef9e65" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-9b4b0029-d6e3-46da-a6a3-a5da94387247" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-729855d2-3668-4723-b094-7996b451d6da" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-720cd19b-54ba-4229-80a4-1acb5fad5eb0" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-20207c5c-43c9-4d9e-898b-d193bb0e369c" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="29">
++         <name>Instrument 28</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-0ba9165f-a66d-4816-b7c8-a7877eedb68e" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-0c752be4-9418-4b06-bb3b-b3574ce3617d" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-88378d39-c938-40b6-980f-d0fd806bcab6" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-cb4aa36e-3534-4301-8dca-4b14d9c77b69" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-dbaf695e-b36b-4d99-8f33-3465b85ad3b0" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="30">
++         <name>Instrument 29</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-7fe6a06f-2f56-45ef-b711-a173fc05c35b" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-31d201e5-cdcc-400b-bc38-68743cdd99ed" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-2d85f537-ff17-4b50-9625-774366b79d1c" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-86d96acd-04be-4bd6-aa95-fa84570186c0" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-2656f0b9-9bc1-4d18-9473-8a0a2531d105" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="31">
++         <name>Instrument 30</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-6ace76d6-66a8-45cf-95fc-f6d5e6721c0b" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-fc3edbfa-8220-4e64-be44-674e4298c4ea" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-70660d5e-551c-49a0-b32d-931ef9afe2ed" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-c6b68225-e269-4e0d-bb87-332c6c3eb125" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-004da35c-46db-4a28-ae1b-84cfe964c294" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++       <channel association="32">
++         <name>Instrument 31</name>
++         <outChannel>Master</outChannel>
++         <level>0.0</level>
++         <pan>0.5</pan>
++         <stereoPanMode>balance</stereoPanMode>
++         <panWidth>1.0</panWidth>
++         <dualPanLeft>0.0</dualPanLeft>
++         <dualPanRight>1.0</dualPanRight>
++         <muted>false</muted>
++         <solo>false</solo>
++         <effectsChain bin="pre"/>
++         <effectsChain bin="post"/>
++         <parameter uniqueId="param-e96b8bb3-417d-48b5-92eb-3ed53f857708" name="Volume" label="dB" min="-96.0" max="12.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="12.0" min="-96.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-0fd9fd35-8165-4846-af13-a9d040ed035a" name="Pan" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.5">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-cab9bc84-e54c-43a8-8c96-7ad54652d7f3" name="Width" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-bfe3286a-5d00-4e0f-a1ae-cd3af7f8856b" name="Dual Left" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="0.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++         <parameter uniqueId="param-39176cc0-d7a2-4302-9c6b-cd5ee77c0c73" name="Dual Right" label="" min="0.0" max="1.0" bdresolution="-1" curve="LINEAR" automationEnabled="false" value="1.0">
++           <line name="" version="2" max="1.0" min="0.0" bdresolution="-1" color="-8355712" rightBound="false" endPointsLinked="false"/>
++         </parameter>
++       </channel>
++     </channelList>
+      <channelList listName="SubChannels" list="subChannels"/>
+      <channel>
+        <name>Master</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+
+ ❯ src/main/optimization-diagnostic.test.ts:40:31
+     38|     reportPerformance(name, samples);
+     39|   }
+     40|   expect(data.saveToString()).toBe(original);
+       |                               ^
+     41| });
+     42|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:07:13
+   Duration  4.16s (transform 1.02s, setup 0ms, import 1.30s, tests 2.73s, environment 0ms)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/stevenyi/work/blue3/packages/blue-
+  │ app

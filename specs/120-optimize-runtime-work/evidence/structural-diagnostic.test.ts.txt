@@ -1,0 +1,42 @@
+import { it, expect } from 'vitest';
+import { cpus, platform, release, arch } from 'node:os';
+import { BlueData, TrackLayerGroup, AudioClip, GenericInstrument, TimePosition, TimeDuration } from '@blue/data';
+import { prepareTransaction } from './project-history-memento';
+import { createProjectEditorSnapshot } from '../shared/project-editor';
+import { reportPerformance } from '../test-support/performance';
+
+it('collects structural preparation and projection diagnostics', { tags: ['performance'] }, () => {
+  const data = new BlueData();
+  data.getScore().length = 0;
+  const group = new TrackLayerGroup();
+  const layer = group.newLayerAt(0);
+  data.getScore().push(group);
+  for (let i = 0; i < 1000; i++) {
+    const clip = new AudioClip();
+    clip.setName(`Clip ${i}`);
+    clip.setStartTime(TimePosition.beats(i * 2));
+    clip.setSubjectiveDuration(TimeDuration.beats(2));
+    layer.push(clip);
+  }
+  for (let i = 0; i < 32; i++) {
+    const instrument = new GenericInstrument();
+    instrument.setName(`Instrument ${i}`);
+    instrument.setText('; original fixture code\n'.repeat(100));
+    data.getArrangement().addInstrument(instrument, String(i + 1));
+  }
+  console.log('ENVIRONMENT', JSON.stringify({ platform: platform(), os: release(), arch: arch(), cpu: cpus()[0]?.model, versions: process.versions, fixture: '1000 clips / 32 generic instruments', warmups: 5, samples: 30, classification: 'diagnostic only; power/display/competing apps not controlled' }));
+  createProjectEditorSnapshot(data, null, 1); // Settle existing lazy mixer initialization before sampling.
+  const original = data.saveToString();
+  for (const [name, run] of [
+    ['structural-prepare', () => prepareTransaction(data, [{ orchestra: { type: 'addInstrument', instrumentType: 'generic' } }])],
+    ['editor-projection', () => createProjectEditorSnapshot(data, null, 1)],
+  ] as const) {
+    for (let i = 0; i < 5; i++) run();
+    const samples: number[] = [];
+    for (let i = 0; i < 30; i++) {
+      const started = performance.now(); run(); samples.push(performance.now() - started);
+    }
+    reportPerformance(name, samples);
+  }
+  expect(data.saveToString()).toBe(original);
+});
