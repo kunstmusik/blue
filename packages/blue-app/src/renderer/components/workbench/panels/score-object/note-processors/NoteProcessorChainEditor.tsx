@@ -316,7 +316,7 @@ export default function NoteProcessorChainEditor({
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveAs();
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSaveAs();
                     if (e.key === 'Escape') {
                       setShowSaveDialog(false);
                       setSaveName('');

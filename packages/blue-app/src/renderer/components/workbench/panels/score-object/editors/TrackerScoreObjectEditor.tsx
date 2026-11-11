@@ -526,7 +526,7 @@ function ColumnConfigModal({
                 onChange={(e) => setBaseFreqText(e.target.value)}
                 onBlur={commitBaseFrequency}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                     (e.currentTarget as HTMLInputElement).blur();
                   }
                 }}
@@ -1050,6 +1050,7 @@ export default function TrackerScoreObjectEditor({
       columnIndex: number,
       stepIndex: number,
     ) => {
+      if (e.key === 'Enter' && e.nativeEvent.isComposing) return;
       const totalSteps = editor.rows.length;
       const mod = e.metaKey || e.ctrlKey;
       const keyLower = e.key.toLowerCase();

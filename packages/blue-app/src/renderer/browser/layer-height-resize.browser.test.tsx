@@ -461,6 +461,45 @@ describe('Layer Height Resize in Browser (Chromium)', () => {
       expect(onConfirm).toHaveBeenCalledWith(57);
     });
 
+    it('does not apply a composing Enter that bubbles from the input', () => {
+      const onConfirm = vi.fn();
+      const onClose = vi.fn();
+
+      act(() => {
+        root.render(
+          <LayerHeightCustomDialog initialHeight={44} onConfirm={onConfirm} onClose={onClose} />,
+        );
+      });
+
+      const input = container.querySelector<HTMLInputElement>('#custom-layer-height-input')!;
+      input.focus();
+      const composingEnter = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        isComposing: true,
+        bubbles: true,
+        cancelable: true,
+      });
+
+      act(() => {
+        input.dispatchEvent(composingEnter);
+      });
+
+      expect(composingEnter.defaultPrevented).toBe(false);
+      expect(onConfirm).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(input.isConnected).toBe(true);
+      expect(document.activeElement).toBe(input);
+
+      act(() => {
+        input.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+        );
+      });
+
+      expect(onConfirm).toHaveBeenCalledWith(44);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
     it('custom dialog initializes empty for mixed selections and closes on Cancel/Escape', () => {
       const onConfirm = vi.fn();
       const onClose = vi.fn();

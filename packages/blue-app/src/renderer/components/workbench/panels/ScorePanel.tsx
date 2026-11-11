@@ -1884,7 +1884,7 @@ function SoundLayerHeader({
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') commitEdit();
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitEdit();
                   if (e.key === 'Escape') cancelEdit();
                 }}
                 onBlur={commitEdit}

@@ -235,7 +235,7 @@ export default function ParameterRow({
                 onChange={(e) => setRenameDraft(e.target.value)}
                 onBlur={commitRename}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitRename();
                   if (e.key === 'Escape') setRenaming(false);
                 }}
               />

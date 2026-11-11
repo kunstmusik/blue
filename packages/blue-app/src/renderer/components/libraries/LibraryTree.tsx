@@ -316,6 +316,7 @@ export function LibraryTree({
         onTransferToUser(descriptor, destination);
       }}
       onKeyDown={(event) => {
+        if (event.key === 'Enter' && event.nativeEvent.isComposing) return;
         if (event.key === 'ArrowDown') {
           event.preventDefault();
           markActive(Math.min(visible.length - 1, resolvedActiveIndex + 1));
@@ -490,7 +491,8 @@ export function LibraryTree({
                     onBlur={() => submitRename(node)}
                     onKeyDown={(event) => {
                       event.stopPropagation();
-                      if (event.key === 'Enter') submitRename(node);
+                      if (event.key === 'Enter' && !event.nativeEvent.isComposing)
+                        submitRename(node);
                       if (event.key === 'Escape') setRenamingId(null);
                     }}
                     className="w-full rounded border border-app-accent bg-app-input px-1 text-role-body"

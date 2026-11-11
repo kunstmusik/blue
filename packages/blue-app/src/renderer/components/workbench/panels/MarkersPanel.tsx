@@ -241,7 +241,7 @@ function MarkerRow({
           onChange={(e) => setDraftTime(e.target.value)}
           onBlur={commitTime}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
               commitTime();
             }
           }}
@@ -261,7 +261,7 @@ function MarkerRow({
           onChange={(e) => setDraftLabel(e.target.value)}
           onBlur={commitLabel}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
               commitLabel();
             }
           }}

@@ -748,7 +748,7 @@ function MarkerWidget({
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitRename();
                   if (e.key === 'Escape') setRenaming(false);
                 }}
                 onBlur={commitRename}

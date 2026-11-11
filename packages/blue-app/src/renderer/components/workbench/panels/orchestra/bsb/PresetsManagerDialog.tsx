@@ -328,7 +328,7 @@ function PresetNode({
             if (event.key === 'Escape') {
               event.stopPropagation();
               node.reset();
-            } else if (event.key === 'Enter') {
+            } else if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
               event.preventDefault();
               node.submit(renameInputRef.current?.value ?? '');
             }

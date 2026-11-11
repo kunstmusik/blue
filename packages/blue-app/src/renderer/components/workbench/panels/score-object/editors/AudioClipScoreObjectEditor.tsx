@@ -196,7 +196,7 @@ export default function AudioClipScoreObjectEditor({
 
   const handleFileStartKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter') {
+      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
         event.preventDefault();
         commitFileStartDraft();
         return;
@@ -259,7 +259,7 @@ export default function AudioClipScoreObjectEditor({
 
   const handleFadeInKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter') {
+      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
         event.preventDefault();
         commitFadeInDraft();
         return;
@@ -322,7 +322,7 @@ export default function AudioClipScoreObjectEditor({
 
   const handleFadeOutKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter') {
+      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
         event.preventDefault();
         commitFadeOutDraft();
         return;

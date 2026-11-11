@@ -431,6 +431,7 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     // KeyDown handler
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && e.nativeEvent.isComposing) return;
         onKeyDown?.(e);
         if (e.defaultPrevented) return;
 

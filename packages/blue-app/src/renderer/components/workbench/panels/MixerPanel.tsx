@@ -336,7 +336,7 @@ export default function MixerPanel(): React.ReactElement {
                   );
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
+                  if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                     commitGroupRenameDialog();
                   }
                   if (event.key === 'Escape') {

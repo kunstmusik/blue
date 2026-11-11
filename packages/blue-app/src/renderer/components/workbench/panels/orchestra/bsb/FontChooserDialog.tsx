@@ -122,7 +122,7 @@ export default function FontChooserDialog({
         e.stopPropagation();
         onCancel();
       }
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
         e.stopPropagation();
         handleConfirm();
       }
@@ -208,8 +208,9 @@ export default function FontChooserDialog({
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                       e.preventDefault();
+                      e.stopPropagation();
                       if (filtered.length > 0) {
                         setName(filtered[0]);
                         setDropdownOpen(false);

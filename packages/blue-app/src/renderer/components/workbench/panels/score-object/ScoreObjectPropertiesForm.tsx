@@ -68,7 +68,7 @@ function CommitTextInput({
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') commit();
+        if (e.key === 'Enter' && !e.nativeEvent.isComposing) commit();
       }}
     />
   );

@@ -56,7 +56,7 @@ export function ValuePanel({
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) commit();
             if (e.key === 'Escape') setEditing(false);
           }}
           onBlur={commit}

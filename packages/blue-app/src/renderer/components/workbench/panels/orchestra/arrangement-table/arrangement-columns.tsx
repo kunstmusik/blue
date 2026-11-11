@@ -46,7 +46,7 @@ export function createArrangementColumns({
           onClick={(event) => event.stopPropagation()}
           onBlur={(event) => onCommitAssignmentId(info.row.original, event.currentTarget.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
               event.currentTarget.blur();
             }
           }}
@@ -67,7 +67,7 @@ export function createArrangementColumns({
           onClick={(event) => event.stopPropagation()}
           onBlur={(event) => onCommitInstrumentName(info.row.original, event.currentTarget.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
               event.currentTarget.blur();
             }
           }}

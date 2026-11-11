@@ -243,7 +243,7 @@ function SeedInput({
         if (canonical !== value) onCommit(canonical);
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Enter') event.currentTarget.blur();
+        if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.currentTarget.blur();
         if (event.key === 'Escape') {
           event.currentTarget.value = value;
           setDraft(value);

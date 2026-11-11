@@ -163,6 +163,88 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
     expect(surface()).toBeNull();
   });
 
+  it('keeps the FontChooser open while the filter confirms an IME candidate', async () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    renderTree(
+      <FontChooserDialog
+        open
+        font={{ name: 'Monaco', size: 14, style: 0 }}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+    await flushFrame();
+
+    const fontButton = [...host.querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === 'Monaco',
+    )!;
+    click(fontButton);
+    await flushFrame();
+
+    const filterInput = surface()!.querySelector('input')!;
+    const nativeValueSetter = Object.getOwnPropertyDescriptor(
+      popout.window.HTMLInputElement.prototype,
+      'value',
+    )?.set;
+    nativeValueSetter?.call(filterInput, 'Arial');
+    act(() => {
+      filterInput.dispatchEvent(new popout.window.Event('input', { bubbles: true }));
+    });
+    await flushFrame();
+    filterInput.focus();
+
+    const composingEnter = new popout.window.KeyboardEvent('keydown', {
+      key: 'Enter',
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      filterInput.dispatchEvent(composingEnter);
+    });
+    await flushFrame();
+
+    expect(composingEnter.defaultPrevented).toBe(false);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(surface()).toBeTruthy();
+    expect(popoutDoc.activeElement).toBe(filterInput);
+
+    act(() => {
+      filterInput.dispatchEvent(
+        new popout.window.KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    await flushFrame();
+
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(surface()).toBeNull();
+    expect(
+      [...host.querySelectorAll('button')].some((button) => button.textContent?.trim() === 'Arial'),
+    ).toBe(true);
+
+    act(() => {
+      fontButton.dispatchEvent(
+        new popout.window.KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    await flushFrame();
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledWith({ name: 'Arial', size: 14, style: 0 });
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
   it('FontChooserDialog uses compact, consistent host menus for font and style', async () => {
     const onCancel = vi.fn();
     renderTree(

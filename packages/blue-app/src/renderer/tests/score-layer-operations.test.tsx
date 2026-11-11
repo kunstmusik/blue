@@ -5,7 +5,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
-import { useProjectStore } from '../stores/project-store';
+import ScoreManagerDialog from '../components/workbench/panels/score/ScoreManagerDialog';
+import { flushProjectDocumentPatches, useProjectStore } from '../stores/project-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { getLayerOperationAvailability } from '../components/workbench/panels/score/layer-selection-utils';
@@ -132,8 +133,10 @@ describe('Score layer operations (US3)', () => {
   let container: HTMLDivElement;
   let root: Root;
   let confirmSpy: ReturnType<typeof vi.spyOn>;
+  let originalBlueApi: typeof window.blueAPI;
 
   beforeEach(() => {
+    originalBlueApi = window.blueAPI;
     useProjectStore.getState().clearProject();
     useLayerSelectionStore.getState().clear();
     useScoreSelectionStore.getState().clearSelection();
@@ -147,6 +150,7 @@ describe('Score layer operations (US3)', () => {
     act(() => root.unmount());
     container.remove();
     confirmSpy.mockRestore();
+    window.blueAPI = originalBlueApi;
     useProjectStore.getState().clearProject();
     useLayerSelectionStore.getState().clear();
     useScoreSelectionStore.getState().clearSelection();
@@ -170,6 +174,73 @@ describe('Score layer operations (US3)', () => {
       (item) => item.textContent?.trim() === label,
     );
   }
+
+  it('keeps composing group rename out of ProjectHistory and preserves ordinary Enter commits', async () => {
+    seedProject();
+    useProjectStore.setState({ documentId: 'doc-1' });
+    const commitProjectDocumentPatches = vi.fn(async () => ({
+      changed: true,
+      revision: 1,
+      sessionId: 1,
+    }));
+    window.blueAPI = {
+      ...window.blueAPI,
+      commitProjectDocumentPatches,
+      getProjectDocument: vi.fn(async () => null),
+    };
+
+    act(() => {
+      root.render(
+        <ScoreManagerDialog score={useProjectStore.getState().score} onClose={vi.fn()} />,
+      );
+    });
+
+    const groupRow = Array.from(container.querySelectorAll('.cursor-pointer')).find(
+      (node) => node.textContent?.trim() === 'SoundObjects',
+    ) as HTMLDivElement;
+    act(() => {
+      groupRow.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      groupRow.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    });
+
+    const input = container.querySelector<HTMLInputElement>('input:not([type])')!;
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    act(() => {
+      valueSetter?.call(input, 'Renamed Group');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    const composingEnter = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      isComposing: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      input.dispatchEvent(composingEnter);
+    });
+    await act(async () => {
+      await flushProjectDocumentPatches();
+    });
+
+    expect(composingEnter.defaultPrevented).toBe(false);
+    expect(input.isConnected).toBe(true);
+    expect(commitProjectDocumentPatches).not.toHaveBeenCalled();
+    expect(useProjectStore.getState().score.layerGroups[0]?.name).toBe('SoundObjects');
+
+    await act(async () => {
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+      );
+      await flushProjectDocumentPatches();
+    });
+
+    expect(commitProjectDocumentPatches).toHaveBeenCalledTimes(1);
+    expect(commitProjectDocumentPatches.mock.calls[0]?.[0]).toMatchObject([
+      { score: { type: 'renameLayerGroup', groupId: 'sound-group', name: 'Renamed Group' } },
+    ]);
+    expect(useProjectStore.getState().score.layerGroups[0]?.name).toBe('Renamed Group');
+  });
 
   it('pushes selected layer range up and down with Alt+ArrowUp and Alt+ArrowDown', async () => {
     seedProject();

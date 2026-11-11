@@ -298,7 +298,7 @@ export default function MeterMapEditorDialog({
                       onChange={(e) => handleSignatureChange(i, e.target.value)}
                       onBlur={(e) => commitSignature(i, e.currentTarget.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                           e.preventDefault();
                           commitSignature(i, e.currentTarget.value);
                         }

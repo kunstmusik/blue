@@ -375,7 +375,7 @@ export default function TempoMapEditorDialog({
                         onChange={(e) => handleBeatChange(i, e.target.value)}
                         onBlur={(e) => commitBeat(i, e.currentTarget.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                             e.preventDefault();
                             commitBeat(i, e.currentTarget.value);
                           }

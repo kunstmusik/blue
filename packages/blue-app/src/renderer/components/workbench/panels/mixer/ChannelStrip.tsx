@@ -1449,7 +1449,7 @@ export default React.memo(function ChannelStrip({
             onChange={(e) => setNameInput(e.target.value)}
             onBlur={commitNameEdit}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') commitNameEdit();
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitNameEdit();
               if (e.key === 'Escape') setEditingName(false);
             }}
             autoFocus
@@ -1594,7 +1594,7 @@ export default React.memo(function ChannelStrip({
               onChange={(e) => setLevelInput(e.target.value)}
               onBlur={commitLevelEdit}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') commitLevelEdit();
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitLevelEdit();
                 if (e.key === 'Escape') setEditingLevel(false);
               }}
               autoFocus

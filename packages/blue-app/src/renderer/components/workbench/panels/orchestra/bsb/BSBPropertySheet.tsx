@@ -725,7 +725,7 @@ function PropertyInput({
         commit();
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
           e.preventDefault();
           commit();
           inputRef.current?.blur();

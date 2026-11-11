@@ -178,7 +178,7 @@ function NodeRenderer({
             if (event.key === 'Escape') {
               event.stopPropagation();
               node.reset();
-            } else if (event.key === 'Enter') {
+            } else if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
               event.preventDefault();
               const nextName = renameInputRef.current?.value.trim() ?? '';
               if (nextName.length > 0) node.submit(nextName);

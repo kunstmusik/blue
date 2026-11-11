@@ -495,7 +495,7 @@ function GroupRow({
           value={editValue}
           onChange={(e) => onEditValueChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') onCommitEdit();
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) onCommitEdit();
             if (e.key === 'Escape') onCancelEdit();
           }}
           onBlur={onCommitEdit}
@@ -561,7 +561,7 @@ function LayerRow({
             value={editValue}
             onChange={(e) => onEditValueChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') onCommitEdit();
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) onCommitEdit();
               if (e.key === 'Escape') onCancelEdit();
             }}
             onBlur={onCommitEdit}

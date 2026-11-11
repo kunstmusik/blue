@@ -103,7 +103,7 @@ export default function TimeUnitEditor({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commitText}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') commitText();
+          if (e.key === 'Enter' && !e.nativeEvent.isComposing) commitText();
         }}
       />
       {error && (

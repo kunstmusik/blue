@@ -224,5 +224,50 @@ describe('CommitNumberInput Browser Native & Popout Tests (T006, T010)', () => {
       expect(onChange).toHaveBeenCalledWith('16');
       expect(document.activeElement).toBe(input);
     });
+
+    it('does not finish a draft on composing Enter but preserves ordinary Enter', () => {
+      const onKeyDown = vi.fn();
+      const onFinish = vi.fn();
+
+      act(() => {
+        root.render(
+          <DraftNumberInput
+            value="15"
+            onChange={vi.fn()}
+            onKeyDown={onKeyDown}
+            onFinish={onFinish}
+          />,
+        );
+      });
+
+      const input = container.querySelector('input')!;
+      input.focus();
+      const composingEnter = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        isComposing: true,
+        bubbles: true,
+        cancelable: true,
+      });
+
+      act(() => {
+        input.dispatchEvent(composingEnter);
+      });
+
+      expect(composingEnter.isComposing).toBe(true);
+      expect(composingEnter.defaultPrevented).toBe(false);
+      expect(onKeyDown).not.toHaveBeenCalled();
+      expect(onFinish).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(input);
+
+      act(() => {
+        input.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+        );
+      });
+
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+      expect(onFinish).toHaveBeenCalledWith('15');
+      expect(document.activeElement).not.toBe(input);
+    });
   });
 });

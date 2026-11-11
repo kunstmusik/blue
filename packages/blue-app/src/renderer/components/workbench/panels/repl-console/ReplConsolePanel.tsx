@@ -308,7 +308,12 @@ export default function ReplConsolePanel({ language }: ReplConsolePanelProps): R
               setHistoryIndex(-1);
             }}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey && !event.altKey) {
+              if (
+                event.key === 'Enter' &&
+                !event.nativeEvent.isComposing &&
+                !event.shiftKey &&
+                !event.altKey
+              ) {
                 event.preventDefault();
                 void submit();
               } else if (event.key === 'ArrowUp' && !event.shiftKey && !event.altKey) {

@@ -224,7 +224,7 @@ export default function PatternLayerHeader({
                 value={editValue}
                 onChange={(event) => setEditValue(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Enter') commitEdit();
+                  if (event.key === 'Enter' && !event.nativeEvent.isComposing) commitEdit();
                   if (event.key === 'Escape') cancelEdit();
                 }}
                 onBlur={commitEdit}

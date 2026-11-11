@@ -39,7 +39,7 @@ export default function NoteProcessorCodeModal({
         className="flex h-[75vh] min-h-[420px] max-h-[85vh] w-[760px] max-w-[calc(100vw-32px)] flex-col rounded-lg border border-blue-border bg-blue-bg shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !e.nativeEvent.isComposing) {
             e.preventDefault();
             handleSave();
           }
