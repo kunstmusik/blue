@@ -385,6 +385,23 @@ describe('Project history canonical writer audit (T014)', () => {
   });
 
   describe('Direct main-process mutations via commitDirectMutation', () => {
+    it('does not serialize a project for an ordinary direct edit', async () => {
+      const { history } = setupTest();
+      const serialization = vi.spyOn(BlueData.prototype, 'saveToString');
+      try {
+        const receipt = await history.commitDirectMutation({
+          label: 'Rename Project',
+          mutator: (candidate) => {
+            candidate.getProjectProperties().title = 'Renamed';
+            return true;
+          },
+        });
+        expect(receipt.changed).toBe(true);
+        expect(serialization).not.toHaveBeenCalled();
+      } finally {
+        serialization.mockRestore();
+      }
+    });
     it('commits structural direct mutation, records memento, and supports undo/redo', async () => {
       const { session, history, context } = setupTest();
       const docId = session.read().documentId!;

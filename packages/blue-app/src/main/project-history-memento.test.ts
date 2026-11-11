@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BlueData,
   Channel,
@@ -140,6 +140,19 @@ describe('project-history-memento', () => {
   });
 
   describe('structural transaction preparation and detached candidate publication', () => {
+    it('prepares a structural edit with only one whole-project copy', () => {
+      const data = new BlueData();
+      const copies = vi.spyOn(BlueData.prototype, 'historyCopy');
+      try {
+        const result = prepareTransaction(data, [
+          { orchestra: { type: 'addInstrument', instrumentType: 'generic' } },
+        ]);
+        expect(result.status).toBe('prepared');
+        expect(copies).toHaveBeenCalledOnce();
+      } finally {
+        copies.mockRestore();
+      }
+    });
     it('isolates the candidate and delta, preserves identities and leaves source intact', () => {
       const data = new BlueData();
       data.getScore().length = 0;
@@ -167,10 +180,10 @@ describe('project-history-memento', () => {
       expect(result.transaction.kind).toBe('structure');
       if (result.transaction.kind !== 'structure') return;
 
-      const { candidate, beforeMemento, delta, changed } = result.transaction;
+      const { candidate, delta, changed } = result.transaction;
       expect(changed).toBe(true);
 
-      expect(new Set([data, candidate, beforeMemento]).size).toBe(3);
+      expect(candidate).not.toBe(data);
 
       // Verify source data was NOT mutated
       expect(data.getArrangement().size()).toBe(0);
@@ -178,22 +191,15 @@ describe('project-history-memento', () => {
       // Verify candidate was mutated
       expect(candidate.getArrangement().size()).toBe(1);
 
-      // Verify beforeMemento reflects source
-      expect(beforeMemento.getArrangement().size()).toBe(0);
-
       // Verify sidecars were transferred
       const candClip = (candidate.getScore()[0] as TrackLayerGroup)[0][0];
       expect(getScoreObjectId(candClip)).toBe('clip-orig-1');
-
-      const beforeClip = (beforeMemento.getScore()[0] as TrackLayerGroup)[0][0];
-      expect(getScoreObjectId(beforeClip)).toBe('clip-orig-1');
 
       const originalXml = data.saveToString();
       const expectedXml = candidate.saveToString();
       candidate.getArrangement().getInstrument(0)!.setName('Changed after capture');
       candClip.setName('Changed candidate clip');
       expect(data.saveToString()).toBe(originalXml);
-      expect(beforeMemento.saveToString()).toBe(originalXml);
 
       applyProjectGraphDelta(data, delta, 'after');
       expect(data.saveToString()).toBe(expectedXml);

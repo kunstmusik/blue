@@ -350,6 +350,7 @@ function alignReplacementNodes(
   const paired = new Set<number>(),
     claimed = new Set<number>(),
     claimedTargets = new Set<object>();
+  const remapped = new Map<number, number>();
   const plain = (node: Node): boolean =>
     !node.frozen &&
     node.metadata.ids.every((id) => id === undefined) &&
@@ -391,6 +392,7 @@ function alignReplacementNodes(
       )
         return;
       assignHistoryNodeId(after.objects.get(right.ref)!, left.ref);
+      remapped.set(right.ref, left.ref);
       claimed.add(left.ref);
       claimedTargets.add(after.objects.get(right.ref)!);
     }
@@ -423,6 +425,21 @@ function alignReplacementNodes(
   };
   // Roots are captured last in a postorder walk; use the shared root identity supplied by the caller instead.
   for (const [id] of before.nodes) if (after.nodes.has(id)) pair({ ref: id }, { ref: id });
+  if (remapped.size === 0) return;
+  const remap = (value: Value): Value =>
+    isReference(value) && remapped.has(value.ref) ? { ref: remapped.get(value.ref)! } : value;
+  // Rewrite captured references after pairing; revisiting the live graph is unnecessary.
+  after.nodes = new Map(
+    [...after.nodes.values()].map((node) => {
+      node.id = remapped.get(node.id) ?? node.id;
+      node.fields = node.fields.map(([key, field]) =>
+        isReference(field.value) ? [key, { ...field, value: remap(field.value) }] : [key, field],
+      );
+      if (node.content) node.content = node.content.map(remap);
+      return [node.id, node];
+    }),
+  );
+  after.objects = new Map([...after.objects].map(([id, value]) => [remapped.get(id) ?? id, value]));
 }
 
 /** Isolated deltas contain no live model instances or complete root snapshots. */
@@ -431,7 +448,7 @@ export function captureProjectGraphDelta(before: object, after: object): Project
     afterSnapshot = snapshot(after);
   alignReplacementNodes(oldSnapshot, afterSnapshot);
   const old = oldSnapshot.nodes,
-    next = snapshot(after).nodes;
+    next = afterSnapshot.nodes;
   const rootId = getHistoryNodeId(before);
   if (rootId !== getHistoryNodeId(after))
     throw new Error('History graph copies must transfer identities before mutation');

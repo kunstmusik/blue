@@ -483,7 +483,6 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
       if (result.transaction.kind !== 'structure') return;
       expect(result.transaction.changed).toBe(true);
       expect(data.saveToString()).toBe(initialXml);
-      expect(result.transaction.beforeMemento.saveToString()).toBe(initialXml);
       expect(result.transaction.candidate.saveToString()).not.toBe(initialXml);
     });
 
@@ -500,7 +499,6 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
       expect(data.saveToString()).toBe(initialXml);
       if (tempo.transaction.kind === 'structure') {
         expect(tempo.transaction.changed).toBe(true);
-        expect(tempo.transaction.beforeMemento.saveToString()).toBe(initialXml);
       }
 
       const meter = prepareTransaction(data, [
@@ -588,7 +586,6 @@ describe('Exhaustive project patch preparation classification (T018)', () => {
       expect(data.saveToString()).toBe(initialXml);
       if (result.transaction.kind === 'structure') {
         expect(result.transaction.changed).toBe(true);
-        expect(result.transaction.beforeMemento.saveToString()).toBe(initialXml);
       }
     });
 

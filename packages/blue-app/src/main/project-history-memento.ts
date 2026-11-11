@@ -73,7 +73,6 @@ export interface PreparedStructuralTransaction {
   readonly kind: 'structure';
   readonly candidate: BlueData;
   readonly delta: ProjectGraphDelta;
-  readonly beforeMemento: BlueData;
   readonly changed: boolean;
   readonly patchChanged?: readonly boolean[];
   readonly patchAccepted?: readonly boolean[];
@@ -808,9 +807,6 @@ export function prepareTransaction(
   const candidate = data.historyCopy();
   transferProjectEditorIdentities(data, candidate);
 
-  const beforeMemento = data.historyCopy();
-  transferProjectEditorIdentities(data, beforeMemento);
-
   let changed = false;
   const patchChanged: boolean[] = [];
   const patchAccepted: boolean[] = [];
@@ -830,14 +826,13 @@ export function prepareTransaction(
     };
   }
 
-  const delta = captureProjectGraphDelta(beforeMemento, candidate);
+  const delta = captureProjectGraphDelta(data, candidate);
   return {
     status: 'prepared',
     transaction: {
       kind: 'structure',
       delta,
       candidate,
-      beforeMemento,
       changed: changed && !isNetZeroProjectGraphDelta(delta),
       patchChanged,
       patchAccepted,

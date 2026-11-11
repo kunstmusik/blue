@@ -2715,9 +2715,6 @@ export class ProjectHistory {
       transferProjectEditorIdentities(current.data, candidate);
     }
 
-    const beforeMemento = current.data.historyCopy();
-    transferProjectEditorIdentities(current.data, beforeMemento);
-
     const changed = options.preparedCandidate ? true : options.mutator(candidate);
     if (!changed) {
       return {
@@ -2729,21 +2726,19 @@ export class ProjectHistory {
       };
     }
 
-    const payloadFingerprint = ProjectHistory.directMutationFingerprint(
-      options.label,
-      beforeMemento,
-      candidate,
-    );
-
     const historyRecord: HistoryRecord = {
       kind: 'structure',
-      delta: captureProjectGraphDelta(beforeMemento, candidate),
+      delta: captureProjectGraphDelta(current.data, candidate),
     };
     const estimatedBytes =
       estimateEntryBytes(historyRecord) +
       JSON.stringify({ label: options.label, origin: options.origin }).length * 2 +
       256;
     const expectedRevision = current.revision;
+    const payloadFingerprint =
+      options.proposalToken || estimatedBytes > this.retainedBytesLimit
+        ? ProjectHistory.directMutationFingerprint(options.label, current.data, candidate)
+        : '';
 
     if (options.proposalToken) {
       const proposal = this.pendingDirectOversizeProposal;

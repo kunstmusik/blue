@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { BlueData, BlueSynthBuilder, BSBHSlider, GenericInstrument } from '@blue/data';
 import {
   transferProjectEditorIdentities,
@@ -18,6 +18,43 @@ function copy<T extends object>(value: T): T {
   return next;
 }
 describe('isolated project graph deltas', () => {
+  it('captures after-node descriptors once while aligning replacement identities', () => {
+    const before = { child: { value: 1 } };
+    const after = copy(before);
+    const descriptors = vi.fn(Reflect.getOwnPropertyDescriptor);
+    after.child = new Proxy<{ value: number }>(
+      { value: 2 },
+      { getOwnPropertyDescriptor: descriptors },
+    );
+    const delta = captureProjectGraphDelta(before, after);
+    expect(descriptors).toHaveBeenCalledTimes(1);
+    applyProjectGraphDelta(before, delta, 'after');
+    expect(before.child.value).toBe(2);
+    applyProjectGraphDelta(before, delta, 'before');
+    expect(before.child.value).toBe(1);
+  });
+  it('remaps replacement cycles and references in map keys, sets and arrays consistently', () => {
+    const child: { value: number; self?: unknown } = { value: 1 };
+    child.self = child;
+    const before = { child, items: [child], map: new Map([[child, child]]), set: new Set([child]) };
+    const after = copy(before);
+    const replacement: typeof child = { value: 2 };
+    replacement.self = replacement;
+    after.child = replacement;
+    after.items = [replacement];
+    after.map = new Map([[replacement, replacement]]);
+    after.set = new Set([replacement]);
+    const delta = captureProjectGraphDelta(before, after);
+    for (const direction of ['after', 'before', 'after'] as const) {
+      applyProjectGraphDelta(before, delta, direction);
+      expect(before.child).toBe(child);
+      expect(child.value).toBe(direction === 'before' ? 1 : 2);
+      expect(child.self).toBe(child);
+      expect(before.items[0]).toBe(child);
+      expect(before.map.get(child)).toBe(child);
+      expect([...before.set]).toEqual([child]);
+    }
+  });
   it('stores changed fields independently of unrelated project size', () => {
     const before = new BlueData();
     before.getGlobalOrcSco().setGlobalOrc('x'.repeat(1000000));
