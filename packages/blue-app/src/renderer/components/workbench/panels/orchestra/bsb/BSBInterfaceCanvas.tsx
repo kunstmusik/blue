@@ -1001,6 +1001,33 @@ function GridOverlay({
       ctx.strokeStyle = 'rgba(80,110,160,0.3)';
       ctx.lineWidth = 1;
       if (style === 'DOT') {
+        const tile =
+          Number.isInteger(w) && Number.isInteger(h) && w <= 1024 && h <= 1024
+            ? document.createElement('canvas')
+            : null;
+        const tileCtx = tile?.getContext('2d');
+        if (tile && tileCtx) {
+          tile.width = w;
+          tile.height = h;
+          tileCtx.fillStyle = 'rgba(80,110,160,0.3)';
+          tileCtx.beginPath();
+          for (const [cx, cy] of [
+            [0, 0],
+            [w, 0],
+            [0, h],
+            [w, h],
+          ]) {
+            tileCtx.moveTo(cx + 1, cy);
+            tileCtx.arc(cx, cy, 1, 0, Math.PI * 2);
+          }
+          tileCtx.fill();
+          const pattern = ctx.createPattern(tile, 'repeat');
+          if (pattern) {
+            ctx.fillStyle = pattern;
+            ctx.fillRect(0, 0, cw, ch);
+            return;
+          }
+        }
         for (let x = 0; x < cw; x += w) {
           for (let y = 0; y < ch; y += h) {
             ctx.beginPath();

@@ -959,88 +959,66 @@ export default React.memo(function ChannelStrip({
     [applyProjectDocumentPatch, channel.id, flushPendingPatches, onPatch],
   );
 
-  const {
-    onPreview: handlePanPreview,
-    onCancel: handlePanCancel,
-    onCommit: handlePanCommit,
-    onDoubleClick: handlePanDoubleClick,
-  } = createPannerGestureHandlers(
-    'pan',
-    activePanGestureRef,
-    setPreviewPan,
-    'Set Channel Pan',
-    'pan',
-    0.5,
-  );
-
-  const {
-    onPreview: handlePanWidthPreview,
-    onCancel: handlePanWidthCancel,
-    onCommit: handlePanWidthCommit,
-    onDoubleClick: handlePanWidthDoubleClick,
-  } = createPannerGestureHandlers(
-    'panWidth',
-    activePanWidthGestureRef,
-    setPreviewPanWidth,
-    'Set Stereo Pan Width',
-    'panWidth',
-    1.0,
-  );
-
-  const {
-    onPreview: handleDualPanLeftPreview,
-    onCancel: handleDualPanLeftCancel,
-    onCommit: handleDualPanLeftCommit,
-    onDoubleClick: handleDualPanLeftDoubleClick,
-  } = createPannerGestureHandlers(
-    'dualPanLeft',
-    activeDualLeftGestureRef,
-    setPreviewDualPanLeft,
-    'Set Dual Pan Left',
-    'dualPanLeft',
-    0.0,
-  );
-
-  const {
-    onPreview: handleDualPanRightPreview,
-    onCancel: handleDualPanRightCancel,
-    onCommit: handleDualPanRightCommit,
-    onDoubleClick: handleDualPanRightDoubleClick,
-  } = createPannerGestureHandlers(
-    'dualPanRight',
-    activeDualRightGestureRef,
-    setPreviewDualPanRight,
-    'Set Dual Pan Right',
-    'dualPanRight',
-    1.0,
-  );
-
-  const pannerGestureHandlers = {
-    pan: {
-      onPreview: handlePanPreview,
-      onCommit: handlePanCommit,
-      onCancel: handlePanCancel,
-      onDoubleClickReset: handlePanDoubleClick,
-    },
-    panWidth: {
-      onPreview: handlePanWidthPreview,
-      onCommit: handlePanWidthCommit,
-      onCancel: handlePanWidthCancel,
-      onDoubleClickReset: handlePanWidthDoubleClick,
-    },
-    dualPanLeft: {
-      onPreview: handleDualPanLeftPreview,
-      onCommit: handleDualPanLeftCommit,
-      onCancel: handleDualPanLeftCancel,
-      onDoubleClickReset: handleDualPanLeftDoubleClick,
-    },
-    dualPanRight: {
-      onPreview: handleDualPanRightPreview,
-      onCommit: handleDualPanRightCommit,
-      onCancel: handleDualPanRightCancel,
-      onDoubleClickReset: handleDualPanRightDoubleClick,
-    },
-  };
+  const pannerGestureHandlers = useMemo(() => {
+    const pan = createPannerGestureHandlers(
+      'pan',
+      activePanGestureRef,
+      setPreviewPan,
+      'Set Channel Pan',
+      'pan',
+      0.5,
+    );
+    const panWidth = createPannerGestureHandlers(
+      'panWidth',
+      activePanWidthGestureRef,
+      setPreviewPanWidth,
+      'Set Stereo Pan Width',
+      'panWidth',
+      1.0,
+    );
+    const dualPanLeft = createPannerGestureHandlers(
+      'dualPanLeft',
+      activeDualLeftGestureRef,
+      setPreviewDualPanLeft,
+      'Set Dual Pan Left',
+      'dualPanLeft',
+      0.0,
+    );
+    const dualPanRight = createPannerGestureHandlers(
+      'dualPanRight',
+      activeDualRightGestureRef,
+      setPreviewDualPanRight,
+      'Set Dual Pan Right',
+      'dualPanRight',
+      1.0,
+    );
+    return {
+      pan: {
+        onPreview: pan.onPreview,
+        onCommit: pan.onCommit,
+        onCancel: pan.onCancel,
+        onDoubleClickReset: pan.onDoubleClick,
+      },
+      panWidth: {
+        onPreview: panWidth.onPreview,
+        onCommit: panWidth.onCommit,
+        onCancel: panWidth.onCancel,
+        onDoubleClickReset: panWidth.onDoubleClick,
+      },
+      dualPanLeft: {
+        onPreview: dualPanLeft.onPreview,
+        onCommit: dualPanLeft.onCommit,
+        onCancel: dualPanLeft.onCancel,
+        onDoubleClickReset: dualPanLeft.onDoubleClick,
+      },
+      dualPanRight: {
+        onPreview: dualPanRight.onPreview,
+        onCommit: dualPanRight.onCommit,
+        onCancel: dualPanRight.onCancel,
+        onDoubleClickReset: dualPanRight.onDoubleClick,
+      },
+    };
+  }, [createPannerGestureHandlers]);
 
   const handleStereoPanModeChange = useCallback(
     (mode: StereoPanMode) => {
@@ -1253,39 +1231,33 @@ export default React.memo(function ChannelStrip({
     });
   }, [channel.id, levelInput, onPatch]);
 
+  const levelEditSettlementRef = useRef({ editingLevel, commitLevelEdit });
+  levelEditSettlementRef.current = { editingLevel, commitLevelEdit };
+
   useEffect(() => {
     const doc = hostDocument ?? (typeof document !== 'undefined' ? document : null);
     if (!doc) return;
     return registerHistoryEditorSettlement(doc, async () => {
-      if (editingLevel) {
-        commitLevelEdit();
+      if (levelEditSettlementRef.current.editingLevel) {
+        levelEditSettlementRef.current.commitLevelEdit();
       }
       if (activeGestureRef.current) {
         await handleSliderCancel();
       }
       if (activePanGestureRef.current) {
-        await handlePanCancel();
+        await pannerGestureHandlers.pan.onCancel();
       }
       if (activePanWidthGestureRef.current) {
-        await handlePanWidthCancel();
+        await pannerGestureHandlers.panWidth.onCancel();
       }
       if (activeDualLeftGestureRef.current) {
-        await handleDualPanLeftCancel();
+        await pannerGestureHandlers.dualPanLeft.onCancel();
       }
       if (activeDualRightGestureRef.current) {
-        await handleDualPanRightCancel();
+        await pannerGestureHandlers.dualPanRight.onCancel();
       }
     });
-  }, [
-    hostDocument,
-    editingLevel,
-    commitLevelEdit,
-    handlePanCancel,
-    handlePanWidthCancel,
-    handleDualPanLeftCancel,
-    handleDualPanRightCancel,
-    handleSliderCancel,
-  ]);
+  }, [hostDocument, handleSliderCancel, pannerGestureHandlers]);
 
   const handleOutChannelChange = useCallback(
     (target: string) => {

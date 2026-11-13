@@ -586,18 +586,24 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function cacheMarkup(key: string, value: string): void {
-  if (htmlMarkupCache.size > 500) {
-    htmlMarkupCache.clear();
+function setBoundedCache<V>(cache: Map<string, V>, key: string, value: V, limit = 500): void {
+  if (cache.has(key)) {
+    cache.delete(key);
+  } else if (cache.size >= limit) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) {
+      cache.delete(oldestKey);
+    }
   }
-  htmlMarkupCache.set(key, value);
+  cache.set(key, value);
+}
+
+function cacheMarkup(key: string, value: string): void {
+  setBoundedCache(htmlMarkupCache, key, value);
 }
 
 function cacheMeasurement(key: string, value: { width: number; height: number }): void {
-  if (htmlMeasurementCache.size > 500) {
-    htmlMeasurementCache.clear();
-  }
-  htmlMeasurementCache.set(key, value);
+  setBoundedCache(htmlMeasurementCache, key, value);
 }
 
 export function isValueNavigationKey(key: string): boolean {

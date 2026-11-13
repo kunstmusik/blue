@@ -95,6 +95,8 @@ export default memo(function LayerPanel({
               <div key={group.groupId} className="not-last:border-b border-app-border/40">
                 <ScoreTimeCanvas
                   group={group}
+                  visibleStartBeats={visibleStartBeats}
+                  visibleEndBeats={visibleEndBeats}
                   allLayerGroups={visibleGroups}
                   rootGroupIndex={gi}
                   projectSessionId={projectSessionId}

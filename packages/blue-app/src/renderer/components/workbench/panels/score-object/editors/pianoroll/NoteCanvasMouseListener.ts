@@ -68,6 +68,7 @@ export type PianoRollGestureState =
       readonly startScaleDegree: number;
       readonly mouseNoteIndex: number;
       readonly sourceData: NoteData[];
+      readonly sourceByIndex: Map<number, NoteData>;
       pointerX: number;
       pointerY: number;
     }
@@ -86,6 +87,7 @@ export type PianoRollGestureState =
       readonly dragStartX: number;
       readonly mouseNoteIndex: number;
       readonly sourceData: NoteData[];
+      readonly sourceByIndex: Map<number, NoteData>;
       readonly minTimeAdjust: number;
       pointerX: number;
       pointerY: number;
@@ -95,6 +97,7 @@ export type PianoRollGestureState =
       readonly dragStartX: number;
       readonly mouseNoteIndex: number;
       readonly sourceData: NoteData[];
+      readonly sourceByIndex: Map<number, NoteData>;
       readonly sourceStart: number;
       readonly minTimeAdjust: number;
       pointerX: number;
@@ -312,6 +315,7 @@ export class NoteCanvasMouseListener {
 
   private getSourceData(mouseNoteIndex: number): {
     sourceData: NoteData[];
+    sourceByIndex: Map<number, NoteData>;
     sourceStart: number;
     minTimeAdjust: number;
   } {
@@ -319,25 +323,26 @@ export class NoteCanvasMouseListener {
     const selected = this.callbacks.selectedIndices;
     const sourceIndices =
       selected.size > 0 && selected.has(mouseNoteIndex) ? [...selected] : [mouseNoteIndex];
-    const sourceData: NoteData[] = sourceIndices.flatMap((i) => {
+    const sourceData: NoteData[] = [];
+    const sourceByIndex = new Map<number, NoteData>();
+    let sourceStart = Infinity;
+    let minTimeAdjust = -Infinity;
+    for (const i of sourceIndices) {
       const note = notes[i];
-      if (!note) return [];
-      return [
-        {
-          noteIndex: i,
-          originStart: note.start,
-          originDuration: note.duration,
-          octave: note.octave,
-          scaleDegree: note.scaleDegree,
-        },
-      ];
-    });
-    const sourceStart = sourceData.reduce((min, d) => Math.min(min, d.originStart), Infinity);
-    const minTimeAdjust = sourceData.reduce(
-      (max, d) => Math.max(max, -d.originDuration),
-      -Infinity,
-    );
-    return { sourceData, sourceStart, minTimeAdjust };
+      if (!note) continue;
+      const entry: NoteData = {
+        noteIndex: i,
+        originStart: note.start,
+        originDuration: note.duration,
+        octave: note.octave,
+        scaleDegree: note.scaleDegree,
+      };
+      sourceData.push(entry);
+      sourceByIndex.set(i, entry);
+      if (entry.originStart < sourceStart) sourceStart = entry.originStart;
+      if (-entry.originDuration > minTimeAdjust) minTimeAdjust = -entry.originDuration;
+    }
+    return { sourceData, sourceByIndex, sourceStart, minTimeAdjust };
   }
 
   mousePressed(e: React.MouseEvent | MouseEvent): void {
@@ -404,7 +409,9 @@ export class NoteCanvasMouseListener {
         this.callbacks.setSelection(new Set([hit.index]));
       }
 
-      const { sourceData, sourceStart, minTimeAdjust } = this.getSourceData(hit.index);
+      const { sourceData, sourceByIndex, sourceStart, minTimeAdjust } = this.getSourceData(
+        hit.index,
+      );
 
       if (hit.edge === 'right') {
         this.state = {
@@ -412,6 +419,7 @@ export class NoteCanvasMouseListener {
           dragStartX: x,
           mouseNoteIndex: hit.index,
           sourceData,
+          sourceByIndex,
           minTimeAdjust,
           pointerX: e.clientX,
           pointerY: e.clientY,
@@ -422,6 +430,7 @@ export class NoteCanvasMouseListener {
           dragStartX: x,
           mouseNoteIndex: hit.index,
           sourceData,
+          sourceByIndex,
           sourceStart,
           minTimeAdjust,
           pointerX: e.clientX,
@@ -435,6 +444,7 @@ export class NoteCanvasMouseListener {
           startScaleDegree: scaleDegree,
           mouseNoteIndex: hit.index,
           sourceData,
+          sourceByIndex,
           pointerX: e.clientX,
           pointerY: e.clientY,
         };
@@ -525,10 +535,7 @@ export class NoteCanvasMouseListener {
         const notes = this.callbacks.notes;
         const selected = this.callbacks.selectedIndices;
         this.previewNotes = notes.map((n, i) => {
-          const src =
-            this.state.kind === 'move'
-              ? this.state.sourceData.find((d) => d.noteIndex === i)
-              : undefined;
+          const src = this.state.kind === 'move' ? this.state.sourceByIndex.get(i) : undefined;
           if (
             src &&
             (selected.has(i) || (this.state.kind === 'move' && i === this.state.mouseNoteIndex))
@@ -596,9 +603,7 @@ export class NoteCanvasMouseListener {
 
         if (this.callbacks.snapEnabled && this.callbacks.snapBeats > 0) {
           const snapValue = this.callbacks.snapBeats;
-          const src = this.state.sourceData.find(
-            (d) => d.noteIndex === (this.state as { mouseNoteIndex: number }).mouseNoteIndex,
-          );
+          const src = this.state.sourceByIndex.get(this.state.mouseNoteIndex);
           if (src) {
             const originEnd = src.originStart + src.originDuration;
             const snapEndTime = snapBeatRound(originEnd + timeAdjust, snapValue);
@@ -610,9 +615,7 @@ export class NoteCanvasMouseListener {
         const finalTimeAdjust = timeAdjust;
         this.previewNotes = this.callbacks.notes.map((n, i) => {
           const src =
-            this.state.kind === 'resize_right'
-              ? this.state.sourceData.find((d) => d.noteIndex === i)
-              : undefined;
+            this.state.kind === 'resize_right' ? this.state.sourceByIndex.get(i) : undefined;
           if (src) {
             return {
               ...n,
@@ -640,9 +643,7 @@ export class NoteCanvasMouseListener {
 
         if (this.callbacks.snapEnabled && this.callbacks.snapBeats > 0) {
           const snapValue = this.callbacks.snapBeats;
-          const src = this.state.sourceData.find(
-            (d) => d.noteIndex === (this.state as { mouseNoteIndex: number }).mouseNoteIndex,
-          );
+          const src = this.state.sourceByIndex.get(this.state.mouseNoteIndex);
           if (src) {
             const snapStartTime = snapBeatRound(src.originStart + timeAdjust, snapValue);
             let newTimeAdjust = snapStartTime - src.originStart;
@@ -654,9 +655,7 @@ export class NoteCanvasMouseListener {
         const finalTimeAdjust = timeAdjust;
         this.previewNotes = this.callbacks.notes.map((n, i) => {
           const src =
-            this.state.kind === 'resize_left'
-              ? this.state.sourceData.find((d) => d.noteIndex === i)
-              : undefined;
+            this.state.kind === 'resize_left' ? this.state.sourceByIndex.get(i) : undefined;
           if (src) {
             const originEnd = src.originStart + src.originDuration;
             const newStart = src.originStart + finalTimeAdjust;
@@ -734,7 +733,7 @@ export class NoteCanvasMouseListener {
             }
           }
           const hasChange = endData.some((end) => {
-            const src = state.sourceData.find((s) => s.noteIndex === end.noteIndex);
+            const src = state.sourceByIndex.get(end.noteIndex);
             if (!src) return false;
             return (
               end.originStart !== src.originStart ||

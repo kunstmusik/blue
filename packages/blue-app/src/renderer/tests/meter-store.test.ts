@@ -326,5 +326,36 @@ describe('MeterStore', () => {
       expect(store.getStripState('track-1')!.clipFlags).toEqual([false, false]);
       expect(store.getStripState('master')!.clipFlags).toEqual([false, false]);
     });
+
+    it('caches MeterDisplayState across reads and invalidates across all mutations', () => {
+      const initial = store.getStripState('track-1')!;
+      expect(store.getStripState('track-1')).toBe(initial);
+      expect(store.getCanvasStripState('track-1')?.barLevels).toBe(initial.barLevels);
+
+      store.processMeterFrame(
+        {
+          sequence: 1,
+          channels: [{ csdKey: '0', rms: [0.5, 0.5], peak: [1.1, 0.5] }],
+        },
+        1000,
+      );
+      const afterFrame = store.getStripState('track-1')!;
+      expect(afterFrame).not.toBe(initial);
+      expect(afterFrame.clipFlags).toEqual([true, false]);
+      expect(store.getStripState('track-1')).toBe(afterFrame);
+
+      store.update(3500);
+      const afterClipExpiry = store.getStripState('track-1')!;
+      expect(afterClipExpiry).not.toBe(afterFrame);
+      expect(afterClipExpiry.clipFlags).toEqual([false, false]);
+
+      store.clearStrip('track-1');
+      const afterClear = store.getStripState('track-1')!;
+      expect(afterClear).not.toBe(afterClipExpiry);
+      expect(afterClear.numericPeak).toBe('-inf');
+
+      store.reset();
+      expect(store.getStripState('track-1')).not.toBe(afterClear);
+    });
   });
 });

@@ -77,6 +77,8 @@ import { buildSetSelectionToLayerColorPatch } from '../score-color-actions';
 
 interface Props {
   group: PolyObjectLayerGroupSnapshot;
+  visibleStartBeats?: number;
+  visibleEndBeats?: number;
   allLayerGroups?: ScoreLayerGroupSnapshot[];
   rootGroupIndex?: number;
   projectSessionId: number;
@@ -297,6 +299,8 @@ const MIN_SCORE_OBJECT_DURATION = 0.25;
 
 export default function ScoreTimeCanvas({
   group,
+  visibleStartBeats,
+  visibleEndBeats,
   allLayerGroups,
   projectSessionId,
   projectRevision,
@@ -2270,11 +2274,20 @@ export default function ScoreTimeCanvas({
                   const startBeats = preview?.startBeats ?? item.startBeats;
                   const durationBeats = preview?.durationBeats ?? item.durationBeats;
                   const isSelected = selectedObjectIds.has(item.objectId);
+                  if (
+                    !preview &&
+                    !isSelected &&
+                    visibleStartBeats !== undefined &&
+                    visibleEndBeats !== undefined &&
+                    (startBeats + durationBeats < visibleStartBeats || startBeats > visibleEndBeats)
+                  ) {
+                    return null;
+                  }
 
                   return (
                     <RenderBar
                       key={item.objectId}
-                      item={{ ...item, startBeats, durationBeats }}
+                      item={preview ? { ...item, startBeats, durationBeats } : item}
                       selected={isSelected}
                       pixelsPerBeat={pixelsPerBeat}
                       pixelsPerSecond={pixelsPerSecond}

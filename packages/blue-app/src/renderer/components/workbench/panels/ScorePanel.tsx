@@ -1493,11 +1493,18 @@ function SoundLayerHeader({
     if (groupType !== 'track') return undefined;
     const mixer = s.mixer;
     if (!mixer) return undefined;
-    return [
-      ...mixer.channelListGroups.flatMap((group) => group.channels),
-      ...mixer.channels,
-      ...mixer.subChannels,
-    ].find((candidate) => candidate.association === layer.layerId);
+    for (const group of mixer.channelListGroups) {
+      for (const candidate of group.channels) {
+        if (candidate.association === layer.layerId) return candidate;
+      }
+    }
+    for (const candidate of mixer.channels) {
+      if (candidate.association === layer.layerId) return candidate;
+    }
+    for (const candidate of mixer.subChannels) {
+      if (candidate.association === layer.layerId) return candidate;
+    }
+    return undefined;
   });
   const setLayerBackgroundColor = useProjectStore((s) => s.setLayerBackgroundColor);
   const renameLayer = useProjectStore((s) => s.renameLayer);

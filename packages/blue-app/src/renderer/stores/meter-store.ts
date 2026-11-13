@@ -11,6 +11,13 @@ export interface MeterDisplayState {
   readonly nchnls: number;
 }
 
+export interface MeterCanvasState {
+  readonly barLevels: readonly number[];
+  readonly peakHoldLevels: readonly number[];
+  readonly clipFlags: readonly boolean[];
+  readonly nchnls: number;
+}
+
 export const DECAY_RATE_DB_PER_SEC = 20.0;
 export const PEAK_HOLD_DURATION_SEC = 1.0;
 export const CLIP_LATCH_DURATION_SEC = 2.0;
@@ -37,6 +44,8 @@ interface StripInternalState {
   targetPeak: number[];
   peakHoldTimers: number[];
   clipTimers: number[];
+  canvasState: MeterCanvasState;
+  displayState: MeterDisplayState | null;
 }
 
 export class MeterStore {
@@ -199,17 +208,29 @@ export class MeterStore {
     for (const entry of payload.entries) {
       this.csdKeyToStripId.set(entry.csdKey, entry.stripId);
 
+      const barLevels = new Array<number>(nchnls).fill(-Infinity);
+      const peakHoldLevels = new Array<number>(nchnls).fill(-Infinity);
+      const heldSamplePeaks = new Array<number>(nchnls).fill(-Infinity);
+      const clipFlags = new Array<boolean>(nchnls).fill(false);
+
       const stripState: StripInternalState = {
         stripId: entry.stripId,
         nchnls,
-        barLevels: new Array(nchnls).fill(-Infinity),
-        peakHoldLevels: new Array(nchnls).fill(-Infinity),
-        heldSamplePeaks: new Array(nchnls).fill(-Infinity),
-        clipFlags: new Array(nchnls).fill(false),
-        targetRms: new Array(nchnls).fill(0),
-        targetPeak: new Array(nchnls).fill(0),
-        peakHoldTimers: new Array(nchnls).fill(0),
-        clipTimers: new Array(nchnls).fill(0),
+        barLevels,
+        peakHoldLevels,
+        heldSamplePeaks,
+        clipFlags,
+        targetRms: new Array<number>(nchnls).fill(0),
+        targetPeak: new Array<number>(nchnls).fill(0),
+        peakHoldTimers: new Array<number>(nchnls).fill(0),
+        clipTimers: new Array<number>(nchnls).fill(0),
+        canvasState: {
+          barLevels,
+          peakHoldLevels,
+          clipFlags,
+          nchnls,
+        },
+        displayState: null,
       };
 
       this.uniqueStrips.push(stripState);
@@ -281,6 +302,7 @@ export class MeterStore {
         }
       }
       if (stripChanged) {
+        strip.displayState = null;
         this.notifyStrip(stripId);
       }
       if (hasCanvasSignal) {
@@ -355,6 +377,7 @@ export class MeterStore {
         }
       }
       if (stripChanged) {
+        strip.displayState = null;
         this.notifyStrip(strip.stripId);
       }
     }
@@ -364,9 +387,17 @@ export class MeterStore {
     }
   }
 
+  getCanvasStripState(stripId: string): MeterCanvasState | undefined {
+    return this.strips.get(stripId)?.canvasState;
+  }
+
   getStripState(stripId: string): MeterDisplayState | undefined {
     const strip = this.strips.get(stripId);
     if (!strip) return undefined;
+
+    if (strip.displayState) {
+      return strip.displayState;
+    }
 
     let maxHeldSamplePeak = -Infinity;
     for (let ch = 0; ch < strip.nchnls; ch++) {
@@ -377,7 +408,7 @@ export class MeterStore {
     }
     const numericPeak = formatPeakDb(maxHeldSamplePeak);
 
-    return {
+    strip.displayState = {
       barLevels: strip.barLevels,
       peakHoldLevels: strip.peakHoldLevels,
       heldSamplePeaks: strip.heldSamplePeaks,
@@ -386,6 +417,7 @@ export class MeterStore {
       clipFlags: strip.clipFlags,
       nchnls: strip.nchnls,
     };
+    return strip.displayState;
   }
 
   clearStrip(stripId: string): void {
@@ -399,6 +431,7 @@ export class MeterStore {
       strip.clipFlags[ch] = false;
       strip.clipTimers[ch] = 0;
     }
+    strip.displayState = null;
     this.notifyStrip(stripId);
     this.notifyCanvasWake(stripId);
   }
@@ -412,6 +445,7 @@ export class MeterStore {
         strip.clipFlags[ch] = false;
         strip.clipTimers[ch] = 0;
       }
+      strip.displayState = null;
       this.notifyStrip(strip.stripId);
       this.notifyCanvasWake(strip.stripId);
     }
@@ -450,6 +484,7 @@ export class MeterStore {
     if (channelIndex !== undefined && channelIndex >= 0 && channelIndex < strip.nchnls) {
       strip.clipFlags[channelIndex] = false;
       strip.clipTimers[channelIndex] = 0;
+      strip.displayState = null;
       this.notifyStrip(stripId);
       this.notifyCanvasWake(stripId);
     } else {
@@ -475,6 +510,7 @@ export class MeterStore {
         strip.peakHoldTimers[ch] = 0;
         strip.clipTimers[ch] = 0;
       }
+      strip.displayState = null;
       this.notifyStrip(strip.stripId);
     }
     this.notifyAllCanvasWake();

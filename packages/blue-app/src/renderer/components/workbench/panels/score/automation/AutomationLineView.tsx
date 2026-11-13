@@ -209,6 +209,7 @@ function buildQuantizedInterpolationPath(
 
   let lastX = Math.round(toX(points[0]!.time));
   let lastY = toY(points[0]!.value);
+  let scanCursor = 1;
 
   for (let i = 1; i < points.length; i++) {
     const previous = points[i - 1]!;
@@ -238,8 +239,9 @@ function buildQuantizedInterpolationPath(
 
     for (let x = Math.max(startX, lastX) + 1; x <= endX; x++) {
       const time = x / pixelsPerBeat;
-      const value = getJavaLineValue(points, time, parameter.resolution);
-      let y = toY(value);
+      const evaluated = evaluateJavaLineMonotonic(points, time, parameter.resolution, scanCursor);
+      scanCursor = evaluated.nextCursor;
+      let y = toY(evaluated.value);
 
       if (endY > startY && y < startY) {
         y = startY;
@@ -267,48 +269,46 @@ function buildQuantizedInterpolationPath(
   return parts.join(' ');
 }
 
-function getJavaLineValue(
+function evaluateJavaLineMonotonic(
   points: Array<{ time: number; value: number }>,
   time: number,
   resolution: number,
-): number {
-  if (points.length === 0) return 0;
+  startCursor: number,
+): { value: number; nextCursor: number } {
+  if (points.length === 0) return { value: 0, nextCursor: startCursor };
 
   const first = points[0]!;
   if (points.length === 1 || time === 0) {
-    return first.value;
+    return { value: first.value, nextCursor: startCursor };
   }
 
-  let a = first;
-  let b = first;
+  let i = startCursor;
+  while (i < points.length && points[i]!.time < time) {
+    i++;
+  }
+  const nextCursor = i;
 
-  for (let i = 1; i < points.length; i++) {
-    b = points[i]!;
-
-    if (b.time === time) {
-      if (i === points.length - 1) {
-        return b.value;
-      }
-      while (i < points.length) {
-        const temp = points[i]!;
-        if (temp.time !== time) {
-          break;
-        }
-        b = temp;
-        i++;
-      }
-      return b.value;
-    }
-
-    if (b.time < time) {
-      a = b;
-    } else {
-      break;
-    }
+  if (i >= points.length) {
+    return { value: points[points.length - 1]!.value, nextCursor };
   }
 
+  const b = points[i]!;
+  if (b.time === time) {
+    if (i === points.length - 1) {
+      return { value: b.value, nextCursor };
+    }
+    let lastMatch = b;
+    let k = i;
+    while (k < points.length && points[k]!.time === time) {
+      lastMatch = points[k]!;
+      k++;
+    }
+    return { value: lastMatch.value, nextCursor };
+  }
+
+  const a = points[i - 1]!;
   if (b === a || b.time === a.time) {
-    return b.value;
+    return { value: b.value, nextCursor };
   }
 
   const slope = (b.value - a.value) / (b.time - a.time);
@@ -318,7 +318,7 @@ function getJavaLineValue(
     value = snapJavaLineValue(value, resolution, b.value < a.value);
   }
 
-  return value;
+  return { value, nextCursor };
 }
 
 function snapJavaLineValue(value: number, resolution: number, descending: boolean): number {

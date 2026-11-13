@@ -84,10 +84,30 @@ export default function PianoRollCanvas({
     documentId: string;
     sessionId: number;
     targetKey?: string;
-    source: string;
+    notes: typeof notes;
+    scale: typeof scale;
+    fieldDefinitions: typeof fieldDefinitions;
+    source: string | null;
   } | null>(null);
-  const latestSource = useRef({ targetKey, source: '' });
-  latestSource.current = { targetKey, source: JSON.stringify([notes, scale, fieldDefinitions]) };
+  const latestSource = useRef({ targetKey, notes, scale, fieldDefinitions });
+  latestSource.current = { targetKey, notes, scale, fieldDefinitions };
+  const isGestureSourceCurrent = (
+    fence: NonNullable<typeof gestureFenceRef.current>,
+    current: typeof latestSource.current,
+  ): boolean => {
+    if (fence.targetKey !== current.targetKey) return false;
+    if (
+      fence.notes === current.notes &&
+      fence.scale === current.scale &&
+      fence.fieldDefinitions === current.fieldDefinitions
+    ) {
+      return true;
+    }
+    fence.source ??= JSON.stringify([fence.notes, fence.scale, fence.fieldDefinitions]);
+    return (
+      fence.source === JSON.stringify([current.notes, current.scale, current.fieldDefinitions])
+    );
+  };
 
   const endHostGesture = useCallback(() => {
     if (hostGestureDisposerRef.current) {
@@ -113,7 +133,7 @@ export default function PianoRollCanvas({
         const documentId =
           typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
         const sessionId = useProjectStore.getState().sessionId;
-        gestureFenceRef.current = { documentId, sessionId, ...latestSource.current };
+        gestureFenceRef.current = { documentId, sessionId, ...latestSource.current, source: null };
 
         const host = canvasRef.current;
         if (typeof registerHistoryEditorSettlement === 'function') {
@@ -123,10 +143,10 @@ export default function PianoRollCanvas({
               typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
             const currentSessionId = useProjectStore.getState().sessionId;
             if (
-              gestureFenceRef.current?.documentId === currentDocId &&
-              gestureFenceRef.current?.sessionId === currentSessionId &&
-              gestureFenceRef.current?.targetKey === latestSource.current.targetKey &&
-              gestureFenceRef.current?.source === latestSource.current.source
+              gestureFenceRef.current &&
+              gestureFenceRef.current.documentId === currentDocId &&
+              gestureFenceRef.current.sessionId === currentSessionId &&
+              isGestureSourceCurrent(gestureFenceRef.current, latestSource.current)
             ) {
               listener.mouseReleased();
             } else {
@@ -144,10 +164,10 @@ export default function PianoRollCanvas({
               typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
             const currentSessionId = useProjectStore.getState().sessionId;
             if (
-              currentDocId !== gestureFenceRef.current?.documentId ||
-              currentSessionId !== gestureFenceRef.current?.sessionId ||
-              latestSource.current.targetKey !== gestureFenceRef.current?.targetKey ||
-              latestSource.current.source !== gestureFenceRef.current?.source
+              !gestureFenceRef.current ||
+              currentDocId !== gestureFenceRef.current.documentId ||
+              currentSessionId !== gestureFenceRef.current.sessionId ||
+              !isGestureSourceCurrent(gestureFenceRef.current, latestSource.current)
             ) {
               hostGestureDisposerRef.current = null;
               listener.cancel();
@@ -161,10 +181,10 @@ export default function PianoRollCanvas({
               typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
             const currentSessionId = useProjectStore.getState().sessionId;
             if (
-              currentDocId !== gestureFenceRef.current?.documentId ||
-              currentSessionId !== gestureFenceRef.current?.sessionId ||
-              latestSource.current.targetKey !== gestureFenceRef.current?.targetKey ||
-              latestSource.current.source !== gestureFenceRef.current?.source
+              !gestureFenceRef.current ||
+              currentDocId !== gestureFenceRef.current.documentId ||
+              currentSessionId !== gestureFenceRef.current.sessionId ||
+              !isGestureSourceCurrent(gestureFenceRef.current, latestSource.current)
             ) {
               hostGestureDisposerRef.current = null;
               listener.cancel();
@@ -223,8 +243,7 @@ export default function PianoRollCanvas({
   useEffect(() => {
     if (
       gestureFenceRef.current &&
-      (gestureFenceRef.current.targetKey !== targetKey ||
-        gestureFenceRef.current.source !== latestSource.current.source)
+      !isGestureSourceCurrent(gestureFenceRef.current, latestSource.current)
     ) {
       clearGesture();
       listener.cancel();

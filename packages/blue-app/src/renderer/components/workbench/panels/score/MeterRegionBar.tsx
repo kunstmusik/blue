@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type {
   MeterMapSnapshot,
   MeterSnapshot,
@@ -38,11 +38,13 @@ export default function MeterRegionBar({
 }: MeterRegionBarProps) {
   const [hoveredRegion, setHoveredRegion] = useState<number | null>(null);
   const entries = meterMap.entries;
-
-  if (!rowVisible || entries.length === 0) return null;
+  const visible = rowVisible && entries.length > 0;
 
   const contentWidth = totalBeats * pixelsPerBeat;
-  const regions = deriveMeterRegions(meterMap, totalBeats);
+  const regions = useMemo(
+    () => (visible ? deriveMeterRegions(meterMap, totalBeats) : []),
+    [visible, meterMap, totalBeats],
+  );
 
   const handleDoubleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -77,6 +79,8 @@ export default function MeterRegionBar({
   const handleMouseLeave = useCallback(() => {
     setHoveredRegion(null);
   }, []);
+
+  if (!visible) return null;
 
   return (
     <div

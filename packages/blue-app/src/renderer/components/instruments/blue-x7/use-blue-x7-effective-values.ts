@@ -166,10 +166,20 @@ export function useBlueX7EffectiveValues(
           observedResult = true;
           onObservationResultRef.current?.();
         }
-        setState({
-          values: new Map(result.values.map((entry) => [entry.parameterId, entry.value])),
-          unavailable: false,
-          engineSequence: result.engineSequence,
+        setState((previous) => {
+          if (
+            !previous.unavailable &&
+            previous.engineSequence === result.engineSequence &&
+            previous.values.size === result.values.length &&
+            result.values.every((entry) => previous.values.get(entry.parameterId) === entry.value)
+          ) {
+            return previous;
+          }
+          return {
+            values: new Map(result.values.map((entry) => [entry.parameterId, entry.value])),
+            unavailable: false,
+            engineSequence: result.engineSequence,
+          };
         });
       } catch {
         if (!disposed && generation === currentGenerationRef.current) {

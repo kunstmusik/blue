@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHostDocument } from '../../../../hooks/use-host-document';
-import { meterStore, MIN_DB, MAX_DB, type MeterDisplayState } from '../../../../stores/meter-store';
+import { meterStore, MIN_DB, MAX_DB, type MeterCanvasState } from '../../../../stores/meter-store';
 import { cn } from '../../../../lib/cn';
 import type { MeterProfileKey } from '@blue/data';
 import { getMeterProfile } from './meter-profiles';
@@ -29,7 +29,7 @@ export function getMeterWidth(nchnls: number): number {
   return Math.min(36, Math.max(12, 2 * PADDING + nchnls * 3 + (nchnls - 1) * BAR_GAP));
 }
 
-function isMeterSilent(state: MeterDisplayState | undefined, minimumDb: number): boolean {
+function isMeterSilent(state: MeterCanvasState | undefined, minimumDb: number): boolean {
   if (!state) return true;
   for (let ch = 0; ch < state.nchnls; ch++) {
     if (
@@ -57,12 +57,12 @@ export const MeterCanvas = React.memo(function MeterCanvas({
   const hostWindow = hostDocument?.defaultView ?? (typeof window !== 'undefined' ? window : null);
 
   const [storeNchnls, setStoreNchnls] = useState(
-    () => meterStore.getStripState(stripId)?.nchnls ?? channelCountProp ?? 2,
+    () => meterStore.getCanvasStripState(stripId)?.nchnls ?? channelCountProp ?? 2,
   );
 
   useEffect(() => {
     return meterStore.onBindingMapChange(() => {
-      const currentNchnls = meterStore.getStripState(stripId)?.nchnls ?? 2;
+      const currentNchnls = meterStore.getCanvasStripState(stripId)?.nchnls ?? 2;
       setStoreNchnls((prev) => (prev === currentNchnls ? prev : currentNchnls));
     });
   }, [stripId]);
@@ -152,7 +152,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
         return;
       }
 
-      const stripState = meterStore.getStripState(stripId);
+      const stripState = meterStore.getCanvasStripState(stripId);
       const nchnls = stripState ? stripState.nchnls : storeNchnls;
 
       const isAllSilent = isMeterSilent(stripState, profile.minimumDb);
@@ -273,7 +273,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
     const wake = () => {
       if (
         wasParkedAtSilence &&
-        isMeterSilent(meterStore.getStripState(stripId), profile.minimumDb)
+        isMeterSilent(meterStore.getCanvasStripState(stripId), profile.minimumDb)
       ) {
         return;
       }
@@ -296,8 +296,7 @@ export const MeterCanvas = React.memo(function MeterCanvas({
     };
   }, [hostWindow, stripId, width, height, storeNchnls, profileKey]);
 
-  const stripState = meterStore.getStripState(stripId);
-  const isClipped = stripState?.clipFlags.some(Boolean) ?? false;
+  const isClipped = meterStore.getIsClipped(stripId);
 
   return (
     <canvas

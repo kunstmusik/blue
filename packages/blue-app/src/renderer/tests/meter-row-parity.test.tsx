@@ -151,6 +151,59 @@ describe('MeterRegionBar double-click interaction', () => {
     });
     expect(onOpenEntryDialog).toHaveBeenCalledWith(0);
   });
+
+  it('transitions from hidden to visible on a mounted instance without React hook-order errors', () => {
+    const { container, root, onMeterPatch, onOpenEntryDialog } = renderMeterBar({
+      meterMap: MIXED_METER_MAP,
+      rowVisible: false,
+    });
+    expect(container.firstElementChild).toBeNull();
+
+    act(() => {
+      root.render(
+        <MeterRegionBar
+          meterMap={MIXED_METER_MAP}
+          totalBeats={40}
+          pixelsPerBeat={100}
+          rowVisible={true}
+          rootTimelineOnly={true}
+          onMeterPatch={onMeterPatch}
+          onOpenEntryDialog={onOpenEntryDialog}
+        />,
+      );
+    });
+    expect(container.querySelectorAll('[title]')).toHaveLength(3);
+
+    act(() => {
+      root.render(
+        <MeterRegionBar
+          meterMap={{ entries: [] }}
+          totalBeats={40}
+          pixelsPerBeat={100}
+          rowVisible={true}
+          rootTimelineOnly={true}
+          onMeterPatch={onMeterPatch}
+          onOpenEntryDialog={onOpenEntryDialog}
+        />,
+      );
+    });
+    expect(container.firstElementChild).toBeNull();
+
+    act(() => {
+      root.render(
+        <MeterRegionBar
+          meterMap={MIXED_METER_MAP}
+          totalBeats={40}
+          pixelsPerBeat={100}
+          rowVisible={true}
+          rootTimelineOnly={true}
+          onMeterPatch={onMeterPatch}
+          onOpenEntryDialog={onOpenEntryDialog}
+        />,
+      );
+    });
+    expect(container.querySelectorAll('[title]')).toHaveLength(3);
+  });
 });
 
 describe('MeterRegionBar context menu', () => {
