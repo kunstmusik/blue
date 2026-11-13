@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, stat, unlink, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -9,7 +9,7 @@ import {
   type ProbeProcessRunner,
 } from './engine-runtime';
 
-function report(protocolVersion = 2, ready = true): string {
+function report(protocolVersion = 2, ready = true, libraryPath = '/csound'): string {
   return JSON.stringify({
     schemaVersion: 1,
     engine: {
@@ -22,7 +22,7 @@ function report(protocolVersion = 2, ready = true): string {
     csound: {
       status: ready ? 'ready' : 'not-found',
       requestedPath: null,
-      loadedPath: ready ? '/csound' : null,
+      loadedPath: ready ? libraryPath : null,
       versionRaw: ready ? 7000 : null,
       major: ready ? 7 : null,
       minor: ready ? 0 : null,
@@ -38,10 +38,13 @@ function report(protocolVersion = 2, ready = true): string {
 describe('EngineRuntimeService', () => {
   let repoRoot: string;
   let enginePath: string;
+  let libraryPath: string;
   let runner: ProbeProcessRunner;
 
   beforeEach(async () => {
     repoRoot = await mkdtemp(path.join(tmpdir(), 'blue-runtime-'));
+    libraryPath = path.join(repoRoot, 'libcsound');
+    await writeFile(libraryPath, 'test library');
     enginePath = developmentEnginePath(repoRoot, 'darwin', 'arm64');
     await mkdir(path.dirname(enginePath), { recursive: true });
     const bytes = Buffer.from('workspace engine');
@@ -60,7 +63,7 @@ describe('EngineRuntimeService', () => {
     );
     runner = async () => ({
       exitCode: 0,
-      stdout: report(),
+      stdout: report(2, true, libraryPath),
       stderr: '',
       timedOut: false,
     });
@@ -193,7 +196,7 @@ describe('EngineRuntimeService', () => {
     let calls = 0;
     runner = async () => {
       calls += 1;
-      return { exitCode: 0, stdout: report(), stderr: '', timedOut: false };
+      return { exitCode: 0, stdout: report(2, true, libraryPath), stderr: '', timedOut: false };
     };
     const runtime = service();
     await runtime.probe();
@@ -394,5 +397,106 @@ describe('EngineRuntimeService', () => {
     );
     expect(result.state).toBe('cancelled');
     expect(result.errorCode).toBe('CSOUND_EXECUTION_CANCELLED');
+  });
+
+  it('executeCsound reuses ok probes, retries once after failed probes, and probes once on cold failure', async () => {
+    let probeCalls = 0;
+    let ready = true;
+    const runtime = service({
+      runProbeProcess: async () => {
+        probeCalls += 1;
+        return { exitCode: 0, stdout: report(2, ready, libraryPath), stderr: '', timedOut: false };
+      },
+      runExecutionProcess: async () => ({
+        exitCode: 0,
+        signal: null,
+        stdout: '',
+        stderr: '',
+        started: true,
+      }),
+    });
+
+    await runtime.executeCsound({
+      kind: 'performance',
+      operationId: 'warm-1',
+      cwd: repoRoot,
+      args: [],
+    });
+    await runtime.executeCsound({
+      kind: 'performance',
+      operationId: 'warm-2',
+      cwd: repoRoot,
+      args: [],
+    });
+    expect(probeCalls).toBe(1);
+
+    ready = false;
+    await unlink(libraryPath);
+    const removed = await runtime.executeCsound({
+      kind: 'performance',
+      operationId: 'removed-library',
+      cwd: repoRoot,
+      args: [],
+    });
+    expect(removed.errorCode).toBe('CSOUND_UNAVAILABLE');
+    expect(probeCalls).toBe(2);
+
+    runtime.invalidate();
+    const coldFail = await runtime.executeCsound({
+      kind: 'performance',
+      operationId: 'cold-fail',
+      cwd: repoRoot,
+      args: [],
+    });
+    expect(coldFail.state).toBe('failed');
+    expect(probeCalls).toBe(3);
+
+    ready = true;
+    const recovered = await runtime.executeCsound({
+      kind: 'performance',
+      operationId: 'warm-retry',
+      cwd: repoRoot,
+      args: [],
+    });
+    expect(recovered.state).toBe('completed');
+    expect(probeCalls).toBe(4);
+  });
+
+  it('re-verifies managed selection on every resolve even when file size and mtime match', async () => {
+    const runtime = service();
+    const first = await runtime.resolve();
+    const second = await runtime.resolve();
+    expect(second).toEqual(first);
+
+    const originalBytes = await readFile(enginePath);
+    const originalStat = await stat(enginePath);
+    const tamperedBytes = Buffer.from(originalBytes);
+    tamperedBytes[0] = (tamperedBytes[0] ?? 0) ^ 0xff;
+    expect(tamperedBytes.length).toBe(originalBytes.length);
+
+    await writeFile(enginePath, tamperedBytes);
+    await chmod(enginePath, originalStat.mode);
+    await utimes(enginePath, originalStat.atime, originalStat.mtime);
+
+    await expect(runtime.resolve()).rejects.toThrow(/hash does not match/i);
+
+    const updatedBytes = Buffer.from('updated workspace engine binary');
+    await writeFile(enginePath, updatedBytes);
+    await chmod(enginePath, originalStat.mode);
+    await writeFile(
+      path.join(path.dirname(enginePath), 'artifact.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        protocolVersion: 2,
+        platform: 'darwin',
+        arch: 'arm64',
+        executableName: 'blue-engine',
+        sha256: createHash('sha256').update(updatedBytes).digest('hex'),
+      }),
+    );
+
+    const third = await runtime.resolve();
+    expect(third.artifactSha256).not.toBe(first.artifactSha256);
+    expect(third.artifactSha256).toBe(createHash('sha256').update(updatedBytes).digest('hex'));
   });
 });

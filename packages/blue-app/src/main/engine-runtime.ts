@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { constants } from 'node:fs';
+import { constants, createReadStream } from 'node:fs';
 import { access, readFile, stat } from 'node:fs/promises';
 import * as path from 'node:path';
 import { BLUE_ENGINE_PROTOCOL_VERSION, hasEngineFeature } from '@blue/engine-client/capabilities';
@@ -109,8 +109,13 @@ function isLegacyBundledValue(value: string | null | undefined): boolean {
 }
 
 async function fileSha256(filePath: string): Promise<string> {
-  const bytes = await readFile(filePath);
-  return createHash('sha256').update(bytes).digest('hex');
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = createReadStream(filePath);
+    stream.on('data', (chunk) => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex')));
+    stream.on('error', reject);
+  });
 }
 
 async function defaultProbeProcess(
@@ -248,6 +253,15 @@ export function developmentEnginePath(
   );
 }
 
+async function fileStamp(filePath: string): Promise<string | null> {
+  try {
+    const fileStat = await stat(filePath);
+    return `${fileStat.dev}:${fileStat.ino}:${fileStat.size}:${fileStat.mtimeMs}:${fileStat.ctimeMs}`;
+  } catch {
+    return null;
+  }
+}
+
 export class EngineRuntimeService {
   private readonly platform: NodeJS.Platform;
   private readonly arch: string;
@@ -255,7 +269,10 @@ export class EngineRuntimeService {
   private readonly timeoutMs: number;
   private readonly runProbeProcess: ProbeProcessRunner;
   private readonly runExecutionProcess: ExecutionProcessRunner;
-  private readonly probeCache = new Map<string, EngineProbeResult>();
+  private readonly probeCache = new Map<
+    string,
+    { result: EngineProbeResult; libraryStamp: string }
+  >();
   private selection: EngineSelection | null = null;
 
   constructor(private readonly options: EngineRuntimeOptions) {
@@ -303,7 +320,7 @@ export class EngineRuntimeService {
 
   async probe(
     rawRequest?: EngineProbeRequest,
-    options: { retry?: boolean } = {},
+    options: { retry?: boolean | 'if-failed' } = {},
   ): Promise<EngineProbeResult> {
     const startedAt = Date.now();
     let request: EngineProbeRequest;
@@ -317,14 +334,20 @@ export class EngineRuntimeService {
         );
       }
       selection = await this.resolve(request.enginePathOverride);
-      const cacheKey = [
-        selection.executablePath,
-        selection.artifactSha256 ?? 'external',
-        request.csoundLibraryPath ?? '',
-      ].join('\0');
-      if (!options.retry) {
-        const cached = this.probeCache.get(cacheKey);
-        if (cached) return cached;
+      const externalStamp =
+        selection.artifactSha256 ?? `external:${await fileStamp(selection.executablePath)}`;
+      const requestedLibrary = request.csoundLibraryPath ?? process.env.LIBCSOUND_PATH ?? '';
+      const cacheKey = [selection.executablePath, externalStamp, requestedLibrary].join('\0');
+      const cached = this.probeCache.get(cacheKey);
+      const loadedPath = cached?.result.report?.csound.loadedPath;
+      if (
+        cached?.result.ok &&
+        options.retry !== true &&
+        loadedPath &&
+        (await fileStamp(loadedPath)) === cached.libraryStamp &&
+        this.probeCache.get(cacheKey) === cached
+      ) {
+        return cached.result;
       }
 
       const args = ['--probe-csound', '--json'];
@@ -383,7 +406,14 @@ export class EngineRuntimeService {
             message: boundedDiagnostic(report.csound.message),
             durationMs: Date.now() - startedAt,
           };
-      this.probeCache.set(cacheKey, result);
+      const libraryPath = report.csound.loadedPath;
+      const libraryStamp =
+        libraryPath && path.isAbsolute(libraryPath) ? await fileStamp(libraryPath) : null;
+      if (result.ok && libraryStamp !== null) {
+        this.probeCache.set(cacheKey, { result, libraryStamp });
+      } else {
+        this.probeCache.delete(cacheKey);
+      }
       return result;
     } catch (error) {
       const runtimeError =
@@ -551,7 +581,7 @@ export class EngineRuntimeService {
 
     const csoundLibraryPath =
       request.csoundLibraryPath ?? (this.options.getCsoundLibraryPath?.().trim() || null);
-    const probe = await this.probe({ csoundLibraryPath }, { retry: true });
+    const probe = await this.probe({ csoundLibraryPath }, { retry: 'if-failed' });
     if (!probe.ok || !probe.selection || !probe.report) {
       return failed(probe.message, probe.errorCode ?? 'CSOUND_UNAVAILABLE');
     }
@@ -714,7 +744,7 @@ export class EngineRuntimeService {
     };
   }
 
-  private async validateExecutable(enginePath: string): Promise<void> {
+  private async validateExecutable(enginePath: string): Promise<{ size: number; mtimeMs: number }> {
     let engineStat;
     try {
       engineStat = await stat(enginePath);
@@ -735,5 +765,6 @@ export class EngineRuntimeService {
         `Blue Engine is not executable: ${enginePath}`,
       );
     }
+    return { size: engineStat.size, mtimeMs: engineStat.mtimeMs };
   }
 }
