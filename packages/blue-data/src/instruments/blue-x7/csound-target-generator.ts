@@ -13,7 +13,11 @@
  * This module is browser-safe. It accepts resolved symbols/literals and does
  * not know about Electron, Csound hosts, or project ownership.
  */
-import { BLUE_X7_PARAMETER_DESCRIPTORS, type BlueX7ParameterDescriptor } from './parameter-catalog';
+import {
+  BLUE_X7_PARAMETER_DESCRIPTORS,
+  getBlueX7Descriptor,
+  type BlueX7ParameterDescriptor,
+} from './parameter-catalog';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 
 export type BlueX7TargetLayout = 'udo' | 'inline';
@@ -41,6 +45,13 @@ export interface BlueX7TargetOptions {
 }
 
 const VOICE_LENGTH = 155;
+const voiceDescriptorsBySlot = new Map<number, BlueX7ParameterDescriptor>();
+for (const descriptor of BLUE_X7_PARAMETER_DESCRIPTORS) {
+  if (descriptor.transport.kind === 'voice') {
+    const { slot } = descriptor.transport;
+    if (!voiceDescriptorsBySlot.has(slot)) voiceDescriptorsBySlot.set(slot, descriptor);
+  }
+}
 
 function assertSymbol(symbol: string): void {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(symbol)) {
@@ -52,16 +63,7 @@ function numberText(value: number): string {
   if (!Number.isFinite(value)) {
     throw new Error('BlueX7 target cannot contain a non-finite value');
   }
-  // Csound accepts decimal literals; avoid exponent notation for predictable
-  // generated output and make negative zero deterministic.
-  if (Object.is(value, -0)) return '0';
-  return Number.isInteger(value) ? String(value) : String(value);
-}
-
-function descriptorByKey(key: string): BlueX7ParameterDescriptor {
-  const descriptor = BLUE_X7_PARAMETER_DESCRIPTORS.find((entry) => entry.key === key);
-  if (!descriptor) throw new Error(`unknown BlueX7 parameter key: ${key}`);
-  return descriptor;
+  return String(value);
 }
 
 function parameterMap(
@@ -70,7 +72,9 @@ function parameterMap(
   if (!parameters) return null;
   const result = new Map<string, string>();
   for (const parameter of parameters) {
-    descriptorByKey(parameter.key);
+    if (!getBlueX7Descriptor(parameter.key)) {
+      throw new Error(`unknown BlueX7 parameter key: ${parameter.key}`);
+    }
     assertSymbol(parameter.symbol);
     if (result.has(parameter.key)) {
       throw new Error(`duplicate BlueX7 parameter key: ${parameter.key}`);
@@ -271,9 +275,7 @@ function inlineLiveVoiceExpression(
   map: Map<string, string> | null,
   voiceName: string,
 ): string {
-  const descriptor = BLUE_X7_PARAMETER_DESCRIPTORS.find(
-    (entry) => entry.transport.kind === 'voice' && entry.transport.slot === slot,
-  );
+  const descriptor = voiceDescriptorsBySlot.get(slot);
   if (!map || !descriptor || descriptor.updateClass === 'next-note') {
     return `${voiceName}[${slot}]`;
   }
@@ -316,9 +318,7 @@ export function generateBlueX7Target(options: BlueX7TargetOptions): string {
   ];
 
   for (let slot = 0; slot < VOICE_LENGTH; slot += 1) {
-    const descriptor = BLUE_X7_PARAMETER_DESCRIPTORS.find(
-      (entry) => entry.transport.kind === 'voice' && entry.transport.slot === slot,
-    );
+    const descriptor = voiceDescriptorsBySlot.get(slot);
     if (map && descriptor) {
       lines.push(
         `${voiceName}[${slot}] = ${transportExpression(descriptor, map.get(descriptor.key)!, 'i')}`,
@@ -372,9 +372,7 @@ export function generateBlueX7Target(options: BlueX7TargetOptions): string {
     // Output level is the one operator value that remains live. Remember the
     // note-start value so the dirty block can update only when it changes.
     for (let operator = 1; operator <= 6; operator += 1) {
-      const descriptor = BLUE_X7_PARAMETER_DESCRIPTORS.find(
-        (entry) => entry.key === `operator.${operator}.outputLevel`,
-      );
+      const descriptor = getBlueX7Descriptor(`operator.${operator}.outputLevel`);
       if (!descriptor || descriptor.transport.kind !== 'voice') {
         throw new Error(`BlueX7 output-level transport is missing for operator ${operator}`);
       }
