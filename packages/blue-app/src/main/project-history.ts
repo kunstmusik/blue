@@ -2229,9 +2229,10 @@ export class ProjectHistory {
         const before = current.data.historyCopy();
         transferProjectEditorIdentities(current.data, before);
         rollbackScalarRecords(before, transaction.records);
-        const after = current.data.historyCopy();
-        transferProjectEditorIdentities(current.data, after);
-        historyRecord = { kind: 'structure', delta: captureProjectGraphDelta(before, after) };
+        historyRecord = {
+          kind: 'structure',
+          delta: captureProjectGraphDelta(before, current.data),
+        };
       } else historyRecord = { kind: 'values', records: transaction.records };
     } else if (transaction.kind === 'bsb') {
       historyRecord = { kind: 'bsb', delta: transaction.delta };

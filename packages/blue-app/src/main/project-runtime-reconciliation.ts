@@ -170,7 +170,7 @@ function restartWork(ownerId: string): PatchRuntimeWork {
   return { capability: 'restart-required', operations: [], restartRequiredOwnerIds: [ownerId] };
 }
 
-function combinePatchWork(works: PatchRuntimeWork[]): PatchRuntimeWork {
+function combinePatchWork(works: readonly PatchRuntimeWork[]): PatchRuntimeWork {
   const combined = emptyPatchWork();
   for (const work of works) {
     combined.capability = mergeCapability(combined.capability, work.capability);
@@ -881,10 +881,14 @@ export class ProjectRuntimeReconciliation {
     revision: number;
     patches: readonly ProjectDocumentPatch[];
   }): RuntimeWorkPlan[] {
-    const capability = classifyPatchesRuntimeCapability(request.patches);
+    const works = request.patches.map(extractPatchRuntimeWork);
+    let capability: RuntimeCapability = 'none';
+    for (const work of works) {
+      capability = mergeCapability(capability, work.capability);
+    }
     if (capability === 'none') return [];
 
-    const batchWork = this.resolveBatchWork(request.patches);
+    const batchWork = this.resolveBatchWork(works);
     const plans: RuntimeWorkPlan[] = [];
     for (const performance of this.performances.values()) {
       plans.push(this.buildPlan(performance, request.documentId, request.revision, batchWork));
@@ -897,8 +901,7 @@ export class ProjectRuntimeReconciliation {
    * single resolved complete-vector operation, or with restart-required work
    * when no canonical catalog can be resolved.
    */
-  private resolveBatchWork(patches: readonly ProjectDocumentPatch[]): PatchRuntimeWork {
-    const works = patches.map(extractPatchRuntimeWork);
+  private resolveBatchWork(works: readonly PatchRuntimeWork[]): PatchRuntimeWork {
     const hasMarker = works.some((work) => work.operations.some(isMixerGatesMarker));
     if (!hasMarker) {
       return combinePatchWork(works);

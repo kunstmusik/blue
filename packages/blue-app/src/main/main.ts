@@ -2443,17 +2443,34 @@ function createWindow(): void {
   let outputBatchTimer: ReturnType<typeof setTimeout> | null = null;
 
   function flushOutputBatch() {
+    outputBatchTimer = null;
     if (outputBatch.length === 0) return;
     const batch = outputBatch;
     outputBatch = [];
-    for (const item of batch) {
-      mainWindow?.webContents.send('engine-output', {
-        tabName: 'Csound',
-        text: item.text,
-        type: item.type,
-      });
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    let currentType = batch[0]!.type;
+    const chunks: string[] = [batch[0]!.text];
+    for (let i = 1; i < batch.length; i += 1) {
+      const item = batch[i]!;
+      if (item.type === currentType) {
+        chunks.push(item.text);
+      } else {
+        mainWindow.webContents.send('engine-output', {
+          tabName: 'Csound',
+          text: chunks.join(''),
+          type: currentType,
+        });
+        currentType = item.type;
+        chunks.length = 0;
+        chunks.push(item.text);
+      }
     }
-    outputBatchTimer = null;
+    mainWindow.webContents.send('engine-output', {
+      tabName: 'Csound',
+      text: chunks.join(''),
+      type: currentType,
+    });
   }
 
   engineBridge.setOutputCallback((text, type) => {
@@ -6188,13 +6205,11 @@ async function syncEngineWithProjectPatch(
     if (mixerPatch.type === 'updateChannel') {
       const channel = getProjectMixerChannelBySnapshotId(mixerPatch.channelId);
       if (channel) {
-        const levelParam = channel.getLevelParameter();
-        const varName = levelParam.getCompilationVarName();
+        const varName = channel.getLevelParameter().getCompilationVarName();
         if (varName && mixerPatch.patch.level !== undefined) {
           await syncActiveRuntimeChannel(varName, mixerPatch.patch.level);
         }
-        const panParam = channel.getPanParameter();
-        const panVarName = panParam.getCompilationVarName();
+        const panVarName = channel.getPanParameter().getCompilationVarName();
         if (panVarName && mixerPatch.patch.pan !== undefined) {
           await syncActiveRuntimeChannel(panVarName, mixerPatch.patch.pan);
         }
@@ -6267,13 +6282,19 @@ async function commitProjectDocumentPatchBatch(
     throw new Error(validation.reason);
   }
 
-  if (!getCurrentData()) {
+  const preCommitData = getCurrentData();
+  if (!preCommitData) {
     throw new Error('No project loaded');
   }
 
   if (!Array.isArray(patches) || patches.length === 0) {
     throw new Error('Empty project document patch batch');
   }
+
+  // Collect affected IDs before commit so clears/removals preserve targets that the patch detaches.
+  const preCommitScoreAutomationParameterIds = patches.map((patch) =>
+    collectAffectedProjectScoreAutomationParameterIds(preCommitData, patch),
+  );
 
   const res = await projectHistory.commit({
     documentId: getCurrentProjectSessionDocumentId(),
@@ -6320,15 +6341,14 @@ async function commitProjectDocumentPatchBatch(
   const isCommitted = res.status === 'committed';
   let javaRuntimeDependenciesChanged = false;
 
-  for (const patch of patches) {
+  for (let patchIndex = 0; patchIndex < patches.length; patchIndex += 1) {
+    const patch = patches[patchIndex]!;
     const blueX7BindingsToInvalidate = collectBlueX7BindingsToInvalidate(getCurrentData(), patch);
     const clojureDependenciesChanged = patch.clojureProject
       ? clojureProjectPatchChangesRuntimeDependencies(getCurrentData(), patch.clojureProject)
       : false;
-    const scoreAutomationParameterIds = collectAffectedProjectScoreAutomationParameterIds(
-      getCurrentData(),
-      patch,
-    );
+    const scoreAutomationParameterIds =
+      preCommitScoreAutomationParameterIds[patchIndex] ?? new Set<string>();
     maybeCloseRemovedProjectEffectEditors(patch);
     maybeCloseRemovedTrackInstrumentEditors(patch);
 
@@ -7251,15 +7271,22 @@ async function startUnifiedLibraryStage(): Promise<void> {
     unifiedLibraryService = new UnifiedLibraryService(
       path.join(app.getPath('userData'), 'blue_libraries.sqlite'),
       undefined,
-      new UnifiedLibraryProjectAdapter(() => {
+      new UnifiedLibraryProjectAdapter((options) => {
         const data = getCurrentData();
         if (!data) return null;
         const initialDocId = getCurrentProjectSessionDocumentId();
         const initialSessionId = getCurrentProjectSessionId();
         const initialRevision = getCurrentProjectRevision();
+        if (!options?.mutable) {
+          return {
+            data,
+            sessionId: initialSessionId,
+            revision: initialRevision,
+          };
+        }
         // Library adapters historically mutated the live graph and then
-        // reported a revision. Give each operation a detached candidate so a
-        // paused save/undo barrier never observes an uncommitted library edit.
+        // reported a revision. Give each mutating operation a detached candidate
+        // so a paused save/undo barrier never observes an uncommitted library edit.
         const candidate = data.historyCopy();
         transferProjectEditorIdentities(data, candidate);
         return {

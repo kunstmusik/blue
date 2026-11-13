@@ -18,6 +18,10 @@ export interface AutomationRuntimeSyncBridge {
     parameter: Parameter,
     automationTiming?: AutomationRuntimeTimingContext,
   ): void | Promise<void>;
+  syncAutomationParameters?(
+    parameters: readonly Parameter[],
+    automationTiming?: AutomationRuntimeTimingContext,
+  ): void | Promise<void>;
 }
 
 export function buildAutomationRuntimeTimingContext(
@@ -118,12 +122,20 @@ export async function syncScoreAutomationParametersToEngine(
     ]),
   );
 
+  const parametersToSync: Parameter[] = [];
   for (const parameterId of parameterIds) {
     const parameter = byId.get(parameterId);
-    if (!parameter) {
-      continue;
+    if (parameter) {
+      parametersToSync.push(parameter);
     }
+  }
 
+  if (parametersToSync.length > 1 && typeof bridge.syncAutomationParameters === 'function') {
+    await bridge.syncAutomationParameters(parametersToSync, automationTiming);
+    return;
+  }
+
+  for (const parameter of parametersToSync) {
     await bridge.syncAutomationParameter(parameter, automationTiming);
   }
 }

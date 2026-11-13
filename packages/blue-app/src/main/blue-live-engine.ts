@@ -721,6 +721,16 @@ export class BlueLiveEngineSession {
     await this.bridge.syncAutomationParameter(parameter, automationTiming);
   }
 
+  async syncAutomationParameters(
+    parameters: readonly Parameter[],
+    automationTiming?: Parameters<EngineBridge['syncAutomationParameters']>[1],
+  ): Promise<void> {
+    if (this.status !== 'running' || !this.bridge) {
+      return;
+    }
+    await this.bridge.syncAutomationParameters(parameters, automationTiming);
+  }
+
   async triggerNote(request: BlueLiveNoteTriggerRequest): Promise<BlueLiveNoteTriggerResult> {
     const client = this.bridge?.getClient();
     const projectData = this.projectData;

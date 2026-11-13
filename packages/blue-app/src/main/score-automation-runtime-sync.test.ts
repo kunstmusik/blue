@@ -776,4 +776,40 @@ describe('EngineBridge automation sync', () => {
       expect.any(Array),
     );
   });
+
+  it('uses batch updateAutomations when syncing multi-parameter range edits through EngineBridge', async () => {
+    const updateAutomations = vi.fn(async (_entries: readonly { name: string }[]) => ({
+      ok: true,
+      message: '',
+    }));
+    const client = {
+      ...createMockClient(),
+      updateAutomations,
+    };
+    const project = createRuntimeProject(2, client);
+    for (let index = 0; index < 2; index += 1) {
+      enableAutomation(project.params[index]!);
+      assignToLayer(project, index);
+    }
+
+    await applyScorePatchAndSync(project, {
+      type: 'moveAutomationRange',
+      range: {
+        startBeat: 1,
+        endBeat: 7,
+        layerIds: [project.layerRef.layerId],
+        parameterIdsByLayer: {
+          [project.layerRef.layerId]: project.params.map((p) => p.getUniqueId()),
+        },
+      },
+      beatDelta: 1,
+    });
+
+    expect(updateAutomations).toHaveBeenCalledTimes(1);
+    expect(updateAutomations.mock.calls[0]?.[0].map((e) => e.name).sort()).toEqual([
+      'gk_blue_auto0',
+      'gk_blue_auto1',
+    ]);
+    expect(project.client.updateAutomation).not.toHaveBeenCalled();
+  });
 });

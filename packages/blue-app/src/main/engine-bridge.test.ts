@@ -96,6 +96,307 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     },
   );
 
+  it('coalesces all interleaved startup fixed channels and batches automated definitions when supported', async () => {
+    const parameters = ['fixed_0', 'auto_0', 'fixed_1', 'auto_1'].map((name) => {
+      const parameter = new Parameter();
+      parameter.setCompilationVarName(name);
+      parameter.setFixedValue(0.5);
+      return parameter;
+    });
+    for (const idx of [1, 3]) {
+      parameters[idx]!.setPoints([
+        { time: 0, value: 0.1 },
+        { time: 4, value: 0.9 },
+      ]);
+      parameters[idx]!.setAutomationEnabled(true);
+    }
+
+    const client = {
+      clearAutomations: vi.fn(async () => ({ ok: true, message: '' })),
+      setChannels: vi.fn(async (_entries: readonly { name: string; value: number }[]) => ({
+        ok: true,
+        message: '',
+      })),
+      createChannel: vi.fn(async () => ({ ok: true, message: '' })),
+      setChannel: vi.fn(async () => ({ ok: true, message: '' })),
+      createAutomations: vi.fn(async (_entries: readonly { name: string }[]) => ({
+        ok: true,
+        ids: [1, 2],
+      })),
+      createAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+    };
+
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    await (
+      bridge as unknown as {
+        sendAutomationDefinitions(client: unknown, parameters: Parameter[]): Promise<void>;
+      }
+    ).sendAutomationDefinitions(client, parameters);
+
+    expect(client.setChannels).toHaveBeenCalledTimes(1);
+    expect(client.setChannels.mock.calls[0]?.[0]).toEqual([
+      { name: 'fixed_0', value: 0.5 },
+      { name: 'fixed_1', value: 0.5 },
+    ]);
+    expect(client.createAutomations).toHaveBeenCalledTimes(1);
+    expect(client.createAutomations.mock.calls[0]?.[0].map((entry) => entry.name)).toEqual([
+      'auto_0',
+      'auto_1',
+    ]);
+    expect(client.createAutomation).not.toHaveBeenCalled();
+
+    // Rejecting createAutomations falls back cleanly to per-item createAutomation.
+    client.createAutomations.mockResolvedValueOnce({
+      ok: false,
+      message: 'unsupported',
+    } as never);
+    await (
+      bridge as unknown as {
+        sendAutomationDefinitions(client: unknown, parameters: Parameter[]): Promise<void>;
+      }
+    ).sendAutomationDefinitions(client, parameters);
+    expect(client.createAutomation).toHaveBeenCalledTimes(2);
+  });
+
+  it('batches syncAutomationParameters via updateAutomations with missing-channel fallback and disable restore', async () => {
+    const p1 = new Parameter();
+    p1.setCompilationVarName('auto_0');
+    p1.setAutomationEnabled(true);
+    p1.setPoints([
+      { time: 0, value: 0.1 },
+      { time: 2, value: 0.9 },
+    ]);
+
+    const p2 = new Parameter();
+    p2.setCompilationVarName('auto_1');
+    p2.setAutomationEnabled(true);
+    p2.setPoints([
+      { time: 0, value: 0.2 },
+      { time: 2, value: 0.8 },
+    ]);
+
+    const pDisabled = new Parameter();
+    pDisabled.setCompilationVarName('fixed_0');
+    pDisabled.setFixedValue(0.42);
+    pDisabled.setAutomationEnabled(false);
+
+    const client = {
+      updateAutomations: vi.fn(async (_entries: readonly { name: string }[]) => ({
+        ok: true,
+        message: '',
+      })),
+      updateAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+      createAutomation: vi.fn(async (_name: string) => ({ ok: true, message: '' })),
+      deleteAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+      setChannel: vi.fn(async () => ({ ok: true, message: '' })),
+      createChannel: vi.fn(async () => ({ ok: true, message: '' })),
+    };
+
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    (bridge as unknown as { activeSession: { getClient: () => typeof client } }).activeSession = {
+      getClient: () => client,
+    };
+
+    await bridge.syncAutomationParameters([p1, p2, pDisabled]);
+
+    expect(client.updateAutomations).toHaveBeenCalledTimes(1);
+    expect(client.updateAutomations.mock.calls[0]?.[0].map((e) => e.name)).toEqual([
+      'auto_0',
+      'auto_1',
+    ]);
+    expect(client.updateAutomation).not.toHaveBeenCalled();
+    expect(client.deleteAutomation).toHaveBeenCalledWith('fixed_0');
+    expect(client.setChannel).toHaveBeenCalledWith('fixed_0', 0.42);
+
+    // Fallback when one entry in updateAutomations is newly enabled (AUTOMATION_NOT_FOUND)
+    client.updateAutomations.mockResolvedValueOnce({
+      ok: false,
+      message: '[AUTOMATION_NOT_FOUND] no automation for channel',
+    });
+    client.updateAutomation.mockResolvedValueOnce({ ok: true, message: '' }).mockResolvedValueOnce({
+      ok: false,
+      message: '[AUTOMATION_NOT_FOUND] no automation for channel',
+    });
+    await bridge.syncAutomationParameters([p1, p2]);
+    expect(client.updateAutomation).toHaveBeenCalledTimes(2);
+    expect(client.createAutomation).toHaveBeenCalledTimes(1);
+    expect(client.createAutomation.mock.calls[0]?.[0]).toBe('auto_1');
+  });
+
+  it('skips stale batch fallback for channels superseded by a newer automation edit', async () => {
+    vi.useFakeTimers();
+    try {
+      const makeParam = (varName: string, value: number) => {
+        const param = new Parameter();
+        param.setCompilationVarName(varName);
+        param.setAutomationEnabled(true);
+        param.setPoints([
+          { time: 0, value },
+          { time: 2, value },
+        ]);
+        return param;
+      };
+
+      const oldA = makeParam('auto_0', 0.1);
+      const oldB = makeParam('auto_1', 0.2);
+      const newerA = makeParam('auto_0', 0.9);
+
+      let resolveBatch!: (value: { ok: boolean; message: string }) => void;
+      const client = {
+        updateAutomations: vi.fn(
+          () =>
+            new Promise<{ ok: boolean; message: string }>((resolve) => {
+              resolveBatch = resolve;
+            }),
+        ),
+        updateAutomation: vi.fn(
+          async (
+            _name: string,
+            _curve: number,
+            _enabled: boolean,
+            _resolutionDecimal: string,
+            _points: Array<{ time: number; value: number }>,
+          ) => ({ ok: true, message: '' }),
+        ),
+        createAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+        deleteAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+        setChannel: vi.fn(async () => ({ ok: true, message: '' })),
+        createChannel: vi.fn(async () => ({ ok: true, message: '' })),
+      };
+
+      const bridge = new EngineBridge(windowStub(), 'blue-engine');
+      (bridge as unknown as { activeSession: { getClient: () => typeof client } }).activeSession = {
+        getClient: () => client,
+      };
+
+      // Hold the older batch open while a newer value (0.9) arrives for auto_0.
+      const batchPromise = bridge.syncAutomationParameters([oldA, oldB]);
+      await bridge.syncAutomationParameter(newerA, undefined, { coalesce: false });
+
+      resolveBatch({ ok: false, message: 'batch failed' });
+      await batchPromise;
+
+      // Only the newer edit (0.9) ran for auto_0; stale fallback (0.1) never ran for auto_0,
+      // while non-superseded sibling auto_1 still fell back cleanly.
+      expect(
+        client.updateAutomation.mock.calls.map(([name, , , , points]) => [name, points[0]?.value]),
+      ).toEqual([
+        ['auto_0', 0.9],
+        ['auto_1', 0.2],
+      ]);
+
+      // Also guard when the newer edit is still coalesced on a timer when the old batch fails.
+      client.updateAutomation.mockClear();
+      let rejectBatch!: (err: Error) => void;
+      client.updateAutomations.mockImplementationOnce(
+        () =>
+          new Promise<{ ok: boolean; message: string }>((_resolve, reject) => {
+            rejectBatch = reject;
+          }),
+      );
+      const staleBatchPromise = bridge.syncAutomationParameters([oldA, oldB]);
+      await bridge.syncAutomationParameter(newerA);
+      rejectBatch(new Error('transport failed'));
+      await staleBatchPromise;
+      expect(
+        client.updateAutomation.mock.calls.map(([name, , , , points]) => [name, points[0]?.value]),
+      ).toEqual([['auto_1', 0.2]]);
+
+      await vi.advanceTimersByTimeAsync(50);
+      expect(
+        client.updateAutomation.mock.calls.map(([name, , , , points]) => [name, points[0]?.value]),
+      ).toEqual([
+        ['auto_1', 0.2],
+        ['auto_0', 0.9],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cancels pending coalesced sync timer when coalesce is false and deduplicates legacy startup parameters', async () => {
+    vi.useFakeTimers();
+    try {
+      const bridge = new EngineBridge(windowStub(), 'blue-engine');
+      const client = {
+        clearAutomations: vi.fn(async () => ({ ok: true, message: '' })),
+        setChannels: vi.fn(async (_entries: readonly { name: string; value: number }[]) => ({
+          ok: true,
+          message: '',
+        })),
+        createChannel: vi.fn(async () => ({ ok: true, message: '' })),
+        setChannel: vi.fn(async () => ({ ok: true, message: '' })),
+        createAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+        updateAutomation: vi.fn(
+          async (
+            _name: string,
+            _curve: number,
+            _enabled: boolean,
+            _resolutionDecimal: string,
+            _points: Array<{ time: number; value: number }>,
+          ) => ({ ok: true, message: '' }),
+        ),
+        deleteAutomation: vi.fn(async () => ({ ok: true, message: '' })),
+      };
+      (bridge as unknown as { activeSession: { getClient: () => typeof client } }).activeSession = {
+        getClient: () => client,
+      };
+
+      const staleParam = new Parameter();
+      staleParam.setCompilationVarName('chan_dup');
+      staleParam.setFixedValue(0.25);
+
+      const latestParam = new Parameter();
+      latestParam.setCompilationVarName('chan_dup');
+      latestParam.setFixedValue(0.75);
+
+      await (
+        bridge as unknown as {
+          sendAutomationDefinitions(client: unknown, parameters: Parameter[]): Promise<void>;
+        }
+      ).sendAutomationDefinitions(client, [staleParam, latestParam]);
+      expect(client.setChannels).toHaveBeenCalledTimes(1);
+      expect(client.setChannels.mock.calls[0]?.[0]).toEqual([{ name: 'chan_dup', value: 0.75 }]);
+
+      const autoFirst = new Parameter();
+      autoFirst.setCompilationVarName('auto_live');
+      autoFirst.setAutomationEnabled(true);
+      autoFirst.setPoints([
+        { time: 0, value: 0.1 },
+        { time: 2, value: 0.2 },
+      ]);
+
+      const autoQueuedStale = new Parameter();
+      autoQueuedStale.setCompilationVarName('auto_live');
+      autoQueuedStale.setAutomationEnabled(true);
+      autoQueuedStale.setPoints([
+        { time: 0, value: 0.3 },
+        { time: 2, value: 0.4 },
+      ]);
+
+      const autoImmediate = new Parameter();
+      autoImmediate.setCompilationVarName('auto_live');
+      autoImmediate.setAutomationEnabled(true);
+      autoImmediate.setPoints([
+        { time: 0, value: 0.8 },
+        { time: 2, value: 0.9 },
+      ]);
+
+      await bridge.syncAutomationParameter(autoFirst);
+      await bridge.syncAutomationParameter(autoQueuedStale);
+      await bridge.syncAutomationParameter(autoImmediate, undefined, { coalesce: false });
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(client.updateAutomation).toHaveBeenCalledTimes(2);
+      expect(client.updateAutomation.mock.calls[1]?.[4]).toEqual([
+        { time: 0, value: 0.8 },
+        { time: 2, value: 0.9 },
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps one health poll outstanding and resumes after failure', async () => {
     vi.useFakeTimers();
     const bridge = new EngineBridge(windowStub(), 'blue-engine');
