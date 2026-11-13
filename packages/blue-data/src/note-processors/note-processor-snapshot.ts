@@ -217,11 +217,13 @@ export function reifyProcessorFromSnapshot(
 
   const def = getNoteProcessorDefinition(entry.processorType);
   if (!def) throw new RangeError('Unsupported processor snapshot type: ' + entry.processorType);
-  let proc = def.createDefault();
+  let proc: NoteProcessor;
   if (entry.serializedXml) {
     const wrapper = new Element('noteProcessorChain');
     wrapper.addElement(Element.parse(entry.serializedXml));
     proc = NoteProcessorChain.loadFromXML(wrapper).getProcessors()[0];
+  } else {
+    proc = def.createDefault();
   }
   applyParametersToProcessor(proc, entry.parameters);
   const wrapper = new Element('noteProcessorChain');
