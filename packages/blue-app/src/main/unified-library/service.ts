@@ -217,6 +217,7 @@ export class UnifiedLibraryService {
       const failedClient = this.client;
       this.client = null;
       this.editorSessions = null;
+      this.importExport?.dispose();
       this.importExport = null;
       await failedClient?.close().catch(() => undefined);
       this.updateSnapshot({
@@ -2256,6 +2257,7 @@ export class UnifiedLibraryService {
     const client = this.client;
     this.client = null;
     this.editorSessions = null;
+    this.importExport?.dispose();
     this.importExport = null;
     if (client) await client.close();
     this.activeOperation = null;
@@ -2304,6 +2306,7 @@ export class UnifiedLibraryService {
     const client = this.client;
     this.client = null;
     this.editorSessions = null;
+    this.importExport?.dispose();
     this.importExport = null;
     await client?.close();
   }

@@ -205,9 +205,9 @@ export class UnifiedLibraryRepository {
 
   getContentRevision(): number {
     this.assertOpen();
-    const row = this.database
-      .prepare('SELECT content_revision FROM library_store_state WHERE singleton_id = 1')
-      .get();
+    const row = this.readStatement(
+      'SELECT content_revision FROM library_store_state WHERE singleton_id = 1',
+    ).get();
     return Number(row?.content_revision ?? 0);
   }
 
@@ -219,11 +219,9 @@ export class UnifiedLibraryRepository {
       soundObject: 0,
       effect: 0,
     };
-    for (const row of this.database
-      .prepare(
-        "SELECT library_type, COUNT(*) AS count FROM library_nodes WHERE node_kind = 'item' GROUP BY library_type",
-      )
-      .all()) {
+    for (const row of this.readStatement(
+      "SELECT library_type, COUNT(*) AS count FROM library_nodes WHERE node_kind = 'item' GROUP BY library_type",
+    ).all()) {
       itemCounts[asLibraryType(row.library_type)] = Number(row.count);
     }
     return { contentRevision: this.getContentRevision(), itemCounts };
@@ -430,9 +428,9 @@ export class UnifiedLibraryRepository {
 
   getItemPayload(nodeId: string): RepositoryItemPayload {
     this.assertOpen();
-    const row = this.database
-      .prepare('SELECT * FROM library_item_payloads WHERE node_id = ?')
-      .get(nodeId);
+    const row = this.readStatement('SELECT * FROM library_item_payloads WHERE node_id = ?').get(
+      nodeId,
+    );
     if (!row) throw new Error(`Library item payload not found: ${nodeId}`);
     return {
       nodeId: String(row.node_id),
@@ -470,16 +468,14 @@ export class UnifiedLibraryRepository {
 
   getItemSummary(nodeId: string): RepositoryItemSummary {
     this.assertOpen();
-    const row = this.database
-      .prepare(
-        `
+    const row = this.readStatement(
+      `
         SELECT nodes.*, payload.object_type, payload.support_status
         FROM library_nodes nodes
         JOIN library_item_payloads payload ON payload.node_id = nodes.id
         WHERE nodes.id = ? AND nodes.node_kind = 'item'
       `,
-      )
-      .get(nodeId);
+    ).get(nodeId);
     if (!row) throw new Error(`Library item not found: ${nodeId}`);
     return {
       node: mapNode(row),
@@ -1244,17 +1240,15 @@ export class UnifiedLibraryRepository {
 
   private isDescendant(candidateId: string, ancestorId: string): boolean {
     return Boolean(
-      this.database
-        .prepare(
-          `
+      this.readStatement(
+        `
       WITH RECURSIVE descendants(id) AS (
         SELECT id FROM library_nodes WHERE parent_id = ?
         UNION ALL
         SELECT child.id FROM library_nodes child JOIN descendants ON child.parent_id = descendants.id
       ) SELECT 1 AS found FROM descendants WHERE id = ? LIMIT 1
     `,
-        )
-        .get(ancestorId, candidateId),
+      ).get(ancestorId, candidateId),
     );
   }
 
@@ -1271,7 +1265,7 @@ export class UnifiedLibraryRepository {
         );
       }
     }
-    const update = this.database.prepare('UPDATE library_nodes SET sort_index = ? WHERE id = ?');
+    const update = this.readStatement('UPDATE library_nodes SET sort_index = ? WHERE id = ?');
     const perKind = new Map<LibraryNodeKind, number>();
     nodes.forEach((node, mixedIndex) => {
       const index =
@@ -1295,28 +1289,24 @@ export class UnifiedLibraryRepository {
   }
 
   private nextSortIndex(parentId: string, nodeKind: Exclude<LibraryNodeKind, 'root'>): number {
-    const row = this.database
-      .prepare(
-        `
+    const row = this.readStatement(
+      `
         SELECT COALESCE(MAX(sort_index), -1) + 1 AS next_index
         FROM library_nodes WHERE parent_id = ? AND node_kind = ?
       `,
-      )
-      .get(parentId, nodeKind);
+    ).get(parentId, nodeKind);
     return Number(row?.next_index ?? 0);
   }
 
   private incrementContentRevision(): void {
     const now = new Date().toISOString();
-    this.database
-      .prepare(
-        `
+    this.readStatement(
+      `
         UPDATE library_store_state
         SET content_revision = content_revision + 1, updated_at = ?
         WHERE singleton_id = 1
       `,
-      )
-      .run(now);
+    ).run(now);
   }
 
   private withTransaction<T>(operation: () => T): T {
@@ -1332,7 +1322,7 @@ export class UnifiedLibraryRepository {
     }
   }
 
-  // Only fixed-shape browse/search queries belong in this per-connection cache.
+  // Only fixed-shape queries/updates belong in this per-connection cache (never call .iterate()).
   private readStatement(sql: string): StatementSync {
     this.assertOpen();
     let statement = this.readStatements.get(sql);

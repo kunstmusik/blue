@@ -1,5 +1,6 @@
+import { EventEmitter } from 'node:events';
 import { describe, expect, it } from 'vitest';
-import { UnifiedLibraryRepositoryClient } from './repository-client';
+import { UnifiedLibraryRepositoryClient, type RepositoryWorkerPort } from './repository-client';
 
 describe('UnifiedLibraryRepositoryClient', () => {
   it('serializes in-process requests and closes deterministically', async () => {
@@ -30,5 +31,32 @@ describe('UnifiedLibraryRepositoryClient', () => {
     } finally {
       await client.close();
     }
+  });
+
+  it('rejects pending requests if the worker exits cleanly with code 0', async () => {
+    class FakeWorker extends EventEmitter implements RepositoryWorkerPort {
+      posted: unknown[] = [];
+      postMessage(value: unknown): void {
+        this.posted.push(value);
+      }
+      async terminate(): Promise<number> {
+        return 0;
+      }
+    }
+
+    const fakeWorker = new FakeWorker();
+    const client = UnifiedLibraryRepositoryClient.openWorkerForTesting(fakeWorker);
+    const pendingSnapshot = client.getSnapshot();
+    const queuedSnapshot = client.getSnapshot();
+    const pendingRejection = expect(pendingSnapshot).rejects.toThrow(/exited with 0/i);
+    const queuedRejection = expect(queuedSnapshot).rejects.toThrow(/closed/i);
+    await Promise.resolve();
+    expect(fakeWorker.posted).toHaveLength(1);
+
+    fakeWorker.emit('exit', 0);
+
+    await Promise.all([pendingRejection, queuedRejection]);
+    expect(fakeWorker.posted).toHaveLength(1);
+    await expect(client.getSnapshot()).rejects.toThrow(/closed/i);
   });
 });

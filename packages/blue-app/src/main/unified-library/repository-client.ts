@@ -23,6 +23,14 @@ interface PendingRequest {
   readonly reject: (error: Error) => void;
 }
 
+export interface RepositoryWorkerPort {
+  on(event: 'message', listener: (value: RepositoryWorkerResponse) => void): unknown;
+  on(event: 'error', listener: (error: Error) => void): unknown;
+  on(event: 'exit', listener: (exitCode: number) => void): unknown;
+  postMessage(value: RepositoryWorkerRequest): void;
+  terminate(): Promise<number>;
+}
+
 export class UnifiedLibraryRepositoryClient {
   private queue: Promise<void> = Promise.resolve();
   private closed = false;
@@ -31,7 +39,7 @@ export class UnifiedLibraryRepositoryClient {
 
   private constructor(
     private readonly repository: UnifiedLibraryRepository | null,
-    private readonly worker: Worker | null,
+    private readonly worker: RepositoryWorkerPort | null,
   ) {
     worker?.on('message', (response: RepositoryWorkerResponse) => {
       const pending = this.pending.get(response.id);
@@ -41,10 +49,12 @@ export class UnifiedLibraryRepositoryClient {
       else pending.reject(new Error(response.error.message));
     });
     worker?.on('error', (error) => {
+      this.closed = true;
       this.rejectPending(error instanceof Error ? error : new Error(String(error)));
     });
     worker?.on('exit', (code) => {
-      if (!this.closed && code !== 0) {
+      if (!this.closed) {
+        this.closed = true;
         this.rejectPending(new Error(`Unified Library repository worker exited with ${code}`));
       }
     });
@@ -63,6 +73,10 @@ export class UnifiedLibraryRepositoryClient {
 
   static openForTesting(databasePath: string): UnifiedLibraryRepositoryClient {
     return new UnifiedLibraryRepositoryClient(UnifiedLibraryRepository.open(databasePath), null);
+  }
+
+  static openWorkerForTesting(worker: RepositoryWorkerPort): UnifiedLibraryRepositoryClient {
+    return new UnifiedLibraryRepositoryClient(null, worker);
   }
 
   getSnapshot(): Promise<RepositorySnapshot> {
@@ -440,7 +454,10 @@ export class UnifiedLibraryRepositoryClient {
   private enqueue<T>(operation: () => T | Promise<T>): Promise<T> {
     if (this.closed)
       return Promise.reject(new Error('Unified Library repository client is closed'));
-    const result = this.queue.then(operation, operation);
+    const result = this.queue.then(() => {
+      if (this.closed) throw new Error('Unified Library repository client is closed');
+      return operation();
+    });
     this.queue = result.then(
       () => undefined,
       () => undefined,

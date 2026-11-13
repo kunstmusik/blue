@@ -6,7 +6,7 @@
 // the optimistic-lock token, and snippet code stored inline on the node row.
 
 import { randomUUID } from 'node:crypto';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync, type StatementSync } from 'node:sqlite';
 import type { CodeRepositoryNode } from '@blue/data';
 import {
   CODE_REPOSITORY_ROOT_ID,
@@ -46,6 +46,7 @@ export interface CodeRepositoryImportRecord extends CodeRepositoryImportRecordIn
 /** Returns true when `hash` already succeeded as an automatic import. */
 export class CodeRepositoryRepository {
   private closed = false;
+  private readonly statements = new Map<string, StatementSync>();
 
   private constructor(private readonly database: DatabaseSync) {}
 
@@ -69,33 +70,32 @@ export class CodeRepositoryRepository {
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    this.statements.clear();
     this.database.close();
   }
 
   getContentRevision(): number {
     this.assertOpen();
-    const row = this.database
-      .prepare('SELECT content_revision FROM code_repository_state WHERE singleton_id = 1')
-      .get();
+    const row = this.prepareStatement(
+      'SELECT content_revision FROM code_repository_state WHERE singleton_id = 1',
+    ).get();
     return Number(row?.content_revision ?? 0);
   }
 
   isInitialized(): boolean {
     this.assertOpen();
-    const row = this.database
-      .prepare('SELECT initialized FROM code_repository_state WHERE singleton_id = 1')
-      .get();
+    const row = this.prepareStatement(
+      'SELECT initialized FROM code_repository_state WHERE singleton_id = 1',
+    ).get();
     return Boolean(row?.initialized);
   }
 
   /** Load the full tree and revision as the canonical snapshot. */
   getSnapshot(): CodeRepositorySnapshotData {
     this.assertOpen();
-    const rows = this.database
-      .prepare(
-        'SELECT * FROM code_repository_nodes ORDER BY parent_id IS NULL DESC, sort_order, id',
-      )
-      .all() as Record<string, unknown>[];
+    const rows = this.prepareStatement(
+      'SELECT * FROM code_repository_nodes ORDER BY parent_id IS NULL DESC, sort_order, id',
+    ).all() as Record<string, unknown>[];
     const nodes = new Map<string, CodeRepositoryNode>();
     const childrenByParent = new Map<string | null, CodeRepositoryNode[]>();
     for (const row of rows) {
@@ -350,9 +350,9 @@ export class CodeRepositoryRepository {
 
   listImports(limit = 50): CodeRepositoryImportRecord[] {
     this.assertOpen();
-    const rows = this.database
-      .prepare('SELECT * FROM code_repository_imports ORDER BY imported_at DESC, id DESC LIMIT ?')
-      .all(Math.max(1, Math.min(limit, 500))) as Record<string, unknown>[];
+    const rows = this.prepareStatement(
+      'SELECT * FROM code_repository_imports ORDER BY imported_at DESC, id DESC LIMIT ?',
+    ).all(Math.max(1, Math.min(limit, 500))) as Record<string, unknown>[];
     return rows.map((row) => ({
       id: String(row.id),
       sourcePath: String(row.source_path),
@@ -368,9 +368,9 @@ export class CodeRepositoryRepository {
   // Internals ----------------------------------------------------------
 
   private requireNode(nodeId: string): CodeRepositoryDbNode {
-    const row = this.database
-      .prepare('SELECT * FROM code_repository_nodes WHERE id = ?')
-      .get(nodeId);
+    const row = this.prepareStatement('SELECT * FROM code_repository_nodes WHERE id = ?').get(
+      nodeId,
+    );
     if (!row) throw new Error(`invalid-tree:missing-node:${nodeId}`);
     return mapDbRow(row as Record<string, unknown>);
   }
@@ -389,40 +389,36 @@ export class CodeRepositoryRepository {
       return;
     }
     const now = Date.now();
-    this.database
-      .prepare(
-        `INSERT INTO code_repository_nodes (
+    this.prepareStatement(
+      `INSERT INTO code_repository_nodes (
           id, parent_id, kind, display_name, code_text, sort_order, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
-        node.id,
-        node.parentId,
-        node.kind,
-        node.name,
-        node.kind === 'snippet' ? (node.code ?? '') : null,
-        node.order,
-        now,
-        now,
-      );
+    ).run(
+      node.id,
+      node.parentId,
+      node.kind,
+      node.name,
+      node.kind === 'snippet' ? (node.code ?? '') : null,
+      node.order,
+      now,
+      now,
+    );
     if (node.kind === 'group') {
       for (const child of node.children ?? []) this.insertSubtree(child);
     }
   }
 
   private nextSortOrder(parentId: string): number {
-    const row = this.database
-      .prepare(
-        'SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM code_repository_nodes WHERE parent_id = ?',
-      )
-      .get(parentId);
+    const row = this.prepareStatement(
+      'SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM code_repository_nodes WHERE parent_id = ?',
+    ).get(parentId);
     return Number(row?.next_order ?? 0);
   }
 
   private normalizeSiblingOrder(parentId: string, movingId?: string, targetIndex?: number): void {
-    const rows = this.database
-      .prepare('SELECT id FROM code_repository_nodes WHERE parent_id = ? ORDER BY sort_order, id')
-      .all(parentId) as Record<string, unknown>[];
+    const rows = this.prepareStatement(
+      'SELECT id FROM code_repository_nodes WHERE parent_id = ? ORDER BY sort_order, id',
+    ).all(parentId) as Record<string, unknown>[];
     const ids = rows.map((row) => String(row.id));
     if (movingId) {
       const from = ids.indexOf(movingId);
@@ -432,7 +428,7 @@ export class CodeRepositoryRepository {
         ids.splice(insertAt, 0, moving);
       }
     }
-    const update = this.database.prepare(
+    const update = this.prepareStatement(
       'UPDATE code_repository_nodes SET sort_order = ? WHERE id = ?',
     );
     ids.forEach((id, index) => update.run(index, id));
@@ -440,11 +436,9 @@ export class CodeRepositoryRepository {
 
   private markInitialized(): void {
     const now = Date.now();
-    this.database
-      .prepare(
-        'UPDATE code_repository_state SET initialized = 1, updated_at = ? WHERE singleton_id = 1',
-      )
-      .run(now);
+    this.prepareStatement(
+      'UPDATE code_repository_state SET initialized = 1, updated_at = ? WHERE singleton_id = 1',
+    ).run(now);
   }
 
   private assertExpectedRevision(expectedRevision: number): void {
@@ -459,11 +453,19 @@ export class CodeRepositoryRepository {
 
   private incrementContentRevision(): void {
     const now = Date.now();
-    this.database
-      .prepare(
-        'UPDATE code_repository_state SET content_revision = content_revision + 1, updated_at = ? WHERE singleton_id = 1',
-      )
-      .run(now);
+    this.prepareStatement(
+      'UPDATE code_repository_state SET content_revision = content_revision + 1, updated_at = ? WHERE singleton_id = 1',
+    ).run(now);
+  }
+
+  private prepareStatement(sql: string): StatementSync {
+    this.assertOpen();
+    let statement = this.statements.get(sql);
+    if (!statement) {
+      statement = this.database.prepare(sql);
+      this.statements.set(sql, statement);
+    }
+    return statement;
   }
 
   private withTransaction<T>(operation: () => T): T {

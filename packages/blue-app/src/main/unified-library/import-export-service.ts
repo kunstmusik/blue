@@ -43,12 +43,16 @@ export interface AutomaticMigrationReport {
 
 interface PendingManualPreview {
   readonly expiresAt: number;
+  readonly expiration: ReturnType<typeof setTimeout>;
   readonly sources: readonly {
     readonly preview: ManualImportSourcePreview;
     readonly plan?: LegacyLibraryDocumentPlan;
     readonly folderResolutionPaths?: Readonly<Record<string, string>>;
   }[];
 }
+
+const MANUAL_PREVIEW_TTL_MS = 5 * 60_000;
+const MAX_MANUAL_PREVIEWS = 32;
 
 export interface AtomicExportOutput {
   readonly targetPath: string;
@@ -149,11 +153,19 @@ function safeMessage(error: unknown): string {
 
 export class UnifiedLibraryImportExportService {
   private operationActive = false;
+  private disposed = false;
   private readonly manualPreviews = new Map<string, PendingManualPreview>();
 
   constructor(private readonly repository: UnifiedLibraryRepositoryClient) {}
 
+  dispose(): void {
+    this.disposed = true;
+    for (const preview of this.manualPreviews.values()) clearTimeout(preview.expiration);
+    this.manualPreviews.clear();
+  }
+
   async previewManualImport(sourcePaths: readonly string[]): Promise<ManualLibraryImportPreview> {
+    if (this.disposed) throw new Error('Library import service is closed');
     if (this.operationActive)
       throw new Error('A library interchange operation is already in progress');
     const sources: {
@@ -204,9 +216,17 @@ export class UnifiedLibraryImportExportService {
         });
       }
     }
+    if (this.disposed) throw new Error('Library import service is closed');
+    if (this.manualPreviews.size >= MAX_MANUAL_PREVIEWS) {
+      const oldestToken = this.manualPreviews.keys().next().value;
+      if (oldestToken !== undefined) this.takeManualPreview(oldestToken);
+    }
     const previewToken = randomUUID();
-    const expiresAt = Date.now() + 5 * 60_000;
-    this.manualPreviews.set(previewToken, { expiresAt, sources });
+    const expiresAt = Date.now() + MANUAL_PREVIEW_TTL_MS;
+    const expiration = setTimeout(() => {
+      this.manualPreviews.delete(previewToken);
+    }, MANUAL_PREVIEW_TTL_MS).unref();
+    this.manualPreviews.set(previewToken, { expiresAt, expiration, sources });
     return { previewToken, expiresAt, sources: sources.map((source) => source.preview) };
   }
 
@@ -214,9 +234,8 @@ export class UnifiedLibraryImportExportService {
     previewToken: string,
     folderSelections: Readonly<Record<string, string>> = {},
   ): Promise<ManualLibraryImportResult> {
-    const pending = this.manualPreviews.get(previewToken);
-    this.manualPreviews.delete(previewToken);
-    if (!pending || pending.expiresAt < Date.now()) throw new Error('Import preview expired');
+    const pending = this.takeManualPreview(previewToken);
+    if (!pending || pending.expiresAt <= Date.now()) throw new Error('Import preview expired');
     if (this.operationActive)
       throw new Error('A library interchange operation is already in progress');
     this.operationActive = true;
@@ -626,6 +645,7 @@ export class UnifiedLibraryImportExportService {
     const folderConflicts: ManualImportSourcePreview['folderConflicts'][number][] = [];
     const folderResolutionPaths: Record<string, string> = {};
     const root = await this.repository.getRoot(plan.libraryType);
+    const siblingHashCache = new Map<string, string>();
     const walk = async (
       parentIds: readonly string[],
       children: readonly LegacyLibraryTreeNode[],
@@ -677,13 +697,20 @@ export class UnifiedLibraryImportExportService {
         const siblings = siblingGroups[0] ?? [];
         let duplicate = false;
         let sameName = false;
-        for (const sibling of siblings.filter((candidate) => candidate.nodeKind === 'item')) {
+        for (const sibling of siblings) {
+          if (sibling.nodeKind !== 'item') continue;
           if (sibling.displayName === child.displayName) sameName = true;
-          if (
-            (await this.repository.getItemPayload(sibling.id)).canonicalContentHash ===
-            child.payload.canonicalContentHash
-          )
-            duplicate = true;
+          if (!duplicate) {
+            let siblingHash = siblingHashCache.get(sibling.id);
+            if (siblingHash === undefined) {
+              siblingHash = (await this.repository.getItemPayload(sibling.id)).canonicalContentHash;
+              siblingHashCache.set(sibling.id, siblingHash);
+            }
+            if (siblingHash === child.payload.canonicalContentHash) {
+              duplicate = true;
+            }
+          }
+          if (duplicate && sameName) break;
         }
         if (duplicate) exactDuplicateCount += 1;
         else if (sameName) aliasConflictCount += 1;
@@ -766,5 +793,12 @@ export class UnifiedLibraryImportExportService {
       diagnostics: [],
       sourceRawHash: '',
     };
+  }
+
+  private takeManualPreview(token: string): PendingManualPreview | undefined {
+    const preview = this.manualPreviews.get(token);
+    if (preview) clearTimeout(preview.expiration);
+    this.manualPreviews.delete(token);
+    return preview;
   }
 }

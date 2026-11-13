@@ -1,11 +1,36 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryImportExportService } from './import-export-service';
 
 describe('manual import preview', () => {
+  it('releases idle previews at expiration and cancels timers on disposal', async () => {
+    vi.useFakeTimers();
+    const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
+    const service = new UnifiedLibraryImportExportService(client);
+    const previews = (service as unknown as { manualPreviews: ReadonlyMap<string, unknown> })
+      .manualPreviews;
+    try {
+      const first = await service.previewManualImport([]);
+      expect(previews.has(first.previewToken)).toBe(true);
+      await vi.advanceTimersByTimeAsync(first.expiresAt - Date.now());
+      expect(previews.size).toBe(0);
+      await expect(service.executeManualImport(first.previewToken)).rejects.toThrow(/expired/);
+
+      await service.previewManualImport([]);
+      service.dispose();
+      expect(previews.size).toBe(0);
+      expect(vi.getTimerCount()).toBe(0);
+      await expect(service.previewManualImport([])).rejects.toThrow(/closed/);
+    } finally {
+      service.dispose();
+      vi.useRealTimers();
+      await client.close();
+    }
+  });
+
   it('presents typed historical SoundObject warnings in the library preview', async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-manual-ruler-'));
     const sourcePath = path.join(directory, 'soundObjectLibrary.xml');

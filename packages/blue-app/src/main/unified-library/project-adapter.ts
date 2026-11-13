@@ -60,7 +60,9 @@ export interface ActiveLibraryProject {
   readonly commit?: (label?: string) => number | Promise<number>;
 }
 
-export type ActiveLibraryProjectProvider = () => ActiveLibraryProject | null;
+export type ActiveLibraryProjectProvider = (options?: {
+  readonly mutable?: boolean;
+}) => ActiveLibraryProject | null;
 
 export interface ProjectInsertionInput {
   readonly key: LibraryItemKey;
@@ -269,7 +271,10 @@ export class UnifiedLibraryProjectAdapter {
   addTimelineSoundObjectToProjectLibrary(
     request: ScoreTimelineSoundObjectRequest,
   ): ProjectMutationReceipt {
-    const { project, soundObject, layer, objectIndex } = this.resolveTimelineSoundObject(request);
+    const { project, soundObject, layer, objectIndex } = this.resolveTimelineSoundObject(
+      request,
+      true,
+    );
     if (soundObject instanceof Instance) {
       throw new Error('This timeline item is already linked to Project SoundObjects.');
     }
@@ -405,7 +410,13 @@ export class UnifiedLibraryProjectAdapter {
   list(libraryType: LibraryType): LibrarySearchResult[] {
     const project = this.getActiveProject();
     if (!project) return [];
+    return this.listWithProject(project, libraryType);
+  }
 
+  private listWithProject(
+    project: ActiveLibraryProject,
+    libraryType: LibraryType,
+  ): LibrarySearchResult[] {
     if (libraryType === 'instrument') {
       return project.data
         .getArrangement()
@@ -581,10 +592,12 @@ export class UnifiedLibraryProjectAdapter {
   search(query: string, typeFilter: LibraryType | 'all'): LibrarySearchResult[] {
     const normalized = query.normalize('NFKC').toLocaleLowerCase().trim();
     if (!normalized) return [];
+    const project = this.getActiveProject();
+    if (!project) return [];
     const types: readonly LibraryType[] =
       typeFilter === 'all' ? ['instrument', 'udo', 'soundObject', 'effect'] : [typeFilter];
     return types
-      .flatMap((type) => this.list(type))
+      .flatMap((type) => this.listWithProject(project, type))
       .filter((item) => item.displayName.normalize('NFKC').toLocaleLowerCase().includes(normalized))
       .sort(
         (left, right) =>
@@ -598,7 +611,7 @@ export class UnifiedLibraryProjectAdapter {
     if (key.scope === 'user') return null;
     const project = this.getActiveProject();
     if (!project || project.sessionId !== key.projectSessionId) return null;
-    const entry = this.list(key.libraryType).find(
+    const entry = this.listWithProject(project, key.libraryType).find(
       (candidate) => JSON.stringify(candidate.key) === JSON.stringify(key),
     );
     if (!entry) return null;
@@ -667,7 +680,7 @@ export class UnifiedLibraryProjectAdapter {
     if (key.scope === 'user') return null;
     const project = this.getActiveProject();
     if (!project || project.sessionId !== key.projectSessionId) return null;
-    const entry = this.list(key.libraryType).find((candidate) => {
+    const entry = this.listWithProject(project, key.libraryType).find((candidate) => {
       if (
         key.locator.kind === 'soundObject' &&
         candidate.key.scope !== 'user' &&
@@ -705,8 +718,6 @@ export class UnifiedLibraryProjectAdapter {
     payloadXml: string,
   ): ProjectLibraryEditorSource | null {
     if (key.scope === 'user') throw new Error('Project editor requires a project key');
-    const project = this.getActiveProject();
-    if (!project || project.sessionId !== key.projectSessionId) return null;
     const current = this.getEditorSource(key);
     if (!current) return null;
     if (current.revision !== expectedRevision) throw new Error('Project editor conflict');
@@ -715,6 +726,8 @@ export class UnifiedLibraryProjectAdapter {
       label: current.displayName,
     });
     if (!report.ok) throw new XmlLoadError(report.diagnostics);
+    const project = this.getActiveProject({ mutable: true });
+    if (!project || project.sessionId !== key.projectSessionId) return null;
     const accepted = report.value;
     let changed = false;
     if (key.locator.kind === 'instrument') {
@@ -885,9 +898,9 @@ export class UnifiedLibraryProjectAdapter {
 
   deleteProjectItem(key: LibraryItemKey, confirmationToken: string): ProjectMutationReceipt {
     if (key.scope === 'user') throw new Error('Project delete requires a project key');
-    const project = this.getActiveProject();
     const confirmation = this.deleteConfirmations.get(confirmationToken);
     this.deleteConfirmations.delete(confirmationToken);
+    const project = this.getActiveProject({ mutable: true });
     if (!project || project.sessionId !== key.projectSessionId)
       throw new Error('Stale project session');
     if (
@@ -996,7 +1009,7 @@ export class UnifiedLibraryProjectAdapter {
     target: InsertionTargetSnapshot,
     libraryType: LibraryType,
   ): ActiveLibraryProject {
-    const project = this.getActiveProject();
+    const project = this.getActiveProject({ mutable: true });
     if (!project || project.sessionId !== target.projectSessionId) {
       throw new Error('Stale project session');
     }
@@ -1007,13 +1020,16 @@ export class UnifiedLibraryProjectAdapter {
     return project;
   }
 
-  private resolveTimelineSoundObject(request: ScoreTimelineSoundObjectRequest): {
+  private resolveTimelineSoundObject(
+    request: ScoreTimelineSoundObjectRequest,
+    mutable = false,
+  ): {
     project: ActiveLibraryProject;
     soundObject: SoundObject;
     layer: Array<SoundObject | AudioClip>;
     objectIndex: number;
   } {
-    const project = this.getActiveProject();
+    const project = mutable ? this.getActiveProject({ mutable: true }) : this.getActiveProject();
     if (!project || project.sessionId !== request.projectSessionId) {
       throw new Error('The source project changed.');
     }
