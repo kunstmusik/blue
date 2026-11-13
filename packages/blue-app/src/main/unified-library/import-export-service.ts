@@ -174,7 +174,7 @@ export class UnifiedLibraryImportExportService {
       folderResolutionPaths?: Readonly<Record<string, string>>;
     }[] = [];
     for (const sourcePath of sourcePaths) {
-      const bytes = fs.readFileSync(sourcePath);
+      const bytes = await fs.promises.readFile(sourcePath);
       const sourceHash = hashBytes(bytes);
       try {
         const plan = parseLegacyLibraryDocument(bytes.toString('utf8'), {
@@ -243,7 +243,10 @@ export class UnifiedLibraryImportExportService {
     const startedAt = new Date().toISOString();
     try {
       for (const source of pending.sources) {
-        if (hashBytes(fs.readFileSync(source.preview.sourcePath)) !== source.preview.sourceHash) {
+        if (
+          hashBytes(await fs.promises.readFile(source.preview.sourcePath)) !==
+          source.preview.sourceHash
+        ) {
           throw new Error(`Import source changed after preview: ${source.preview.sourcePath}`);
         }
         for (const conflict of source.preview.folderConflicts) {
@@ -502,7 +505,7 @@ export class UnifiedLibraryImportExportService {
         const sourceId = randomUUID();
         let sourceHash: string | undefined;
         try {
-          const bytes = fs.readFileSync(sourcePath);
+          const bytes = await fs.promises.readFile(sourcePath);
           sourceHash = hashBytes(bytes);
           const plan = parseLegacyLibraryDocument(bytes.toString('utf8'), {
             kind: 'library',
