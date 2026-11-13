@@ -745,6 +745,10 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
   const projectParameterCatalog = getProjectParameterCatalog(data);
   const allParameters = projectParameterCatalog.map((entry) => entry.parameter);
   const assignedLayerMap = buildAssignedAutomationLayerMap(score);
+  const sharedAutomationData = {
+    paramMap: buildParameterMap(allParameters),
+    metadataMap: buildParameterMetadataMap(arrangement, mixer, projectParameterCatalog),
+  };
 
   for (let i = 0; i < score.length; i++) {
     const lg = score[i];
@@ -761,6 +765,7 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
           mixer,
           assignedLayerMap,
           projectParameterCatalog,
+          sharedAutomationData,
         ),
       );
     } else if (lg instanceof TrackLayerGroup) {
@@ -774,6 +779,7 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
           mixer,
           assignedLayerMap,
           projectParameterCatalog,
+          sharedAutomationData,
         ),
       );
     } else if (lg instanceof PatternsLayerGroup) {
@@ -793,6 +799,10 @@ function createPolyObjectGroupSnapshot(
   mixer: BlueDataMixer,
   assignedLayerMap: Map<string, { layerId: string; layerName: string }>,
   projectParameterCatalog: readonly ProjectParameterEntry[],
+  sharedAutomationData?: {
+    paramMap: Map<string, BlueDataParameter>;
+    metadataMap: Map<string, ParameterMetadata>;
+  },
 ): PolyObjectLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const layers: ScoreLayerSnapshot[] = [];
@@ -844,6 +854,7 @@ function createPolyObjectGroupSnapshot(
       arrangement,
       mixer,
       projectParameterCatalog,
+      sharedAutomationData,
     );
     layers.push({
       layerId,
@@ -887,6 +898,10 @@ function createTrackLayerGroupSnapshot(
   mixer: BlueDataMixer,
   assignedLayerMap: Map<string, { layerId: string; layerName: string }>,
   projectParameterCatalog: readonly ProjectParameterEntry[],
+  sharedAutomationData?: {
+    paramMap: Map<string, BlueDataParameter>;
+    metadataMap: Map<string, ParameterMetadata>;
+  },
 ): TrackLayerGroupSnapshot {
   const groupId = lg.getUniqueId();
   const layers: TrackSnapshot[] = [];
@@ -970,6 +985,7 @@ function createTrackLayerGroupSnapshot(
       arrangement,
       mixer,
       projectParameterCatalog,
+      sharedAutomationData,
     );
     const instrument = layer.getInstrument();
     const instrumentType = instrument ? getInstrumentSnapshotType(instrument) : 'unknown';
@@ -2104,7 +2120,8 @@ export function createProjectEditorSnapshot(
   sessionId = 0,
   documentId?: string,
 ): ProjectEditorSnapshot {
-  reconcileMixerWithArrangement(data);
+  const orchestra = createOrchestraSnapshot(data);
+  reconcileMixerWithArrangement(data, orchestra);
   return {
     filePath,
     version: data.getVersion(),
@@ -2112,7 +2129,7 @@ export function createProjectEditorSnapshot(
     documentId,
     globalOrc: data.getGlobalOrcSco().getGlobalOrc(),
     globalSco: data.getGlobalOrcSco().getGlobalSco(),
-    orchestra: createOrchestraSnapshot(data),
+    orchestra,
     mixer: {
       ...createMixerSnapshot(data.getMixer(), data.getScore()),
       legacyActiveChannelStateNotice: computeLegacyMixerStateNotice(data),
@@ -2271,6 +2288,14 @@ function buildAutomationParameterSnapshot(
   };
 }
 
+function buildParameterMap(allParameters: BlueDataParameter[]): Map<string, BlueDataParameter> {
+  const paramMap = new Map<string, BlueDataParameter>();
+  for (const p of allParameters) {
+    paramMap.set(p.getUniqueId(), p);
+  }
+  return paramMap;
+}
+
 export function collectLayerAutomationSnapshot(
   layerId: string,
   layerKind: AutomationLayerKind,
@@ -2281,16 +2306,18 @@ export function collectLayerAutomationSnapshot(
   arrangement: BlueDataArrangement,
   mixer: BlueDataMixer,
   projectParameterCatalog: readonly ProjectParameterEntry[] = [],
+  prepared?: {
+    paramMap?: Map<string, BlueDataParameter>;
+    metadataMap?: Map<string, ParameterMetadata>;
+  },
 ): ScoreLayerAutomationSnapshot | undefined {
   const paramIdList = automatableLayer.getAutomationParameters();
   const assignedIds = paramIdList.getIds();
 
-  const paramMap = new Map<string, BlueDataParameter>();
-  for (const p of allParameters) {
-    paramMap.set(p.getUniqueId(), p);
-  }
+  const paramMap = prepared?.paramMap ?? buildParameterMap(allParameters);
 
-  const metadataMap = buildParameterMetadataMap(arrangement, mixer, projectParameterCatalog);
+  const metadataMap =
+    prepared?.metadataMap ?? buildParameterMetadataMap(arrangement, mixer, projectParameterCatalog);
 
   const resolvedParameters: AutomationParameterSnapshot[] = [];
   const missingParameterIds: string[] = [];

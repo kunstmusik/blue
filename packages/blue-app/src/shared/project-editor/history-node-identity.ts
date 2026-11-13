@@ -117,11 +117,26 @@ export function transferHistoryNodeIds(
       const right = [...b];
       [...a].forEach((value, i) => pair(value, right[i]));
     }
-    if (Array.isArray(a) && Array.isArray(b))
+    if (Array.isArray(a) && Array.isArray(b)) {
+      let bByIdentity: Map<unknown, unknown> | undefined;
       for (let i = 0; i < a.length; i++) {
         const id = identity(a[i]);
-        pair(a[i], id === undefined ? b[i] : b.find((item) => identity(item) === id));
+        if (id === undefined) {
+          pair(a[i], b[i]);
+        } else {
+          if (!bByIdentity) {
+            bByIdentity = new Map();
+            for (const item of b) {
+              const itemId = identity(item);
+              if (itemId !== undefined && !bByIdentity.has(itemId)) {
+                bByIdentity.set(itemId, item);
+              }
+            }
+          }
+          pair(a[i], bByIdentity.get(id));
+        }
       }
+    }
     for (const key of Reflect.ownKeys(a)) {
       if (Array.isArray(a) && typeof key === 'string' && /^\d+$/.test(key)) continue;
       const left = Object.getOwnPropertyDescriptor(a, key),

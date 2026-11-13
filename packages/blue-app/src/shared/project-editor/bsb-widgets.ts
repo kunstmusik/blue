@@ -266,17 +266,52 @@ function getWidgetSnapshotFallbackSize(record: Record<string, unknown>): {
   };
 }
 
-function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | null {
+type BsbWidgetVisitCallback = (
+  widget: unknown,
+  ctorName: string,
+  record: Record<string, unknown>,
+) => void;
+
+function visitGraphicSubtreeMetadata(widget: unknown, onVisit: BsbWidgetVisitCallback): void {
+  if (!widget || typeof widget !== 'object') return;
+  const record = widget as Record<string, unknown>;
+  const ctorName =
+    typeof record.constructor === 'function' && 'name' in record.constructor
+      ? String(record.constructor.name)
+      : 'Unknown';
+  onVisit(widget, ctorName, record);
+  const children =
+    typeof record.getChildren === 'function'
+      ? (record.getChildren as () => unknown[]).call(widget)
+      : (record.children ?? record._children);
+  if (Array.isArray(children)) {
+    for (const child of children) {
+      visitGraphicSubtreeMetadata(child, onVisit);
+    }
+  }
+}
+
+function serializeBsbWidgetSnapshot(
+  widget: unknown,
+  onVisit?: BsbWidgetVisitCallback,
+): BsbWidgetNodeSnapshot | null {
   if (!widget || typeof widget !== 'object') return null;
   const record = widget as Record<string, unknown>;
-
-  const id = typeof record.id === 'string' ? record.id : '';
-  if (!id) return null;
 
   const ctorName =
     typeof record.constructor === 'function' && 'name' in record.constructor
       ? String(record.constructor.name)
       : 'Unknown';
+
+  const id = typeof record.id === 'string' ? record.id : '';
+  if (!id) {
+    if (onVisit) {
+      visitGraphicSubtreeMetadata(widget, onVisit);
+    }
+    return null;
+  }
+
+  onVisit?.(widget, ctorName, record);
 
   const preservedOnly = !KNOWN_WIDGET_TYPES.has(ctorName);
 
@@ -400,7 +435,7 @@ function serializeBsbWidgetSnapshot(widget: unknown): BsbWidgetNodeSnapshot | nu
 
   const childSnapshots = Array.isArray(children)
     ? children
-        .map((child) => serializeBsbWidgetSnapshot(child))
+        .map((child) => serializeBsbWidgetSnapshot(child, onVisit))
         .filter((node): node is BsbWidgetNodeSnapshot => Boolean(node))
     : [];
 
@@ -472,6 +507,95 @@ export function createDefaultBsbWidgetSnapshot(widgetType: string): BsbWidgetNod
 
 function buildWidgetTreeNodeFromGraphicNode(widget: unknown): BsbWidgetNodeSnapshot | null {
   return serializeBsbWidgetSnapshot(widget);
+}
+
+export function collectGraphicInterfaceSnapshot(graphicInterface: {
+  getRootGroup(): {
+    id?: string;
+    getChildren(): unknown[];
+  };
+}): {
+  objectNames: string[];
+  widgets: BsbWidgetSnapshot[];
+  widgetTree: BsbWidgetNodeSnapshot;
+} {
+  const rootGroup = graphicInterface.getRootGroup();
+  const keys = new Set<string>();
+  const widgets: BsbWidgetSnapshot[] = [];
+
+  const collectNodeMetadata: BsbWidgetVisitCallback = (node, ctorName, record) => {
+    for (const key of getBsbReplacementKeysFromWidget(
+      node as Parameters<typeof getBsbReplacementKeysFromWidget>[0],
+    )) {
+      keys.add(key);
+    }
+    const objectName =
+      typeof record.getObjectName === 'function'
+        ? (record.getObjectName as () => unknown)()
+        : (record.objectName ?? record._objectName);
+    if (typeof objectName === 'string' && objectName.trim()) {
+      widgets.push({
+        objectName: objectName.trim(),
+        widgetType: ctorName === 'Unknown' ? 'BSBObject' : ctorName,
+        value: typeof record.value === 'number' ? record.value : 0,
+        minimum: typeof record.minimum === 'number' ? record.minimum : 0,
+        maximum: typeof record.maximum === 'number' ? record.maximum : 1,
+      });
+    }
+  };
+
+  for (const key of getBsbReplacementKeysFromWidget(
+    rootGroup as Parameters<typeof getBsbReplacementKeysFromWidget>[0],
+  )) {
+    keys.add(key);
+  }
+  const rootRecord = rootGroup as Record<string, unknown>;
+  const rootObjectName =
+    typeof rootRecord.getObjectName === 'function'
+      ? (rootRecord.getObjectName as () => unknown)()
+      : (rootRecord.objectName ?? rootRecord._objectName);
+  if (typeof rootObjectName === 'string' && rootObjectName.trim()) {
+    widgets.push({
+      objectName: rootObjectName.trim(),
+      widgetType:
+        typeof rootRecord.constructor === 'function' && 'name' in rootRecord.constructor
+          ? String(rootRecord.constructor.name)
+          : 'BSBObject',
+      value: typeof rootRecord.value === 'number' ? rootRecord.value : 0,
+      minimum: typeof rootRecord.minimum === 'number' ? rootRecord.minimum : 0,
+      maximum: typeof rootRecord.maximum === 'number' ? rootRecord.maximum : 1,
+    });
+  }
+
+  const children: BsbWidgetNodeSnapshot[] = [];
+  for (const child of rootGroup.getChildren()) {
+    const node = serializeBsbWidgetSnapshot(child, collectNodeMetadata);
+    if (node) {
+      children.push(node);
+    }
+  }
+
+  widgets.sort((a, b) => a.objectName.localeCompare(b.objectName));
+  return {
+    objectNames: [...keys].sort((left, right) => left.localeCompare(right)),
+    widgets,
+    widgetTree: {
+      id: rootGroup.id || 'root',
+      gestureTargetId: getBsbGestureTargetId(rootGroup),
+      type: 'BSBRootGroup',
+      objectName: '',
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      value: 0,
+      minimum: 0,
+      maximum: 1,
+      editable: true,
+      properties: {},
+      children,
+    },
+  };
 }
 
 export function buildWidgetTreeSnapshotFromGraphicInterface(graphicInterface: {

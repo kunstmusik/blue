@@ -781,12 +781,7 @@ export function validateProjectDocumentPatch(patch: ProjectDocumentPatch): {
   return { valid: true };
 }
 
-export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
-  const validation = validateProjectDocumentPatch(patch);
-  if (!validation.valid) {
-    return false;
-  }
-
+function isEmptyValidatedProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
   const hasProjectProperties =
     patch.projectProperties !== undefined && Object.keys(patch.projectProperties).length > 0;
   // A supplied replacement list is a candidate edit even when empty: removing
@@ -819,10 +814,18 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
   );
 }
 
+export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
+  const validation = validateProjectDocumentPatch(patch);
+  if (!validation.valid) {
+    return false;
+  }
+  return isEmptyValidatedProjectDocumentPatch(patch);
+}
+
 export function isScalarProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
   const validation = validateProjectDocumentPatch(patch);
   if (!validation.valid) return false;
-  if (isEmptyProjectDocumentPatch(patch)) return false;
+  if (isEmptyValidatedProjectDocumentPatch(patch)) return false;
 
   if (patch.score !== undefined && SCORE_PATCH_PREPARATION_CLASS[patch.score.type] !== 'scalar') {
     return false;

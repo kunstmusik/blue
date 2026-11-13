@@ -676,11 +676,31 @@ function createManagedLayerGroup(
 }
 
 function findLayerGroupByGroupId(score: Score, groupId: string): ManagedLayerGroup | null {
-  return (
-    collectManagedLayerGroupLocations(score).find(
-      (location) => getManagedLayerGroupId(location.group) === groupId,
-    )?.group ?? null
-  );
+  const visited = new Set<ManagedLayerGroup>();
+  const visit = (group: ManagedLayerGroup): ManagedLayerGroup | null => {
+    if (visited.has(group)) return null;
+    visited.add(group);
+    if (getManagedLayerGroupId(group) === groupId) return group;
+    if (!(group instanceof PolyObject)) return null;
+    for (const layer of group) {
+      for (let objectIndex = 0; objectIndex < layer.length; objectIndex++) {
+        const soundObject = layer[objectIndex];
+        if (soundObject instanceof PolyObject) {
+          const match = visit(soundObject);
+          if (match) return match;
+        }
+      }
+    }
+    return null;
+  };
+  for (let index = 0; index < score.length; index++) {
+    const group = score[index];
+    if (isManagedLayerGroup(group)) {
+      const match = visit(group);
+      if (match) return match;
+    }
+  }
+  return null;
 }
 
 interface ManagedLayerGroupLocation {
@@ -1563,6 +1583,17 @@ function findParameterById(data: BlueData, parameterId: string): BlueDataParamet
   );
 }
 
+function buildParameterMapById(data: BlueData): Map<string, BlueDataParameter> {
+  const map = new Map<string, BlueDataParameter>();
+  for (const entry of getProjectParameterCatalog(data)) {
+    const id = entry.parameter.getUniqueId();
+    if (!map.has(id)) {
+      map.set(id, entry.parameter);
+    }
+  }
+  return map;
+}
+
 function removeAutomationParameterFromGroup(group: unknown, parameterId: string): void {
   if (!(group instanceof PolyObject) && !(group instanceof TrackLayerGroup)) {
     return;
@@ -1673,6 +1704,7 @@ function applyAutomationRangePatch(
     return false;
   }
 
+  let parameterById: Map<string, BlueDataParameter> | undefined;
   for (const layerId of patch.range.layerIds) {
     const layer = findAutomationLayerBySnapshotId(data, layerId);
     if (!layer) {
@@ -1687,7 +1719,8 @@ function applyAutomationRangePatch(
         continue;
       }
 
-      const param = findParameterById(data, parameterId);
+      parameterById ??= buildParameterMapById(data);
+      const param = parameterById.get(parameterId) ?? null;
       if (!param) {
         continue;
       }
@@ -2394,11 +2427,22 @@ function applyConvertToPolyObjectPatch(
     globalLayerIndex: number;
   }> = [];
 
+  const layerIndexByObject = new Map<SoundObject, number>();
+  for (let gIdx = 0; gIdx < allLayers.length; gIdx += 1) {
+    const l = allLayers[gIdx]!;
+    for (const child of l) {
+      if (seenObjects.has(child as SoundObject) && !layerIndexByObject.has(child as SoundObject)) {
+        layerIndexByObject.set(child as SoundObject, gIdx);
+      }
+    }
+  }
+
   for (const item of resolvedTargets) {
     const sObj = item.sObj;
-    const gIdx = allLayers.findIndex(
-      (l) => l.includes(sObj) || ('contains' in l && l.contains(sObj)),
-    );
+    let gIdx = layerIndexByObject.get(sObj) ?? -1;
+    if (gIdx === -1) {
+      gIdx = allLayers.findIndex((l) => l.includes(sObj) || ('contains' in l && l.contains(sObj)));
+    }
     if (gIdx === -1) return false;
     const layer = allLayers[gIdx]!;
 

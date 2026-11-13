@@ -351,9 +351,7 @@ import {
   restoreBsbAutomationParameters,
   snapshotToUdo,
   toGridSettingsSnapshot,
-  collectGraphicInterfaceObjectNames,
-  collectGraphicInterfaceWidgets,
-  buildWidgetTreeSnapshotFromGraphicInterface,
+  collectGraphicInterfaceSnapshot,
 } from './bsb-widgets';
 import {
   assignClojureLibraryEntrySnapshotId,
@@ -434,6 +432,7 @@ export function createJMaskPayloadSummary(payload: JMaskEditorPayload): string {
 
 function createEffectSnapshotBase(effect: Effect): EffectSnapshot {
   const graphicInterface = effect.getGraphicInterface();
+  const graphicSnapshot = collectGraphicInterfaceSnapshot(graphicInterface);
   return {
     effectXml: effect.saveAsXML().toXml(),
     name: effect.getName(),
@@ -445,9 +444,9 @@ function createEffectSnapshotBase(effect: Effect): EffectSnapshot {
     comments: effect.getComments(),
     editEnabled: graphicInterface.isEditEnabled(),
     gridSettings: toGridSettingsSnapshot(graphicInterface.getGridSettings()),
-    objectNames: collectGraphicInterfaceObjectNames(graphicInterface),
-    widgets: collectGraphicInterfaceWidgets(graphicInterface),
-    widgetTree: buildWidgetTreeSnapshotFromGraphicInterface(graphicInterface),
+    objectNames: graphicSnapshot.objectNames,
+    widgets: graphicSnapshot.widgets,
+    widgetTree: graphicSnapshot.widgetTree,
     udos: effect.getOpcodeList().getOpcodes().map(udoToSnapshot),
   };
 }
@@ -1790,9 +1789,12 @@ export function findTrackLayerGroupByAssociation(
   );
 }
 
-export function reconcileMixerWithArrangement(data: BlueData): boolean {
+export function reconcileMixerWithArrangement(
+  data: BlueData,
+  prebuiltOrchestra?: OrchestraSnapshot,
+): boolean {
   const mixer = data.getMixer();
-  const orchestra = createOrchestraSnapshot(data);
+  const orchestra = prebuiltOrchestra ?? createOrchestraSnapshot(data);
   const currentSnapshot = createMixerSnapshot(mixer);
   const reconciled = reconcileMixerSnapshotWithArrangement(currentSnapshot, orchestra);
   const reconciledWithGroups: MixerSnapshot = {
