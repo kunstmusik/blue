@@ -178,16 +178,29 @@ function expandPluses(notes: NoteList): void {
 }
 
 function expandRamps(notes: NoteList): void {
+  const unmatchedThrough = new Map<number, number>();
   for (let i = 0; i < notes.length; i++) {
     const currentNote = notes.getNote(i);
 
     for (let j = 0; j < currentNote.getPCount(); j++) {
       const pField = currentNote.getPField(j + 1);
       if (pField === '>' || pField === '<') {
-        const headIndex = findRampHead(notes, i, j + 1);
-        const tailIndex = findRampTail(notes, i, j + 1);
+        const field = j + 1;
+        if ((unmatchedThrough.get(field) ?? -1) >= i) continue;
 
-        if (headIndex < 0 || tailIndex < 0) continue;
+        // Earlier notes have already been visited, so the first marker in a
+        // run is adjacent to its head. Scan the rest of the run once.
+        const headIndex = i - 1;
+        let tailIndex = i + 1;
+        while (tailIndex < notes.length) {
+          const next = notes.getNote(tailIndex).getPField(field);
+          if (next !== '>' && next !== '<') break;
+          tailIndex++;
+        }
+        if (headIndex < 0 || tailIndex === notes.length) {
+          unmatchedThrough.set(field, tailIndex - 1);
+          continue;
+        }
 
         const startNote = notes.getNote(headIndex);
         const endNote = notes.getNote(tailIndex);
@@ -206,54 +219,6 @@ function expandRamps(notes: NoteList): void {
       }
     }
   }
-}
-
-function findRampHead(notes: NoteList, currentIndex: number, pFieldNum: number): number {
-  const prev = currentIndex - 1;
-  if (prev < 0) return -1;
-
-  let pField: string;
-  try {
-    pField = notes.getNote(prev).getPField(pFieldNum) ?? '';
-  } catch {
-    return -1;
-  }
-
-  if (pField === '>' || pField === '<') {
-    return findRampHead(notes, prev, pFieldNum);
-  }
-
-  try {
-    parseFloat(pField);
-  } catch {
-    return -2;
-  }
-
-  return prev;
-}
-
-function findRampTail(notes: NoteList, currentIndex: number, pFieldNum: number): number {
-  const next = currentIndex + 1;
-  if (next >= notes.length) return -1;
-
-  let pField: string;
-  try {
-    pField = notes.getNote(next).getPField(pFieldNum) ?? '';
-  } catch {
-    return -1;
-  }
-
-  if (pField === '>' || pField === '<') {
-    return findRampTail(notes, next, pFieldNum);
-  }
-
-  try {
-    parseFloat(pField);
-  } catch {
-    return -2;
-  }
-
-  return next;
 }
 
 export function getNotes(scoreText: string): NoteList {

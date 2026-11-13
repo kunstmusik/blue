@@ -5,6 +5,16 @@ import { TimeContext } from '../time/time-context';
 import { getNotes, NoteParseException } from './score';
 
 describe('ScoreUtilities.getNotes', () => {
+  it('preserves a long unmatched ramp and expands the next complete run', () => {
+    const unmatched = Array.from({ length: 12_000 }, (_, i) => `i1 ${i} 1 >`);
+    const notes = getNotes(
+      [...unmatched, 'i1 12000 1 0', 'i1 12001 1 <', 'i1 12002 1 2'].join('\n'),
+    );
+    expect(notes.getNote(0).getPField(4)).toBe('>');
+    expect(notes.getNote(11_999).getPField(4)).toBe('>');
+    expect(notes.getNote(12_001).getPField(4)).toBe('1');
+  });
+
   it('should parse simple score text', () => {
     const scoreText = 'i1 0 1 440';
     const notes = getNotes(scoreText);
