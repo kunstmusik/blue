@@ -1084,7 +1084,8 @@ function computeDiskPruningSet(
       const t = track as Track;
       if (t.getNoteProcessorChain().getProcessors().length > 0) return NO_PRUNING;
       if (!isAudioClipOnlyTrack(t)) return NO_PRUNING;
-      if (trackInstrumentMakesPruningUnsafe(t)) return NO_PRUNING;
+      // An enabled track instrument can contribute opaque shared orchestra code.
+      if (t.getInstrument()?.isEnabled()) return NO_PRUNING;
     }
   }
   for (const ia of state.arrangement.getArrangement()) {
@@ -1126,14 +1127,15 @@ function computeDiskPruningSet(
   const indicatorByOrdinal = new Map(
     gateContext.state.channels.map((candidate) => [candidate.ordinal, candidate] as const),
   );
-  const inaudibleTrackIds = new Set<string>();
-  for (const node of gateContext.graph.nodes) {
-    const assoc = gateContext.orderedChannels[node.ordinal]?.getAssociation();
-    if (!assoc) continue;
-    const indicator = indicatorByOrdinal.get(node.ordinal);
-    if (indicator && !indicator.reachesAudibleOutput) {
-      inaudibleTrackIds.add(assoc);
-    }
+  const audibilityByAssociation = new Map<string, boolean>();
+  for (const [ordinal, channel] of gateContext.orderedChannels.entries()) {
+    const association = channel.getAssociation();
+    // Clip routing uses the first channel with a matching association.
+    if (!association || audibilityByAssociation.has(association)) continue;
+    audibilityByAssociation.set(
+      association,
+      indicatorByOrdinal.get(ordinal)?.reachesAudibleOutput ?? true,
+    );
   }
 
   const prune = new Set<string>();
@@ -1142,40 +1144,11 @@ function computeDiskPruningSet(
     for (const track of group as TrackLayerGroup & Track[]) {
       const t = track as Track;
       if (!isAudioClipOnlyTrack(t)) continue;
-      if (!inaudibleTrackIds.has(t.getUniqueId())) continue;
+      if (audibilityByAssociation.get(t.getUniqueId()) !== false) continue;
       prune.add(t.getUniqueId());
     }
   }
   return prune;
-}
-
-/**
- * Track-owned instruments can contribute instrument text, global/always-on
- * code, and user-defined opcodes to the shared generated orchestra. The
- * generated code is intentionally inspected before the final conservative
- * decision, but an enabled instrument remains an unsafe certification case
- * even when those known accessors happen to be empty: instrument subclasses
- * may add executable content through their generation hooks.
- */
-function trackInstrumentMakesPruningUnsafe(track: Track): boolean {
-  const instrument = track.getInstrument();
-  if (!instrument || !instrument.isEnabled()) return false;
-
-  const globalOrc = instrument.generateGlobalOrc()?.trim() ?? '';
-  const globalSco = instrument.generateGlobalSco()?.trim() ?? '';
-  const alwaysOn = instrument.generateAlwaysOnInstrument()?.trim() ?? '';
-  const opcodeList = (
-    instrument as Instrument & { getOpcodeList?: () => OpcodeList }
-  ).getOpcodeList?.();
-  const hasAuthoredSharedCode =
-    globalOrc.length > 0 ||
-    globalSco.length > 0 ||
-    alwaysOn.length > 0 ||
-    (opcodeList?.getOpcodes().length ?? 0) > 0;
-
-  // Keep the variable explicit so future instrument-specific exemptions have
-  // one review point; for now every enabled Track instrument is opaque.
-  return hasAuthoredSharedCode || instrument.isEnabled();
 }
 
 function isAudioClipOnlyTrack(track: Track): boolean {

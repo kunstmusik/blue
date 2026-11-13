@@ -229,6 +229,18 @@ describe('disk pruning eligibility and route survival (Spec 111 US3)', () => {
     expect(score).toContain('"test.wav"');
   });
 
+  it('keeps a clip routed to the first audible channel when a later association is muted', () => {
+    const { data, trackA } = createCertifiableProject();
+    addClip(trackA, 0, 4);
+    const duplicate = new Channel();
+    duplicate.setName('Duplicate');
+    duplicate.setAssociation(trackA.getUniqueId());
+    duplicate.setMuted(true);
+    data.getMixer().getChannels().push(duplicate);
+
+    expect(buildStandardCSD(data, 'disk').csdText).toContain('"test.wav"');
+  });
+
   it('leaves the project untouched by pruning decisions', () => {
     const { data, trackA } = createCertifiableProject();
     addClip(trackA, 0, 4);
