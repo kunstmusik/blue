@@ -179,6 +179,18 @@ export const CMD_ENABLE_AUTOMATION = 0x23;
 export const CMD_DISABLE_AUTOMATION = 0x24;
 export const CMD_LIST_AUTOMATION = 0x25;
 export const CMD_CLEAR_AUTOMATION = 0x26;
+export const CMD_BATCH_CREATE_AUTOMATIONS = 0x27;
+export const CMD_BATCH_UPDATE_AUTOMATIONS = 0x28;
+
+export const MAX_BATCH_AUTOMATIONS = 256;
+
+export interface BatchAutomationEntry {
+  name: string;
+  curve: AutomationCurveCode;
+  enabled: boolean;
+  resolutionDecimal: string;
+  points: AutomationPoint[];
+}
 
 /**
  * Automation curve types — must match C++ AutomationCurve enum values.
@@ -353,8 +365,7 @@ function canonicalJavaDecimalText(text: string): string | null {
  *   + resolution ASCII bytes + n_points(u32)
  *   + points[] (each: time(f64) + value(f64) = 16 bytes)
  */
-function encodeAutomation(
-  command: number,
+function encodeAutomationEntryPayload(
   name: string,
   curve: AutomationCurveCode,
   enabled: boolean,
@@ -426,12 +437,88 @@ function encodeAutomation(
     payload.writeDoubleLE(point.value, offset);
     offset += 8;
   }
+  return payload;
+}
 
-  const commandBuffer = Buffer.alloc(5 + payloadSize);
+function encodeAutomation(
+  command: number,
+  name: string,
+  curve: AutomationCurveCode,
+  enabled: boolean,
+  resolutionDecimal: string,
+  points: AutomationPoint[],
+): Buffer {
+  const payload = encodeAutomationEntryPayload(name, curve, enabled, resolutionDecimal, points);
+  const commandBuffer = Buffer.alloc(5 + payload.length);
   commandBuffer.writeUInt8(command, 0);
-  commandBuffer.writeUInt32LE(payloadSize, 1);
+  commandBuffer.writeUInt32LE(payload.length, 1);
   payload.copy(commandBuffer, 5);
   return commandBuffer;
+}
+
+function encodeBatchAutomations(command: number, entries: readonly BatchAutomationEntry[]): Buffer {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    throw new RangeError('Batch automations requires at least one entry');
+  }
+  if (entries.length > MAX_BATCH_AUTOMATIONS) {
+    throw new RangeError(`Batch automations exceeds ${MAX_BATCH_AUTOMATIONS} entries`);
+  }
+
+  const parts: Buffer[] = [];
+  const seen = new Set<string>();
+  let totalPayloadSize = 2;
+  for (const entry of entries) {
+    if (seen.has(entry.name)) {
+      throw new RangeError(`Batch automations contains duplicate channel name: ${entry.name}`);
+    }
+    seen.add(entry.name);
+    const entryBuf = encodeAutomationEntryPayload(
+      entry.name,
+      entry.curve,
+      entry.enabled,
+      entry.resolutionDecimal,
+      entry.points,
+    );
+    totalPayloadSize += entryBuf.length;
+    parts.push(entryBuf);
+  }
+  if (totalPayloadSize > 0xffff_ffff) {
+    throw new RangeError('Batch automation payload is too large');
+  }
+
+  const commandBuffer = Buffer.alloc(5 + totalPayloadSize);
+  commandBuffer.writeUInt8(command, 0);
+  commandBuffer.writeUInt32LE(totalPayloadSize, 1);
+  commandBuffer.writeUInt16LE(entries.length, 5);
+  let offset = 7;
+  for (const part of parts) {
+    part.copy(commandBuffer, offset);
+    offset += part.length;
+  }
+  return commandBuffer;
+}
+
+export function encodeBatchCreateAutomations(entries: readonly BatchAutomationEntry[]): Buffer {
+  return encodeBatchAutomations(CMD_BATCH_CREATE_AUTOMATIONS, entries);
+}
+
+export function encodeBatchUpdateAutomations(entries: readonly BatchAutomationEntry[]): Buffer {
+  return encodeBatchAutomations(CMD_BATCH_UPDATE_AUTOMATIONS, entries);
+}
+
+export function decodeBatchAutomationIds(payload: Buffer): number[] {
+  if (!Buffer.isBuffer(payload) || payload.length < 2) {
+    throw new RangeError('Batch automation IDs payload is truncated');
+  }
+  const count = payload.readUInt16LE(0);
+  if (payload.length !== 2 + count * 4) {
+    throw new RangeError('Batch automation IDs payload length does not match count');
+  }
+  const ids: number[] = [];
+  for (let i = 0; i < count; i++) {
+    ids.push(payload.readUInt32LE(2 + i * 4));
+  }
+  return ids;
 }
 
 export function encodeCreateAutomation(

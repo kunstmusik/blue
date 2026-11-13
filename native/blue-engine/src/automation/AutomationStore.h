@@ -7,6 +7,14 @@
 
 namespace blue {
 
+struct AutomationBatchEntry {
+    std::string channelName;
+    AutomationCurve curve = AutomationCurve::LINEAR;
+    std::vector<AutomationPoint> points;
+    bool enabled = true;
+    std::string resolutionText;
+};
+
 // Thread-safe storage for automation definitions.
 //
 // Writers (the ZMQ control thread) publish fully prepared immutable
@@ -38,6 +46,14 @@ public:
                                             const std::vector<AutomationPoint>& points,
                                             bool enabled,
                                             const std::string& resolutionText);
+
+    // Batch writer operations: prepare all entries before publishing one
+    // snapshot swap. Any preparation failure (or NotFound on update) leaves
+    // existing definitions intact.
+    AutomationPrepareError createAutomations(const std::vector<AutomationBatchEntry>& entries,
+                                             std::vector<uint32_t>* outIds = nullptr);
+
+    AutomationPrepareError updateAutomations(const std::vector<AutomationBatchEntry>& entries);
 
     // Delete automation by channel name
     bool deleteAutomation(const std::string& channelName);
@@ -84,6 +100,10 @@ public:
     uint64_t inlineRetireCount() const { return inlineRetireCount_.load(std::memory_order_relaxed); }
 
 private:
+    AutomationPrepareError applyAutomationBatch(const std::vector<AutomationBatchEntry>& entries,
+                                                bool createMode,
+                                                std::vector<uint32_t>* outIds);
+
     // Helper to perform copy-update-swap pattern
     template<typename F>
     void updateList(F&& modifier);

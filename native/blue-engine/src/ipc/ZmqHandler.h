@@ -52,6 +52,7 @@ private:
     // Csound channel memory directly.
     uint32_t meterSequence_ = 0;
     int64_t lastMeterSampleFrames_ = -1;
+    std::vector<char> meterFrameBuffer_;
 
     void enqueueStateSnapshot(const EngineStateSnapshot &snapshot);
     void publishPendingStateSnapshots();

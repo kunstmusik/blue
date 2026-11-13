@@ -519,6 +519,61 @@ void testDirectStoreMutationsReclaimAndAdoptEdits() {
             "direct store callers must reclaim retired snapshots automatically");
 }
 
+void testBatchAutomationCreateUpdateAtomicityAndSingleRevisionStep() {
+    using namespace blue;
+    auto store = std::make_shared<AutomationStore>();
+    std::vector<uint32_t> createdIds;
+    const uint64_t revBefore = store->getRevision();
+
+    std::vector<AutomationBatchEntry> createBatch{
+        {"batch-a", AutomationCurve::LINEAR, {{0.0, 0.0}, {1.0, 1.0}}, true, "-1"},
+        {"batch-b", AutomationCurve::LINEAR, {{0.0, 10.0}, {1.0, 20.0}}, true, "0.01"},
+        {"batch-c", AutomationCurve::STEP, {{0.0, 5.0}, {1.0, 9.0}}, true, "-1"},
+    };
+    assert(store->createAutomations(createBatch, &createdIds) == AutomationPrepareError::Ok);
+    assert(createdIds.size() == 3);
+    assert(createdIds[0] < createdIds[1] && createdIds[1] < createdIds[2]);
+    assert(store->getRevision() == revBefore + 1);
+
+    const auto revAfterCreate = store->getRevision();
+    const auto listAfterCreate = store->getList();
+    assert(listAfterCreate->automations.at("batch-a")->id == createdIds[0]);
+
+    // Failed update (one missing channel) must keep every existing entry and revision untouched.
+    std::vector<AutomationBatchEntry> missingUpdate{
+        {"batch-a", AutomationCurve::LINEAR, {{0.0, 1.0}, {1.0, 2.0}}, true, "-1"},
+        {"batch-missing", AutomationCurve::LINEAR, {{0.0, 0.0}, {1.0, 1.0}}, true, "-1"},
+    };
+    assert(store->updateAutomations(missingUpdate) == AutomationPrepareError::NotFound);
+    assert(store->getRevision() == revAfterCreate);
+    assert(store->getList()->automations.at("batch-a")->points.front().value == 0.0);
+
+    // Valid batch update preserves IDs and bumps revision by 1.
+    std::vector<AutomationBatchEntry> validUpdate{
+        {"batch-a", AutomationCurve::LINEAR, {{0.0, 2.0}, {1.0, 4.0}}, true, "-1"},
+        {"batch-c", AutomationCurve::LINEAR, {{0.0, 6.0}, {1.0, 8.0}}, true, "-1"},
+    };
+    assert(store->updateAutomations(validUpdate) == AutomationPrepareError::Ok);
+    assert(store->getRevision() == revAfterCreate + 1);
+    const auto updatedList = store->getList();
+    assert(updatedList->automations.at("batch-a")->id == createdIds[0]);
+    assert(updatedList->automations.at("batch-a")->definitionRevision == 2);
+    assert(updatedList->automations.at("batch-b") == listAfterCreate->automations.at("batch-b"));
+
+    // Direct C++ callers must also reject duplicate channel names without mutating revision or nextId_.
+    const auto revBeforeDup = store->getRevision();
+    assert(store->createAutomations({
+        {"dup-ch", AutomationCurve::LINEAR, {{0.0, 1.0}, {1.0, 2.0}}, true, "-1"},
+        {"dup-ch", AutomationCurve::LINEAR, {{0.0, 3.0}, {1.0, 4.0}}, true, "-1"},
+    }, &createdIds) == AutomationPrepareError::DuplicateChannel);
+    assert(store->getRevision() == revBeforeDup);
+    assert(store->updateAutomations({
+        {"batch-a", AutomationCurve::LINEAR, {{0.0, 1.0}, {1.0, 2.0}}, true, "-1"},
+        {"batch-a", AutomationCurve::LINEAR, {{0.0, 3.0}, {1.0, 4.0}}, true, "-1"},
+    }) == AutomationPrepareError::DuplicateChannel);
+    assert(store->getRevision() == revBeforeDup);
+}
+
 } // namespace
 
 int main() {
@@ -544,6 +599,8 @@ int main() {
     testRetirementRingSaturationContinuesAdvancingAndRecovers();
     std::cout << "Starting test 9..." << std::endl;
     testDirectStoreMutationsReclaimAndAdoptEdits();
+    std::cout << "Starting test 10..." << std::endl;
+    testBatchAutomationCreateUpdateAtomicityAndSingleRevisionStep();
     std::cout << "All AutomationManager tests passed successfully!" << std::endl;
     return 0;
 }

@@ -9,6 +9,7 @@ import {
   BLUE_ENGINE_PROTOCOL_VERSION,
   AUTOMATION_DECIMAL_FEATURE,
   BATCH_CHANNELS_FEATURE,
+  BATCH_AUTOMATIONS_FEATURE,
   MIXER_METERING_FEATURE,
   decodeEngineCapabilitiesJson,
   EngineCapabilities,
@@ -20,12 +21,16 @@ import {
   encodeGetChannel,
   encodeCreateAutomation,
   encodeUpdateAutomation,
+  encodeBatchCreateAutomations,
+  encodeBatchUpdateAutomations,
+  decodeBatchAutomationIds,
   encodeNameCommand,
   encodeNoPayloadCommand,
   decodeAutomationList,
   decodeEngineStatePayload,
   AutomationCurveCode,
   AutomationPoint,
+  BatchAutomationEntry,
   AutomationListEntry,
   EngineStateSnapshot,
   ENGINE_STATE_TOPIC,
@@ -51,6 +56,8 @@ import {
   BatchChannelEntry,
   CMD_CREATE_AUTOMATION,
   CMD_UPDATE_AUTOMATION,
+  CMD_BATCH_CREATE_AUTOMATIONS,
+  CMD_BATCH_UPDATE_AUTOMATIONS,
   CMD_DELETE_AUTOMATION,
   CMD_ENABLE_AUTOMATION,
   CMD_DISABLE_AUTOMATION,
@@ -79,6 +86,8 @@ interface EngineResponse {
   message: string;
   payload: Buffer;
 }
+
+const EMPTY_PAYLOAD = Buffer.alloc(0);
 
 export class EngineClient {
   private socket: Request | null = null;
@@ -266,8 +275,15 @@ export class EngineClient {
 
         const status = respBuf.readUInt8(0);
         const msgLen = respBuf.readUInt32LE(1);
-        const message = respBuf.slice(5, 5 + msgLen).toString('utf-8');
-        const rawPayload = respBuf.slice(5, 5 + msgLen);
+        if (respBuf.length !== 5 + msgLen) {
+          return {
+            ok: false,
+            message: 'Invalid response (length mismatch)',
+            payload: Buffer.alloc(0),
+          };
+        }
+        const rawPayload = msgLen > 0 ? respBuf.subarray(5, 5 + msgLen) : EMPTY_PAYLOAD;
+        const message = rawPayload.toString('utf-8');
 
         return { ok: status === STATUS_OK, message, payload: rawPayload };
       })
@@ -313,7 +329,10 @@ export class EngineClient {
         };
       }
       this.verifiedCapabilities = capabilityResult.capabilities;
-      if (hasEngineFeature(capabilityResult.capabilities, MIXER_METERING_FEATURE)) {
+      if (
+        this.meterListeners.size > 0 &&
+        hasEngineFeature(capabilityResult.capabilities, MIXER_METERING_FEATURE)
+      ) {
         this.subscribeMeters();
       }
     }
@@ -485,21 +504,32 @@ export class EngineClient {
   }
 
   /**
-   * The batch-channel capability must be accepted by the handshake before
-   * any batch command is sent; an older engine yields an explicit
-   * unsupported-runtime diagnostic instead of a silent fallback.
+   * Batch capabilities require the handshake to advertise their matching feature;
+   * an older engine yields an explicit unsupported-runtime diagnostic instead of
+   * a silent fallback.
    */
-  private batchChannelsGuard(): { ok: true } | { ok: false; message: string } {
+  private featureGuard(
+    feature: string,
+    label: string,
+  ): { ok: true } | { ok: false; message: string } {
     if (!this.verifiedCapabilities) {
-      return { ok: false, message: 'Batch channels require a completed capability handshake' };
+      return { ok: false, message: `${label} require a completed capability handshake` };
     }
-    if (!hasEngineFeature(this.verifiedCapabilities, BATCH_CHANNELS_FEATURE)) {
+    if (!hasEngineFeature(this.verifiedCapabilities, feature)) {
       return {
         ok: false,
-        message: `Blue Engine is missing required capability: ${BATCH_CHANNELS_FEATURE}`,
+        message: `Blue Engine is missing required capability: ${feature}`,
       };
     }
     return { ok: true };
+  }
+
+  private batchChannelsGuard(): { ok: true } | { ok: false; message: string } {
+    return this.featureGuard(BATCH_CHANNELS_FEATURE, 'Batch channels');
+  }
+
+  private batchAutomationsGuard(): { ok: true } | { ok: false; message: string } {
+    return this.featureGuard(BATCH_AUTOMATIONS_FEATURE, 'Batch automations');
   }
 
   /**
@@ -540,7 +570,11 @@ export class EngineClient {
       return { ok: false, message: resp.message };
     }
     try {
-      return { ok: true, values: decodeBatchChannelValues(resp.payload) };
+      const values = decodeBatchChannelValues(resp.payload);
+      if (values.length !== names.length) {
+        return { ok: false, message: 'Batch channel response count mismatch' };
+      }
+      return { ok: true, values };
     } catch (error) {
       return {
         ok: false,
@@ -579,6 +613,55 @@ export class EngineClient {
   ): Promise<{ ok: boolean; message: string }> {
     const data = encodeUpdateAutomation(name, curve, enabled, resolutionDecimal, points);
     return this.sendRaw(CMD_UPDATE_AUTOMATION, data);
+  }
+
+  /**
+   * Create multiple automation definitions in one all-or-error round trip.
+   */
+  async createAutomations(
+    entries: readonly BatchAutomationEntry[],
+  ): Promise<{ ok: true; ids: number[] } | { ok: false; message: string }> {
+    if (!this.socket) {
+      throw new Error('EngineClient not connected.');
+    }
+    const guard = this.batchAutomationsGuard();
+    if (!guard.ok) {
+      return guard;
+    }
+    const data = encodeBatchCreateAutomations(entries);
+    const resp = await this.sendRaw(CMD_BATCH_CREATE_AUTOMATIONS, data);
+    if (!resp.ok) {
+      return { ok: false, message: resp.message };
+    }
+    try {
+      const ids = decodeBatchAutomationIds(resp.payload);
+      if (ids.length !== entries.length) {
+        return { ok: false, message: 'Batch automation response count mismatch' };
+      }
+      return { ok: true, ids };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
+   * Update multiple existing automation definitions in one all-or-error round trip.
+   */
+  async updateAutomations(
+    entries: readonly BatchAutomationEntry[],
+  ): Promise<{ ok: boolean; message: string }> {
+    if (!this.socket) {
+      throw new Error('EngineClient not connected.');
+    }
+    const guard = this.batchAutomationsGuard();
+    if (!guard.ok) {
+      return guard;
+    }
+    const data = encodeBatchUpdateAutomations(entries);
+    return this.sendRaw(CMD_BATCH_UPDATE_AUTOMATIONS, data);
   }
 
   /**

@@ -500,6 +500,91 @@ int main() {
 
     testBatchChannelCommands(engine, handler, controlEndpoint);
 
+    // Batch automation commands (BATCH_CREATE_AUTOMATIONS / BATCH_UPDATE_AUTOMATIONS)
+    auto buildBatchAutoPayload = [](const std::vector<std::string>& encodedEntries, uint16_t overrideCount = 0xffffu) {
+        const uint16_t count = (overrideCount == 0xffffu)
+            ? static_cast<uint16_t>(encodedEntries.size())
+            : overrideCount;
+        std::string payload;
+        appendUint16LE(payload, count);
+        for (const auto& entry : encodedEntries) {
+            payload.append(entry);
+        }
+        return payload;
+    };
+
+    auto batchCreateEmpty = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_CREATE_AUTOMATIONS,
+        buildBatchAutoPayload({}, 0)));
+    expect(batchCreateEmpty.transportOk && batchCreateEmpty.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch create automations rejects zero count");
+
+    auto batchCreateTooLarge = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_CREATE_AUTOMATIONS,
+        buildBatchAutoPayload({}, 257)));
+    expect(batchCreateTooLarge.transportOk && batchCreateTooLarge.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch create automations rejects count > 256");
+
+    auto batchCreateDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_CREATE_AUTOMATIONS,
+        buildBatchAutoPayload({
+            makeAutomationPayload("batch-dup", "-1"),
+            makeAutomationPayload("batch-dup", "0.01"),
+        })));
+    expect(batchCreateDuplicate.transportOk
+               && batchCreateDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR)
+               && batchCreateDuplicate.payload.find("duplicate channel name") != std::string::npos,
+           "batch create automations rejects duplicate channel names");
+
+    // Trailing byte rejection
+    auto batchTrailing = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_CREATE_AUTOMATIONS,
+        buildBatchAutoPayload({makeAutomationPayload("batch-trail", "-1")}) + std::string("\x01", 1)));
+    expect(batchTrailing.transportOk && batchTrailing.status == static_cast<uint8_t>(blue::Status::ERROR),
+           "batch create automations rejects trailing bytes");
+
+    // Valid batch create
+    auto batchCreateValid = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_CREATE_AUTOMATIONS,
+        buildBatchAutoPayload({
+            makeAutomationPayload("batch-p1", "-1"),
+            makeAutomationPayload("batch-p2", "0.01"),
+        })));
+    expect(batchCreateValid.transportOk
+               && batchCreateValid.status == static_cast<uint8_t>(blue::Status::OK)
+               && batchCreateValid.payload.size() == 2 + 2 * sizeof(uint32_t),
+           "batch create automations returns 2 uint32 IDs");
+    const uint16_t returnedCount = static_cast<uint16_t>(static_cast<unsigned char>(batchCreateValid.payload[0]))
+        | (static_cast<uint16_t>(static_cast<unsigned char>(batchCreateValid.payload[1])) << 8);
+    expect(returnedCount == 2, "batch create response echoes count=2");
+
+    // Batch update with missing entry is all-or-nothing and returns AUTOMATION_NOT_FOUND
+    auto batchUpdateMissing = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_UPDATE_AUTOMATIONS,
+        buildBatchAutoPayload({
+            makeAutomationPayload("batch-p1", "0.001"),
+            makeAutomationPayload("batch-missing", "-1"),
+        })));
+    expect(batchUpdateMissing.transportOk
+               && batchUpdateMissing.status == static_cast<uint8_t>(blue::Status::ERROR)
+               && batchUpdateMissing.payload.find("AUTOMATION_NOT_FOUND") != std::string::npos,
+           "batch update automations reports AUTOMATION_NOT_FOUND when any entry is missing");
+    expect(engine.getAutomationStore()->getList()->automations.at("batch-p1")->resolutionDecimal == "-1",
+           "failed batch update automations leaves earlier entries untouched");
+
+    // Valid batch update
+    auto batchUpdateValid = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_UPDATE_AUTOMATIONS,
+        buildBatchAutoPayload({
+            makeAutomationPayload("batch-p1", "0.001"),
+            makeAutomationPayload("batch-p2", "-1"),
+        })));
+    expect(batchUpdateValid.transportOk && batchUpdateValid.status == static_cast<uint8_t>(blue::Status::OK),
+           "batch update automations succeeds for existing channels");
+    expect(engine.getAutomationStore()->getList()->automations.at("batch-p1")->resolutionDecimal == "0.001"
+               && engine.getAutomationStore()->getList()->automations.at("batch-p2")->resolutionDecimal == "-1",
+           "batch update applies all definitions atomically");
+
     if (g_failures == 0) {
         std::printf("test_automation_protocol: all tests passed\n");
         return 0;

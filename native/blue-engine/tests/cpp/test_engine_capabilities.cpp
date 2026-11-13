@@ -21,6 +21,9 @@ int main() {
   assert(json.find(blue::BLUE_ENGINE_BATCH_CHANNELS_FEATURE) != std::string::npos);
   static_assert(static_cast<uint8_t>(blue::Command::BATCH_SET_CHANNELS) == 0x14);
   static_assert(static_cast<uint8_t>(blue::Command::BATCH_GET_CHANNELS) == 0x15);
+  assert(json.find(blue::BLUE_ENGINE_BATCH_AUTOMATIONS_FEATURE) != std::string::npos);
+  static_assert(static_cast<uint8_t>(blue::Command::BATCH_CREATE_AUTOMATIONS) == 0x27);
+  static_assert(static_cast<uint8_t>(blue::Command::BATCH_UPDATE_AUTOMATIONS) == 0x28);
   assert(json.find("\"csound-probe-v1\"") != std::string::npos);
   assert(json.find("\"csound-io-v1\"") != std::string::npos);
   assert(json.find("\"csound-utility-v1\"") != std::string::npos);

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <new>
+#include <string_view>
+#include <unordered_set>
 
 namespace blue {
 
@@ -19,6 +21,8 @@ const char* automationPrepareErrorName(AutomationPrepareError error) {
             return "DECIMAL_WORKSPACE_UNAVAILABLE";
         case AutomationPrepareError::NotFound:
             return "AUTOMATION_NOT_FOUND";
+        case AutomationPrepareError::DuplicateChannel:
+            return "DUPLICATE_AUTOMATION_CHANNEL";
     }
     return "UNKNOWN";
 }
@@ -178,6 +182,113 @@ AutomationPrepareError AutomationStore::updateAutomation(
         list.automations[channelName] = std::make_shared<const AutomationDef>(std::move(def));
     });
 
+    return AutomationPrepareError::Ok;
+}
+
+AutomationPrepareError AutomationStore::createAutomations(
+    const std::vector<AutomationBatchEntry>& entries,
+    std::vector<uint32_t>* outIds) {
+    return applyAutomationBatch(entries, true, outIds);
+}
+
+AutomationPrepareError AutomationStore::updateAutomations(
+    const std::vector<AutomationBatchEntry>& entries) {
+    return applyAutomationBatch(entries, false, nullptr);
+}
+
+AutomationPrepareError AutomationStore::applyAutomationBatch(
+    const std::vector<AutomationBatchEntry>& entries,
+    bool createMode,
+    std::vector<uint32_t>* outIds) {
+    struct ReclaimGuard {
+        AutomationStore& store;
+        ~ReclaimGuard() { store.reclaimRetired(); }
+    } reclaimGuard{*this};
+    std::lock_guard<std::mutex> lock(listMutex_);
+
+    if (entries.empty()) {
+        if (outIds) {
+            outIds->clear();
+        }
+        return AutomationPrepareError::Ok;
+    }
+
+    // Reject duplicate channel names within the batch so direct C++ callers
+    // preserve ID/revision invariants just like ZMQ batch validation.
+    constexpr size_t kLinearDuplicateLimit = 16;
+    if (entries.size() <= kLinearDuplicateLimit) {
+        for (size_t i = 0; i < entries.size(); ++i) {
+            for (size_t j = i + 1; j < entries.size(); ++j) {
+                if (entries[i].channelName == entries[j].channelName) {
+                    return AutomationPrepareError::DuplicateChannel;
+                }
+            }
+        }
+    } else {
+        std::unordered_set<std::string_view> seenNames;
+        seenNames.reserve(entries.size());
+        for (const auto& entry : entries) {
+            if (!seenNames.insert(entry.channelName).second) {
+                return AutomationPrepareError::DuplicateChannel;
+            }
+        }
+    }
+
+    auto current = std::atomic_load_explicit(&currentList_, std::memory_order_acquire);
+    std::vector<AutomationDef> prepared;
+    prepared.reserve(entries.size());
+    std::vector<uint32_t> createdIds;
+    if (outIds) {
+        createdIds.reserve(entries.size());
+    }
+
+    uint32_t allocatedNextId = nextId_;
+    for (const auto& entry : entries) {
+        uint32_t autoId = 0;
+        uint64_t defRev = 1;
+        if (createMode) {
+            autoId = allocatedNextId++;
+        } else {
+            auto it = current->automations.find(entry.channelName);
+            if (it == current->automations.end()) {
+                return AutomationPrepareError::NotFound;
+            }
+            autoId = it->second->id;
+            defRev = it->second->definitionRevision + 1;
+        }
+
+        AutomationDef def;
+        const auto status = prepareAutomationDef(autoId,
+                                                 entry.channelName,
+                                                 entry.curve,
+                                                 entry.points,
+                                                 entry.enabled,
+                                                 entry.resolutionText,
+                                                 defRev,
+                                                 def);
+        if (status != AutomationPrepareError::Ok) {
+            return status;
+        }
+        if (outIds) {
+            createdIds.push_back(autoId);
+        }
+        prepared.push_back(std::move(def));
+    }
+
+    if (createMode) {
+        nextId_ = allocatedNextId;
+    }
+
+    updateList([&](AutomationList& list) {
+        for (auto& def : prepared) {
+            const std::string key = def.channelName;
+            list.automations[key] = std::make_shared<const AutomationDef>(std::move(def));
+        }
+    });
+
+    if (outIds) {
+        *outIds = std::move(createdIds);
+    }
     return AutomationPrepareError::Ok;
 }
 

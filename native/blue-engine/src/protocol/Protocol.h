@@ -41,6 +41,12 @@ enum class Command : uint8_t {
     DISABLE_AUTOMATION = 0x24,  // payload: channel_name\0
     LIST_AUTOMATIONS   = 0x25,  // no payload, response: count(4B) + entries
     CLEAR_AUTOMATIONS  = 0x26,  // no payload
+
+    // Batch automation commands (feature batch-automations-v1).
+    // CREATE/UPDATE payload: count(u16 LE, 1..256) + count packed single-automation entries
+    // CREATE success response payload: count(u16 LE) + count * id(u32 LE) in request order
+    BATCH_CREATE_AUTOMATIONS = 0x27,
+    BATCH_UPDATE_AUTOMATIONS = 0x28,
 };
 
 /*

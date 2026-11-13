@@ -105,6 +105,7 @@ enum class AutomationPrepareError {
     NonFiniteAutomationInput,
     DecimalWorkspaceUnavailable,
     NotFound,
+    DuplicateChannel,
 };
 
 const char* automationPrepareErrorName(AutomationPrepareError error);

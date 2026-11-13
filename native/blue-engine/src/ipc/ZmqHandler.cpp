@@ -7,6 +7,7 @@
 #include "../automation/AutomationTypes.h"
 
 #include <zmq.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -242,6 +243,176 @@ bool parseBatchChannelPayload(
         return false;
     }
     return true;
+}
+
+constexpr uint16_t BATCH_MAX_AUTOMATIONS = 256;
+
+bool parseAutomationEntryPayload(
+    const std::string& payload,
+    size_t& offset,
+    AutomationBatchEntry& entry,
+    size_t& nameOffsetOut,
+    size_t& nameLengthOut,
+    std::string& errorMessage) {
+    const size_t payloadSize = payload.size();
+    const size_t remaining = (offset <= payloadSize) ? (payloadSize - offset) : 0;
+    const size_t nameLen = (remaining > 0)
+        ? strnlen(payload.data() + offset, remaining)
+        : 0;
+    if (nameLen == 0 || nameLen == remaining) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] channel name must be a non-empty NUL-terminated string";
+        return false;
+    }
+
+    nameOffsetOut = offset;
+    nameLengthOut = nameLen;
+    entry.channelName.assign(payload, offset, nameLen);
+    if (!isValidUtf8(entry.channelName)) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] channel name must be valid UTF-8";
+        return false;
+    }
+    offset += nameLen + 1;
+
+    if (payloadSize - offset < 1 + 1 + sizeof(uint32_t)) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] payload too small for curve, enabled, and resolution length";
+        return false;
+    }
+
+    const uint8_t curveValue = static_cast<uint8_t>(payload[offset]);
+    if (curveValue > static_cast<uint8_t>(AutomationCurve::EXPONENTIAL)) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] unknown curve code";
+        return false;
+    }
+    entry.curve = static_cast<AutomationCurve>(curveValue);
+    offset += 1;
+
+    const uint8_t enabledValue = static_cast<uint8_t>(payload[offset]);
+    if (enabledValue > 1) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] enabled must be 0 or 1";
+        return false;
+    }
+    entry.enabled = (enabledValue == 1);
+    offset += 1;
+
+    const uint32_t resolutionLength = readUint32LE(payload.data() + offset);
+    offset += sizeof(uint32_t);
+    if (resolutionLength == 0 || resolutionLength > payloadSize - offset) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] resolution length does not fit the payload";
+        return false;
+    }
+
+    entry.resolutionText.assign(payload, offset, resolutionLength);
+    offset += resolutionLength;
+    for (const char c : entry.resolutionText) {
+        if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) > 0x7e) {
+            errorMessage = "[AUTOMATION_PAYLOAD_INVALID] resolution must be printable ASCII";
+            return false;
+        }
+    }
+
+    JavaBigDecimal parsedResolution;
+    const auto resolutionStatus = parseJavaBigDecimal(entry.resolutionText, parsedResolution);
+    if (resolutionStatus == DecimalParseError::InvalidSyntax) {
+        errorMessage = "[INVALID_DECIMAL_SYNTAX] automation resolution is not valid Java decimal text";
+        return false;
+    }
+    if (resolutionStatus == DecimalParseError::ScaleOverflow) {
+        errorMessage = "[DECIMAL_SCALE_OVERFLOW] automation resolution scale is outside Java int range";
+        return false;
+    }
+    if (parsedResolution.canonicalText() != entry.resolutionText) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] resolution must use canonical Java decimal text";
+        return false;
+    }
+
+    if (payloadSize - offset < sizeof(uint32_t)) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] payload too small for point count";
+        return false;
+    }
+    const uint32_t nPoints = readUint32LE(payload.data() + offset);
+    offset += sizeof(uint32_t);
+
+    const uint64_t pointsBytes = static_cast<uint64_t>(nPoints) * 16u;
+    if (pointsBytes > payloadSize - offset) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] point count does not match remaining bytes";
+        return false;
+    }
+
+    entry.points.clear();
+    entry.points.reserve(nPoints);
+    for (uint32_t i = 0; i < nPoints; ++i) {
+        const double time = readDoubleLE(payload.data() + offset);
+        offset += sizeof(double);
+        const double value = readDoubleLE(payload.data() + offset);
+        offset += sizeof(double);
+        if (!std::isfinite(time) || !std::isfinite(value)) {
+            errorMessage = "[NON_FINITE_AUTOMATION_INPUT] automation points must be finite";
+            return false;
+        }
+        entry.points.emplace_back(time, value);
+    }
+    return true;
+}
+
+bool parseBatchAutomationPayload(
+    const std::string& payload,
+    std::vector<AutomationBatchEntry>& entries,
+    std::string& errorMessage) {
+    if (payload.size() < 2) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] BATCH payload truncated before count";
+        return false;
+    }
+    const size_t count = static_cast<size_t>(static_cast<unsigned char>(payload[0]))
+        | (static_cast<size_t>(static_cast<unsigned char>(payload[1])) << 8);
+    if (count == 0 || count > BATCH_MAX_AUTOMATIONS) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] BATCH automation count out of bounds";
+        return false;
+    }
+
+    constexpr size_t kLinearDuplicateLimit = 16;
+    size_t offset = 2;
+    entries.clear();
+    entries.reserve(count);
+    std::unordered_set<std::string_view> seenNames;
+    if (count > kLinearDuplicateLimit) {
+        seenNames.reserve(count);
+    }
+
+    for (size_t index = 0; index < count; ++index) {
+        AutomationBatchEntry entry;
+        size_t nameOffset = 0;
+        size_t nameLength = 0;
+        if (!parseAutomationEntryPayload(payload, offset, entry, nameOffset, nameLength, errorMessage)) {
+            return false;
+        }
+        const std::string_view nameView(payload.data() + nameOffset, nameLength);
+        if (count <= kLinearDuplicateLimit) {
+            for (const auto& previous : entries) {
+                if (previous.channelName == nameView) {
+                    errorMessage = "[AUTOMATION_PAYLOAD_INVALID] BATCH payload contains duplicate channel name";
+                    return false;
+                }
+            }
+        } else if (!seenNames.insert(nameView).second) {
+            errorMessage = "[AUTOMATION_PAYLOAD_INVALID] BATCH payload contains duplicate channel name";
+            return false;
+        }
+        entries.push_back(std::move(entry));
+    }
+
+    if (offset != payload.size()) {
+        errorMessage = "[AUTOMATION_PAYLOAD_INVALID] BATCH payload has trailing bytes";
+        return false;
+    }
+    return true;
+}
+
+Response responseForAutomationPrepareError(AutomationPrepareError status) {
+    if (status == AutomationPrepareError::NotFound) {
+        return Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
+    }
+    return Response::error(
+        std::string("[") + automationPrepareErrorName(status) + "] automation definition rejected");
 }
 
 }  // namespace
@@ -559,137 +730,77 @@ bool ZmqHandler::processOne() {
                 // payload: channel_name\0 + curve(1B) + enabled(1B) +
                 //          resolutionLength(u32-le) + resolution(ascii) +
                 //          n_points(u32-le) + points
-                const char* payload = req.payload.c_str();
-                const size_t payloadSize = req.payload.size();
-                const size_t nameLen = strnlen(payload, payloadSize);
-
-                if (nameLen == 0 || nameLen == payloadSize) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] channel name must be a non-empty NUL-terminated string");
+                AutomationBatchEntry entry;
+                size_t offset = 0;
+                size_t nameOffset = 0;
+                size_t nameLength = 0;
+                std::string errorMessage;
+                if (!parseAutomationEntryPayload(
+                        req.payload, offset, entry, nameOffset, nameLength, errorMessage)) {
+                    resp = Response::error(errorMessage);
                     break;
                 }
-                std::string channelName(payload, nameLen);
-                if (!isValidUtf8(channelName)) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] channel name must be valid UTF-8");
-                    break;
-                }
-                size_t offset = nameLen + 1;
-
-                if (payloadSize < offset + 1 + 1 + sizeof(uint32_t)) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] payload too small for curve, enabled, and resolution length");
-                    break;
-                }
-
-                const uint8_t curveValue = static_cast<uint8_t>(req.payload[offset]);
-                if (curveValue > static_cast<uint8_t>(AutomationCurve::EXPONENTIAL)) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] unknown curve code");
-                    break;
-                }
-                const AutomationCurve curve = static_cast<AutomationCurve>(curveValue);
-                offset += 1;
-
-                const uint8_t enabledValue = static_cast<uint8_t>(req.payload[offset]);
-                if (enabledValue > 1) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] enabled must be 0 or 1");
-                    break;
-                }
-                const bool enabled = (enabledValue == 1);
-                offset += 1;
-
-                uint32_t resolutionLength = 0;
-                resolutionLength = readUint32LE(req.payload.data() + offset);
-                offset += sizeof(uint32_t);
-
-                if (resolutionLength == 0 || resolutionLength > payloadSize - offset) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] resolution length does not fit the payload");
-                    break;
-                }
-                const std::string resolutionText(req.payload.data() + offset, resolutionLength);
-                offset += resolutionLength;
-                bool resolutionAsciiValid = true;
-                for (const char c : resolutionText) {
-                    if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) > 0x7e) {
-                        resolutionAsciiValid = false;
-                        break;
-                    }
-                }
-                if (!resolutionAsciiValid) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] resolution must be printable ASCII");
-                    break;
-                }
-
-                JavaBigDecimal parsedResolution;
-                const auto resolutionStatus = parseJavaBigDecimal(resolutionText, parsedResolution);
-                if (resolutionStatus == DecimalParseError::InvalidSyntax) {
-                    resp = Response::error("[INVALID_DECIMAL_SYNTAX] automation resolution is not valid Java decimal text");
-                    break;
-                }
-                if (resolutionStatus == DecimalParseError::ScaleOverflow) {
-                    resp = Response::error("[DECIMAL_SCALE_OVERFLOW] automation resolution scale is outside Java int range");
-                    break;
-                }
-                if (parsedResolution.canonicalText() != resolutionText) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] resolution must use canonical Java decimal text");
-                    break;
-                }
-
-                if (payloadSize < offset + sizeof(uint32_t)) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] payload too small for point count");
-                    break;
-                }
-                uint32_t nPoints = 0;
-                nPoints = readUint32LE(req.payload.data() + offset);
-                offset += sizeof(uint32_t);
-
-                const uint64_t pointsBytes = static_cast<uint64_t>(nPoints) * 16u;
-                if (pointsBytes != payloadSize - offset) {
-                    resp = Response::error("[AUTOMATION_PAYLOAD_INVALID] point count does not match remaining bytes");
-                    break;
-                }
-
-                std::vector<AutomationPoint> points;
-                points.reserve(nPoints);
-                bool finitePoints = true;
-                for (uint32_t i = 0; i < nPoints; ++i) {
-                    const double time = readDoubleLE(req.payload.data() + offset);
-                    offset += sizeof(double);
-                    const double value = readDoubleLE(req.payload.data() + offset);
-                    offset += sizeof(double);
-                    if (!std::isfinite(time) || !std::isfinite(value)) {
-                        finitePoints = false;
-                        break;
-                    }
-                    points.emplace_back(time, value);
-                }
-                if (!finitePoints) {
-                    resp = Response::error("[NON_FINITE_AUTOMATION_INPUT] automation points must be finite");
+                if (offset != req.payload.size()) {
+                    resp = Response::error(
+                        "[AUTOMATION_PAYLOAD_INVALID] point count does not match remaining bytes");
                     break;
                 }
 
                 auto store = engine_.getAutomationStore();
                 if (req.command == Command::CREATE_AUTOMATION) {
                     uint32_t id = 0;
-                    const auto status = store->createAutomation(channelName, curve, points,
-                                                                enabled, resolutionText, &id);
+                    const auto status = store->createAutomation(
+                        entry.channelName, entry.curve, entry.points,
+                        entry.enabled, entry.resolutionText, &id);
                     if (status != AutomationPrepareError::Ok) {
-                        resp = Response::error(std::string("[") + automationPrepareErrorName(status) + "] automation definition rejected");
+                        resp = responseForAutomationPrepareError(status);
                         break;
                     }
-                    // Return automation ID
                     std::string idPayload;
                     idPayload.reserve(sizeof(uint32_t));
                     appendUint32LE(idPayload, id);
                     resp = Response::ok(idPayload);
                 } else {
-                    // UPDATE_AUTOMATION
-                    const auto status = store->updateAutomation(channelName, curve, points,
-                                                                enabled, resolutionText);
-                    if (status == AutomationPrepareError::NotFound) {
-                        resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
-                    } else if (status != AutomationPrepareError::Ok) {
-                        resp = Response::error(std::string("[") + automationPrepareErrorName(status) + "] automation definition rejected");
-                    } else {
-                        resp = Response::ok();
+                    const auto status = store->updateAutomation(
+                        entry.channelName, entry.curve, entry.points,
+                        entry.enabled, entry.resolutionText);
+                    resp = (status == AutomationPrepareError::Ok)
+                        ? Response::ok()
+                        : responseForAutomationPrepareError(status);
+                }
+                break;
+            }
+
+            case Command::BATCH_CREATE_AUTOMATIONS:
+            case Command::BATCH_UPDATE_AUTOMATIONS: {
+                std::vector<AutomationBatchEntry> entries;
+                std::string errorMessage;
+                if (!parseBatchAutomationPayload(req.payload, entries, errorMessage)) {
+                    resp = Response::error(errorMessage);
+                    break;
+                }
+
+                auto store = engine_.getAutomationStore();
+                if (req.command == Command::BATCH_CREATE_AUTOMATIONS) {
+                    std::vector<uint32_t> ids;
+                    const auto status = store->createAutomations(entries, &ids);
+                    if (status != AutomationPrepareError::Ok) {
+                        resp = responseForAutomationPrepareError(status);
+                        break;
                     }
+                    std::string idPayload;
+                    idPayload.reserve(2 + ids.size() * sizeof(uint32_t));
+                    idPayload.push_back(static_cast<char>(ids.size() & 0xffu));
+                    idPayload.push_back(static_cast<char>((ids.size() >> 8) & 0xffu));
+                    for (const uint32_t id : ids) {
+                        appendUint32LE(idPayload, id);
+                    }
+                    resp = Response::ok(idPayload);
+                } else {
+                    const auto status = store->updateAutomations(entries);
+                    resp = (status == AutomationPrepareError::Ok)
+                        ? Response::ok()
+                        : responseForAutomationPrepareError(status);
                 }
                 break;
             }
@@ -943,17 +1054,21 @@ void ZmqHandler::publishMeterFrame(const MeterValuesSnapshot &values) {
     const size_t entrySize = 64 + nchnls * 8 * 2;
     const size_t totalSize = 8 + channelCount * entrySize;
 
-    std::vector<char> buffer(totalSize, 0);
+    meterFrameBuffer_.resize(totalSize);
+    char* const bufferData = meterFrameBuffer_.data();
     const uint32_t seq = ++meterSequence_;
 
-    writeUint32LE(buffer.data() + 0, seq);
-    writeUint16LE(buffer.data() + 4, channelCount);
-    writeUint16LE(buffer.data() + 6, nchnls);
+    writeUint32LE(bufferData + 0, seq);
+    writeUint16LE(bufferData + 4, channelCount);
+    writeUint16LE(bufferData + 6, nchnls);
 
     size_t offset = 8;
     for (const auto &channel : values.channels) {
-        std::strncpy(buffer.data() + offset, channel.csdKey.c_str(), 63);
-        buffer[offset + 63] = '\0';
+        std::memset(bufferData + offset, 0, 64);
+        const size_t keyLen = std::min<size_t>(channel.csdKey.size(), 63);
+        if (keyLen > 0) {
+            std::memcpy(bufferData + offset, channel.csdKey.data(), keyLen);
+        }
 
         size_t valOffset = offset + 64;
         // RMS values (already sanitized at capture; clamp defensively)
@@ -962,7 +1077,7 @@ void ZmqHandler::publishMeterFrame(const MeterValuesSnapshot &values) {
             if (!std::isfinite(v) || v < 0.0) {
                 v = 0.0;
             }
-            writeDoubleLE(buffer.data() + valOffset, v);
+            writeDoubleLE(bufferData + valOffset, v);
             valOffset += 8;
         }
 
@@ -972,7 +1087,7 @@ void ZmqHandler::publishMeterFrame(const MeterValuesSnapshot &values) {
             if (!std::isfinite(v) || v < 0.0) {
                 v = 0.0;
             }
-            writeDoubleLE(buffer.data() + valOffset, v);
+            writeDoubleLE(bufferData + valOffset, v);
             valOffset += 8;
         }
 
@@ -981,7 +1096,7 @@ void ZmqHandler::publishMeterFrame(const MeterValuesSnapshot &values) {
 
     static constexpr const char* METER_TOPIC = "engine.meters";
     zmq_send(pubSocket_, METER_TOPIC, std::strlen(METER_TOPIC), ZMQ_SNDMORE);
-    zmq_send(pubSocket_, buffer.data(), buffer.size(), 0);
+    zmq_send(pubSocket_, bufferData, totalSize, 0);
 }
 
 }  // namespace blue

@@ -116,8 +116,15 @@ vi.mock('zeromq', () => {
 });
 
 import { EngineClient } from '../src/engine-client';
-import { BLUE_ENGINE_PROTOCOL_VERSION, AUTOMATION_DECIMAL_FEATURE } from '../src/capabilities';
 import {
+  BLUE_ENGINE_PROTOCOL_VERSION,
+  AUTOMATION_DECIMAL_FEATURE,
+  BATCH_AUTOMATIONS_FEATURE,
+} from '../src/capabilities';
+import {
+  AutomationCurveCode,
+  CMD_BATCH_CREATE_AUTOMATIONS,
+  CMD_BATCH_UPDATE_AUTOMATIONS,
   CMD_CREATE_ENGINE,
   CMD_DESTROY_ENGINE,
   CMD_GET_CAPABILITIES,
@@ -401,5 +408,157 @@ describe('EngineClient', () => {
     unsubscribe();
     // Unsubscribed when all listeners removed
     expect(subscriber.subscriptions).not.toContain('engine.meters');
+  });
+
+  it('defers meter subscription until a listener attaches after createEngine', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const request = mockState.requestInstances[0];
+    const subscriber = mockState.subscriberInstances[0];
+
+    const caps = capabilities(BLUE_ENGINE_PROTOCOL_VERSION, [
+      AUTOMATION_DECIMAL_FEATURE,
+      'mixer-metering-v1',
+    ]);
+    request.responses.push(encodeOkResponse(caps), encodeOkResponse());
+
+    const created = await client.createEngine();
+    expect(created.ok).toBe(true);
+    expect(subscriber.subscriptions).toEqual(['engine.state']);
+
+    const unsub = client.onEngineMeters(vi.fn());
+    expect(subscriber.subscriptions).toContain('engine.meters');
+
+    unsub();
+    expect(subscriber.subscriptions).not.toContain('engine.meters');
+  });
+
+  it('guards batch automations behind batch-automations-v1 capability and decodes IDs', async () => {
+    const client = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await client.connect();
+    const request = mockState.requestInstances[0];
+
+    // Missing batch-automations-v1 fails closed before sending a command.
+    request.responses.push(encodeOkResponse(capabilities()), encodeOkResponse());
+    expect((await client.createEngine()).ok).toBe(true);
+    const rejected = await client.createAutomations([
+      {
+        name: 'a1',
+        curve: AutomationCurveCode.LINEAR,
+        enabled: true,
+        resolutionDecimal: '-1',
+        points: [{ time: 0, value: 0.5 }],
+      },
+    ]);
+    expect(rejected).toEqual({
+      ok: false,
+      message: `Blue Engine is missing required capability: ${BATCH_AUTOMATIONS_FEATURE}`,
+    });
+
+    // Connected with batch-automations-v1 sends batch commands cleanly.
+    const batchClient = new EngineClient({ endpoint: 'tcp://localhost:5555' });
+    await batchClient.connect();
+    const batchRequest = mockState.requestInstances[1];
+    const idPayload = Buffer.alloc(5 + 2 + 2 * 4);
+    idPayload.writeUInt8(0x00, 0);
+    idPayload.writeUInt32LE(2 + 2 * 4, 1);
+    idPayload.writeUInt16LE(2, 5);
+    idPayload.writeUInt32LE(101, 7);
+    idPayload.writeUInt32LE(102, 11);
+
+    batchRequest.responses.push(
+      encodeOkResponse(
+        capabilities(BLUE_ENGINE_PROTOCOL_VERSION, [
+          AUTOMATION_DECIMAL_FEATURE,
+          BATCH_AUTOMATIONS_FEATURE,
+        ]),
+      ),
+      encodeOkResponse(),
+      idPayload,
+      encodeOkResponse(),
+    );
+
+    expect((await batchClient.createEngine()).ok).toBe(true);
+    const created = await batchClient.createAutomations([
+      {
+        name: 'a1',
+        curve: AutomationCurveCode.LINEAR,
+        enabled: true,
+        resolutionDecimal: '-1',
+        points: [{ time: 0, value: 0.5 }],
+      },
+      {
+        name: 'a2',
+        curve: AutomationCurveCode.STEP,
+        enabled: true,
+        resolutionDecimal: '0.01',
+        points: [{ time: 0, value: 1 }],
+      },
+    ]);
+    expect(created).toEqual({ ok: true, ids: [101, 102] });
+
+    const updated = await batchClient.updateAutomations([
+      {
+        name: 'a1',
+        curve: AutomationCurveCode.LINEAR,
+        enabled: true,
+        resolutionDecimal: '-1',
+        points: [{ time: 0, value: 0.75 }],
+      },
+    ]);
+    expect(updated).toMatchObject({ ok: true, message: '' });
+    expect(batchRequest.sent.map((m) => m.readUInt8(0))).toEqual([
+      CMD_GET_CAPABILITIES,
+      CMD_CREATE_ENGINE,
+      CMD_BATCH_CREATE_AUTOMATIONS,
+      CMD_BATCH_UPDATE_AUTOMATIONS,
+    ]);
+
+    // Reject response frames whose payload length mismatches msgLen or request count.
+    const truncatedFrame = Buffer.alloc(7);
+    truncatedFrame.writeUInt8(0x00, 0);
+    truncatedFrame.writeUInt32LE(10, 1);
+    batchRequest.responses.push(truncatedFrame);
+    const badFrame = await batchClient.updateAutomations([
+      {
+        name: 'a1',
+        curve: AutomationCurveCode.LINEAR,
+        enabled: true,
+        resolutionDecimal: '-1',
+        points: [{ time: 0, value: 0.75 }],
+      },
+    ]);
+    expect(badFrame).toEqual({
+      ok: false,
+      message: 'Invalid response (length mismatch)',
+      payload: Buffer.alloc(0),
+    });
+
+    const wrongCountIds = Buffer.alloc(5 + 2 + 4);
+    wrongCountIds.writeUInt8(0x00, 0);
+    wrongCountIds.writeUInt32LE(2 + 4, 1);
+    wrongCountIds.writeUInt16LE(1, 5);
+    wrongCountIds.writeUInt32LE(101, 7);
+    batchRequest.responses.push(wrongCountIds);
+    const countMismatch = await batchClient.createAutomations([
+      {
+        name: 'a1',
+        curve: AutomationCurveCode.LINEAR,
+        enabled: true,
+        resolutionDecimal: '-1',
+        points: [{ time: 0, value: 0.5 }],
+      },
+      {
+        name: 'a2',
+        curve: AutomationCurveCode.STEP,
+        enabled: true,
+        resolutionDecimal: '0.01',
+        points: [{ time: 0, value: 1 }],
+      },
+    ]);
+    expect(countMismatch).toEqual({
+      ok: false,
+      message: 'Batch automation response count mismatch',
+    });
   });
 });

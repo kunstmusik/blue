@@ -9,6 +9,8 @@ import {
   AutomationCurveCode,
   CMD_CREATE_AUTOMATION,
   CMD_UPDATE_AUTOMATION,
+  CMD_BATCH_CREATE_AUTOMATIONS,
+  CMD_BATCH_UPDATE_AUTOMATIONS,
   CMD_DELETE_AUTOMATION,
   CMD_ENABLE_AUTOMATION,
   CMD_DISABLE_AUTOMATION,
@@ -20,6 +22,9 @@ import {
   CMD_BATCH_GET_CHANNELS,
   CMD_SET_CHANNEL,
   CMD_GET_CHANNEL,
+  encodeBatchCreateAutomations,
+  encodeBatchUpdateAutomations,
+  decodeBatchAutomationIds,
   encodeSetChannels,
   encodeGetChannels,
   decodeBatchChannelValues,
@@ -391,5 +396,90 @@ describe('Batch Channel Protocol Encoding (batch-channels-v1)', () => {
     const getBuf = encodeGetChannel('gk_blue_auto0');
     expect(getBuf.readUInt8(0)).toBe(CMD_GET_CHANNEL);
     expect(getBuf.toString('utf-8', 5, 5 + 'gk_blue_auto0'.length + 1)).toBe('gk_blue_auto0\0');
+  });
+});
+
+describe('Batch Automation Protocol Encoding', () => {
+  const sampleEntries = [
+    {
+      name: 'auto_a',
+      curve: AutomationCurveCode.LINEAR,
+      enabled: true,
+      resolutionDecimal: '-1',
+      points: [
+        { time: 0, value: 0.25 },
+        { time: 1, value: 0.75 },
+      ],
+    },
+    {
+      name: 'auto_b',
+      curve: AutomationCurveCode.EXPONENTIAL,
+      enabled: false,
+      resolutionDecimal: '0.01',
+      points: [{ time: 2, value: 0.5 }],
+    },
+  ];
+
+  it('packs count(u16) + per-entry payloads for BATCH_CREATE and BATCH_UPDATE', () => {
+    const createBuf = encodeBatchCreateAutomations(sampleEntries);
+    expect(createBuf.readUInt8(0)).toBe(CMD_BATCH_CREATE_AUTOMATIONS);
+    expect(createBuf.readUInt32LE(1)).toBe(createBuf.length - 5);
+    expect(createBuf.readUInt16LE(5)).toBe(2);
+
+    const firstSingle = encodeCreateAutomation(
+      sampleEntries[0].name,
+      sampleEntries[0].curve,
+      sampleEntries[0].enabled,
+      sampleEntries[0].resolutionDecimal,
+      sampleEntries[0].points,
+    ).subarray(5);
+    const secondSingle = encodeCreateAutomation(
+      sampleEntries[1].name,
+      sampleEntries[1].curve,
+      sampleEntries[1].enabled,
+      sampleEntries[1].resolutionDecimal,
+      sampleEntries[1].points,
+    ).subarray(5);
+    expect(createBuf.subarray(7)).toEqual(Buffer.concat([firstSingle, secondSingle]));
+
+    const updateBuf = encodeBatchUpdateAutomations(sampleEntries);
+    expect(updateBuf.readUInt8(0)).toBe(CMD_BATCH_UPDATE_AUTOMATIONS);
+    expect(updateBuf.subarray(5)).toEqual(createBuf.subarray(5));
+  });
+
+  it('rejects empty, oversized, duplicate, non-canonical decimal, and non-finite entries', () => {
+    expect(() => encodeBatchCreateAutomations([])).toThrow(RangeError);
+    expect(() =>
+      encodeBatchUpdateAutomations(
+        Array.from({ length: 257 }, (_, i) => ({
+          name: `a_${i}`,
+          curve: AutomationCurveCode.LINEAR,
+          enabled: true,
+          resolutionDecimal: '-1',
+          points: [{ time: 0, value: 1 }],
+        })),
+      ),
+    ).toThrow(RangeError);
+    expect(() => encodeBatchCreateAutomations([sampleEntries[0], { ...sampleEntries[0] }])).toThrow(
+      /duplicate/i,
+    );
+    expect(() =>
+      encodeBatchUpdateAutomations([{ ...sampleEntries[0], resolutionDecimal: '1e-7' }]),
+    ).toThrow(/canonical/i);
+    expect(() =>
+      encodeBatchCreateAutomations([
+        { ...sampleEntries[0], points: [{ time: 0, value: Number.NaN }] },
+      ]),
+    ).toThrow(/finite/i);
+  });
+
+  it('decodes and validates BATCH_CREATE_AUTOMATIONS response IDs', () => {
+    const respPayload = Buffer.alloc(2 + 2 * 4);
+    respPayload.writeUInt16LE(2, 0);
+    respPayload.writeUInt32LE(11, 2);
+    respPayload.writeUInt32LE(12, 6);
+    expect(decodeBatchAutomationIds(respPayload)).toEqual([11, 12]);
+    expect(() => decodeBatchAutomationIds(Buffer.alloc(1))).toThrow(RangeError);
+    expect(() => decodeBatchAutomationIds(respPayload.subarray(0, 7))).toThrow(RangeError);
   });
 });
