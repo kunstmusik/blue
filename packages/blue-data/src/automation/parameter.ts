@@ -340,6 +340,10 @@ export class Parameter implements BlueDataObject {
     this._curve = c;
   }
 
+  getPointCount(): number {
+    return this._points.length;
+  }
+
   getPoints(): AutomationPoint[] {
     return this._points.map((point) => ({ time: point.time, value: point.value }));
   }

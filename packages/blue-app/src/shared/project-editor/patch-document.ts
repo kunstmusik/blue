@@ -824,9 +824,14 @@ export function isEmptyProjectDocumentPatch(patch: ProjectDocumentPatch): boolea
 
 export function isScalarProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
   const validation = validateProjectDocumentPatch(patch);
-  if (!validation.valid) return false;
-  if (isEmptyValidatedProjectDocumentPatch(patch)) return false;
+  return (
+    validation.valid &&
+    !isEmptyValidatedProjectDocumentPatch(patch) &&
+    isScalarValidatedProjectDocumentPatch(patch)
+  );
+}
 
+function isScalarValidatedProjectDocumentPatch(patch: ProjectDocumentPatch): boolean {
   if (patch.score !== undefined && SCORE_PATCH_PREPARATION_CLASS[patch.score.type] !== 'scalar') {
     return false;
   }
@@ -882,7 +887,7 @@ export function classifyProjectDocumentPatch(
 ): 'empty' | 'scalar' | 'structural' | 'invalid' {
   const validation = validateProjectDocumentPatch(patch);
   if (!validation.valid) return 'invalid';
-  if (isEmptyProjectDocumentPatch(patch)) return 'empty';
-  if (isScalarProjectDocumentPatch(patch)) return 'scalar';
+  if (isEmptyValidatedProjectDocumentPatch(patch)) return 'empty';
+  if (isScalarValidatedProjectDocumentPatch(patch)) return 'scalar';
   return 'structural';
 }

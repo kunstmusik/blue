@@ -1222,7 +1222,7 @@ export class EngineBridge {
       const automatedEntries: BatchAutomationEntry[] = [];
       for (const [varName, param] of deduplicatedByVarName) {
         const points =
-          param.isAutomationEnabled() && param.getPoints().length >= 2
+          param.isAutomationEnabled() && param.getPointCount() >= 2
             ? getEngineAutomationPoints(
                 param,
                 automationTiming?.renderStartTime ?? 0,
@@ -1273,7 +1273,7 @@ export class EngineBridge {
     };
     for (const [varName, param] of deduplicatedByVarName) {
       const points =
-        param.isAutomationEnabled() && param.getPoints().length >= 2
+        param.isAutomationEnabled() && param.getPointCount() >= 2
           ? getEngineAutomationPoints(
               param,
               automationTiming?.renderStartTime ?? 0,
@@ -1360,7 +1360,7 @@ export class EngineBridge {
       this.lastAutomationSyncAt.set(varName, now);
 
       const runtimePoints =
-        parameter.isAutomationEnabled() && parameter.getPoints().length >= 2
+        parameter.isAutomationEnabled() && parameter.getPointCount() >= 2
           ? getEngineAutomationPoints(
               parameter,
               automationTiming?.renderStartTime ?? 0,
@@ -1538,7 +1538,7 @@ export class EngineBridge {
     }
 
     const runtimePoints =
-      parameter.isAutomationEnabled() && parameter.getPoints().length >= 2
+      parameter.isAutomationEnabled() && parameter.getPointCount() >= 2
         ? getEngineAutomationPoints(
             parameter,
             automationTiming?.renderStartTime ?? 0,

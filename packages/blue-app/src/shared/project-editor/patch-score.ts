@@ -36,6 +36,7 @@ import {
   LiveObjectSetList,
   Send,
   Score,
+  type Layer,
   PolyObject,
   SoundLayer,
   TrackLayer,
@@ -789,13 +790,7 @@ function moveLayerRangeInManagedGroup(
   ) {
     return false;
   }
-  if (group instanceof PolyObject) {
-    return moveLayerRangeInTypedGroup(group, startIndex, endIndex, targetIndex);
-  }
-  if (group instanceof TrackLayerGroup) {
-    return moveLayerRangeInTypedGroup(group, startIndex, endIndex, targetIndex);
-  }
-  return moveLayerRangeInTypedGroup(group, startIndex, endIndex, targetIndex);
+  return moveLayerRangeInTypedGroup<Layer>(group, startIndex, endIndex, targetIndex);
 }
 
 function applyRemoveLayerRangesPatch(
@@ -1623,7 +1618,7 @@ function removeAutomationParameterFromAllLayers(data: BlueData, parameterId: str
 }
 
 function seedDefaultAutomationPoint(param: BlueDataParameter): void {
-  if (param.getPoints().length > 0) {
+  if (param.getPointCount() > 0) {
     return;
   }
 
