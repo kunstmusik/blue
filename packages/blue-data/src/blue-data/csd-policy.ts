@@ -1093,14 +1093,46 @@ function computeDiskPruningSet(
 
   // No enabled effect anywhere in the mixer: effects are opaque code whose
   // state or side effects cannot be proven irrelevant.
-  const chains = [
-    ...state.mixer.getAllSourceChannels(),
-    ...state.mixer.getSubChannels(),
-    state.mixer.getMaster(),
-  ].flatMap((channel) => [channel.getPreEffects(), channel.getPostEffects()]);
-  for (const chain of chains) {
+  const hasEnabledEffectInChain = (chain: Iterable<unknown>): boolean => {
     for (const item of chain) {
-      if (item instanceof Effect && item.isEnabled()) return NO_PRUNING;
+      if (item instanceof Effect && item.isEnabled()) return true;
+    }
+    return false;
+  };
+  for (const channel of state.mixer.getAllSourceChannels()) {
+    if (
+      hasEnabledEffectInChain(channel.getPreEffects()) ||
+      hasEnabledEffectInChain(channel.getPostEffects())
+    ) {
+      return NO_PRUNING;
+    }
+  }
+  for (const channel of state.mixer.getSubChannels()) {
+    if (
+      hasEnabledEffectInChain(channel.getPreEffects()) ||
+      hasEnabledEffectInChain(channel.getPostEffects())
+    ) {
+      return NO_PRUNING;
+    }
+  }
+  const master = state.mixer.getMaster();
+  if (
+    hasEnabledEffectInChain(master.getPreEffects()) ||
+    hasEnabledEffectInChain(master.getPostEffects())
+  ) {
+    return NO_PRUNING;
+  }
+
+  const indicatorByOrdinal = new Map(
+    gateContext.state.channels.map((candidate) => [candidate.ordinal, candidate] as const),
+  );
+  const inaudibleTrackIds = new Set<string>();
+  for (const node of gateContext.graph.nodes) {
+    const assoc = gateContext.orderedChannels[node.ordinal]?.getAssociation();
+    if (!assoc) continue;
+    const indicator = indicatorByOrdinal.get(node.ordinal);
+    if (indicator && !indicator.reachesAudibleOutput) {
+      inaudibleTrackIds.add(assoc);
     }
   }
 
@@ -1110,7 +1142,7 @@ function computeDiskPruningSet(
     for (const track of group as TrackLayerGroup & Track[]) {
       const t = track as Track;
       if (!isAudioClipOnlyTrack(t)) continue;
-      if (!isTrackInaudible(gateContext, t.getUniqueId())) continue;
+      if (!inaudibleTrackIds.has(t.getUniqueId())) continue;
       prune.add(t.getUniqueId());
     }
   }
@@ -1151,27 +1183,6 @@ function isAudioClipOnlyTrack(track: Track): boolean {
     if (!(item instanceof AudioClip)) return false;
   }
   return track.length > 0;
-}
-
-/**
- * True when no permitted route from the track's associated channel reaches
- * the master terminal output. Tracks without an associated channel bypass
- * channel gates entirely and are never pruned (conservative fallback).
- */
-function isTrackInaudible(gateContext: BlueMixerGateContext, trackId: string): boolean {
-  const channel = gateContext.orderedChannels.find(
-    (candidate) => candidate.getAssociation() === trackId,
-  );
-  if (!channel) return false;
-  const nodeOrdinal = gateContext.graph.nodes.findIndex(
-    (node) => gateContext.orderedChannels[node.ordinal] === channel,
-  );
-  if (nodeOrdinal < 0) return false;
-  const indicator = gateContext.state.channels.find(
-    (candidate) => candidate.ordinal === nodeOrdinal,
-  );
-  if (!indicator) return false;
-  return !indicator.reachesAudibleOutput;
 }
 
 function buildOrchestraHeader(blueData: BlueData, profile: CsdRenderProfile = 'realtime'): string {

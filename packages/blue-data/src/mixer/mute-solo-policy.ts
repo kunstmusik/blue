@@ -378,13 +378,24 @@ export function computeMixerGateState(graph: MixerRouteGraph): MixerGateState {
       incomingIncluded.set(edge.targetOrdinal, inc);
     }
   }
+  const edgesBySource = new Map<number, Array<(typeof graph.edges)[number]>>();
+  for (const edge of graph.edges) {
+    let list = edgesBySource.get(edge.sourceOrdinal);
+    if (!list) {
+      list = [];
+      edgesBySource.set(edge.sourceOrdinal, list);
+    }
+    list.push(edge);
+  }
+
   const reaches = new Set<number>();
   if (terminalEdge !== undefined && gates[terminalEdge.gateOrdinal] === 1) {
     // Reverse BFS over included edges from the master node.
     const queue = [terminalEdge.sourceOrdinal];
     reaches.add(terminalEdge.sourceOrdinal);
-    while (queue.length > 0) {
-      const node = queue.shift()!;
+    let head = 0;
+    while (head < queue.length) {
+      const node = queue[head++]!;
       for (const source of incomingIncluded.get(node) ?? []) {
         if (reaches.has(source)) continue;
         reaches.add(source);
@@ -394,7 +405,7 @@ export function computeMixerGateState(graph: MixerRouteGraph): MixerGateState {
   }
 
   const indicators = graph.nodes.map((node) => {
-    const nodeEdges = graph.edges.filter((edge) => edge.sourceOrdinal === node.ordinal);
+    const nodeEdges = edgesBySource.get(node.ordinal) ?? [];
     const outputEdge = nodeEdges.find((edge) => edge.kind === 'output');
     const outputIncluded = outputEdge !== undefined && gates[outputEdge.gateOrdinal] === 1;
     const hasIncludedSend = nodeEdges.some(

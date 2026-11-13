@@ -13,6 +13,26 @@ import { TimeContext } from './time-context';
 import { XmlLoadContext } from '../serialization/xml-load';
 import { checkRoot, checkShape, readBoolean, readDouble, parseXmlNumber } from '../utilities/xml';
 
+function findLastIndexAtOrBefore<T>(
+  items: readonly T[],
+  target: number,
+  getKey: (item: T) => number,
+): number {
+  let lo = 0;
+  let hi = items.length - 1;
+  let best = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    if (getKey(items[mid]!) <= target) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
 export class TempoMap {
   private points: TempoPoint[] = [new TempoPoint(undefined, 60, CurveType.CONSTANT)];
   private _enabled = false;
@@ -189,23 +209,21 @@ export class TempoMap {
   getTempoAt(beat: number): number {
     if (!this._enabled) return 60;
 
-    // Find the segment containing this beat
-    for (let i = this.points.length - 1; i >= 0; i--) {
-      if (beat >= this.points[i].beat) {
-        const point = this.points[i];
-        // Beyond last point: constant tempo
-        if (i >= this.points.length - 1) return point.tempo;
-        // CONSTANT: use this point's tempo
-        if (point.curveType === CurveType.CONSTANT) return point.tempo;
-        // LINEAR: interpolate
-        const nextPoint = this.points[i + 1];
-        const segmentLength = nextPoint.beat - point.beat;
-        if (segmentLength <= 0) return point.tempo;
-        const fraction = (beat - point.beat) / segmentLength;
-        return point.tempo + fraction * (nextPoint.tempo - point.tempo);
-      }
+    const i = findLastIndexAtOrBefore(this.points, beat, (p) => p.beat);
+    if (i < 0) {
+      return this.points[0].tempo;
     }
-    return this.points[0].tempo;
+    const point = this.points[i];
+    // Beyond last point: constant tempo
+    if (i >= this.points.length - 1) return point.tempo;
+    // CONSTANT: use this point's tempo
+    if (point.curveType === CurveType.CONSTANT) return point.tempo;
+    // LINEAR: interpolate
+    const nextPoint = this.points[i + 1];
+    const segmentLength = nextPoint.beat - point.beat;
+    if (segmentLength <= 0) return point.tempo;
+    const fraction = (beat - point.beat) / segmentLength;
+    return point.tempo + fraction * (nextPoint.tempo - point.tempo);
   }
 
   /**
@@ -216,14 +234,10 @@ export class TempoMap {
   beatsToSeconds(beats: number): number {
     if (!this._enabled) return beats; // 60 BPM → 1 beat = 1 second
 
-    // Find the segment containing this beat
-    let segIndex = 0;
-    for (let i = this.points.length - 1; i >= 0; i--) {
-      if (beats >= this.points[i].beat) {
-        segIndex = i;
-        break;
-      }
-    }
+    const segIndex = Math.max(
+      0,
+      findLastIndexAtOrBefore(this.points, beats, (p) => p.beat),
+    );
 
     const point = this.points[segIndex];
     const accumulatedTime = point.accumulatedTime;
@@ -266,14 +280,10 @@ export class TempoMap {
   secondsToBeats(seconds: number): number {
     if (!this._enabled) return seconds; // 60 BPM → 1 second = 1 beat
 
-    // Find the segment containing this time
-    let segIndex = 0;
-    for (let i = this.points.length - 1; i >= 0; i--) {
-      if (seconds >= this.points[i].accumulatedTime) {
-        segIndex = i;
-        break;
-      }
-    }
+    const segIndex = Math.max(
+      0,
+      findLastIndexAtOrBefore(this.points, seconds, (p) => p.accumulatedTime),
+    );
 
     const point = this.points[segIndex];
     const elapsed = seconds - point.accumulatedTime;

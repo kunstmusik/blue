@@ -34,6 +34,127 @@ export enum AutomationCurve {
   EXPONENTIAL = 'EXPONENTIAL',
 }
 
+function isPointsAscendingByTime(points: readonly AutomationPoint[]): boolean {
+  for (let i = 1; i < points.length; i++) {
+    if (!(points[i].time >= points[i - 1].time)) return false;
+  }
+  return true;
+}
+
+type ParameterSegmentResult =
+  { kind: 'exact'; value: number } | { kind: 'segment'; a: AutomationPoint; b: AutomationPoint };
+
+function resolveParameterSegment(
+  points: readonly AutomationPoint[],
+  time: number,
+  sorted: boolean,
+): ParameterSegmentResult {
+  const size = points.length;
+  if (size === 0) {
+    return { kind: 'exact', value: 0.0 };
+  }
+  const first = points[0];
+  // Java compares `time == 0.0f` widened to double: -0.0 also matches
+  if (size === 1 || time === 0.0) {
+    return { kind: 'exact', value: first.value };
+  }
+
+  let aIndex = 0;
+  let bIndex = -1;
+
+  if (sorted && !Number.isNaN(time)) {
+    let lo = 1;
+    let hi = size - 1;
+    let firstGe = size;
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1;
+      if (points[mid].time >= time) {
+        firstGe = mid;
+        hi = mid - 1;
+      } else {
+        lo = mid + 1;
+      }
+    }
+
+    if (firstGe < size && points[firstGe].time === time) {
+      if (firstGe === size - 1) {
+        return { kind: 'exact', value: points[firstGe].value };
+      }
+      // last point of the same-time run wins
+      let lastEq = firstGe;
+      lo = firstGe + 1;
+      hi = size - 1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >>> 1;
+        if (points[mid].time === time) {
+          lastEq = mid;
+          lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+      return { kind: 'exact', value: points[lastEq].value };
+    }
+
+    if (firstGe < size) {
+      bIndex = firstGe;
+      aIndex = firstGe - 1;
+    }
+  } else {
+    for (let i = 1; i < size; i++) {
+      const candidate = points[i];
+      if (candidate.time === time) {
+        if (i === size - 1) {
+          return { kind: 'exact', value: candidate.value };
+        }
+        // last point of the same-time run wins
+        while (i < size) {
+          const temp = points[i];
+          if (temp.time !== time) {
+            break;
+          }
+          bIndex = i;
+          i++;
+        }
+        return { kind: 'exact', value: points[bIndex].value };
+      }
+      if (candidate.time < time) {
+        aIndex = i;
+      } else {
+        bIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (bIndex === -1) {
+    // time is at or beyond the last point (Java: b == a after the loop)
+    return { kind: 'exact', value: points[size - 1].value };
+  }
+  if (bIndex === aIndex) {
+    return { kind: 'exact', value: points[bIndex].value };
+  }
+
+  return { kind: 'segment', a: points[aIndex], b: points[bIndex] };
+}
+
+function quantizeEvaluatedValue(
+  y: number,
+  aValue: number,
+  bValue: number,
+  resolution: JavaDecimal,
+): number {
+  if (!javaDecimalIsQuantizationActive(resolution)) {
+    return y;
+  }
+  let adjusted = y;
+  if (bValue < aValue) {
+    adjusted += resolution.doubleValue * 0.99;
+  }
+  const quantized = quantizeToResolutionJava(adjusted, resolution);
+  return quantized !== null ? quantized : adjusted;
+}
+
 /** Raised when parameter XML carries a resolution that Java would reject. */
 export class ParameterResolutionError extends Error {
   readonly code: string;
@@ -79,6 +200,7 @@ export class Parameter implements BlueDataObject {
   private _maximum = 1;
   private _curve: AutomationCurve = AutomationCurve.LINEAR;
   private _points: AutomationPoint[] = [];
+  private _pointsSorted = true;
   private _enabled = false;
   private _resolution: JavaDecimal = defaultResolutionDecimal();
   private _compilationVarName: string | null = null;
@@ -219,15 +341,41 @@ export class Parameter implements BlueDataObject {
   }
 
   getPoints(): AutomationPoint[] {
-    return [...this._points];
+    return this._points.map((point) => ({ time: point.time, value: point.value }));
   }
   setPoints(points: AutomationPoint[]): void {
-    this._points = [...points];
+    this._points = points.map((point) => ({ time: point.time, value: point.value }));
+    this._pointsSorted = isPointsAscendingByTime(this._points);
   }
 
   addPoint(time: number, value: number): void {
-    this._points.push({ time, value });
-    this._points.sort((a, b) => a.time - b.time);
+    const point: AutomationPoint = { time, value };
+    if (!this._pointsSorted || Number.isNaN(time)) {
+      this._points.push(point);
+      if (!Number.isNaN(time)) {
+        this._points.sort((a, b) => a.time - b.time);
+        this._pointsSorted = isPointsAscendingByTime(this._points);
+      } else {
+        this._pointsSorted = false;
+      }
+      return;
+    }
+    // Keep stable relative order for equal timestamps while avoiding O(N log N) sort.
+    let lo = 0;
+    let hi = this._points.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (this._points[mid].time <= time) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    if (lo === this._points.length) {
+      this._points.push(point);
+    } else {
+      this._points.splice(lo, 0, point);
+    }
   }
 
   isEnabled(): boolean {
@@ -369,68 +517,16 @@ export class Parameter implements BlueDataObject {
    * descending bias; and exact positive-resolution quantization.
    */
   private evaluateJavaLinear(time: number): number {
-    const points = this._points;
-    const size = points.length;
-    if (size === 0) {
-      return 0.0;
+    const segment = resolveParameterSegment(this._points, time, this._pointsSorted);
+    if (segment.kind === 'exact') {
+      return segment.value;
     }
 
-    const first = points[0];
-    // Java compares `time == 0.0f` widened to double: -0.0 also matches
-    if (size === 1 || time === 0.0) {
-      return first.value;
-    }
-
-    let aIndex = 0;
-    let bIndex = -1;
-    for (let i = 1; i < size; i++) {
-      const candidate = points[i];
-      if (candidate.time === time) {
-        if (i === size - 1) {
-          return candidate.value;
-        }
-        // last point of the same-time run wins
-        while (i < size) {
-          const temp = points[i];
-          if (temp.time !== time) {
-            break;
-          }
-          bIndex = i;
-          i++;
-        }
-        return points[bIndex].value;
-      }
-      if (candidate.time < time) {
-        aIndex = i;
-      } else {
-        bIndex = i;
-        break;
-      }
-    }
-    if (bIndex === -1) {
-      // time is at or beyond the last point (Java: b == a after the loop)
-      return points[size - 1].value;
-    }
-    if (bIndex === aIndex) {
-      return points[bIndex].value;
-    }
-
-    const a = points[aIndex];
-    const b = points[bIndex];
+    const { a, b } = segment;
     const m = (b.value - a.value) / (b.time - a.time);
     const x = time - a.time;
-    let y = m * x + a.value;
-
-    if (javaDecimalIsQuantizationActive(this._resolution)) {
-      if (b.value < a.value) {
-        y += this._resolution.doubleValue * 0.99;
-      }
-      const quantized = quantizeToResolutionJava(y, this._resolution);
-      if (quantized !== null) {
-        y = quantized;
-      }
-    }
-    return y;
+    const y = m * x + a.value;
+    return quantizeEvaluatedValue(y, a.value, b.value, this._resolution);
   }
 
   /**
@@ -440,37 +536,12 @@ export class Parameter implements BlueDataObject {
    * and then applies the exact quantizer when the resolution is active.
    */
   private evaluateExtensionCurve(time: number): number {
-    const points = this._points;
-    const size = points.length;
-    if (size === 0) return 0.0;
-    if (size === 1 || time === 0.0) return points[0].value;
-
-    let aIndex = 0;
-    let bIndex = -1;
-    for (let i = 1; i < size; i++) {
-      const candidate = points[i];
-      if (candidate.time === time) {
-        if (i === size - 1) return candidate.value;
-        while (i < size) {
-          const temp = points[i];
-          if (temp.time !== time) break;
-          bIndex = i;
-          i++;
-        }
-        return points[bIndex].value;
-      }
-      if (candidate.time < time) {
-        aIndex = i;
-      } else {
-        bIndex = i;
-        break;
-      }
+    const segment = resolveParameterSegment(this._points, time, this._pointsSorted);
+    if (segment.kind === 'exact') {
+      return segment.value;
     }
-    if (bIndex === -1) return points[size - 1].value;
-    if (bIndex === aIndex) return points[bIndex].value;
 
-    const a = points[aIndex];
-    const b = points[bIndex];
+    const { a, b } = segment;
     let y: number;
     if (this._curve === AutomationCurve.STEP) {
       y = time < b.time ? a.value : b.value;
@@ -480,17 +551,7 @@ export class Parameter implements BlueDataObject {
       const v2 = Math.max(b.value, 0.0001);
       y = v1 * Math.pow(v2 / v1, t);
     }
-
-    if (javaDecimalIsQuantizationActive(this._resolution)) {
-      if (b.value < a.value) {
-        y += this._resolution.doubleValue * 0.99;
-      }
-      const quantized = quantizeToResolutionJava(y, this._resolution);
-      if (quantized !== null) {
-        y = quantized;
-      }
-    }
-    return y;
+    return quantizeEvaluatedValue(y, a.value, b.value, this._resolution);
   }
 
   saveAsXML(): Element {
@@ -650,6 +711,7 @@ export class Parameter implements BlueDataObject {
     copy._maximum = this._maximum;
     copy._curve = this._curve;
     copy._points = this._points.map((point) => ({ ...point }));
+    copy._pointsSorted = this._pointsSorted;
     copy._enabled = this._enabled;
     copy._resolution = this._resolution;
     copy._compilationVarName = this._compilationVarName;

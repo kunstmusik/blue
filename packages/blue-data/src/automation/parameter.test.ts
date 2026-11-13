@@ -126,6 +126,33 @@ describe('Parameter point sorting', () => {
     expect(pts.map((p) => p.time)).toEqual([1, 3, 5]);
     expect(pts.map((p) => p.value)).toEqual([0.1, 0.3, 0.5]);
   });
+
+  it('clones points at getPoints and setPoints boundaries so external mutations cannot corrupt binary search', () => {
+    const param = new Parameter();
+    param.setMinimum(0);
+    param.setMaximum(30);
+    param.setAutomationEnabled(true);
+
+    const inputPoints = [
+      { time: 0, value: 0 },
+      { time: 1, value: 10 },
+      { time: 2, value: 20 },
+      { time: 3, value: 30 },
+    ];
+    param.setPoints(inputPoints);
+
+    // Mutate caller's input point after setPoints()
+    inputPoints[2]!.time = 0.1;
+    inputPoints[2]!.value = 25;
+    expect(param.getValue(0.5)).toBeCloseTo(5, 6);
+
+    // Mutate returned point object after getPoints()
+    const exported = param.getPoints();
+    exported[2]!.time = 0.1;
+    exported[2]!.value = 25;
+    expect(param.getValue(0.5)).toBeCloseTo(5, 6);
+    expect(param.getPoints().map((p) => p.time)).toEqual([0, 1, 2, 3]);
+  });
 });
 
 describe('Parameter exact resolution ownership', () => {

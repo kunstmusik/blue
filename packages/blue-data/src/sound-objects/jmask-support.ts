@@ -193,7 +193,13 @@ export class Table {
   }
 
   private getSortedPoints(): TablePoint[] {
-    return [...this.points].sort((left, right) => left.time - right.time);
+    const { points } = this;
+    for (let i = 1; i < points.length; i += 1) {
+      if (points[i]!.time < points[i - 1]!.time) {
+        return [...points].sort((left, right) => left.time - right.time);
+      }
+    }
+    return points;
   }
 
   private interpolateValue(ex: number, r: number, a: number, b: number): number {
@@ -217,8 +223,13 @@ export class Table {
     return a + cx * (b - a);
   }
 
-  private integrateSegment(x1: number, xe: number, y1: number, y2: number): number {
-    const pw2 = Math.pow(2, this.interpolation);
+  private integrateSegment(
+    x1: number,
+    xe: number,
+    y1: number,
+    y2: number,
+    pw2 = Math.pow(2, this.interpolation),
+  ): number {
     return x1 * y1 + (Math.pow(x1, 1.0 + pw2) * (y2 - y1)) / ((1.0 + pw2) * Math.pow(xe, pw2));
   }
 
@@ -412,51 +423,55 @@ export class Table {
     const sorted = this.getSortedPoints();
     const pointsSize = sorted.length;
 
-    const x = new Array<number>(pointsSize);
-    const y = new Array<number>(pointsSize);
-    for (let index = 0; index < pointsSize; index += 1) {
-      const point = sorted[index]!;
-      x[index] = point.time;
-      y[index] = point.value;
-    }
-
     if (pointsSize === 0) {
       erg = 0.0;
     } else if (pointsSize === 1) {
-      erg = xtr * y[0]!;
-    } else if (xtr <= x[0]!) {
-      erg = x[0]! * y[0]! - xtr * y[0]!;
+      erg = xtr * sorted[0]!.value;
+    } else if (xtr <= sorted[0]!.time) {
+      const y0 = sorted[0]!.value;
+      erg = sorted[0]!.time * y0 - xtr * y0;
     } else {
       let index = 0;
-      while (index < pointsSize && x[index]! < xtr) {
+      while (index < pointsSize && sorted[index]!.time < xtr) {
         index += 1;
       }
 
       if (this.interpolationType !== Table.OFF) {
+        const pw2 = Math.pow(2, this.interpolation);
         if (index >= 2) {
           for (let k = 0; k < index - 1; k += 1) {
-            phsum += this.integrateSegment(x[k + 1]! - x[k]!, x[k + 1]! - x[k]!, y[k]!, y[k + 1]!);
+            const p0 = sorted[k]!;
+            const p1 = sorted[k + 1]!;
+            const dx = p1.time - p0.time;
+            phsum += this.integrateSegment(dx, dx, p0.value, p1.value, pw2);
           }
         }
 
-        if (xtr >= x[pointsSize - 1]!) {
-          phsum += xtr * y[pointsSize - 1]! - x[pointsSize - 1]! * y[pointsSize - 1]!;
+        const last = sorted[pointsSize - 1]!;
+        if (xtr >= last.time) {
+          phsum += xtr * last.value - last.time * last.value;
         } else {
+          const prev = sorted[index - 1]!;
+          const curr = sorted[index]!;
           phsum += this.integrateSegment(
-            xtr - x[index - 1]!,
-            x[index]! - x[index - 1]!,
-            y[index - 1]!,
-            y[index]!,
+            xtr - prev.time,
+            curr.time - prev.time,
+            prev.value,
+            curr.value,
+            pw2,
           );
         }
         erg = phsum;
       } else {
         if (index >= 2) {
           for (let k = 0; k < index - 1; k += 1) {
-            phsum += x[k + 1]! * y[k]! - x[k]! * y[k]!;
+            const p0 = sorted[k]!;
+            const p1 = sorted[k + 1]!;
+            phsum += p1.time * p0.value - p0.time * p0.value;
           }
         }
-        phsum += xtr * y[index - 1]! - x[index - 1]! * y[index - 1]!;
+        const prev = sorted[index - 1]!;
+        phsum += xtr * prev.value - prev.time * prev.value;
         erg = phsum;
       }
     }

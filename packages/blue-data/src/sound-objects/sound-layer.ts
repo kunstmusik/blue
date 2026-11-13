@@ -254,6 +254,12 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     this.length = 0;
   }
 
+  private sortByStartBeat(context: TimeContext): Array<{ sObj: SoundObject; sObjStart: number }> {
+    return [...this]
+      .map((sObj) => ({ sObj, sObjStart: sObj.getStartTime().toBeats(context) }))
+      .sort((a, b) => a.sObjStart - b.sObjStart);
+  }
+
   /**
    * Generate notes for all sound objects in this layer.
    * Mirrors Java SoundLayer.generateForCSD exactly:
@@ -274,12 +280,9 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
       const noteList = new NoteList();
 
       // Sort sound objects by start time
-      const sorted = [...this].sort(
-        (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
-      );
+      const sorted = this.sortByStartBeat(context);
 
-      for (const sObj of sorted) {
-        const sObjStart = sObj.getStartTime().toBeats(context);
+      for (const { sObj, sObjStart } of sorted) {
         const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
         const sObjEnd = sObjStart + sObjDur;
 
@@ -323,12 +326,9 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     return withSoundOccurrencesAsync(compileData, 0, startTime, endTime, async () => {
       const noteList = new NoteList();
 
-      const sorted = [...this].sort(
-        (a, b) => a.getStartTime().toBeats(context) - b.getStartTime().toBeats(context),
-      );
+      const sorted = this.sortByStartBeat(context);
 
-      for (const sObj of sorted) {
-        const sObjStart = sObj.getStartTime().toBeats(context);
+      for (const { sObj, sObjStart } of sorted) {
         const sObjDur = sObj.getSubjectiveDuration().toBeats(context);
         const sObjEnd = sObjStart + sObjDur;
 

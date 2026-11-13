@@ -14,6 +14,26 @@ import { checkRoot, checkShape } from '../utilities/xml';
 /** Default PPQ (pulses per quarter note), matching Java. */
 export const DEFAULT_PPQ = 960;
 
+function findLastEntryAtOrBefore<T>(
+  items: readonly T[],
+  target: number,
+  getKey: (item: T) => number,
+): number {
+  let lo = 0;
+  let hi = items.length - 1;
+  let best = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    if (getKey(items[mid]!) <= target) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
 export class MeterMap {
   private entries: MeasureMeterPair[] = [new MeasureMeterPair(1, new Meter(4, 4))];
   private measureStartBeats: number[] = [0.0];
@@ -33,22 +53,25 @@ export class MeterMap {
 
   /** Get the meter in effect at the given measure (1-based). */
   getMeterForMeasure(measure: number): Meter {
-    for (let i = this.entries.length - 1; i >= 0; i--) {
-      if (measure >= this.entries[i].measure) {
-        return this.entries[i].meter;
-      }
-    }
-    return this.entries[0].meter;
+    const index = findLastEntryAtOrBefore(this.entries, measure, (entry) => entry.measure);
+    return this.entries[index].meter;
   }
 
   /** Get the meter in effect at the given beat position. */
   getMeterAtBeat(beat: number): Meter {
-    for (let i = this.entries.length - 1; i >= 0; i--) {
-      if (beat >= this.measureStartBeats[i]) {
-        return this.entries[i].meter;
+    let lo = 0;
+    let hi = this.measureStartBeats.length - 1;
+    let best = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1;
+      if (this.measureStartBeats[mid] <= beat) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
       }
     }
-    return this.entries[0].meter;
+    return this.entries[best].meter;
   }
 
   /** Add a new meter entry at the given measure. */
@@ -130,13 +153,7 @@ export class MeterMap {
     }
 
     // Find the meter entry for this bar
-    let entryIndex = 0;
-    for (let i = this.entries.length - 1; i >= 0; i--) {
-      if (bar >= this.entries[i].measure) {
-        entryIndex = i;
-        break;
-      }
-    }
+    const entryIndex = findLastEntryAtOrBefore(this.entries, bar, (entry) => entry.measure);
 
     const entry = this.entries[entryIndex];
     const meter = entry.meter;
@@ -169,11 +186,16 @@ export class MeterMap {
     }
 
     // Find the entry whose measureStartBeats <= beats
+    let lo = 0;
+    let hi = this.measureStartBeats.length - 1;
     let entryIndex = 0;
-    for (let i = this.entries.length - 1; i >= 0; i--) {
-      if (beats >= this.measureStartBeats[i]) {
-        entryIndex = i;
-        break;
+    while (lo <= hi) {
+      const mid = (lo + hi) >>> 1;
+      if (this.measureStartBeats[mid] <= beats) {
+        entryIndex = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
       }
     }
 

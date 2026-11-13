@@ -446,12 +446,13 @@ export class Mixer implements BlueDataObject {
 
 export const MAX_SUB_METER_KEY_BYTES = 42;
 
+const SHARED_TEXT_ENCODER = new TextEncoder();
+const SHARED_TEXT_DECODER = new TextDecoder('utf-8', { fatal: false });
+
 export function truncateUtf8(str: string, maxBytes: number): string {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(str);
+  const bytes = SHARED_TEXT_ENCODER.encode(str);
   if (bytes.length <= maxBytes) return str;
-  const decoder = new TextDecoder('utf-8', { fatal: false });
-  let decoded = decoder.decode(bytes.subarray(0, maxBytes));
+  let decoded = SHARED_TEXT_DECODER.decode(bytes.subarray(0, maxBytes));
   if (decoded.endsWith('\uFFFD')) {
     decoded = decoded.slice(0, -1);
   }
@@ -461,7 +462,6 @@ export function truncateUtf8(str: string, maxBytes: number): string {
 export function buildSubChannelMeterKeys(subChannels: Channel[]): Map<Channel, string> {
   const map = new Map<Channel, string>();
   const usedKeys = new Set<string>();
-  const encoder = new TextEncoder();
 
   for (const subChannel of subChannels) {
     const rawBase = `sub_${subChannel.getName().replace(/\s+/g, '_')}`;
@@ -470,7 +470,7 @@ export function buildSubChannelMeterKeys(subChannels: Channel[]): Map<Channel, s
 
     while (true) {
       const suffix = counter > 1 ? `_${counter}` : '';
-      const suffixBytes = encoder.encode(suffix).length;
+      const suffixBytes = SHARED_TEXT_ENCODER.encode(suffix).length;
       const allowedBaseBytes = MAX_SUB_METER_KEY_BYTES - suffixBytes;
       const base = truncateUtf8(rawBase, allowedBaseBytes);
       key = `${base}${suffix}`;

@@ -11,6 +11,22 @@ export function replaceAll(input: string, search: string, replacement: string): 
   return input.split(search).join(replacement);
 }
 
+const OPCODE_REPLACE_REGEX_CACHE = new Map<string, RegExp>();
+
+function getOpcodeBoundaryRegex(from: string): RegExp {
+  let pattern = OPCODE_REPLACE_REGEX_CACHE.get(from);
+  if (!pattern) {
+    if (OPCODE_REPLACE_REGEX_CACHE.size >= 512) {
+      OPCODE_REPLACE_REGEX_CACHE.clear();
+    }
+    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    pattern = new RegExp(`(^|\\s)${escaped}($|\\s)`, 'g');
+    OPCODE_REPLACE_REGEX_CACHE.set(from, pattern);
+  }
+  pattern.lastIndex = 0;
+  return pattern;
+}
+
 /**
  * Replace opcode names using Java-compatible whitespace boundary matching.
  * Mirrors TextUtilities.replaceOpcodeNames().
@@ -23,9 +39,7 @@ export function replaceOpcodeNames(replacementValues: Map<string, string>, input
       continue;
     }
 
-    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`(^|\\s)${escaped}($|\\s)`, 'g');
-    output = output.replace(pattern, `$1${to}$2`);
+    output = output.replace(getOpcodeBoundaryRegex(from), `$1${to}$2`);
   }
 
   return output;

@@ -93,37 +93,43 @@ export class PatternObject extends AbstractSoundObject {
     this._patterns.push(pattern);
   }
 
+  private appendPatternSteps(
+    pattern: Pattern,
+    maxSteps: number,
+    timeIncrement: number,
+    out: NoteList,
+  ): void {
+    let baseNotes: NoteList | null = null;
+    const limit = Math.min(pattern.values.length, maxSteps);
+    for (let j = 0; j < limit; j++) {
+      if (!pattern.values[j]) continue;
+      if (baseNotes === null) {
+        baseNotes = getNotes(pattern.patternScore);
+      }
+      const stepNotes = baseNotes.deepCopy();
+      setScoreStart(stepNotes, j * timeIncrement);
+      out.merge(stepNotes);
+    }
+  }
+
   private generateRawNotes(): NoteList {
     const tempNoteList = new NoteList();
     const timeIncrement = 1.0 / this._subDivisions;
+    const maxSteps = this._beats * this._subDivisions;
 
     let soloFound = false;
 
     for (const p of this._patterns) {
       if (p.solo && !p.muted) {
         soloFound = true;
-        for (let j = 0; j < Math.min(p.values.length, this._beats * this._subDivisions); j++) {
-          if (p.values[j]) {
-            const tempPattern = getNotes(p.patternScore);
-            const start = j * timeIncrement;
-            setScoreStart(tempPattern, start);
-            tempNoteList.merge(tempPattern);
-          }
-        }
+        this.appendPatternSteps(p, maxSteps, timeIncrement, tempNoteList);
       }
     }
 
     if (!soloFound) {
       for (const p of this._patterns) {
         if (!p.muted) {
-          for (let j = 0; j < Math.min(p.values.length, this._beats * this._subDivisions); j++) {
-            if (p.values[j]) {
-              const tempPattern = getNotes(p.patternScore);
-              const start = j * timeIncrement;
-              setScoreStart(tempPattern, start);
-              tempNoteList.merge(tempPattern);
-            }
-          }
+          this.appendPatternSteps(p, maxSteps, timeIncrement, tempNoteList);
         }
       }
     }

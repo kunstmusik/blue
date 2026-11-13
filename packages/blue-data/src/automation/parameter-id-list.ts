@@ -2,20 +2,38 @@ import { XmlLoadContext } from '../serialization/xml-load';
 import { checkRoot, checkShape, readText, parseXmlInteger } from '../utilities/xml';
 import { Element } from '../serialization/xml-reader';
 
+const CASE_INSENSITIVE_COLLATOR = new Intl.Collator(undefined, { sensitivity: 'base' });
+
 export class ParameterIdList {
   private _ids: string[] = [];
   private _selectedIndex = -1;
+  private _isSorted = true;
 
   addParameterId(id: string): void {
     if (this._ids.includes(id)) {
       return;
     }
 
-    const currentSelected =
-      this.getSelectedIndex() > 0 ? this.getParameterId(this.getSelectedIndex()) : null;
+    const selectedIdx = this.getSelectedIndex();
+    const currentSelected = selectedIdx > 0 ? this._ids[selectedIdx] : null;
 
-    this._ids.push(id);
-    this._ids.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    if (!this._isSorted) {
+      this._ids.push(id);
+      this._ids.sort((a, b) => CASE_INSENSITIVE_COLLATOR.compare(a, b));
+      this._isSorted = true;
+    } else {
+      let lo = 0;
+      let hi = this._ids.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        if (CASE_INSENSITIVE_COLLATOR.compare(this._ids[mid], id) <= 0) {
+          lo = mid + 1;
+        } else {
+          hi = mid;
+        }
+      }
+      this._ids.splice(lo, 0, id);
+    }
 
     if (this._ids.length > 0 && this._selectedIndex < 0) {
       this._selectedIndex = 0;
@@ -107,6 +125,7 @@ export class ParameterIdList {
         });
       list._ids.push(id);
     }
+    list._isSorted = false;
     const selected = data.getAttribute('selectedIndex');
     list._selectedIndex =
       selected === null
@@ -121,6 +140,7 @@ export class ParameterIdList {
     const copy = new ParameterIdList();
     copy._ids = [...this._ids];
     copy._selectedIndex = this._selectedIndex;
+    copy._isSorted = this._isSorted;
     return copy;
   }
 }
