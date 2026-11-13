@@ -543,6 +543,8 @@ public final class FixtureGenerator {
                 new double[][] {{0.0, Double.MIN_VALUE}, {1.0, 2.0 * Double.MIN_VALUE}}, 0.5);
         curated("c-rt-subnormal-quantized", "special-values", "0.0000000000000000001",
                 new double[][] {{0.0, Double.MIN_VALUE}, {1.0, 2.0 * Double.MIN_VALUE}}, 0.5);
+        curated("c-rt-subnormal-double-rounding", "special-values", "7.410984687618698e-324",
+                new double[][] {{0.0, 2.0 * Double.MIN_VALUE}, {1.0, 2.0 * Double.MIN_VALUE}}, 0.5);
         curated("c-rt-near-overflow", "special-values", "-1",
                 new double[][] {{0.0, 1.0e308}, {1.0, 1.7e308}}, 0.5);
         curated("c-rt-overflow-to-infinite", "non-finite",
@@ -632,6 +634,8 @@ public final class FixtureGenerator {
             "Infinity", "1e", "1e+", "--1",
             // scale overflow
             "1E-2147483648", "1E+2147483649", "0.00000000000000000000000000000001e-2147483647",
+            // subnormal rounding boundary (< 1.5 * 2^-1074 must round in one step)
+            "7.410984687618698e-324",
         };
         for (int i = 0; i < texts.length; i++) {
             String text = texts[i];

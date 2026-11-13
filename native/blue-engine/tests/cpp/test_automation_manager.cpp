@@ -385,6 +385,140 @@ void testInvalidDefinitionKeepsPreviousRevision() {
     assert(std::abs(value - 0.5) < 1.0e-12);
 }
 
+void testRetirementRingSaturationContinuesAdvancingAndRecovers() {
+    using namespace blue;
+
+    auto require = [](bool condition, const char* message) {
+        if (!condition) {
+            std::cerr << "FAIL: " << message << std::endl;
+            std::abort();
+        }
+    };
+
+    auto store = std::make_shared<AutomationStore>();
+    const std::vector<AutomationPoint> initialRamp = {
+        {0.0, 0.0},
+        {10.0, 10.0},
+    };
+    require(store->createAutomation("ramp", AutomationCurve::LINEAR, initialRamp, true, "-1") ==
+                AutomationPrepareError::Ok,
+            "create initial ramp");
+
+    double lastValue = -1.0;
+    uint64_t writeCount = 0;
+    AutomationManager manager(
+        store,
+        [&](const std::string& channelName, double nextValue) {
+            if (channelName == "ramp") {
+                lastValue = nextValue;
+                ++writeCount;
+            }
+        });
+
+    // Adopt the initial snapshot at t = 1.0s.
+    manager.process(100, 100.0);
+    require(std::abs(lastValue - 1.0) < 1.0e-9, "initial ramp value at t=1.0s");
+
+    // Fill all 256 retirement slots while auto-reclaim is paused. Updating an
+    // unrelated channel keeps "ramp" continuously progressing across revisions.
+    store->setAutoReclaimPausedForTesting(true);
+    for (int i = 0; i < 256; ++i) {
+        const double offset = static_cast<double>(i);
+        const auto status = (i == 0)
+            ? store->createAutomation(
+                  "aux", AutomationCurve::LINEAR,
+                  std::vector<AutomationPoint>{{0.0, offset}, {1.0, offset + 1.0}},
+                  true, "-1")
+            : store->updateAutomation(
+                  "aux", AutomationCurve::LINEAR,
+                  std::vector<AutomationPoint>{{0.0, offset}, {1.0, offset + 1.0}},
+                  true, "-1");
+        require(status == AutomationPrepareError::Ok, "saturate retirement slot");
+        manager.process(100, 100.0);
+    }
+    require(store->inlineRetireCount() == 0, "retirement ring fills without misses first");
+
+    // Publish a replacement definition for "ramp" while every retirement slot is full.
+    const std::vector<AutomationPoint> replacementRamp = {
+        {0.0, 100.0},
+        {10.0, 110.0},
+    };
+    require(store->updateAutomation("ramp", AutomationCurve::LINEAR, replacementRamp, true, "-1") ==
+                AutomationPrepareError::Ok,
+            "publish replacement ramp while ring is full");
+
+    // Ring saturation must defer snapshot adoption WITHOUT freezing "ramp".
+    const uint64_t writesBeforeFull = writeCount;
+    manager.process(200, 100.0); // t = 2.0s -> old ramp should advance to 2.0
+    require(store->inlineRetireCount() == 1, "first saturated cycle increments inlineRetireCount");
+    require(writeCount == writesBeforeFull + 1, "first saturated cycle writes ramp");
+    require(std::abs(lastValue - 2.0) < 1.0e-9, "old ramp advances to 2.0 while ring is full");
+
+    manager.process(300, 100.0); // t = 3.0s -> old ramp should advance to 3.0
+    require(store->inlineRetireCount() == 2, "second saturated cycle increments inlineRetireCount");
+    require(writeCount == writesBeforeFull + 2, "second saturated cycle writes ramp");
+    require(std::abs(lastValue - 3.0) < 1.0e-9, "old ramp advances to 3.0 while ring is full");
+
+    // Once auto-reclamation is resumed, a normal store mutation reclaims retired
+    // slots cleanly so the next process adopts and evaluates the edit.
+    store->setAutoReclaimPausedForTesting(false);
+    const std::vector<AutomationPoint> updatedReplacementRamp = {
+        {0.0, 200.0},
+        {10.0, 210.0},
+    };
+    require(store->updateAutomation("ramp", AutomationCurve::LINEAR, updatedReplacementRamp, true, "-1") ==
+                AutomationPrepareError::Ok,
+            "direct update triggers single-owner store reclamation");
+    manager.process(400, 100.0); // t = 4.0s -> updated ramp should produce 204.0
+    require(std::abs(lastValue - 204.0) < 1.0e-9,
+            "direct store edit takes effect automatically once reclamation runs");
+}
+
+void testDirectStoreMutationsReclaimAndAdoptEdits() {
+    using namespace blue;
+
+    auto require = [](bool condition, const char* message) {
+        if (!condition) {
+            std::cerr << "FAIL: " << message << std::endl;
+            std::abort();
+        }
+    };
+
+    auto store = std::make_shared<AutomationStore>();
+    require(store->createAutomation(
+                "direct", AutomationCurve::LINEAR,
+                std::vector<AutomationPoint>{{0.0, 0.0}, {10.0, 10.0}}, true, "-1") ==
+                AutomationPrepareError::Ok,
+            "create initial direct automation");
+
+    double lastValue = -1.0;
+    AutomationManager manager(
+        store,
+        [&](const std::string& channelName, double nextValue) {
+            if (channelName == "direct") {
+                lastValue = nextValue;
+            }
+        });
+
+    // Perform well over kRetireSlots (256) direct store updates interleaved with
+    // audio evaluation without ever calling reclaimRetired() externally.
+    constexpr int kTotalEdits = 400;
+    for (int edit = 0; edit < kTotalEdits; ++edit) {
+        const double base = static_cast<double>(edit) * 10.0;
+        require(store->updateAutomation(
+                    "direct", AutomationCurve::LINEAR,
+                    std::vector<AutomationPoint>{{0.0, base}, {10.0, base + 10.0}},
+                    true, "-1") == AutomationPrepareError::Ok,
+                "direct updateAutomation succeeds");
+        manager.process(100, 100.0); // t = 1.0s -> base + 1.0
+        require(std::abs(lastValue - (base + 1.0)) < 1.0e-9,
+                "each direct store edit must be adopted immediately without stalling");
+    }
+
+    require(store->inlineRetireCount() == 0,
+            "direct store callers must reclaim retired snapshots automatically");
+}
+
 } // namespace
 
 int main() {
@@ -406,6 +540,10 @@ int main() {
     testCompletedAutomationRebindsFinalValue();
     std::cout << "Starting test 7..." << std::endl;
     testInvalidDefinitionKeepsPreviousRevision();
+    std::cout << "Starting test 8..." << std::endl;
+    testRetirementRingSaturationContinuesAdvancingAndRecovers();
+    std::cout << "Starting test 9..." << std::endl;
+    testDirectStoreMutationsReclaimAndAdoptEdits();
     std::cout << "All AutomationManager tests passed successfully!" << std::endl;
     return 0;
 }

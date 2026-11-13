@@ -16,6 +16,8 @@
 #include <cstring>
 #include <functional>
 #include <map>
+#include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -409,7 +411,14 @@ bool CsoundEngine::setChannels(
     return false;
   }
 
+  constexpr size_t kLinearDuplicateLimit = 16;
   const bool running = running_.load();
+  const auto automationList =
+      (running && automationStore_) ? automationStore_->getList() : nullptr;
+  std::unordered_set<std::string_view> seenNames;
+  if (entries.size() > kLinearDuplicateLimit) {
+    seenNames.reserve(entries.size());
+  }
   for (size_t index = 0; index < entries.size(); ++index) {
     const auto &[name, value] = entries[index];
     if (name.empty()) {
@@ -420,21 +429,28 @@ bool CsoundEngine::setChannels(
       setLastError("Channel value must be finite");
       return false;
     }
-    for (size_t previous = 0; previous < index; ++previous) {
-      if (entries[previous].first == name) {
-        setLastError("Batch payload contains duplicate channel name");
+    if (entries.size() <= kLinearDuplicateLimit) {
+      for (size_t previous = 0; previous < index; ++previous) {
+        if (entries[previous].first == name) {
+          setLastError("Batch payload contains duplicate channel name");
+          return false;
+        }
+      }
+    } else if (!seenNames.insert(name).second) {
+      setLastError("Batch payload contains duplicate channel name");
+      return false;
+    }
+    if (automationList) {
+      const auto it = automationList->automations.find(name);
+      if (it != automationList->automations.end() && it->second->enabled) {
+        setLastError("Cannot set automated channel during playback: " + name);
         return false;
       }
-    }
-    if (running && hasActiveAutomation(name)) {
-      setLastError("Cannot set automated channel during playback: " + name);
-      return false;
     }
   }
 
   // All validation, including live-channel applicability and automation
   // authority, completes before the first value is applied or enqueued.
-  std::vector<std::pair<std::string, double>> directEntries;
   const auto bindings = getChannelBindings();
   if (running) {
     if (!bindings) {
@@ -462,24 +478,21 @@ bool CsoundEngine::setChannels(
       setLastError("Channel batch could not be queued");
       return false;
     }
+    for (const auto &[name, value] : entries) {
+      pendingChannelValues_[name] = value;
+    }
   } else {
     for (const auto &[name, value] : entries) {
-      if (bindings && bindings->controlChannels.find(name) !=
-                          bindings->controlChannels.end()) {
-        directEntries.emplace_back(name, value);
+      pendingChannelValues_[name] = value;
+      ChannelEntry *sharedMemoryEntry = nullptr;
+      if (bindings) {
+        const auto binding = bindings->controlChannels.find(name);
+        if (binding != bindings->controlChannels.end()) {
+          CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
+          sharedMemoryEntry = binding->second.sharedMemoryEntry;
+        }
       }
-    }
-  }
-
-  for (const auto &[name, value] : entries) {
-    pendingChannelValues_[name] = value;
-  }
-  if (!running) {
-    for (const auto &[name, value] : directEntries) {
-      CsoundLoader::csoundSetControlChannel(csound_, name.c_str(), value);
-    }
-    for (const auto &[name, value] : entries) {
-      mirrorChannelValue(name, value);
+      mirrorChannelValueWithEntry(name, value, sharedMemoryEntry);
     }
   }
 
@@ -546,6 +559,35 @@ bool CsoundEngine::getChannels(const std::vector<std::string> &names,
   clearLastError();
   return true;
 }
+
+#ifdef BLUE_ENGINE_TESTING
+bool CsoundEngine::prepareStoppedBoundChannelsForTesting() {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+  if (!csound_ || running_.load()) {
+    return false;
+  }
+  if (CsoundLoader::csoundStart(csound_) != csound::CSOUND_SUCCESS) {
+    return false;
+  }
+  return rebuildControlChannelCache();
+}
+
+bool CsoundEngine::readCsoundControlChannelForTesting(const std::string &name,
+                                                      double &value) const {
+  std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+  if (!csound_) {
+    return false;
+  }
+  int32_t err = csound::CSOUND_SUCCESS;
+  const double rawValue =
+      CsoundLoader::csoundGetControlChannel(csound_, name.c_str(), &err);
+  if (err != csound::CSOUND_SUCCESS) {
+    return false;
+  }
+  value = rawValue;
+  return true;
+}
+#endif
 
 bool CsoundEngine::start() {
   std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
@@ -1741,6 +1783,16 @@ void CsoundEngine::mirrorChannelValue(const std::string &name, double value) {
     if (it != bindings->controlChannels.end()) {
       sharedMemoryEntry = it->second.sharedMemoryEntry;
     }
+  }
+
+  mirrorChannelValueWithEntry(name, value, sharedMemoryEntry);
+}
+
+void CsoundEngine::mirrorChannelValueWithEntry(const std::string &name,
+                                               double value,
+                                               ChannelEntry *sharedMemoryEntry) {
+  if (!shm_) {
+    return;
   }
 
   if (sharedMemoryEntry) {

@@ -69,9 +69,15 @@ public:
     // and must defer adoption rather than destroy on the audio thread.
     bool retireSnapshot(std::shared_ptr<const AutomationList>& snapshot);
 
-    // Control-thread reclamation: destroys retired snapshots. Called from the
-    // ZMQ handling path after command batches and from writer operations.
+    // Control-thread reclamation: destroys retired snapshots. AutomationStore
+    // mutators invoke this automatically as the single control-thread
+    // reclamation owner, serialized by reclaimMutex_.
     void reclaimRetired();
+
+#ifdef BLUE_ENGINE_TESTING
+    // Test hook to hold retirement slots full and exercise ring saturation.
+    void setAutoReclaimPausedForTesting(bool paused);
+#endif
 
     // Instrumentation: how many handoffs found every reclamation slot occupied.
     // A capacity miss is deferred and never destroys a snapshot inline.
@@ -92,6 +98,10 @@ private:
     // Mutex protects writers
     mutable std::mutex listMutex_;
 
+    // Mutex serializes control-thread retirement reclamation so retireSlots_
+    // always has a single consumer even across multiple writer/control paths.
+    mutable std::mutex reclaimMutex_;
+
     // ID generation (protected by listMutex_)
     uint32_t nextId_;
 
@@ -103,6 +113,9 @@ private:
     std::atomic<uint8_t> retireStates_[kRetireSlots];
     std::shared_ptr<const AutomationList> retireSlots_[kRetireSlots];
     std::atomic<uint64_t> inlineRetireCount_{0};
+#ifdef BLUE_ENGINE_TESTING
+    std::atomic<bool> autoReclaimPaused_{false};
+#endif
 };
 
 }  // namespace blue

@@ -158,6 +158,7 @@ add_executable(test_channel_bridge
 )
 target_include_directories(test_channel_bridge PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(test_channel_bridge PRIVATE Boost::boost libzmq-static)
+target_compile_definitions(test_channel_bridge PRIVATE BLUE_ENGINE_TESTING=1)
 set_target_properties(test_channel_bridge PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 if(UNIX AND NOT APPLE)
     target_link_libraries(test_channel_bridge PRIVATE dl)

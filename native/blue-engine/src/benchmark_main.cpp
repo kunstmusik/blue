@@ -65,9 +65,11 @@ const std::vector<Scenario> kScenarios = {
     {"exponential_32", 32, 32, false, true, false, nullptr, false, false, false, false, false},
     {"exponential_128", 128, 128, false, true, false, nullptr, false, false, false, false, false},
     {"exponential_256", 256, 256, false, true, false, nullptr, false, false, false, false, false},
-    // exact decimal quantization scenarios: one ordinary scale and one scale
-    // beyond the former bounded fixed-point range, reported separately
+    // exact decimal quantization scenarios: unit coefficient ("0.01"), non-unit
+    // coefficient ("0.25", full remainder arithmetic), and one scale beyond the
+    // former bounded fixed-point range, reported separately
     {"quantized_exact_32", 32, 32, false, false, true, "0.01", false, false, false, false, false},
+    {"quantized_exact_nonunit_32", 32, 32, false, false, true, "0.25", false, false, false, false, false},
     {"quantized_exact_large_scale_32", 32, 32, false, false, true, "0.0000000000000000001", false, false, false, false, false},
     {"completed_256", 256, 256, false, false, true, "0.01", true, false, false, false, false},
     {"live_edit_32", 32, 32, false, false, true, "0.01", false, true, false, false, true},
@@ -307,7 +309,7 @@ TrialMetrics runTrial(const Scenario &scenario, int warmupCycles,
                                  : AutomationCurve::LINEAR,
             std::vector<AutomationPoint>{{0.0, 0.1},
                                          {0.75, 0.2 + update * 0.01},
-                                         {3.0, 0.8}},
+                                         {3.0, 0.8 + update * 0.01}},
             true, scenario.quantized ? scenario.quantizedResolutionText : "-1");
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -347,6 +349,15 @@ TrialMetrics runTrial(const Scenario &scenario, int warmupCycles,
   // still joinable while it emits its final counters. Join before reading the
   // summary so the benchmark observes the completed publication.
   engine.stop();
+
+  if (scenario.liveEdit) {
+    require(store->inlineRetireCount() == 0,
+            "live_edit exhausted snapshot retirement slots without reclamation");
+    double adoptedValue = 0.0;
+    require(sharedMemory.getChannel("chan_0", adoptedValue) &&
+                std::abs(adoptedValue - 0.95) < 1.0e-6,
+            "live_edit did not adopt the final updated automation snapshot");
+  }
 
   const auto summary = engine.getLastPerformanceSummary();
   require(summary.available, "engine did not publish performance counters");

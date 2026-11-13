@@ -192,6 +192,10 @@ public:
   uint64_t getCaptureHotPathAllocationCount() const {
     return captureHotPathAllocationCount_.load(std::memory_order_relaxed);
   }
+#ifdef BLUE_ENGINE_TESTING
+  bool prepareStoppedBoundChannelsForTesting();
+  bool readCsoundControlChannelForTesting(const std::string &name, double &value) const;
+#endif
 
 private:
   std::atomic<uint64_t> captureHotPathAllocationCount_{0};
@@ -207,6 +211,8 @@ private:
   void syncSharedMemoryFromBindings(
       const RuntimeChannelBindingSnapshot *bindings);
   void mirrorChannelValue(const std::string &name, double value);
+  void mirrorChannelValueWithEntry(const std::string &name, double value,
+                                   ChannelEntry *sharedMemoryEntry);
   double *findControlChannelPointer(const std::string &name);
   bool hasActiveAutomation(const std::string &name) const;
   void rebuildMeterLayout(const RuntimeChannelBindingSnapshot *bindings);

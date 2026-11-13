@@ -191,6 +191,27 @@ void testBatchChannelCommandsThroughHandler(blue::CsoundEngine& engine) {
   require(a == 1.5 && b == -2.25 && c == 99.125,
           "batch get values must correspond exactly to request order");
 
+  // Exercise the >16-entry hash-set path on direct CsoundEngine::setChannels()
+  // including whole-batch duplicate rejection without Csound/SHM mutation.
+  std::vector<std::pair<std::string, double>> largeBatch;
+  largeBatch.reserve(64);
+  for (int i = 0; i < 64; ++i) {
+    largeBatch.emplace_back("bx7-large-" + std::to_string(i), 10.0 + i);
+  }
+  require(batchEngine.setChannels(largeBatch), batchEngine.getLastError());
+  double shmMirrored = 0.0;
+  require(batchShm.getChannel("bx7-large-63", shmMirrored)
+              && approxEqual(shmMirrored, 73.0),
+          "stopped large batch must mirror channels directly to shared memory");
+  auto dupBatch = largeBatch;
+  dupBatch[0].second = 999.0;
+  dupBatch[63].first = dupBatch[12].first;
+  require(!batchEngine.setChannels(dupBatch),
+          "direct large setChannels batch must reject late duplicates");
+  require(batchEngine.getChannel("bx7-large-0", shmMirrored)
+              && approxEqual(shmMirrored, 10.0),
+          "rejected direct batch set must not mutate earlier channel values");
+
   // Once the Csound channels are live, a batch must preflight every target
   // before applying any value. A late missing or automated channel must not
   // leave the earlier channel changed.
@@ -274,6 +295,61 @@ endin
           "batch-set value must be readable through GET_CHANNEL");
 
   batchEngine.stop();
+
+  // Exercise stopped-mode batch write AFTER compileOrc so exported bound
+  // channels exist and single-lookup stopped mirroring updates both Csound's
+  // control channel storage and SharedMemory.
+  batchStore->clear();
+  require(batchEngine.setOption("-+rtaudio=null"), batchEngine.getLastError());
+  require(batchEngine.setOption("-odac"), batchEngine.getLastError());
+  require(batchEngine.setOption("-d"), batchEngine.getLastError());
+  require(batchEngine.compileOrc(R"(
+sr = 48000
+ksmps = 32
+nchnls = 2
+0dbfs = 1
+
+gk_bx7_a init 0
+gk_bx7_a chnexport "bx7-a", 3
+gk_bx7_b init 0
+gk_bx7_b chnexport "bx7-b", 3
+
+instr 1
+    aout init 0
+    out aout, aout
+endin
+)"),
+          batchEngine.getLastError());
+  require(batchEngine.prepareStoppedBoundChannelsForTesting(),
+          "failed to prepare Csound bound channels in stopped mode");
+  auto stoppedCompiledSet = batchRoundTrip(
+      handler, controlEndpoint,
+      makeProtocolRequest(
+          blue::Command::BATCH_SET_CHANNELS,
+          makeBatchSetPayload({{"bx7-a", 14.25}, {"bx7-b", -7.5}, {"bx7-stopped-unbound", 3.125}})));
+  require(stoppedCompiledSet.transportOk
+              && stoppedCompiledSet.status == static_cast<uint8_t>(blue::Status::OK),
+          "stopped batch set after compile must succeed");
+  double csoundVal = 0.0;
+  double shmVal = 0.0;
+  const bool csoundReadA = batchEngine.readCsoundControlChannelForTesting("bx7-a", csoundVal);
+  require(csoundReadA && approxEqual(csoundVal, 14.25),
+          "stopped batch set must write bound channel bx7-a to Csound (ok="
+              + std::string(csoundReadA ? "true" : "false")
+              + ", val=" + std::to_string(csoundVal) + ")");
+  require(batchShm.getChannel("bx7-a", shmVal)
+              && approxEqual(shmVal, 14.25),
+          "stopped batch set must mirror bound channel bx7-a to SharedMemory");
+  require(batchEngine.readCsoundControlChannelForTesting("bx7-b", csoundVal)
+              && approxEqual(csoundVal, -7.5),
+          "stopped batch set must write bound channel bx7-b to Csound");
+  require(batchShm.getChannel("bx7-b", shmVal)
+              && approxEqual(shmVal, -7.5),
+          "stopped batch set must mirror bound channel bx7-b to SharedMemory");
+  require(batchShm.getChannel("bx7-stopped-unbound", shmVal)
+              && approxEqual(shmVal, 3.125),
+          "stopped batch set must mirror unbound channel to SharedMemory");
+
   batchEngine.destroy();
 }
 

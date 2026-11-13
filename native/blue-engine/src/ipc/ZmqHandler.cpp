@@ -12,6 +12,8 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -174,9 +176,13 @@ bool parseBatchChannelPayload(
         errorMessage = "BATCH channel count out of bounds";
         return false;
     }
+    constexpr size_t kLinearDuplicateLimit = 16;
     size_t offset = 2;
-    std::vector<std::string> seen;
-    seen.reserve(count);
+    entries.reserve(count);
+    std::unordered_set<std::string_view> seenNames;
+    if (count > kLinearDuplicateLimit) {
+        seenNames.reserve(count);
+    }
     for (size_t index = 0; index < count; ++index) {
         if (offset + 2 > payload.size()) {
             errorMessage = "BATCH payload truncated in entry header";
@@ -193,6 +199,7 @@ bool parseBatchChannelPayload(
             errorMessage = "BATCH payload truncated in channel name";
             return false;
         }
+        const size_t nameOffset = offset;
         BatchChannelEntry entry;
         entry.name.assign(payload, offset, nameLength);
         offset += nameLength;
@@ -204,13 +211,18 @@ bool parseBatchChannelPayload(
             errorMessage = "BATCH channel name is not valid UTF-8";
             return false;
         }
-        for (const auto& previous : seen) {
-            if (previous == entry.name) {
-                errorMessage = "BATCH payload contains duplicate channel name";
-                return false;
+        const std::string_view nameView(payload.data() + nameOffset, nameLength);
+        if (count <= kLinearDuplicateLimit) {
+            for (const auto& previous : entries) {
+                if (previous.name == nameView) {
+                    errorMessage = "BATCH payload contains duplicate channel name";
+                    return false;
+                }
             }
+        } else if (!seenNames.insert(nameView).second) {
+            errorMessage = "BATCH payload contains duplicate channel name";
+            return false;
         }
-        seen.push_back(entry.name);
         if (withValues) {
             if (offset + sizeof(double) > payload.size()) {
                 errorMessage = "BATCH payload truncated in channel value";
@@ -679,8 +691,6 @@ bool ZmqHandler::processOne() {
                         resp = Response::ok();
                     }
                 }
-                // reclaim snapshots retired by the performance thread
-                store->reclaimRetired();
                 break;
             }
 
@@ -695,7 +705,6 @@ bool ZmqHandler::processOne() {
                 } else {
                     resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
                 }
-                store->reclaimRetired();
                 break;
             }
 
@@ -710,7 +719,6 @@ bool ZmqHandler::processOne() {
                 } else {
                     resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
                 }
-                store->reclaimRetired();
                 break;
             }
 
@@ -725,7 +733,6 @@ bool ZmqHandler::processOne() {
                 } else {
                     resp = Response::error("[AUTOMATION_NOT_FOUND] no automation for channel");
                 }
-                store->reclaimRetired();
                 break;
             }
 
@@ -760,7 +767,6 @@ bool ZmqHandler::processOne() {
             case Command::CLEAR_AUTOMATIONS: {
                 auto store = engine_.getAutomationStore();
                 store->clear();
-                store->reclaimRetired();
                 resp = Response::ok();
                 break;
             }

@@ -24,7 +24,8 @@ using BlueBigInt =
     boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
 
 template <class Int>
-double decimalToBinary64(const Int& coefficient, int32_t scale);
+double decimalToBinary64(const Int& coefficient, int32_t scale,
+                         const Int* precomputedPow10 = nullptr);
 
 struct JavaBigDecimal {
     BlueBigInt coefficient{0};
@@ -150,13 +151,22 @@ int estimateBinaryExponent(const Int& magnitude, int32_t scale) {
 
 /** round-half-even(magnitude * 10^-scale * 2^(52-e)); assumes magnitude > 0 */
 template <class Int>
-Int scaleSignificand(const Int& magnitude, int32_t scale, int e) {
+Int scaleSignificand(const Int& magnitude, int32_t scale, int e,
+                     const Int* precomputedPow10 = nullptr) {
     Int numerator = magnitude;
     Int denominator(1);
     if (scale < 0) {
-        numerator *= pow10<Int>(-scale);
-    } else {
-        denominator = pow10<Int>(scale);
+        if (precomputedPow10) {
+            numerator *= *precomputedPow10;
+        } else {
+            numerator *= pow10<Int>(-scale);
+        }
+    } else if (scale > 0) {
+        if (precomputedPow10) {
+            denominator = *precomputedPow10;
+        } else {
+            denominator = pow10<Int>(scale);
+        }
     }
     const long long shift = static_cast<long long>(52) - e;
     if (shift >= 0) {
@@ -192,7 +202,8 @@ double signedFromRawBits(bool negative, uint64_t rawBits) {
  * error is absorbed by the wide overflow/underflow margins.
  */
 template <class Int>
-double decimalToBinary64(const Int& coefficient, int32_t scale) {
+double decimalToBinary64(const Int& coefficient, int32_t scale,
+                         const Int* precomputedPow10) {
     using namespace decimal_detail;
 
     const bool negative = coefficient.sign() < 0;
@@ -217,7 +228,7 @@ double decimalToBinary64(const Int& coefficient, int32_t scale) {
     const Int twoPow52 = Int(1u) << 52;
     const Int twoPow53 = Int(1u) << 53;
     for (int attempt = 0; attempt < 6; attempt++) {
-        q = scaleSignificand(magnitude, scale, e);
+        q = scaleSignificand(magnitude, scale, e, precomputedPow10);
         if (q >= twoPow53) {
             e++;
             continue;
@@ -239,15 +250,9 @@ double decimalToBinary64(const Int& coefficient, int32_t scale) {
         return signedFromRawBits<Int>(negative, bits);
     }
 
-    // subnormal range: rescale onto the 2^-1074 grid, ties to even
-    const unsigned long long shift = static_cast<unsigned long long>(-1022 - e);
-    const Int shifted = q >> shift;
-    const Int remainder = q - (shifted << shift);
-    Int subnormal = shifted;
-    const Int half = Int(1u) << (shift - 1);
-    if (remainder > half || (remainder == half && !(shifted & 1u).is_zero())) {
-        subnormal += 1;
-    }
+    // Subnormal range: round once directly onto the 2^-1074 grid (ties to even)
+    // to avoid a second rounding pass from the 53-bit significand above.
+    const Int subnormal = scaleSignificand(magnitude, scale, -1022, precomputedPow10);
     if (subnormal.is_zero()) {
         return negative ? -0.0 : 0.0;
     }

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 namespace blue {
 
@@ -65,6 +66,23 @@ std::size_t bytesForDigits(std::size_t digits) {
     return (digits / 2) + 64;
 }
 
+// Copies a non-negative control-thread BlueBigInt directly into an
+// arena-backed integer via raw limbs so quantize() performs zero ASCII
+// parsing and zero upstream heap allocations.
+void copyNonNegativeToArenaInt(const BlueBigInt& src, ArenaInt& dst) {
+    if (src.is_zero()) {
+        dst = 0;
+        return;
+    }
+    const auto& srcBackend = src.backend();
+    const unsigned limbCount = srcBackend.size();
+    auto& dstBackend = dst.backend();
+    dstBackend.resize(limbCount, limbCount);
+    std::memcpy(dstBackend.limbs(), srcBackend.limbs(),
+                static_cast<std::size_t>(limbCount) * sizeof(boost::multiprecision::limb_type));
+    dstBackend.normalize();
+}
+
 }  // namespace
 
 std::unique_ptr<ExactDecimalQuantizer> ExactDecimalQuantizer::prepare(
@@ -81,8 +99,7 @@ std::unique_ptr<ExactDecimalQuantizer> ExactDecimalQuantizer::prepare(
     quantizer->resolutionDouble_ = resolution.doubleValue();
     quantizer->coefficientAbs_ =
         resolution.coefficient.sign() < 0 ? -resolution.coefficient : resolution.coefficient;
-    // precomputed decimal text avoids any string formatting during evaluation
-    quantizer->coefficientAbsText_ = quantizer->coefficientAbs_.str();
+    quantizer->coefficientAbsIsOne_ = (quantizer->coefficientAbs_ == 1);
     quantizer->pow10Abs_ = 1;
     if (resolution.scale != 0) {
         decimal_detail::pow10Checked(std::abs(resolution.scale), quantizer->pow10Abs_);
@@ -90,8 +107,9 @@ std::unique_ptr<ExactDecimalQuantizer> ExactDecimalQuantizer::prepare(
 
     // worst-case working set: exact double expansion, the resolution
     // coefficient, their products/quotients, and division temporaries
-    const std::size_t resolutionDigits = quantizer->coefficientAbsText_.size();
-    const std::size_t pow10Digits = quantizer->pow10Abs_.str().size();
+    const std::size_t resolutionDigits = quantizer->coefficientAbs_.str().size();
+    const std::size_t pow10Digits =
+        static_cast<std::size_t>(std::abs(static_cast<long long>(resolution.scale))) + 1;
     const std::size_t maxDigits =
         std::max({kWorstCaseDoubleDigits, resolutionDigits + pow10Digits + 8, pow10Digits + 16});
     const std::size_t bytesPerNumber = bytesForDigits(maxDigits);
@@ -151,14 +169,16 @@ bool ExactDecimalQuantizer::quantize(double y, double* out) const noexcept {
         } else {
             denominator <<= static_cast<unsigned>(-binaryExponent);
         }
-        if (scale_ > 0) {
-            ArenaInt powerOfTen;
-            if (!decimal_detail::pow10Checked(scale_, powerOfTen)) break;
-            numerator *= powerOfTen;
-        } else if (scale_ < 0) {
-            ArenaInt powerOfTen;
-            if (!decimal_detail::pow10Checked(-scale_, powerOfTen)) break;
-            denominator *= powerOfTen;
+        ArenaInt powerOfTen;
+        const ArenaInt* precomputedPow10 = nullptr;
+        if (scale_ != 0) {
+            copyNonNegativeToArenaInt(pow10Abs_, powerOfTen);
+            precomputedPow10 = &powerOfTen;
+            if (scale_ > 0) {
+                numerator *= powerOfTen;
+            } else {
+                denominator *= powerOfTen;
+            }
         }
 
         ArenaInt quotient = numerator / denominator;
@@ -175,18 +195,22 @@ bool ExactDecimalQuantizer::quantize(double y, double* out) const noexcept {
         // v - v.remainder(resolution): the signed remainder keeps the dividend
         // sign, so the magnitude-domain computation with a final negation is
         // exact: -(|v| - |v| mod C) = v - v.remainder(C)
-        const bool coefficientNegative = valueCoefficient.sign() < 0;
-        ArenaInt coefficientMagnitude =
-            coefficientNegative ? -valueCoefficient : valueCoefficient;
-        const ArenaInt resolutionCoefficient(coefficientAbsText_.c_str());
-        const ArenaInt quotientMultiple = coefficientMagnitude / resolutionCoefficient;
-        const ArenaInt remainder =
-            coefficientMagnitude - quotientMultiple * resolutionCoefficient;
-        coefficientMagnitude -= remainder;
-        const ArenaInt resultCoefficient =
-            coefficientNegative ? -coefficientMagnitude : coefficientMagnitude;
+        ArenaInt resultCoefficient = valueCoefficient;
+        if (!coefficientAbsIsOne_) {
+            const bool coefficientNegative = valueCoefficient.sign() < 0;
+            ArenaInt coefficientMagnitude =
+                coefficientNegative ? -valueCoefficient : valueCoefficient;
+            ArenaInt resolutionCoefficient;
+            copyNonNegativeToArenaInt(coefficientAbs_, resolutionCoefficient);
+            const ArenaInt quotientMultiple = coefficientMagnitude / resolutionCoefficient;
+            const ArenaInt remainder =
+                coefficientMagnitude - quotientMultiple * resolutionCoefficient;
+            coefficientMagnitude -= remainder;
+            resultCoefficient =
+                coefficientNegative ? -coefficientMagnitude : coefficientMagnitude;
+        }
 
-        result = decimalToBinary64(resultCoefficient, scale_);
+        result = decimalToBinary64(resultCoefficient, scale_, precomputedPow10);
         ok = true;
     } while (false);
 

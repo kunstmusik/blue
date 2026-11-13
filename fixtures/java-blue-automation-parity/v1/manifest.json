@@ -44,15 +44,15 @@
   },
   "generationCommand": "pnpm fixtures:java-automation -- --java-blue-root \"$JAVA_BLUE_ROOT\"",
   "counts": {
-    "total": 2192,
+    "total": 2194,
     "bySection": {
-      "realtime": 2092,
-      "resolution": 80,
+      "realtime": 2093,
+      "resolution": 81,
       "offline": 20
     },
     "byOrigin": {
       "seeded": 2048,
-      "curated": 144
+      "curated": 146
     },
     "byCategory": {
       "DECIMAL_SCALE_OVERFLOW": 3,
@@ -75,7 +75,7 @@
       "manager-boundary": 4,
       "non-finite": 4,
       "parameter-load-save": 10,
-      "parse": 17,
+      "parse": 18,
       "render-clip": 3,
       "repeat-times": 1,
       "resolution-variant": 12,
@@ -83,7 +83,7 @@
       "sentinel": 1,
       "single-point": 1,
       "snap": 12,
-      "special-values": 5,
+      "special-values": 6,
       "stepped-ascending": 1,
       "stepped-descending": 1,
       "stepped-flat": 1,

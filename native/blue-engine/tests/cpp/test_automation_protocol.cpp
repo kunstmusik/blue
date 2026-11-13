@@ -292,14 +292,46 @@ void testBatchChannelCommands(
     auto setDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
         blue::Command::BATCH_SET_CHANNELS,
         makeBatchSetPayload({{"bx7-dup", 1.0}, {"bx7-dup", 2.0}})));
-    expect(setDuplicate.transportOk && setDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR),
-           "batch set rejects duplicate names");
+    expect(setDuplicate.transportOk && setDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR)
+           && setDuplicate.payload.find("duplicate channel name") != std::string::npos
+           && setDuplicate.payload.find("Engine not created") == std::string::npos,
+           "batch set rejects duplicate names with duplicate-specific diagnostic");
 
     auto getDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
         blue::Command::BATCH_GET_CHANNELS,
         makeBatchGetPayload({"bx7-dup", "bx7-dup"})));
-    expect(getDuplicate.transportOk && getDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR),
-           "batch get rejects duplicate names");
+    expect(getDuplicate.transportOk && getDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR)
+           && getDuplicate.payload.find("duplicate channel name") != std::string::npos
+           && getDuplicate.payload.find("Engine not created") == std::string::npos,
+           "batch get rejects duplicate names with duplicate-specific diagnostic");
+
+    std::vector<std::pair<std::string, double>> largeSetDup;
+    std::vector<std::string> largeGetDup;
+    largeSetDup.reserve(256);
+    largeGetDup.reserve(256);
+    for (int i = 0; i < 255; ++i) {
+        std::string name = "bx7-large-" + std::to_string(i);
+        largeSetDup.emplace_back(name, static_cast<double>(i));
+        largeGetDup.push_back(std::move(name));
+    }
+    largeSetDup.emplace_back("bx7-large-42", 999.0);
+    largeGetDup.emplace_back("bx7-large-42");
+
+    auto setLargeDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_SET_CHANNELS,
+        makeBatchSetPayload(largeSetDup)));
+    expect(setLargeDuplicate.transportOk && setLargeDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR)
+           && setLargeDuplicate.payload.find("duplicate channel name") != std::string::npos
+           && setLargeDuplicate.payload.find("Engine not created") == std::string::npos,
+           "256-entry batch set rejects duplicate at index 255 with duplicate-specific diagnostic");
+
+    auto getLargeDuplicate = roundTrip(handler, controlEndpoint, makeRequest(
+        blue::Command::BATCH_GET_CHANNELS,
+        makeBatchGetPayload(largeGetDup)));
+    expect(getLargeDuplicate.transportOk && getLargeDuplicate.status == static_cast<uint8_t>(blue::Status::ERROR)
+           && getLargeDuplicate.payload.find("duplicate channel name") != std::string::npos
+           && getLargeDuplicate.payload.find("Engine not created") == std::string::npos,
+           "256-entry batch get rejects duplicate at index 255 with duplicate-specific diagnostic");
 
     std::string nulName = makeBatchGetPayload({"ok"});
     // replace name with embedded NUL: "a\0b"

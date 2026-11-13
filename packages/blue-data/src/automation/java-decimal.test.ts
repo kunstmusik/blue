@@ -147,6 +147,8 @@ describe('javaDecimalToBinary64 (Java BigDecimal.doubleValue())', () => {
     // exact halfway between +0.0 and the minimum subnormal; ties to even -> 0
     ['2.470328229206232720882843964341106861825299013071623822127928412503377536351043E-324', 0.0],
     ['4.9406564584124654417656879286822137207201181583404541015625E-324', 4.9e-324],
+    // strictly below 1.5 * 2^-1074; single-step rounding yields 1 * 2^-1074 (no double rounding to 2x)
+    ['7.410984687618698e-324', 4.9e-324],
   ])('converts %s exactly', (text, expected) => {
     expect(javaDecimalToBinary64(parseOk(text))).toBe(expected);
   });

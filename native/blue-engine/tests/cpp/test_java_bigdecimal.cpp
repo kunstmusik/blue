@@ -166,6 +166,8 @@ void testToBinary64() {
                  "tie rounds to even (down)");
     expectDouble(parseOk("9007199254740995").doubleValue(), 9007199254740996.0,
                  "tie rounds to even (up)");
+    expectDouble(parseOk("7.410984687618698e-324").doubleValue(), 4.9406564584124654e-324,
+                 "subnormal below 1.5 * 2^-1074 rounds in one step (0x1)");
 }
 
 void testRoundingOperations() {
@@ -233,6 +235,9 @@ void testQuantizerArithmetic() {
     double tiny = 4.9e-324;
     expectText(quantizeWithNewQuantizer("0.0000000000000000001", tiny, &ok),
                "0000000000000000", "subnormal quantizes to 0");
+    expectText(quantizeWithNewQuantizer("7.410984687618698e-324", 2.0 * 4.9406564584124654e-324, &ok),
+               "0000000000000001",
+               "subnormal quantization avoids double rounding (0x1)");
 
     const std::string largeScaleResolution = "1." + std::string(3000, '0');
     blue::JavaBigDecimal largeScale;
@@ -294,6 +299,36 @@ void testAllocationContract() {
     expect(!nanOk && !infOk, "non-finite input rejected");
     expect(g_allocations == 0, "non-finite rejection allocates nothing");
     expect(quantizer->invalidInputCount() == 2, "invalid inputs counted");
+
+    // Multi-limb scale and non-unit coefficient quantizers must also satisfy
+    // zero system and zero upstream allocations across arena resets.
+    for (const char* resText : {"0.0000000000000000001", "0.123456789012345678901234", "1E+3", "7.410984687618698e-324"}) {
+        auto extraQuantizer = blue::ExactDecimalQuantizer::prepare(parseOk(resText), nullptr);
+        expect(extraQuantizer != nullptr, std::string("quantizer prepared for ") + resText);
+        if (!extraQuantizer) continue;
+        const unsigned long long extraUpstreamBefore = blue::decimalUpstreamAllocationCount().load();
+        g_allocations = 0;
+        g_countingAllocations = true;
+        for (int evaluation = 0; evaluation < 20; ++evaluation) {
+            for (double value : values) {
+                if (!extraQuantizer->quantize(value, &out)) {
+                    expect(false, std::string("quantize failed for ") + resText);
+                    break;
+                }
+            }
+        }
+        g_countingAllocations = false;
+        const unsigned long long extraUpstream =
+            blue::decimalUpstreamAllocationCount().load() - extraUpstreamBefore;
+        expect(g_allocations == 0,
+               std::string("zero system allocations for ") + resText + " (got " +
+                   std::to_string(g_allocations) + ")");
+        expect(extraUpstream == 0,
+               std::string("zero upstream allocations for ") + resText + " (got " +
+                   std::to_string(extraUpstream) + ")");
+        expect(extraQuantizer->arena().overflowCount() == 0,
+               std::string("zero arena overflows for ") + resText);
+    }
 }
 
 void testArenaOverflowInstrumentation() {

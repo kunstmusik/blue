@@ -337,17 +337,10 @@ export function javaDecimalToBinary64(decimal: JavaDecimal): number {
     return fromSignAndRawBits(negative, bits);
   }
 
-  // Subnormal range: rescale onto the 2^-1074 grid, ties to even.
-  const shift = BigInt(-1022 - e);
-  const shifted = q >> shift;
-  const remainderMask = (1n << shift) - 1n;
-  const remainder = q & remainderMask;
-  let subnormal = shifted;
-  const half = 1n << (shift - 1n);
-  if (remainder > half || (remainder === half && (shifted & 1n) === 1n)) {
-    subnormal = shifted + 1n;
-  }
-  if (subnormal === 0n) {
+  // Subnormal range: round once directly onto the 2^-1074 grid (ties to even)
+  // to avoid a second rounding pass from the 53-bit significand above.
+  const subnormal = scaleSignificand(magnitude, scale, -1022);
+  if (subnormal === null || subnormal === 0n) {
     return negative ? -0.0 : 0.0;
   }
   if (subnormal >= 1n << 52n) {

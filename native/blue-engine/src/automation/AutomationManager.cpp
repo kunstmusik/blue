@@ -55,19 +55,17 @@ void AutomationManager::processElapsed(double elapsed) {
     const uint64_t storeRev = store_ ? store_->getRevision() : 0;
     if (storeRev != cachedSnapshotRevision_ || !activeListSnapshot_) {
         // If the control thread has not reclaimed a previous snapshot, defer
-        // this revision adoption. Keeping the old active list is safe because
-        // it remains immutable; importantly, no shared_ptr destruction occurs
-        // on the performance thread when the fixed retirement ring is full.
-        if (activeListSnapshot_ && store_ && !store_->retireSnapshot(activeListSnapshot_)) {
-            return;
+        // this revision adoption and keep evaluating the immutable active list.
+        // Importantly, no shared_ptr destruction occurs on the performance thread
+        // when the fixed retirement ring is full.
+        if (!activeListSnapshot_ || !store_ || store_->retireSnapshot(activeListSnapshot_)) {
+            auto nextSnapshot = store_ ? store_->getList() : nullptr;
+            // Rebuilding reads only prior numeric IDs/state: retirement may reclaim
+            // the old map's strings and definitions immediately on the control thread.
+            rebuildActiveAutomations(nextSnapshot);
+            activeListSnapshot_ = std::move(nextSnapshot);
+            cachedSnapshotRevision_ = storeRev;
         }
-
-        auto nextSnapshot = store_ ? store_->getList() : nullptr;
-        // Rebuilding reads only prior numeric IDs/state: retirement may reclaim
-        // the old map's strings and definitions immediately on the control thread.
-        rebuildActiveAutomations(nextSnapshot);
-        activeListSnapshot_ = std::move(nextSnapshot);
-        cachedSnapshotRevision_ = storeRev;
     }
 
 #if BLUE_ENGINE_USE_PERFORMANCE_TRACKING

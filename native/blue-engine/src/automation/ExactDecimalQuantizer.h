@@ -158,7 +158,7 @@ private:
     int32_t scale_ = 0;
     double resolutionDouble_ = 0.0;
     BlueBigInt coefficientAbs_;   // |resolution coefficient| at scale_
-    std::string coefficientAbsText_;  // precomputed to avoid runtime formatting
+    bool coefficientAbsIsOne_ = false;
     BlueBigInt pow10Abs_;         // 10^|scale_| when scale_ != 0
     mutable DecimalArena arena_;
     mutable uint64_t evaluationCount_ = 0;

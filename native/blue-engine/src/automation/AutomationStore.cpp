@@ -110,6 +110,9 @@ AutomationStore::AutomationStore()
 }
 
 AutomationStore::~AutomationStore() {
+#ifdef BLUE_ENGINE_TESTING
+    autoReclaimPaused_.store(false, std::memory_order_release);
+#endif
     reclaimRetired();
 }
 
@@ -120,6 +123,10 @@ AutomationPrepareError AutomationStore::createAutomation(
     bool enabled,
     const std::string& resolutionText,
     uint32_t* outId) {
+    struct ReclaimGuard {
+        AutomationStore& store;
+        ~ReclaimGuard() { store.reclaimRetired(); }
+    } reclaimGuard{*this};
     std::lock_guard<std::mutex> lock(listMutex_);
 
     AutomationDef def;
@@ -145,6 +152,10 @@ AutomationPrepareError AutomationStore::updateAutomation(
     const std::vector<AutomationPoint>& points,
     bool enabled,
     const std::string& resolutionText) {
+    struct ReclaimGuard {
+        AutomationStore& store;
+        ~ReclaimGuard() { store.reclaimRetired(); }
+    } reclaimGuard{*this};
     std::lock_guard<std::mutex> lock(listMutex_);
 
     auto current = std::atomic_load_explicit(&currentList_, std::memory_order_acquire);
@@ -171,6 +182,10 @@ AutomationPrepareError AutomationStore::updateAutomation(
 }
 
 bool AutomationStore::deleteAutomation(const std::string& channelName) {
+    struct ReclaimGuard {
+        AutomationStore& store;
+        ~ReclaimGuard() { store.reclaimRetired(); }
+    } reclaimGuard{*this};
     std::lock_guard<std::mutex> lock(listMutex_);
 
     auto current = std::atomic_load_explicit(&currentList_, std::memory_order_acquire);
@@ -187,6 +202,10 @@ bool AutomationStore::deleteAutomation(const std::string& channelName) {
 }
 
 bool AutomationStore::setEnabled(const std::string& channelName, bool enabled) {
+    struct ReclaimGuard {
+        AutomationStore& store;
+        ~ReclaimGuard() { store.reclaimRetired(); }
+    } reclaimGuard{*this};
     std::lock_guard<std::mutex> lock(listMutex_);
 
     auto current = std::atomic_load_explicit(&currentList_, std::memory_order_acquire);
@@ -208,6 +227,10 @@ bool AutomationStore::setEnabled(const std::string& channelName, bool enabled) {
 }
 
 void AutomationStore::clear() {
+    struct ReclaimGuard {
+        AutomationStore& store;
+        ~ReclaimGuard() { store.reclaimRetired(); }
+    } reclaimGuard{*this};
     std::lock_guard<std::mutex> lock(listMutex_);
 
     const uint64_t nextRev = revision_.load(std::memory_order_relaxed) + 1;
@@ -251,7 +274,19 @@ bool AutomationStore::retireSnapshot(std::shared_ptr<const AutomationList>& snap
     return false;
 }
 
+#ifdef BLUE_ENGINE_TESTING
+void AutomationStore::setAutoReclaimPausedForTesting(bool paused) {
+    autoReclaimPaused_.store(paused, std::memory_order_release);
+}
+#endif
+
 void AutomationStore::reclaimRetired() {
+#ifdef BLUE_ENGINE_TESTING
+    if (autoReclaimPaused_.load(std::memory_order_acquire)) {
+        return;
+    }
+#endif
+    std::lock_guard<std::mutex> lock(reclaimMutex_);
     for (size_t i = 0; i < kRetireSlots; i++) {
         if (retireStates_[i].load(std::memory_order_acquire) != 2) {
             continue;

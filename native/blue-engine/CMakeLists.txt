@@ -129,11 +129,6 @@ target_include_directories(blue-engine PRIVATE
 )
 
 target_link_libraries(blue-engine PRIVATE libzmq-static Boost::boost)
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    target_compile_options(blue-engine PRIVATE -ffp-contract=off -fno-associative-math)
-elseif(MSVC)
-    target_compile_options(blue-engine PRIVATE /fp:precise)
-endif()
 
 # Benchmark executable
 add_executable(benchmark_engine
@@ -150,11 +145,6 @@ target_include_directories(benchmark_engine PRIVATE
     ${CMAKE_SOURCE_DIR}/src
 )
 target_link_libraries(benchmark_engine PRIVATE libzmq-static Boost::boost)
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    target_compile_options(benchmark_engine PRIVATE -ffp-contract=off -fno-associative-math)
-elseif(MSVC)
-    target_compile_options(benchmark_engine PRIVATE /fp:precise)
-endif()
 target_compile_definitions(benchmark_engine PRIVATE
     BLUE_ENGINE_USE_PERFORMANCE_TRACKING=1
 )
