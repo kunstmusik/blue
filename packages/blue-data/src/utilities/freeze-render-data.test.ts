@@ -5,6 +5,7 @@ import { GenericScore } from '../sound-objects/generic-score';
 import { TimeDuration } from '../time/time-duration';
 import { TimePosition } from '../time/time-position';
 import { JavaScriptObject } from '../sound-objects/javascript-object';
+import { Instance } from '../sound-objects/instance';
 import { PolyObject } from '../sound-objects/poly-object';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '../javascript-runtime';
 import { buildFreezeRenderData } from './freeze-render-data';
@@ -149,5 +150,34 @@ describe('buildFreezeRenderData', () => {
     } finally {
       session.dispose();
     }
+  });
+
+  it('omits unrelated score layer groups while remapping copied library Instance targets', () => {
+    const data = createProjectWithMixer(0, false);
+    const extraGroup = new PolyObject(true);
+    const extraLayer = extraGroup.newLayerAt(-1);
+    const unrelated = new GenericScore();
+    unrelated.setName('Unrelated Object');
+    extraLayer.push(unrelated);
+    data.getScore().push(extraGroup);
+
+    const libTemplate = new GenericScore();
+    libTemplate.setName('Lib Template');
+    libTemplate.setSubjectiveDuration(TimeDuration.beats(2));
+    libTemplate.setScoreText('i1 0 1');
+    const sObjLib = data.getSoundObjectLibrary();
+    sObjLib.addObject(libTemplate);
+
+    const instance = new Instance();
+    instance.setSoundObject(libTemplate);
+    instance.setStartTime(TimePosition.beats(1));
+    instance.setSubjectiveDuration(TimeDuration.beats(2));
+
+    const result = buildFreezeRenderData(data, instance);
+    expect(result.tempData.getScore()).toHaveLength(1);
+    expect(result.tempData.getSoundObjectLibrary().size()).toBe(1);
+    const frozenObj = (result.tempData.getScore()[0] as PolyObject)[0][0] as Instance;
+    expect(frozenObj).toBeInstanceOf(Instance);
+    expect(result.tempData.toDiskCSD()).toContain('i1');
   });
 });

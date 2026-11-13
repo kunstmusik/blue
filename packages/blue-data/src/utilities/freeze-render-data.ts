@@ -44,8 +44,7 @@ export function buildFreezeRenderData(
     endTimeBeats += mixer.getExtraRenderTime();
   }
 
-  const xml = sourceData.saveToString();
-  const tempData = BlueData.loadFromString(xml);
+  const tempData = sourceData.deepCopyWithoutScoreLayers('history');
 
   const tempObj = sourceObject.deepCopy();
   const tempPObj = new PolyObject(true);

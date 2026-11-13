@@ -399,6 +399,15 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
   // ─── DeepCopy ───
 
   deepCopy(mode: CopyMode = 'duplication'): BlueData {
+    return this.cloneProject(mode, true);
+  }
+
+  /** @internal Copy project state with an empty root PolyObject for isolated single-object freeze rendering. */
+  deepCopyWithoutScoreLayers(mode: CopyMode = 'duplication'): BlueData {
+    return this.cloneProject(mode, false);
+  }
+
+  private cloneProject(mode: CopyMode, copyScoreLayers: boolean): BlueData {
     const copy = new BlueData();
     copy.version = this.version;
     copy.arrangement = new Arrangement(this.arrangement, mode);
@@ -419,7 +428,7 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
 
     copy.globalOrcSco = new GlobalOrcSco(this.globalOrcSco);
     copy.tableSet = new Tables(this.tableSet);
-    copy.score = new Score(this.score, mode);
+    copy.score = new Score(this.score, mode, copyScoreLayers);
 
     // Deep-copy Live Data (was previously aliased by reference).
     copy.liveData = this.liveData.deepCopy(mode) as LiveData;
@@ -447,7 +456,9 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
       for (const soundObject of copy.sObjLib.getAllObjects()) {
         remapInstanceReferencesInSoundObject(soundObject, libraryRemap, seen);
       }
-      remapInstanceReferences(copy.score, libraryRemap, seen);
+      if (copyScoreLayers) {
+        remapInstanceReferences(copy.score, libraryRemap, seen);
+      }
       remapInstanceReferencesInLiveData(copy.liveData, libraryRemap, seen);
     }
 

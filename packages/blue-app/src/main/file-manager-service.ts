@@ -9,7 +9,8 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { AudioClip, TimeDuration, parseAudioFileMetadata } from '@blue/data';
+import { AudioClip, TimeDuration } from '@blue/data';
+import { readAudioFileMetadataHeader } from './audio-file-metadata';
 import type {
   AudioDropRejectionCode,
   CommitAudioFileDropRequest,
@@ -403,10 +404,11 @@ export async function commitAudioFileDrop(
   let channels = 0;
   let durationSeconds = 0;
   try {
-    const bytes = await fs.promises.readFile(finalPath);
-    const metadata = parseAudioFileMetadata(new Uint8Array(bytes));
-    channels = metadata.channels;
-    durationSeconds = metadata.durationSeconds;
+    const metadata = await readAudioFileMetadataHeader(finalPath);
+    if (metadata) {
+      channels = metadata.channels;
+      durationSeconds = metadata.durationSeconds;
+    }
   } catch {
     // Fall back to defaults below.
   }

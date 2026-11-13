@@ -47,15 +47,19 @@ export class Score extends Array<LayerGroup<Layer>> {
   private npc = new NoteProcessorChain();
   private _trackLayerMuteSoloMode: TrackLayerMuteSoloMode = 'audio';
 
-  constructor(other?: Score, mode: CopyMode = 'duplication') {
+  constructor(other?: Score, mode: CopyMode = 'duplication', copyLayerGroups = true) {
     super();
     if (other instanceof Score) {
       this.timeContext = new TimeContext(other.timeContext);
       this.timeState = new TimeState(other.timeState);
       this.npc = new NoteProcessorChain(other.npc);
       this._trackLayerMuteSoloMode = other._trackLayerMuteSoloMode;
-      for (const layerGroup of other) {
-        this.push(layerGroup.deepCopy(mode) as LayerGroup<Layer>);
+      if (copyLayerGroups) {
+        for (const layerGroup of other) {
+          this.push(layerGroup.deepCopy(mode) as LayerGroup<Layer>);
+        }
+      } else {
+        this.push(new PolyObject(true));
       }
     } else if (!other) {
       this.timeContext.setSmpteFrameRate(this.timeState.getSmpteFrameRate());
