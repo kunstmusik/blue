@@ -76,7 +76,76 @@ export class Elements implements Iterable<Element> {
 /**
  * Element class wrapping an XML node with the electric.xml API.
  */
+interface RootMutationObserverState {
+  active: boolean;
+}
+
+interface RootMutationObserverEntry {
+  readonly hook: () => void;
+  readonly state: RootMutationObserverState;
+}
+
+const rootMutationObservers = new WeakMap<Element, Set<RootMutationObserverEntry>>();
+let pendingMutationObserverCount = 0;
+// Register only the minimal state flag as the held/unregister token so the
+// FinalizationRegistry never strongly retains `hook` (which may capture `root`).
+const rootMutationRegistry =
+  typeof FinalizationRegistry !== 'undefined'
+    ? new FinalizationRegistry<RootMutationObserverState>((state) => {
+        if (state.active) {
+          state.active = false;
+          pendingMutationObserverCount = Math.max(0, pendingMutationObserverCount - 1);
+        }
+      })
+    : null;
+
+function notifyMutationObservers(element: Element): void {
+  if (pendingMutationObserverCount === 0) return;
+  let current: Element | null = element;
+  while (current) {
+    const observers = rootMutationObservers.get(current);
+    if (observers && observers.size > 0) {
+      rootMutationObservers.delete(current);
+      for (const entry of observers) {
+        if (!entry.state.active) continue;
+        entry.state.active = false;
+        pendingMutationObserverCount = Math.max(0, pendingMutationObserverCount - 1);
+        rootMutationRegistry?.unregister(entry.state);
+        entry.hook();
+      }
+    }
+    current = current.getParent();
+  }
+}
+
 export class Element {
+  /** Register a one-shot hook fired before the first structural mutation inside root. */
+  static registerRootMutationObserver(root: Element, hook: () => void): () => void {
+    let observers = rootMutationObservers.get(root);
+    if (!observers) {
+      observers = new Set();
+      rootMutationObservers.set(root, observers);
+    }
+    const state: RootMutationObserverState = { active: true };
+    const entry: RootMutationObserverEntry = { hook, state };
+    observers.add(entry);
+    pendingMutationObserverCount += 1;
+    rootMutationRegistry?.register(root, state, state);
+    return () => {
+      if (!state.active) return;
+      state.active = false;
+      pendingMutationObserverCount = Math.max(0, pendingMutationObserverCount - 1);
+      rootMutationRegistry?.unregister(state);
+      const current = rootMutationObservers.get(root);
+      if (current) {
+        current.delete(entry);
+        if (current.size === 0) {
+          rootMutationObservers.delete(root);
+        }
+      }
+    };
+  }
+
   private _name: string;
   private _attributes: Map<string, string>;
   private _children: Element[];
@@ -158,6 +227,7 @@ export class Element {
 
   /** Set element name (used when renaming, e.g., setName("startTime")). */
   setName(name: string): Element {
+    notifyMutationObservers(this);
     this._name = name;
     return this;
   }
@@ -222,6 +292,21 @@ export class Element {
     return this._children.some((c) => c._name === name);
   }
 
+  /**
+   * Return the 1-based position of child among siblings sharing its tag name without array allocations.
+   */
+  getChildIndexByName(child: Element): number {
+    const targetName = child._name;
+    let count = 0;
+    for (const candidate of this._children) {
+      if (candidate._name === targetName) {
+        count += 1;
+        if (candidate === child) return count;
+      }
+    }
+    return 0;
+  }
+
   // ─── Child element modification ───
 
   /**
@@ -230,6 +315,7 @@ export class Element {
   removeElement(name: string): Element | null {
     const idx = this._children.findIndex((c) => c._name === name);
     if (idx === -1) return null;
+    notifyMutationObservers(this);
     const removed = this._children.splice(idx, 1)[0];
     removed._parent = null;
     return removed;
@@ -239,6 +325,10 @@ export class Element {
    * Remove all child elements by name. Returns them as Elements.
    */
   removeElements(name: string): Elements {
+    if (!this._children.some((c) => c._name === name)) {
+      return new Elements([]);
+    }
+    notifyMutationObservers(this);
     const removed: Element[] = [];
     this._children = this._children.filter((c) => {
       if (c._name === name) {
@@ -256,6 +346,7 @@ export class Element {
    * Returns the added element.
    */
   addElement(arg: string | Element): Element {
+    notifyMutationObservers(this);
     if (typeof arg === 'string') {
       const child = new Element(arg);
       child._parent = this;

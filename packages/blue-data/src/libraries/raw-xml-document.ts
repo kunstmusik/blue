@@ -61,7 +61,7 @@ function collectText(node: XmlElement): string {
 
 function convertElement(source: string, node: XmlElement): RawXmlElement {
   const span = resolveElementSpan(source, node);
-  const attributes: Record<string, string> = {};
+  const attributes = Object.create(null) as Record<string, string>;
   for (const [name, value] of Object.entries(node.attributes)) {
     attributes[name] = String(value);
   }

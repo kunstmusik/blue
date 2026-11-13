@@ -92,62 +92,82 @@ function walkCounts(node: LegacyLibraryFolderPlan): {
   return { folders, items, unsupported };
 }
 
+function rawXmlElementToElement(raw: RawXmlElement): Element {
+  const el = new Element(raw.name);
+  for (const [key, value] of Object.entries(raw.attributes)) {
+    el.setAttribute(key, value);
+  }
+  if (raw.text.length > 0) {
+    el.setText(raw.text);
+  }
+  for (const child of raw.children) {
+    el.addElement(rawXmlElementToElement(child));
+  }
+  return el;
+}
+
 export function parseLegacyLibraryDocument(
   source: string,
   sourceInfo: XmlSource = { kind: 'library', label: 'in-memory library' },
 ): LegacyLibraryDocumentPlan {
   const document = parseRawXmlDocument(source);
   const descriptor = descriptorForRoot(document.root.name);
-  const candidate = Element.parse(source);
+  const candidate = rawXmlElementToElement(document.root);
   const context = new XmlLoadContext(candidate, sourceInfo);
-  checkShape(candidate, [], [descriptor.categoryElement], context);
-  const validateCategory = (node: Element, root: boolean): void => {
-    checkShape(
-      node,
-      descriptor.libraryType === 'soundObject' ? ['categoryName'] : ['categoryName', 'isRoot'],
-      [descriptor.categoryElement, descriptor.leafElement],
-      context,
-      [descriptor.categoryElement, descriptor.leafElement],
+  let matchedCategory: RawXmlElement;
+  try {
+    checkShape(candidate, [], [descriptor.categoryElement], context);
+    const validateCategory = (node: Element, root: boolean): void => {
+      checkShape(
+        node,
+        descriptor.libraryType === 'soundObject' ? ['categoryName'] : ['categoryName', 'isRoot'],
+        [descriptor.categoryElement, descriptor.leafElement],
+        context,
+        [descriptor.categoryElement, descriptor.leafElement],
+      );
+      const name = node.getAttribute('categoryName');
+      if (name === null || !name.trim())
+        throw context.at(node).error({
+          code: 'value',
+          member: '@categoryName',
+          value: name ?? '',
+          message: 'Library category requires a nonempty name.',
+          recovery: 'Supply a valid category name.',
+        });
+      const flag = node.getAttribute('isRoot');
+      if (flag !== null && parseXmlBoolean(flag, context.at(node), '@isRoot') !== root)
+        throw context.at(node).error({
+          code: 'conflict',
+          member: '@isRoot',
+          value: flag,
+          message: 'Category root flag disagrees with its structural position.',
+          recovery: 'Correct the root flag.',
+        });
+      for (const child of node.getElements(descriptor.categoryElement))
+        validateCategory(child, false);
+    };
+    const rootCategory = candidate.getElement(descriptor.categoryElement);
+    if (rootCategory) validateCategory(rootCategory, true);
+    const category = document.root.children.find(
+      (child) => child.name === descriptor.categoryElement,
     );
-    const name = node.getAttribute('categoryName');
-    if (name === null || !name.trim())
-      throw context.at(node).error({
-        code: 'value',
-        member: '@categoryName',
-        value: name ?? '',
-        message: 'Library category requires a nonempty name.',
-        recovery: 'Supply a valid category name.',
+    if (!category) {
+      throw context.at(candidate).error({
+        code: 'cardinality',
+        member: descriptor.categoryElement,
+        message: `Missing ${descriptor.categoryElement} root category`,
+        recovery: 'Supply the complete library envelope.',
       });
-    const flag = node.getAttribute('isRoot');
-    if (flag !== null && parseXmlBoolean(flag, context.at(node), '@isRoot') !== root)
-      throw context.at(node).error({
-        code: 'conflict',
-        member: '@isRoot',
-        value: flag,
-        message: 'Category root flag disagrees with its structural position.',
-        recovery: 'Correct the root flag.',
-      });
-    for (const child of node.getElements(descriptor.categoryElement))
-      validateCategory(child, false);
-  };
-  const rootCategory = candidate.getElement(descriptor.categoryElement);
-  if (rootCategory) validateCategory(rootCategory, true);
-  const category = document.root.children.find(
-    (child) => child.name === descriptor.categoryElement,
-  );
-  if (!category) {
-    throw context.at(candidate).error({
-      code: 'cardinality',
-      member: descriptor.categoryElement,
-      message: `Missing ${descriptor.categoryElement} root category`,
-      recovery: 'Supply the complete library envelope.',
-    });
+    }
+    matchedCategory = category;
+  } finally {
+    context.disposeObserver();
   }
 
   const diagnostics: XmlDiagnostic[] = [];
   const root = parseFolder(
     descriptor,
-    category,
+    matchedCategory,
     true,
     sourceInfo,
     `/${descriptor.rootElement}/${descriptor.categoryElement}[1]`,

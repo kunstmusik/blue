@@ -119,6 +119,8 @@ describe('legacy library envelope codec', () => {
 describe('complete library acceptance and archive boundary', () => {
   it.each([
     '<instrumentLibrary future="x"><instrumentCategory categoryName="Root"/></instrumentLibrary>',
+    '<instrumentLibrary __proto__="extra"><instrumentCategory categoryName="Root"/></instrumentLibrary>',
+    '<instrumentLibrary><instrumentCategory categoryName="Root" __proto__="extra"/></instrumentLibrary>',
     '<instrumentLibrary><instrumentCategory categoryName="Root"/><instrumentCategory categoryName="Extra"/></instrumentLibrary>',
     '<instrumentLibrary><instrumentCategory categoryName="Root"><foreign/></instrumentCategory></instrumentLibrary>',
     '<instrumentLibrary><instrumentCategory categoryName="Root"><effect/></instrumentCategory></instrumentLibrary>',

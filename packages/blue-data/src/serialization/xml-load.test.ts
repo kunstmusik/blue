@@ -92,4 +92,21 @@ describe('XML operation reports', () => {
       message: 'Invalid resource',
     });
   });
+
+  it('preserves pre-mutation source paths across setName, removeElement, and no-op removals', () => {
+    const root = Element.parse(
+      '<blueData><legacyNode><child val="a"/></legacyNode><keep/></blueData>',
+    );
+    const context = new XmlLoadContext(root, source);
+    expect(root.removeElement('nonexistent')).toBeNull();
+    expect(root.removeElements('missing').toArray()).toEqual([]);
+
+    const legacy = root.getElement('legacyNode')!;
+    const child = legacy.getElement('child')!;
+    legacy.setName('canonicalNode');
+    root.removeElement('keep');
+
+    expect(context.at(child).path).toBe('/blueData/legacyNode[1]/child[1]');
+    context.disposeObserver();
+  });
 });

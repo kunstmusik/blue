@@ -30,4 +30,11 @@ describe('raw XML document', () => {
       /document type/i,
     );
   });
+
+  it('preserves __proto__ XML attributes on a null-prototype record', () => {
+    const document = parseRawXmlDocument('<soundObject __proto__="extra"/>');
+    expect(Object.getPrototypeOf(document.root.attributes)).toBeNull();
+    expect(document.root.attributes['__proto__']).toBe('extra');
+    expect(Object.entries(document.root.attributes)).toEqual([['__proto__', 'extra']]);
+  });
 });

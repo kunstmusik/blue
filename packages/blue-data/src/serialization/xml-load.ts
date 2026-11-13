@@ -39,6 +39,8 @@ type Operation = {
   source: XmlSource;
   paths: WeakMap<Element, string>;
   diagnostics: XmlDiagnostic[];
+  indexed: boolean;
+  disposeObserver?: () => void;
 };
 
 export class XmlLoadError extends Error {
@@ -66,12 +68,15 @@ export class XmlLoadContext {
       source: { ...(source ?? { kind: 'primitive', label: 'in-memory XML' }) },
       paths: new WeakMap(),
       diagnostics: [],
+      indexed: false,
     };
     if (!operation) {
       if (source) {
         let root = element;
         while (root.getParent()) root = root.getParent()!;
-        this.index(root, `/${root.getName()}`);
+        this.operation.disposeObserver = Element.registerRootMutationObserver(root, () => {
+          this.ensureIndexed(root);
+        });
       } else {
         // Direct primitive reads need only their own path, not a project-wide walk.
         this.operation.paths.set(element, this.pathOf(element));
@@ -79,13 +84,27 @@ export class XmlLoadContext {
     }
   }
 
+  private ensureIndexed(root: Element): void {
+    if (this.operation.indexed) return;
+    this.operation.indexed = true;
+    this.operation.disposeObserver = undefined;
+    this.index(root, `/${root.getName()}`);
+  }
+
+  disposeObserver(): void {
+    this.operation.disposeObserver?.();
+    this.operation.disposeObserver = undefined;
+  }
+
   private pathOf(element: Element): string {
     const anchored = this.operation.paths.get(element);
     if (anchored) return anchored;
     const parent = element.getParent();
-    if (!parent) return `/${element.getName()}`;
-    const siblings = parent.getElements(element.getName()).toArray();
-    return `${this.pathOf(parent)}/${element.getName()}[${siblings.indexOf(element) + 1}]`;
+    const path = parent
+      ? `${this.pathOf(parent)}/${element.getName()}[${parent.getChildIndexByName(element)}]`
+      : `/${element.getName()}`;
+    this.operation.paths.set(element, path);
+    return path;
   }
 
   private index(element: Element, path: string): void {
@@ -180,6 +199,8 @@ export function loadXml<T>(
     return context.result(loader(root, context));
   } catch (error) {
     return context.reject(error);
+  } finally {
+    context.disposeObserver();
   }
 }
 
