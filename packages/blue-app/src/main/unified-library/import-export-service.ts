@@ -648,7 +648,6 @@ export class UnifiedLibraryImportExportService {
     const folderConflicts: ManualImportSourcePreview['folderConflicts'][number][] = [];
     const folderResolutionPaths: Record<string, string> = {};
     const root = await this.repository.getRoot(plan.libraryType);
-    const siblingHashCache = new Map<string, string>();
     const walk = async (
       parentIds: readonly string[],
       children: readonly LegacyLibraryTreeNode[],
@@ -658,6 +657,9 @@ export class UnifiedLibraryImportExportService {
       const siblingGroups = await Promise.all(
         parentIds.map((parentId) => this.repository.listChildren(parentId)),
       );
+      const parentId = parentIds.length === 1 ? parentIds[0] : undefined;
+      let itemHashes: Set<string> | undefined;
+      let itemNames: Set<string> | undefined;
       for (const [childIndex, child] of children.entries()) {
         const childIndices = [...sourceIndices, childIndex];
         if (child.kind === 'folder') {
@@ -696,27 +698,17 @@ export class UnifiedLibraryImportExportService {
           }
           continue;
         }
-        if (parentIds.length !== 1) continue;
-        const siblings = siblingGroups[0] ?? [];
-        let duplicate = false;
-        let sameName = false;
-        for (const sibling of siblings) {
-          if (sibling.nodeKind !== 'item') continue;
-          if (sibling.displayName === child.displayName) sameName = true;
-          if (!duplicate) {
-            let siblingHash = siblingHashCache.get(sibling.id);
-            if (siblingHash === undefined) {
-              siblingHash = (await this.repository.getItemPayload(sibling.id)).canonicalContentHash;
-              siblingHashCache.set(sibling.id, siblingHash);
-            }
-            if (siblingHash === child.payload.canonicalContentHash) {
-              duplicate = true;
-            }
-          }
-          if (duplicate && sameName) break;
+        if (parentId === undefined) continue;
+        if (!itemHashes || !itemNames) {
+          itemHashes = new Set(await this.repository.listChildItemHashes(parentId));
+          itemNames = new Set(
+            (siblingGroups[0] ?? [])
+              .filter((sibling) => sibling.nodeKind === 'item')
+              .map((sibling) => sibling.displayName),
+          );
         }
-        if (duplicate) exactDuplicateCount += 1;
-        else if (sameName) aliasConflictCount += 1;
+        if (itemHashes.has(child.payload.canonicalContentHash)) exactDuplicateCount += 1;
+        else if (itemNames.has(child.displayName)) aliasConflictCount += 1;
       }
     };
     await walk([root.id], plan.root.children, [plan.root.name], []);

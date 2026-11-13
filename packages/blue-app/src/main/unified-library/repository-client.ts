@@ -95,6 +95,10 @@ export class UnifiedLibraryRepositoryClient {
     return this.request<RepositoryNode[]>('listChildren', parentId);
   }
 
+  listChildItemHashes(parentId: string): Promise<string[]> {
+    return this.request<string[]>('listChildItemHashes', parentId);
+  }
+
   listChildrenPage(parentId: string, offset: number, limit: number): Promise<RepositoryBrowsePage> {
     return this.request<RepositoryBrowsePage>('listChildrenPage', parentId, offset, limit);
   }
@@ -322,6 +326,8 @@ export class UnifiedLibraryRepositoryClient {
             return this.repository.getRoot(args[0] as LibraryType) as T;
           case 'listChildren':
             return this.repository.listChildren(String(args[0])) as T;
+          case 'listChildItemHashes':
+            return this.repository.listChildItemHashes(String(args[0])) as T;
           case 'listChildrenPage':
             return this.repository.listChildrenPage(
               String(args[0]),

@@ -319,6 +319,17 @@ export class UnifiedLibraryRepository {
       .map(mapNode);
   }
 
+  listChildItemHashes(parentId: string): string[] {
+    return this.readStatement(
+      `SELECT payload.canonical_content_hash
+       FROM library_nodes AS node
+       JOIN library_item_payloads AS payload ON payload.node_id = node.id
+       WHERE node.parent_id = ? AND node.node_kind = 'item'`,
+    )
+      .all(parentId)
+      .map((row) => String(row.canonical_content_hash));
+  }
+
   listChildrenPage(parentId: string, offset: number, limit: number): RepositoryBrowsePage {
     this.assertOpen();
     const boundedLimit = Math.max(1, Math.min(limit, 500));
@@ -933,21 +944,22 @@ export class UnifiedLibraryRepository {
           return;
         }
         if (input.conflictPolicy === 'merge') {
-          const siblings = this.listChildren(parentId).filter(
-            (candidate) => candidate.nodeKind === 'item',
-          );
-          const duplicate = siblings.find(
-            (candidate) =>
-              this.getItemPayload(candidate.id).canonicalContentHash ===
-              child.payload.canonicalContentHash,
-          );
+          const duplicate = this.readStatement(
+            `SELECT node.id, node.revision
+             FROM library_item_payloads AS payload
+             JOIN library_nodes AS node ON node.id = payload.node_id
+             WHERE payload.canonical_content_hash = ? AND node.parent_id = ?
+               AND node.node_kind = 'item'
+             ORDER BY node.sort_index, node.id
+             LIMIT 1`,
+          ).get(child.payload.canonicalContentHash, parentId);
           if (duplicate) {
             exactDuplicateCount += 1;
             recordChange.run(
               input.sourceId,
-              duplicate.id,
+              String(duplicate.id),
               'exactDuplicateSkipped',
-              duplicate.revision,
+              Number(duplicate.revision),
               JSON.stringify({ sourceName: child.displayName }),
             );
             return;

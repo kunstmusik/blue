@@ -9,6 +9,7 @@ export interface RepositoryWorkerRequest {
     | 'getNode'
     | 'getRoot'
     | 'listChildren'
+    | 'listChildItemHashes'
     | 'listChildrenPage'
     | 'hasChildren'
     | 'getBreadcrumb'
@@ -70,6 +71,9 @@ export function startUnifiedLibraryRepositoryWorker(databasePath: string): void 
           break;
         case 'listChildren':
           value = repository.listChildren(String(request.args[0]));
+          break;
+        case 'listChildItemHashes':
+          value = repository.listChildItemHashes(String(request.args[0]));
           break;
         case 'listChildrenPage':
           value = repository.listChildrenPage(
