@@ -31,7 +31,11 @@ import {
   BSBVSliderBankWidget,
   PreservedWidget,
 } from './widgets';
-import { getCanvasDisplaySize, getWidgetDisplaySize } from './widgets/utils';
+import {
+  getCanvasDisplaySize,
+  getWidgetDisplaySize,
+  useBsbHtmlMeasurementRefresh,
+} from './widgets/utils';
 import { cn } from '../../../../../lib/cn';
 import { useKeyboardShortcutScope } from '../../../../../hooks/use-keyboard-shortcut-scope';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
@@ -194,11 +198,13 @@ function BSBInterfaceCanvas({
   useEffect(() => {
     if (requestedGroupStack.length !== groupStack.length) setGroupStack(groupStack);
   }, [requestedGroupStack, groupStack]);
+  useBsbHtmlMeasurementRefresh(currentChildren);
   const canvasSize = getCanvasDisplaySize(
     currentChildren,
     editEnabled ? viewportSize.width : 0,
     editEnabled ? viewportSize.height : 0,
     editEnabled ? undefined : 10,
+    { allowDomMeasure: false },
   );
 
   const parentGroupId = groupStack.length > 0 ? groupStack[groupStack.length - 1].id : undefined;
@@ -990,8 +996,8 @@ function GridOverlay({
 
   const drawGrid = useCallback(
     (canvas: HTMLCanvasElement) => {
-      const cw = Math.max(canvasWidth, 2000);
-      const ch = Math.max(canvasHeight, 2000);
+      const cw = Math.max(1, Math.ceil(canvasWidth));
+      const ch = Math.max(1, Math.ceil(canvasHeight));
       canvas.width = cw;
       canvas.height = ch;
       const ctx = canvas.getContext('2d');

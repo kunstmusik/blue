@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import WidgetWrapper from './WidgetWrapper';
-import { getWidgetDisplaySize } from './utils';
+import { getWidgetDisplaySize, useBsbHtmlMeasurementRefresh } from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 import BsbTextLabel from './BsbTextLabel';
 
@@ -20,10 +20,11 @@ function BSBCheckBoxWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBCheckBoxWidgetProps): React.ReactElement {
+  useBsbHtmlMeasurementRefresh(node);
   const selected = node.properties.selected === true;
   const labelText =
     typeof node.properties.label === 'string' ? node.properties.label : node.objectName;
-  const displaySize = getWidgetDisplaySize(node);
+  const displaySize = getWidgetDisplaySize(node, { allowDomMeasure: false });
 
   const handleToggle = useCallback(
     (e: React.MouseEvent) => {

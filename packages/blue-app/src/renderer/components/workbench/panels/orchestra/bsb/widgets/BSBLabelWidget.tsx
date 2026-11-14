@@ -1,6 +1,6 @@
 import React from 'react';
 import WidgetWrapper from './WidgetWrapper';
-import { getWidgetDisplaySize } from './utils';
+import { getWidgetDisplaySize, useBsbHtmlMeasurementRefresh } from './utils';
 import type { BSBWidgetComponentProps } from './widget-component-props';
 import BsbTextLabel from './BsbTextLabel';
 
@@ -20,6 +20,7 @@ function BSBLabelWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBLabelWidgetProps): React.ReactElement {
+  useBsbHtmlMeasurementRefresh(node);
   const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
   const fontName =
     typeof node.properties['font.name'] === 'string' ? node.properties['font.name'] : 'Roboto';
@@ -29,7 +30,7 @@ function BSBLabelWidget({
     typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
   const fontWeight = fontStyle & 1 ? 'bold' : 'normal';
   const fontItalic = fontStyle & 2 ? 'italic' : 'normal';
-  const displaySize = getWidgetDisplaySize(node);
+  const displaySize = getWidgetDisplaySize(node, { allowDomMeasure: false });
 
   return (
     <WidgetWrapper

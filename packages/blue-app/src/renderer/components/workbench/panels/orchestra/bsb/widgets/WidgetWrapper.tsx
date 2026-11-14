@@ -77,9 +77,12 @@ function WidgetWrapper({
         : currentNode.current.id === source.id &&
           currentNode.current.gestureTargetId === source.gestureTargetId);
   };
-  const measuredSize = getWidgetDisplaySize(node);
-  const w = displayWidth ?? measuredSize.width;
-  const h = displayHeight ?? measuredSize.height;
+  const measuredSize =
+    displayWidth !== undefined && displayHeight !== undefined
+      ? null
+      : getWidgetDisplaySize(node, { allowDomMeasure: false });
+  const w = displayWidth ?? measuredSize!.width;
+  const h = displayHeight ?? measuredSize!.height;
   const widthResizeProperty = resizeMeta?.widthProperty ?? 'width';
   const heightResizeProperty = resizeMeta?.heightProperty ?? 'height';
 
@@ -392,7 +395,7 @@ function WidgetWrapper({
             nodeId={node.id}
             minSize={resizeMeta!.minWidth}
             propertyKey={widthResizeProperty}
-            startValue={resolveResizeStartValue(node, widthResizeProperty, measuredSize.width)}
+            startValue={resolveResizeStartValue(node, widthResizeProperty, w)}
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapWidth}
             onPatch={onBsbInterfacePatch!}
@@ -406,7 +409,7 @@ function WidgetWrapper({
             nodeX={node.x}
             minSize={resizeMeta!.minWidth}
             propertyKey={widthResizeProperty}
-            startValue={resolveResizeStartValue(node, widthResizeProperty, measuredSize.width)}
+            startValue={resolveResizeStartValue(node, widthResizeProperty, w)}
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapWidth}
             onPatch={onBsbInterfacePatch!}
@@ -423,7 +426,7 @@ function WidgetWrapper({
             nodeId={node.id}
             minSize={resizeMeta!.minHeight}
             propertyKey={heightResizeProperty}
-            startValue={resolveResizeStartValue(node, heightResizeProperty, measuredSize.height)}
+            startValue={resolveResizeStartValue(node, heightResizeProperty, h)}
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapHeight}
             onPatch={onBsbInterfacePatch!}
@@ -437,7 +440,7 @@ function WidgetWrapper({
             nodeY={node.y}
             minSize={resizeMeta!.minHeight}
             propertyKey={heightResizeProperty}
-            startValue={resolveResizeStartValue(node, heightResizeProperty, measuredSize.height)}
+            startValue={resolveResizeStartValue(node, heightResizeProperty, h)}
             gridSnapEnabled={gridSnapEnabled}
             gridSnapSize={gridSnapHeight}
             onPatch={onBsbInterfacePatch!}

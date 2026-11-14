@@ -8,6 +8,7 @@ import {
   getWidgetDisplaySize,
   measureTextContent,
   stripBsbSwingHtmlText,
+  useBsbHtmlMeasurementRefresh,
 } from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
@@ -33,6 +34,7 @@ function BSBKnobWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBKnobWidgetProps): React.ReactElement {
+  useBsbHtmlMeasurementRefresh(node);
   const value = node.value;
   const minimum = node.minimum;
   const maximum = node.maximum;
@@ -49,7 +51,9 @@ function BSBKnobWidget({
   const labelFontStyle =
     typeof node.properties['labelFont.style'] === 'number' ? node.properties['labelFont.style'] : 0;
   const labelMetrics = showLabel
-    ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
+    ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle), {
+        allowDomMeasure: false,
+      })
     : { width: 0, height: 0 };
 
   const range = maximum - minimum || 1;
@@ -58,7 +62,7 @@ function BSBKnobWidget({
   const strVal = formatValue(value);
   const displayVal = formatDisplayValue(strVal);
 
-  const displaySize = getWidgetDisplaySize(node);
+  const displaySize = getWidgetDisplaySize(node, { allowDomMeasure: false });
   const labelH = showLabel ? Math.max(16, Math.ceil(labelMetrics.height)) : 0;
   const valueH = showValue ? VALUE_HEIGHT : 0;
   const knobSize =

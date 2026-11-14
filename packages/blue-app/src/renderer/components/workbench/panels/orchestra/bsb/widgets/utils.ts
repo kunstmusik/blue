@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   type BsbWidgetNodeSnapshot,
   getWidgetResolution,
@@ -28,6 +29,19 @@ let sharedHtmlMeasureEl: HTMLDivElement | null = null;
 
 const htmlMarkupCache = new Map<string, string>();
 const htmlMeasurementCache = new Map<string, { width: number; height: number }>();
+const plainTextWidthCache = new Map<string, number>();
+
+let htmlMeasurementRevision = 0;
+const htmlMeasurementListeners = new Set<() => void>();
+
+export interface BsbTextMeasurementOptions {
+  /**
+   * When false (the React render path), never touch `document.body` / `innerHTML` /
+   * `getBoundingClientRect()` for uncached Swing HTML text; return the deterministic
+   * fallback estimate and let post-commit `useBsbHtmlMeasurementRefresh` measure it.
+   */
+  allowDomMeasure?: boolean;
+}
 
 export const BSB_CANVAS_MIN_WIDTH = 600;
 export const BSB_CANVAS_MIN_HEIGHT = 400;
@@ -38,16 +52,25 @@ export function measureTextWidth(text: string, font: string): number {
 
   if (!displayText) return 0;
   if (typeof document === 'undefined') return estimateTextWidth(displayText, fontSize);
+  const cacheKey = `${font}\u0000${displayText}`;
+  const cached = plainTextWidthCache.get(cacheKey);
+  if (cached !== undefined) return cached;
   if (!sharedCanvas) {
     sharedCanvas = document.createElement('canvas');
   }
   const ctx = sharedCanvas.getContext('2d');
   if (!ctx) return estimateTextWidth(displayText, fontSize);
   ctx.font = font;
-  return ctx.measureText(displayText).width;
+  const width = ctx.measureText(displayText).width;
+  setBoundedCache(plainTextWidthCache, cacheKey, width);
+  return width;
 }
 
-export function measureTextContent(text: string, font: string): { width: number; height: number } {
+export function measureTextContent(
+  text: string,
+  font: string,
+  options?: BsbTextMeasurementOptions,
+): { width: number; height: number } {
   const fontSize = getTextFontSize(font);
   const displayText = isBsbSwingHtmlText(text) ? stripBsbSwingHtmlText(text) : text;
   const baseHeight = Math.max(16, Math.ceil(fontSize * 1.25));
@@ -67,6 +90,9 @@ export function measureTextContent(text: string, font: string): { width: number;
   }
 
   const fallback = estimateSwingHtmlTextContent(text, fontSize);
+  if (options?.allowDomMeasure === false) {
+    return fallback;
+  }
   if (typeof document === 'undefined' || !document.body) {
     cacheMeasurement(cacheKey, fallback);
     return fallback;
@@ -162,7 +188,10 @@ export function getFontString(name: string, size: number, style = 0): string {
   return parts.join(' ');
 }
 
-export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
+export function getWidgetDisplaySize(
+  node: BsbWidgetNodeSnapshot,
+  options?: BsbTextMeasurementOptions,
+): {
   width: number;
   height: number;
 } {
@@ -256,7 +285,11 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
           ? node.properties['labelFont.style']
           : 0;
       const labelMetrics = labelEnabled
-        ? measureTextContent(labelText, getFontString(labelFontName, labelFontSize, labelFontStyle))
+        ? measureTextContent(
+            labelText,
+            getFontString(labelFontName, labelFontSize, labelFontStyle),
+            options,
+          )
         : { width: 0, height: 0 };
       const labelHeight = labelEnabled ? Math.max(16, Math.ceil(labelMetrics.height)) : 0;
       const valueHeight = node.properties.valueDisplayEnabled === true ? 16 : 0;
@@ -296,7 +329,7 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
         typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
       const titleMetrics =
         titleEnabled && groupName
-          ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
+          ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle), options)
           : { width: 0, height: 0 };
       const labelHeight =
         titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
@@ -305,7 +338,7 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
       let childrenWidth = 10;
       let childrenHeight = 10;
       for (const child of node.children ?? []) {
-        const childSize = getWidgetDisplaySize(child);
+        const childSize = getWidgetDisplaySize(child, options);
         childrenWidth = Math.max(childrenWidth, child.x + childSize.width);
         childrenHeight = Math.max(childrenHeight, child.y + childSize.height);
       }
@@ -328,6 +361,7 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
       const labelMetrics = measureTextContent(
         labelText,
         getFontString(fontName, fontSize, fontStyle),
+        options,
       );
       return {
         width: Math.max(1, Math.ceil(labelMetrics.width) + 1),
@@ -337,7 +371,11 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
     case 'BSBCheckBox': {
       const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
       const fontSize = 12;
-      const labelMetrics = measureTextContent(labelText, `${fontSize}px Roboto, sans-serif`);
+      const labelMetrics = measureTextContent(
+        labelText,
+        `${fontSize}px Roboto, sans-serif`,
+        options,
+      );
       return {
         width: Math.max(1, Math.ceil(labelMetrics.width) + 20),
         height: Math.max(20, Math.ceil(labelMetrics.height)),
@@ -401,14 +439,17 @@ export function getWidgetDisplaySize(node: BsbWidgetNodeSnapshot): {
   }
 }
 
-function getWidgetCanvasBoundsSize(node: BsbWidgetNodeSnapshot): { width: number; height: number } {
-  const displaySize = getWidgetDisplaySize(node);
+function getWidgetCanvasBoundsSize(
+  node: BsbWidgetNodeSnapshot,
+  options?: BsbTextMeasurementOptions,
+): { width: number; height: number } {
+  const displaySize = getWidgetDisplaySize(node, options);
   if (node.type !== 'BSBGroup') return displaySize;
 
   let width = displaySize.width;
   let height = displaySize.height;
   for (const child of node.children ?? []) {
-    const childSize = getWidgetCanvasBoundsSize(child);
+    const childSize = getWidgetCanvasBoundsSize(child, options);
     width = Math.max(width, child.x + childSize.width + BSB_CANVAS_SCROLL_PADDING);
     height = Math.max(height, child.y + childSize.height + BSB_CANVAS_SCROLL_PADDING);
   }
@@ -420,12 +461,13 @@ export function getCanvasDisplaySize(
   viewportWidth = 0,
   viewportHeight = 0,
   minOverride?: number,
+  options?: BsbTextMeasurementOptions,
 ): { width: number; height: number } {
   let maxWidth = 1;
   let maxHeight = 1;
 
   for (const child of children) {
-    const childSize = getWidgetCanvasBoundsSize(child);
+    const childSize = getWidgetCanvasBoundsSize(child, options);
     maxWidth = Math.max(maxWidth, child.x + childSize.width);
     maxHeight = Math.max(maxHeight, child.y + childSize.height);
   }
@@ -439,6 +481,123 @@ export function getCanvasDisplaySize(
     width: Math.max(minW, Math.ceil(viewportWidth), contentWidth),
     height: Math.max(minH, Math.ceil(viewportHeight), contentHeight),
   };
+}
+
+function measureSwingHtmlTextEntry(text: string, font: string): boolean {
+  if (!isBsbSwingHtmlText(text)) return false;
+  const cacheKey = `${font}\u0000${text}`;
+  if (htmlMeasurementCache.has(cacheKey)) return false;
+  const estimate = estimateSwingHtmlTextContent(text, getTextFontSize(font));
+  const measured = measureTextContent(text, font, { allowDomMeasure: true });
+  return measured.width !== estimate.width || measured.height !== estimate.height;
+}
+
+/**
+ * Populates cached Swing HTML DOM text measurements for widget trees outside React render.
+ * Returns true if any measured metric differs from its fallback estimate.
+ */
+export function measurePendingSwingHtmlForNodes(nodes: readonly BsbWidgetNodeSnapshot[]): boolean {
+  if (typeof document === 'undefined' || !document.body) return false;
+  let changed = false;
+  for (const node of nodes) {
+    switch (node.type) {
+      case 'BSBLabel': {
+        const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
+        const fontName =
+          typeof node.properties['font.name'] === 'string'
+            ? node.properties['font.name']
+            : 'Roboto';
+        const fontSize =
+          typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+        const fontStyle =
+          typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+        if (measureSwingHtmlTextEntry(labelText, getFontString(fontName, fontSize, fontStyle))) {
+          changed = true;
+        }
+        break;
+      }
+      case 'BSBKnob': {
+        if (node.properties.labelEnabled !== false) {
+          const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
+          const fontName =
+            typeof node.properties['labelFont.name'] === 'string'
+              ? node.properties['labelFont.name']
+              : 'Roboto';
+          const fontSize =
+            typeof node.properties['labelFont.size'] === 'number'
+              ? node.properties['labelFont.size']
+              : 12;
+          const fontStyle =
+            typeof node.properties['labelFont.style'] === 'number'
+              ? node.properties['labelFont.style']
+              : 0;
+          if (measureSwingHtmlTextEntry(labelText, getFontString(fontName, fontSize, fontStyle))) {
+            changed = true;
+          }
+        }
+        break;
+      }
+      case 'BSBGroup': {
+        const titleEnabled = node.properties.titleEnabled !== false;
+        const groupName =
+          typeof node.properties.groupName === 'string' ? node.properties.groupName : '';
+        if (titleEnabled && groupName) {
+          const fontName =
+            typeof node.properties['font.name'] === 'string'
+              ? node.properties['font.name']
+              : 'Roboto';
+          const fontSize =
+            typeof node.properties['font.size'] === 'number' ? node.properties['font.size'] : 12;
+          const fontStyle =
+            typeof node.properties['font.style'] === 'number' ? node.properties['font.style'] : 0;
+          if (measureSwingHtmlTextEntry(groupName, getFontString(fontName, fontSize, fontStyle))) {
+            changed = true;
+          }
+        }
+        if (node.children?.length && measurePendingSwingHtmlForNodes(node.children)) {
+          changed = true;
+        }
+        break;
+      }
+      case 'BSBCheckBox': {
+        const labelText = typeof node.properties.label === 'string' ? node.properties.label : '';
+        if (measureSwingHtmlTextEntry(labelText, '12px Roboto, sans-serif')) {
+          changed = true;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  return changed;
+}
+
+/**
+ * Defers Swing HTML DOM measurements to a post-commit effect so React render never performs
+ * forced synchronous layout, and re-renders affected widgets only if exact DOM bounds differ.
+ */
+export function useBsbHtmlMeasurementRefresh(
+  nodesOrNode: readonly BsbWidgetNodeSnapshot[] | BsbWidgetNodeSnapshot,
+): void {
+  const [, setRevision] = useState(htmlMeasurementRevision);
+
+  useEffect(() => {
+    const sync = () => setRevision(htmlMeasurementRevision);
+    htmlMeasurementListeners.add(sync);
+    const list = Array.isArray(nodesOrNode) ? nodesOrNode : [nodesOrNode];
+    if (measurePendingSwingHtmlForNodes(list)) {
+      htmlMeasurementRevision += 1;
+      for (const listener of htmlMeasurementListeners) {
+        listener();
+      }
+    } else {
+      setRevision((prev) => (prev === htmlMeasurementRevision ? prev : htmlMeasurementRevision));
+    }
+    return () => {
+      htmlMeasurementListeners.delete(sync);
+    };
+  }, [nodesOrNode]);
 }
 
 function ensureSharedHtmlMeasureEl(): HTMLDivElement {

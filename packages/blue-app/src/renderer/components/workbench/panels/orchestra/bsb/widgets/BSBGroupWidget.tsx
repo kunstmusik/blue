@@ -2,7 +2,12 @@ import React from 'react';
 import type { BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
 import WidgetWrapper from './WidgetWrapper';
 import BsbTextLabel from './BsbTextLabel';
-import { getFontString, getWidgetDisplaySize, measureTextContent } from './utils';
+import {
+  getFontString,
+  getWidgetDisplaySize,
+  measureTextContent,
+  useBsbHtmlMeasurementRefresh,
+} from './utils';
 import type { BSBWidgetPatchComponentProps } from './widget-component-props';
 
 interface BSBGroupWidgetProps extends BSBWidgetPatchComponentProps {
@@ -26,6 +31,7 @@ export default function BSBGroupWidget({
   getWidgetPosition,
   onWidgetAction,
 }: BSBGroupWidgetProps): React.ReactElement {
+  useBsbHtmlMeasurementRefresh(node);
   const groupName = typeof node.properties.groupName === 'string' ? node.properties.groupName : '';
   const titleEnabled = node.properties.titleEnabled !== false;
   const bgColor = parseBsbColor(node.properties.backgroundColor, 'rgba(0,0,0,0.2)');
@@ -42,11 +48,13 @@ export default function BSBGroupWidget({
   const fontItalic = (fontStyle & 2) !== 0 ? 'italic' : 'normal';
   const titleMetrics =
     titleEnabled && groupName
-      ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle))
+      ? measureTextContent(groupName, getFontString(fontName, fontSize, fontStyle), {
+          allowDomMeasure: false,
+        })
       : { width: 0, height: 0 };
   const titleHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
 
-  const displaySize = getWidgetDisplaySize(node);
+  const displaySize = getWidgetDisplaySize(node, { allowDomMeasure: false });
 
   return (
     <WidgetWrapper
