@@ -134,6 +134,9 @@ function emitWaveformUpdate(entry: WaveformCacheEntry): void {
   }
 }
 
+let sharedAudioContext: AudioContext | null = null;
+let sharedAudioContextCtor: typeof AudioContext | null = null;
+
 function getAudioContext(): AudioContext | null {
   const AudioContextCtor =
     globalThis.AudioContext ??
@@ -142,7 +145,24 @@ function getAudioContext(): AudioContext | null {
   if (!AudioContextCtor) {
     return null;
   }
-  return new AudioContextCtor();
+  if (
+    sharedAudioContext &&
+    sharedAudioContextCtor === AudioContextCtor &&
+    sharedAudioContext.state !== 'closed'
+  ) {
+    return sharedAudioContext;
+  }
+  sharedAudioContext = new AudioContextCtor();
+  sharedAudioContextCtor = AudioContextCtor;
+  return sharedAudioContext;
+}
+
+function closeSharedAudioContext(): void {
+  if (!sharedAudioContext) return;
+  const ctx = sharedAudioContext;
+  sharedAudioContext = null;
+  sharedAudioContextCtor = null;
+  void ctx.close?.().catch(() => undefined);
 }
 
 function normalizeAudioBytes(bytes: unknown): ArrayBuffer | null {
@@ -206,6 +226,7 @@ export function clearWaveformCache(): void {
   waveformCache.clear();
   waveformListeners.clear();
   pendingWaveformLoads.clear();
+  closeSharedAudioContext();
   for (const listener of cacheResetListeners) listener();
 }
 
@@ -331,8 +352,12 @@ function readWaveformData(
         sampleRate: metadata?.sampleRate ?? decoded.sampleRate,
         numberOfChannels: decoded.numberOfChannels,
       };
-    } finally {
-      await context.close().catch(() => undefined);
+    } catch (error) {
+      if (context.state === 'closed' && sharedAudioContext === context) {
+        sharedAudioContext = null;
+        sharedAudioContextCtor = null;
+      }
+      throw error;
     }
   });
   loadQueue = result.then(
@@ -429,7 +454,7 @@ export function buildWaveformPathData(
       }
 
       const center = channelMiddle + channelIndex * channelHeight;
-      let path = '';
+      const segments: string[] = [];
       for (let x = 0; x < width; x += 1) {
         let sampleIndex = Math.floor(startOffsetPixels + x);
 
@@ -443,10 +468,10 @@ export function buildWaveformPathData(
         const max = channel.max[sampleIndex] ?? 0;
         const yTop = center - max * channelMiddle;
         const yBottom = center - min * channelMiddle;
-        path += `M${x + 0.5} ${yTop} L${x + 0.5} ${yBottom} `;
+        segments.push(`M${x + 0.5} ${yTop} L${x + 0.5} ${yBottom}`);
       }
 
-      return path.trim();
+      return segments.join(' ');
     })
     .filter((path) => path.length > 0);
 }

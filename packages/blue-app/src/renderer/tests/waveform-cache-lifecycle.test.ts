@@ -26,16 +26,27 @@ function mockAudio(read: (path: string) => Promise<ArrayBuffer | null>) {
     sampleRate: 4,
     getChannelData: () => Float32Array.from([-1, 0, 0.5, 1]),
   }));
-  const close = vi.fn(async () => undefined);
+  let state: AudioContextState = 'running';
+  const close = vi.fn(async () => {
+    state = 'closed';
+  });
+  let constructCount = 0;
   vi.stubGlobal('window', { blueAPI: { readAudioFileBytes: vi.fn(read) } });
   vi.stubGlobal(
     'AudioContext',
     class {
+      get state() {
+        return state;
+      }
       decodeAudioData = decode;
       close = close;
+      constructor() {
+        constructCount += 1;
+        state = 'running';
+      }
     },
   );
-  return { decode, close };
+  return { decode, close, getConstructCount: () => constructCount };
 }
 
 afterEach(() => {
@@ -248,7 +259,7 @@ describe('waveform cache lifecycle', () => {
     const readBytes = vi.fn((path: string) =>
       path === 'first.wav' ? read.promise : Promise.resolve(new ArrayBuffer(16)),
     );
-    const { decode, close } = mockAudio(readBytes);
+    const { decode, close, getConstructCount } = mockAudio(readBytes);
     requestWaveform('first', 'first.wav', 4);
     requestWaveform('queued', 'queued.wav', 4);
     await flush();
@@ -263,8 +274,18 @@ describe('waveform cache lifecycle', () => {
     expect(callsBeforeClear).toBe(1);
     expect(readBytes.mock.calls.map(([path]) => path)).toEqual(['first.wav', 'current.wav']);
     expect(decode).toHaveBeenCalledOnce();
-    expect(close).toHaveBeenCalledOnce();
+    expect(close).not.toHaveBeenCalled();
+    expect(getConstructCount()).toBe(1);
     expect(listener).toHaveBeenCalled();
     expect(getWaveformCacheEntry('current', 4)?.loading).toBe(false);
+
+    // Subsequent decode in the same project reuses the open singleton AudioContext; clearWaveformCache closes it.
+    requestWaveform('another', 'another.wav', 4);
+    await flush();
+    expect(decode).toHaveBeenCalledTimes(2);
+    expect(getConstructCount()).toBe(1);
+    expect(close).not.toHaveBeenCalled();
+    clearWaveformCache();
+    expect(close).toHaveBeenCalledOnce();
   });
 });
