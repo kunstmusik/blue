@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../../../../lib/cn';
 import {
   PopoutContextMenuPortal,
@@ -844,17 +844,26 @@ export function TrackPropertiesModal({
   );
 }
 
+const TRACKER_VIRTUALIZE_THRESHOLD = 64;
+const TRACKER_DEFAULT_ROW_HEIGHT = 24;
+const TRACKER_FALLBACK_VIEWPORT_ROWS = 28;
+const TRACKER_OVERSCAN_ROWS = 12;
+
 function focusCell(
   gridRef: React.RefObject<HTMLTableElement | null>,
   track: number,
   col: number,
   step: number,
-) {
+): boolean {
   const cell = gridRef.current?.querySelector<HTMLInputElement>(
     `[data-track="${track}"][data-col="${col}"][data-step="${step}"]`,
   );
-  cell?.focus();
-  cell?.select();
+  if (!cell) {
+    return false;
+  }
+  cell.focus();
+  cell.select();
+  return true;
 }
 
 export default function TrackerScoreObjectEditor({
@@ -872,14 +881,115 @@ export default function TrackerScoreObjectEditor({
   const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
     useScoreObjectTest(scoreDocument.target);
   const gridRef = useRef<HTMLTableElement>(null);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const pendingFocusRef = useRef<{ track: number; col: number; step: number } | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [rowHeight, setRowHeight] = useState(TRACKER_DEFAULT_ROW_HEIGHT);
   // Keyboard focus ('?' shortcut) must be observed in the hosting window and
   // against the hosting document's activeElement (popout-safe).
   const hostDocument = useHostDocument();
   const hostWindow = hostDocument?.defaultView ?? null;
   const activeCellRef = useRef({ trackIndex: 0, columnIndex: -1, stepIndex: 0 });
+  const focusedDraftCellRef = useRef<{
+    trackIndex: number;
+    columnIndex: number;
+    stepIndex: number;
+  } | null>(null);
   const draftCellsRef = useRef<Record<string, string>>({});
   const noteCopyBuffer = useRef<NoteSnapshot[]>([]);
+
+  const isVirtualized = editor.rows.length > TRACKER_VIRTUALIZE_THRESHOLD;
+  const effectiveRowHeight = rowHeight > 0 ? rowHeight : TRACKER_DEFAULT_ROW_HEIGHT;
+  const effectiveViewportHeight =
+    viewportHeight > 0 ? viewportHeight : effectiveRowHeight * TRACKER_FALLBACK_VIEWPORT_ROWS;
+
+  const totalColumnCount = useMemo(
+    () => 1 + editor.tracks.reduce((sum, track) => sum + 1 + (track.columns?.length ?? 0), 0),
+    [editor.tracks],
+  );
+
+  const { startStep, endStep, topSpacerHeight, bottomSpacerHeight } = useMemo(() => {
+    if (!isVirtualized) {
+      return {
+        startStep: 0,
+        endStep: editor.rows.length,
+        topSpacerHeight: 0,
+        bottomSpacerHeight: 0,
+      };
+    }
+    const maxScrollTop = Math.max(
+      0,
+      editor.rows.length * effectiveRowHeight - effectiveViewportHeight,
+    );
+    const clampedScrollTop = Math.max(0, Math.min(scrollTop, maxScrollTop));
+    const start = Math.max(
+      0,
+      Math.floor(clampedScrollTop / effectiveRowHeight) - TRACKER_OVERSCAN_ROWS,
+    );
+    const visibleCount =
+      Math.ceil(effectiveViewportHeight / effectiveRowHeight) + TRACKER_OVERSCAN_ROWS * 2;
+    const end = Math.min(editor.rows.length, start + visibleCount);
+    return {
+      startStep: start,
+      endStep: end,
+      topSpacerHeight: start * effectiveRowHeight,
+      bottomSpacerHeight: Math.max(0, (editor.rows.length - end) * effectiveRowHeight),
+    };
+  }, [isVirtualized, editor.rows.length, effectiveRowHeight, effectiveViewportHeight, scrollTop]);
+
+  useLayoutEffect(() => {
+    const scrollEl = gridScrollRef.current;
+    if (!scrollEl) return;
+    const updateMeasurements = () => {
+      setViewportHeight(scrollEl.clientHeight);
+      const sampleRow =
+        gridRef.current?.querySelector<HTMLTableRowElement>('tr[data-tracker-step]');
+      if (sampleRow && sampleRow.offsetHeight > 0) {
+        setRowHeight(sampleRow.offsetHeight);
+      }
+    };
+    updateMeasurements();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(updateMeasurements);
+    observer.observe(scrollEl);
+    return () => observer.disconnect();
+  }, [editor.rows.length, editor.tracks.length]);
+
+  useLayoutEffect(() => {
+    const pending = pendingFocusRef.current;
+    if (!pending) return;
+    if (focusCell(gridRef, pending.track, pending.col, pending.step)) {
+      pendingFocusRef.current = null;
+    }
+  }, [startStep, endStep]);
+
+  const focusTrackerCell = useCallback(
+    (track: number, col: number, step: number) => {
+      const clampedStep = Math.max(0, Math.min(editor.rows.length - 1, step));
+      const scrollEl = gridScrollRef.current;
+      if (scrollEl && isVirtualized) {
+        const headerHeight = gridRef.current?.tHead?.offsetHeight ?? 0;
+        const rowTop = clampedStep * effectiveRowHeight;
+        const rowBottom = rowTop + effectiveRowHeight;
+        const visibleHeight = Math.max(effectiveRowHeight, scrollEl.clientHeight - headerHeight);
+        if (rowTop < scrollEl.scrollTop) {
+          scrollEl.scrollTop = rowTop;
+          setScrollTop(scrollEl.scrollTop);
+        } else if (rowBottom > scrollEl.scrollTop + visibleHeight) {
+          scrollEl.scrollTop = Math.max(0, rowBottom - visibleHeight);
+          setScrollTop(scrollEl.scrollTop);
+        }
+      }
+      if (!focusCell(gridRef, track, col, clampedStep)) {
+        pendingFocusRef.current = { track, col, step: clampedStep };
+      } else {
+        pendingFocusRef.current = null;
+      }
+    },
+    [editor.rows.length, effectiveRowHeight, isVirtualized],
+  );
 
   const lastShowNoteNamesRef = useRef(editor.showNoteNames);
   if (lastShowNoteNamesRef.current !== editor.showNoteNames) {
@@ -973,6 +1083,16 @@ export default function TrackerScoreObjectEditor({
     },
     [clearDraftCellValue, editor.tracks, getRowFieldValue, patch],
   );
+
+  // Wheel scrolling can unmount a focused cell outside the virtual window without a DOM blur.
+  useEffect(() => {
+    if (!isVirtualized || !focusedDraftCellRef.current) return;
+    const focused = focusedDraftCellRef.current;
+    if (focused.stepIndex < startStep || focused.stepIndex >= endStep) {
+      focusedDraftCellRef.current = null;
+      commitCellEdit(focused.trackIndex, focused.columnIndex, focused.stepIndex);
+    }
+  }, [commitCellEdit, endStep, isVirtualized, startStep]);
 
   const handleCellChange = useCallback(
     (trackIndex: number, columnIndex: number, stepIndex: number, value: string) => {
@@ -1233,7 +1353,7 @@ export default function TrackerScoreObjectEditor({
           },
         });
         if (stepIndex < totalSteps - 2) {
-          setTimeout(() => focusCell(gridRef, trackIndex, columnIndex, stepIndex + 1), 0);
+          setTimeout(() => focusTrackerCell(trackIndex, columnIndex, stepIndex + 1), 0);
         }
         return;
       }
@@ -1279,7 +1399,7 @@ export default function TrackerScoreObjectEditor({
               },
             });
             if (stepIndex < totalSteps - 2) {
-              setTimeout(() => focusCell(gridRef, trackIndex, columnIndex, stepIndex + 1), 0);
+              setTimeout(() => focusTrackerCell(trackIndex, columnIndex, stepIndex + 1), 0);
             }
           }
           return;
@@ -1346,23 +1466,66 @@ export default function TrackerScoreObjectEditor({
             }
           }
           break;
-        case 'Tab':
+        case 'Tab': {
           if (columnIndex >= 0)
             commitCellEdit(trackIndex, columnIndex, stepIndex, e.currentTarget.value);
+          if (!isVirtualized || editor.tracks.length === 0) return;
+          const tracks = editor.tracks;
+          if (e.shiftKey) {
+            let prevCol = columnIndex - 1;
+            let prevTrack = trackIndex;
+            let prevStep = stepIndex;
+            if (prevCol < -1) {
+              if (prevTrack > 0) {
+                prevTrack -= 1;
+                prevCol = (tracks[prevTrack].columns?.length ?? 0) - 1;
+              } else if (prevStep > 0) {
+                prevStep -= 1;
+                prevTrack = tracks.length - 1;
+                prevCol = (tracks[prevTrack].columns?.length ?? 0) - 1;
+              } else {
+                return;
+              }
+            }
+            e.preventDefault();
+            focusTrackerCell(prevTrack, prevCol, prevStep);
+            return;
+          }
+          let nextTabCol = columnIndex + 1;
+          let nextTabTrack = trackIndex;
+          let nextTabStep = stepIndex;
+          const trackCols = tracks[trackIndex].columns?.length ?? 0;
+          if (nextTabCol >= trackCols) {
+            if (nextTabTrack < tracks.length - 1) {
+              nextTabTrack += 1;
+              nextTabCol = -1;
+            } else if (nextTabStep < totalSteps - 1) {
+              nextTabStep += 1;
+              nextTabTrack = 0;
+              nextTabCol = -1;
+            } else {
+              return;
+            }
+          }
+          e.preventDefault();
+          focusTrackerCell(nextTabTrack, nextTabCol, nextTabStep);
           return;
+        }
         default:
           return;
       }
 
-      focusCell(gridRef, nextTrack, nextCol, nextStep);
+      focusTrackerCell(nextTrack, nextCol, nextStep);
     },
     [
       editor.rows.length,
       editor.tracks,
       editor.octave,
+      isVirtualized,
       useKeyboardNotes,
       clearDraftCellValue,
       commitCellEdit,
+      focusTrackerCell,
       getRowFieldValue,
       readNoteFromRow,
       toTrackerActionBuffer,
@@ -1383,8 +1546,7 @@ export default function TrackerScoreObjectEditor({
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
         const delta = e.key === 'ArrowUp' ? -1 : 1;
-        focusCell(
-          gridRef,
+        focusTrackerCell(
           trackIndex,
           active.columnIndex,
           Math.max(0, Math.min(editor.rows.length - 1, stepIndex + delta)),
@@ -1405,7 +1567,7 @@ export default function TrackerScoreObjectEditor({
         });
       }
     },
-    [editor.rows.length, editor.tracks.length, patch],
+    [editor.rows.length, editor.tracks.length, focusTrackerCell, patch],
   );
 
   const handleSelectTrack = useCallback((index: number) => {
@@ -1541,9 +1703,13 @@ export default function TrackerScoreObjectEditor({
       </div>
 
       <div
+        ref={gridScrollRef}
         className="flex-1 overflow-auto bg-black focus:outline-none"
         tabIndex={0}
         aria-label="Tracker grid"
+        onScroll={(event) => {
+          setScrollTop(event.currentTarget.scrollTop);
+        }}
         onKeyDown={handleGridKeyDown}
         onMouseDown={(event) => {
           const target = event.target as HTMLElement;
@@ -1645,11 +1811,21 @@ export default function TrackerScoreObjectEditor({
               </tr>
             </thead>
             <tbody>
-              {editor.rows.map((row, ri) => {
+              {topSpacerHeight > 0 && (
+                <tr aria-hidden="true">
+                  <td
+                    colSpan={totalColumnCount}
+                    style={{ height: topSpacerHeight, padding: 0, border: 0 }}
+                  />
+                </tr>
+              )}
+              {editor.rows.slice(startStep, endStep).map((row, offset) => {
+                const ri = startStep + offset;
                 const isBeatStart = ri % spb === 0;
                 return (
                   <tr
                     key={ri}
+                    data-tracker-step={ri}
                     className={cn(
                       'group',
                       isBeatStart
@@ -1729,13 +1905,27 @@ export default function TrackerScoreObjectEditor({
                                       columnIndex: ci,
                                       stepIndex: ri,
                                     };
+                                    focusedDraftCellRef.current = {
+                                      trackIndex: ti,
+                                      columnIndex: ci,
+                                      stepIndex: ri,
+                                    };
                                     const current = e.currentTarget.value.trim();
                                     if (current === '...' || current === '---') {
                                       handleCellChange(ti, ci, ri, '');
                                     }
                                   }}
                                   onChange={(e) => handleCellChange(ti, ci, ri, e.target.value)}
-                                  onBlur={(e) => commitCellEdit(ti, ci, ri, e.currentTarget.value)}
+                                  onBlur={(e) => {
+                                    if (
+                                      focusedDraftCellRef.current?.trackIndex === ti &&
+                                      focusedDraftCellRef.current?.columnIndex === ci &&
+                                      focusedDraftCellRef.current?.stepIndex === ri
+                                    ) {
+                                      focusedDraftCellRef.current = null;
+                                    }
+                                    commitCellEdit(ti, ci, ri, e.currentTarget.value);
+                                  }}
                                   onKeyDown={(e) => handleKeyDown(e, ti, ci, ri)}
                                   spellCheck={false}
                                 />
@@ -1748,6 +1938,14 @@ export default function TrackerScoreObjectEditor({
                   </tr>
                 );
               })}
+              {bottomSpacerHeight > 0 && (
+                <tr aria-hidden="true">
+                  <td
+                    colSpan={totalColumnCount}
+                    style={{ height: bottomSpacerHeight, padding: 0, border: 0 }}
+                  />
+                </tr>
+              )}
             </tbody>
           </table>
         )}

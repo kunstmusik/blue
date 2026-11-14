@@ -3,8 +3,12 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import PianoRollCanvas from '../components/workbench/panels/score-object/editors/pianoroll/PianoRollCanvas';
 import PianoRollPropertiesEditor from '../components/workbench/panels/score-object/editors/pianoroll/PianoRollPropertiesEditor';
-import type { PianoRollPayload } from '../components/workbench/panels/score-object/editors/pianoroll/types';
+import type {
+  NoteCanvasMouseListener,
+  PianoRollPayload,
+} from '../components/workbench/panels/score-object/editors/pianoroll/types';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -116,5 +120,59 @@ describe('PianoRoll Base Frequency editor', () => {
 
     expect(onPatch).not.toHaveBeenCalled();
     expect(input.value).toBe('261.625565');
+  });
+
+  it('virtualizes PianoRollCanvas notes outside the viewport + overscan and updates on scroll', () => {
+    const payload = createPayload();
+    const notes = [
+      { start: 0.5, duration: 1, octave: 5, scaleDegree: 0, fieldValues: [] },
+      { start: 15, duration: 1, octave: 5, scaleDegree: 0, fieldValues: [] },
+      { start: 30, duration: 1, octave: 5, scaleDegree: 0, fieldValues: [] },
+    ];
+    const listener = {
+      getDragMode: () => 'NONE',
+      getMarquee: () => null,
+      getCursor: () => 'default',
+      mousePressed: vi.fn(),
+      mouseDragged: vi.fn(),
+      mouseReleased: vi.fn(),
+      cancel: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as NoteCanvasMouseListener;
+
+    const renderAtScroll = (scrollLeft: number) => {
+      act(() => {
+        root.render(
+          <PianoRollCanvas
+            notes={notes}
+            previewNotes={null}
+            scale={payload.scale}
+            fieldDefinitions={payload.fieldDefinitions}
+            selectedIndices={new Set()}
+            pixelSecond={64}
+            noteHeight={15}
+            snapEnabled={false}
+            snapBeats={0.25}
+            durationBeats={40}
+            pchGenerationMethod={0}
+            listener={listener}
+            canvasRef={{ current: null }}
+            scrollLeft={scrollLeft}
+            scrollTop={0}
+            viewportWidth={300}
+            viewportHeight={400}
+          />,
+        );
+      });
+    };
+
+    renderAtScroll(0);
+    let mountedNotes = container.querySelectorAll('div[title^="Note: "]');
+    expect(mountedNotes.length).toBe(1);
+
+    renderAtScroll(900);
+    mountedNotes = container.querySelectorAll('div[title^="Note: "]');
+    expect(mountedNotes.length).toBe(1);
+    expect(mountedNotes[0]!.getAttribute('style')).toContain('left: 960px');
   });
 });

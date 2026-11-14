@@ -12,14 +12,14 @@ import TrackerScoreObjectEditor from '../components/workbench/panels/score-objec
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-function makeTrackerDocument() {
+function makeTrackerDocument(steps = 4) {
   const data = new BlueData();
   data.getScore().length = 0;
   const poly = new PolyObject();
   const layer = new SoundLayer();
   const tracker = new TrackerObject();
   const track = new Track();
-  tracker.getTracks().setSteps(4);
+  tracker.getTracks().setSteps(steps);
   tracker.getTracks().addTrack(track);
   track.getTrackerNote(0).setValue(1, '8.00');
   layer.push(tracker);
@@ -163,5 +163,174 @@ describe('TrackerScoreObjectEditor keyboard interaction', () => {
     expect(onPatch).not.toHaveBeenCalled();
     expect(cell.value).toBe('8.00');
     expect(document.activeElement).not.toBe(cell);
+  });
+
+  it('virtualizes step rows above 64 steps and renders scrolled rows', () => {
+    act(() => {
+      root.render(
+        <TrackerScoreObjectEditor document={makeTrackerDocument(128)} onPatch={vi.fn()} />,
+      );
+    });
+
+    const initialRows = container.querySelectorAll('tr[data-tracker-step]');
+    expect(initialRows.length).toBeGreaterThan(0);
+    expect(initialRows.length).toBeLessThan(128);
+    expect(container.querySelector('[data-tracker-step="0"]')).not.toBeNull();
+    expect(container.querySelector('[data-tracker-step="120"]')).toBeNull();
+
+    const gridScroll = container.querySelector<HTMLElement>('[aria-label="Tracker grid"]')!;
+    act(() => {
+      gridScroll.scrollTop = 2400;
+      gridScroll.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(container.querySelector('[data-tracker-step="120"]')).not.toBeNull();
+  });
+
+  it('commits an active uncommitted draft cell when scrolling unmounts it without blur', () => {
+    const onPatch = vi.fn();
+    act(() => {
+      root.render(
+        <TrackerScoreObjectEditor document={makeTrackerDocument(128)} onPatch={onPatch} />,
+      );
+    });
+
+    const cell = container.querySelector<HTMLInputElement>(
+      '[data-track="0"][data-col="0"][data-step="0"]',
+    )!;
+    act(() => {
+      cell.focus();
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      setter?.call(cell, '8.04');
+      cell.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(onPatch).not.toHaveBeenCalled();
+
+    const gridScroll = container.querySelector<HTMLElement>('[aria-label="Tracker grid"]')!;
+    act(() => {
+      gridScroll.scrollTop = 2400;
+      gridScroll.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(container.querySelector('[data-tracker-step="0"]')).toBeNull();
+    expect(onPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        patch: {
+          updateTrackCell: {
+            trackIndex: 0,
+            columnIndex: 0,
+            stepIndex: 0,
+            value: '8.04',
+          },
+        },
+      }),
+    );
+  });
+
+  it('routes Tab and Shift+Tab across virtualized row boundaries while exiting at grid edges', () => {
+    const trackerDoc = makeTrackerDocument(128);
+    const lastColIndex = (trackerDoc.editor.tracks[0].columns?.length ?? 1) - 1;
+    const onPatch = vi.fn();
+    act(() => {
+      root.render(<TrackerScoreObjectEditor document={trackerDoc} onPatch={onPatch} />);
+    });
+
+    const gridScroll = container.querySelector<HTMLElement>('[aria-label="Tracker grid"]')!;
+
+    // Boundary exit at very first cell on Shift+Tab
+    const firstCell = container.querySelector<HTMLInputElement>(
+      '[data-track="0"][data-col="-1"][data-step="0"]',
+    )!;
+    let firstShiftTab!: KeyboardEvent;
+    act(() => {
+      firstCell.focus();
+      firstShiftTab = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      firstCell.dispatchEvent(firstShiftTab);
+    });
+    expect(firstShiftTab.defaultPrevented).toBe(false);
+
+    // Tab from the last column of the last currently mounted row must cross into the next unmounted step.
+    const initialRows = container.querySelectorAll('tr[data-tracker-step]');
+    const lastMountedStep = Number(
+      initialRows[initialRows.length - 1].getAttribute('data-tracker-step'),
+    );
+    expect(lastMountedStep).toBeLessThan(127);
+    expect(container.querySelector(`[data-tracker-step="${lastMountedStep + 1}"]`)).toBeNull();
+
+    const lastMountedCell = container.querySelector<HTMLInputElement>(
+      `[data-track="0"][data-col="${lastColIndex}"][data-step="${lastMountedStep}"]`,
+    )!;
+    let forwardTab!: KeyboardEvent;
+    act(() => {
+      lastMountedCell.focus();
+      forwardTab = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      });
+      lastMountedCell.dispatchEvent(forwardTab);
+    });
+    expect(forwardTab.defaultPrevented).toBe(true);
+    const expectedNextCell = container.querySelector<HTMLInputElement>(
+      `[data-track="0"][data-col="-1"][data-step="${lastMountedStep + 1}"]`,
+    );
+    expect(expectedNextCell).not.toBeNull();
+    expect(document.activeElement).toBe(expectedNextCell);
+
+    // Scroll to the middle/bottom and Shift+Tab from first mounted row across the top virtual boundary.
+    act(() => {
+      gridScroll.scrollTop = 2400;
+      gridScroll.dispatchEvent(new Event('scroll'));
+    });
+    const scrolledRows = container.querySelectorAll('tr[data-tracker-step]');
+    const firstMountedStep = Number(scrolledRows[0].getAttribute('data-tracker-step'));
+    expect(firstMountedStep).toBeGreaterThan(0);
+    expect(container.querySelector(`[data-tracker-step="${firstMountedStep - 1}"]`)).toBeNull();
+
+    const firstMountedCell = container.querySelector<HTMLInputElement>(
+      `[data-track="0"][data-col="-1"][data-step="${firstMountedStep}"]`,
+    )!;
+    let backwardTab!: KeyboardEvent;
+    act(() => {
+      firstMountedCell.focus();
+      backwardTab = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      firstMountedCell.dispatchEvent(backwardTab);
+    });
+    expect(backwardTab.defaultPrevented).toBe(true);
+    const expectedPrevCell = container.querySelector<HTMLInputElement>(
+      `[data-track="0"][data-col="${lastColIndex}"][data-step="${firstMountedStep - 1}"]`,
+    );
+    expect(expectedPrevCell).not.toBeNull();
+    expect(document.activeElement).toBe(expectedPrevCell);
+
+    // Boundary exit at the very last row/column on Tab
+    act(() => {
+      gridScroll.scrollTop = 5000;
+      gridScroll.dispatchEvent(new Event('scroll'));
+    });
+    const finalCell = container.querySelector<HTMLInputElement>(
+      `[data-track="0"][data-col="${lastColIndex}"][data-step="127"]`,
+    )!;
+    let finalTab!: KeyboardEvent;
+    act(() => {
+      finalCell.focus();
+      finalTab = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      });
+      finalCell.dispatchEvent(finalTab);
+    });
+    expect(finalTab.defaultPrevented).toBe(false);
   });
 });

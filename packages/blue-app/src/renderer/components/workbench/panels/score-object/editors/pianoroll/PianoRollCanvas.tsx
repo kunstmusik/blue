@@ -29,7 +29,72 @@ interface PianoRollCanvasProps {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   /** Viewport width floor so grid layers reach the right edge on short scores. */
   minWidth?: number;
+  scrollLeft?: number;
+  scrollTop?: number;
+  viewportWidth?: number;
+  viewportHeight?: number;
   targetKey?: string;
+}
+
+const PIANO_ROLL_OVERSCAN_X = 200;
+const PIANO_ROLL_OVERSCAN_Y = 120;
+
+function areNumberArraysEqual(a: number[], b: number[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function areNotesEqual(a: NoteSnapshot[], b: NoteSnapshot[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const na = a[i]!;
+    const nb = b[i]!;
+    if (
+      na.octave !== nb.octave ||
+      na.scaleDegree !== nb.scaleDegree ||
+      na.start !== nb.start ||
+      na.duration !== nb.duration ||
+      (na.noteTemplate ?? null) !== (nb.noteTemplate ?? null) ||
+      !areNumberArraysEqual(na.fieldValues, nb.fieldValues)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function areScalesEqual(a: ScaleSnapshot, b: ScaleSnapshot): boolean {
+  if (a === b) return true;
+  return (
+    a.scaleName === b.scaleName &&
+    a.baseFrequency === b.baseFrequency &&
+    a.octave === b.octave &&
+    areNumberArraysEqual(a.ratios, b.ratios)
+  );
+}
+
+function areFieldDefsEqual(a: FieldDefSnapshot[], b: FieldDefSnapshot[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const fa = a[i]!;
+    const fb = b[i]!;
+    if (
+      fa.fieldName !== fb.fieldName ||
+      fa.fieldType !== fb.fieldType ||
+      fa.minValue !== fb.minValue ||
+      fa.maxValue !== fb.maxValue ||
+      fa.defaultValue !== fb.defaultValue
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export default function PianoRollCanvas({
@@ -47,6 +112,10 @@ export default function PianoRollCanvas({
   listener,
   canvasRef,
   minWidth,
+  scrollLeft = 0,
+  scrollTop = 0,
+  viewportWidth = 0,
+  viewportHeight = 0,
   targetKey,
 }: PianoRollCanvasProps): React.ReactElement {
   const isMidi = pchGenerationMethod === GENERATE_MIDI;
@@ -87,7 +156,6 @@ export default function PianoRollCanvas({
     notes: typeof notes;
     scale: typeof scale;
     fieldDefinitions: typeof fieldDefinitions;
-    source: string | null;
   } | null>(null);
   const latestSource = useRef({ targetKey, notes, scale, fieldDefinitions });
   latestSource.current = { targetKey, notes, scale, fieldDefinitions };
@@ -96,16 +164,10 @@ export default function PianoRollCanvas({
     current: typeof latestSource.current,
   ): boolean => {
     if (fence.targetKey !== current.targetKey) return false;
-    if (
-      fence.notes === current.notes &&
-      fence.scale === current.scale &&
-      fence.fieldDefinitions === current.fieldDefinitions
-    ) {
-      return true;
-    }
-    fence.source ??= JSON.stringify([fence.notes, fence.scale, fence.fieldDefinitions]);
     return (
-      fence.source === JSON.stringify([current.notes, current.scale, current.fieldDefinitions])
+      areNotesEqual(fence.notes, current.notes) &&
+      areScalesEqual(fence.scale, current.scale) &&
+      areFieldDefsEqual(fence.fieldDefinitions, current.fieldDefinitions)
     );
   };
 
@@ -133,7 +195,7 @@ export default function PianoRollCanvas({
         const documentId =
           typeof getProjectDocumentId === 'function' ? (getProjectDocumentId() ?? '') : '';
         const sessionId = useProjectStore.getState().sessionId;
-        gestureFenceRef.current = { documentId, sessionId, ...latestSource.current, source: null };
+        gestureFenceRef.current = { documentId, sessionId, ...latestSource.current };
 
         const host = canvasRef.current;
         if (typeof registerHistoryEditorSettlement === 'function') {
@@ -252,46 +314,87 @@ export default function PianoRollCanvas({
 
   const marquee = listener.getMarquee();
 
+  const hasViewport = viewportWidth > 0 && viewportHeight > 0;
+  const viewMinX = hasViewport ? Math.max(0, scrollLeft - PIANO_ROLL_OVERSCAN_X) : 0;
+  const viewMaxX = hasViewport ? scrollLeft + viewportWidth + PIANO_ROLL_OVERSCAN_X : canvasWidth;
+  const viewMinY = hasViewport ? Math.max(0, scrollTop - PIANO_ROLL_OVERSCAN_Y) : 0;
+  const viewMaxY = hasViewport ? scrollTop + viewportHeight + PIANO_ROLL_OVERSCAN_Y : canvasHeight;
+
   const octaveBackgrounds = useMemo(() => {
-    const backgrounds: Array<{ y: number; h: number; dark: boolean }> = [];
-    if (isMidi) {
-      for (let i = 0; i < OCTAVES; i++) {
-        const y = (OCTAVES - 1 - i) * 12 * noteHeight;
-        backgrounds.push({ y, h: 12 * noteHeight, dark: i % 2 === 0 });
-      }
-    } else {
-      const minOctave = CENTER_OCTAVE - Math.floor(OCTAVES / 2);
-      for (let i = 0; i < OCTAVES; i++) {
-        const y = (OCTAVES - 1 - i) * numDegrees * noteHeight;
-        backgrounds.push({ y, h: numDegrees * noteHeight, dark: i % 2 === 0 });
-      }
+    const backgrounds: Array<{ key: number; y: number; h: number; dark: boolean }> = [];
+    const octaveHeight = (isMidi ? 12 : numDegrees) * noteHeight;
+    for (let i = 0; i < OCTAVES; i++) {
+      const y = (OCTAVES - 1 - i) * octaveHeight;
+      if (y + octaveHeight < viewMinY || y > viewMaxY) continue;
+      backgrounds.push({ key: i, y, h: octaveHeight, dark: i % 2 === 0 });
     }
     return backgrounds;
-  }, [isMidi, numDegrees, noteHeight]);
+  }, [isMidi, numDegrees, noteHeight, viewMinY, viewMaxY]);
 
   const snapLines = useMemo(() => {
-    if (!snapEnabled || snapBeats <= 0) return [];
-    const lines: Array<{ x: number; isBoundary: boolean }> = [];
-    const maxBeat = canvasWidth / pixelSecond;
-    for (let b = 0; b <= maxBeat; b += snapBeats) {
+    if (!snapEnabled || snapBeats <= 0 || pixelSecond <= 0) return [];
+    const lines: Array<{ key: number; x: number; isBoundary: boolean }> = [];
+    const maxBeat = Math.min(canvasWidth, viewMaxX) / pixelSecond;
+    const firstStep = Math.max(0, Math.floor(viewMinX / pixelSecond / snapBeats));
+    const lastStep = Math.floor(maxBeat / snapBeats);
+    for (let step = firstStep; step <= lastStep; step++) {
+      const b = step * snapBeats;
       const x = b * pixelSecond;
       const isBeat = Math.abs(b - Math.round(b)) < 0.001;
       const isBar = isBeat && Math.round(b) % 4 === 0;
-      lines.push({ x, isBoundary: isBar });
+      lines.push({ key: step, x, isBoundary: isBar });
     }
     return lines;
-  }, [snapEnabled, snapBeats, canvasWidth, pixelSecond]);
+  }, [snapEnabled, snapBeats, canvasWidth, pixelSecond, viewMinX, viewMaxX]);
 
   const boundaryX = durationBeats * pixelSecond;
 
   const rowLines = useMemo(() => {
-    const lines: Array<{ y: number; isOctave: boolean }> = [];
-    for (let i = 0; i <= totalRows; i++) {
+    const lines: Array<{ key: number; y: number; isOctave: boolean }> = [];
+    const startRow = noteHeight > 0 ? Math.max(0, Math.floor(viewMinY / noteHeight)) : 0;
+    const endRow =
+      noteHeight > 0 ? Math.min(totalRows, Math.ceil(viewMaxY / noteHeight)) : totalRows;
+    for (let i = startRow; i <= endRow; i++) {
       const isOctave = isMidi ? i % 12 === 0 : i % numDegrees === 0;
-      lines.push({ y: i * noteHeight, isOctave });
+      lines.push({ key: i, y: i * noteHeight, isOctave });
     }
     return lines;
-  }, [totalRows, noteHeight, numDegrees, isMidi]);
+  }, [totalRows, noteHeight, numDegrees, isMidi, viewMinY, viewMaxY]);
+
+  const visibleNotes = useMemo(() => {
+    const visible: Array<{
+      index: number;
+      note: NoteSnapshot;
+      x: number;
+      y: number;
+      width: number;
+    }> = [];
+    for (let i = 0; i < displayNotes.length; i += 1) {
+      const note = displayNotes[i]!;
+      const x = note.start * pixelSecond;
+      const w = note.duration * pixelSecond;
+      const renderW = Math.max(w - 1, 4);
+      if (hasViewport && (x + renderW < viewMinX || x > viewMaxX)) {
+        continue;
+      }
+      const y = pitchToY(note.octave, note.scaleDegree);
+      if (hasViewport && (y + noteHeight < viewMinY || y > viewMaxY)) {
+        continue;
+      }
+      visible.push({ index: i, note, x, y, width: renderW });
+    }
+    return visible;
+  }, [
+    displayNotes,
+    pixelSecond,
+    hasViewport,
+    viewMinX,
+    viewMaxX,
+    viewMinY,
+    viewMaxY,
+    pitchToY,
+    noteHeight,
+  ]);
 
   const getTooltipText = useCallback(
     (note: NoteSnapshot): string => {
@@ -323,9 +426,9 @@ export default function PianoRollCanvas({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
     >
-      {octaveBackgrounds.map((bg, i) => (
+      {octaveBackgrounds.map((bg) => (
         <div
-          key={`bg-${i}`}
+          key={`bg-${bg.key}`}
           className="absolute left-0"
           style={{
             top: bg.y,
@@ -336,9 +439,9 @@ export default function PianoRollCanvas({
         />
       ))}
 
-      {rowLines.map((line, i) => (
+      {rowLines.map((line) => (
         <div
-          key={`row-${i}`}
+          key={`row-${line.key}`}
           className="absolute left-0"
           style={{
             top: line.y,
@@ -349,9 +452,9 @@ export default function PianoRollCanvas({
         />
       ))}
 
-      {snapLines.map((line, i) => (
+      {snapLines.map((line) => (
         <div
-          key={`snap-${i}`}
+          key={`snap-${line.key}`}
           className="absolute top-0"
           style={{
             left: line.x,
@@ -375,10 +478,7 @@ export default function PianoRollCanvas({
         />
       )}
 
-      {displayNotes.map((note, i) => {
-        const x = note.start * pixelSecond;
-        const y = pitchToY(note.octave, note.scaleDegree);
-        const w = note.duration * pixelSecond;
+      {visibleNotes.map(({ index: i, note, x, y, width: renderW }) => {
         const isSelected = selectedIndices.has(i);
         return (
           <div
@@ -390,7 +490,7 @@ export default function PianoRollCanvas({
             style={{
               left: x,
               top: y + 1,
-              width: Math.max(w - 1, 4),
+              width: renderW,
               height: noteHeight - 2,
             }}
             title={getTooltipText(note)}

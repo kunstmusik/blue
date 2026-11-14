@@ -89,6 +89,7 @@ export default function PianoRollEditor({
   const centeredTargetRef = useRef<string | null>(null);
   const laneViewportRef = useRef<HTMLDivElement>(null);
   const [rollViewportWidth, setRollViewportWidth] = useState(0);
+  const [rollViewportHeight, setRollViewportHeight] = useState(0);
   const [laneViewportWidth, setLaneViewportWidth] = useState(0);
 
   // Measured in a layout effect so grid layers sized to the viewport are
@@ -97,6 +98,7 @@ export default function PianoRollEditor({
     if (activeTab !== 'notes') return;
     const update = () => {
       setRollViewportWidth(scrollRef.current?.clientWidth ?? 0);
+      setRollViewportHeight(scrollRef.current?.clientHeight ?? 0);
       setLaneViewportWidth(laneViewportRef.current?.clientWidth ?? 0);
     };
     update();
@@ -816,6 +818,10 @@ export default function PianoRollEditor({
                           listener={listenerRef.current!}
                           canvasRef={canvasRef}
                           minWidth={rollViewportWidth}
+                          scrollLeft={scrollLeft}
+                          scrollTop={scrollTop}
+                          viewportWidth={rollViewportWidth}
+                          viewportHeight={rollViewportHeight}
                           targetKey={targetKey}
                         />
                       </div>

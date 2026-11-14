@@ -547,7 +547,7 @@ export class NoteCanvasMouseListener {
               scaleDegree: (((src.scaleDegree + deltaDegree) % nd) + nd) % nd,
             };
           }
-          return { ...n };
+          return n;
         });
         this.autoScroller.start();
         this.callbacks.requestRedraw();
@@ -623,7 +623,7 @@ export class NoteCanvasMouseListener {
               duration: Math.max(minDuration, src.originDuration + finalTimeAdjust),
             };
           }
-          return { ...n };
+          return n;
         });
         this.callbacks.requestRedraw();
         break;
@@ -662,7 +662,7 @@ export class NoteCanvasMouseListener {
             const newDuration = originEnd - newStart;
             return { ...n, start: newStart, duration: Math.max(minDuration, newDuration) };
           }
-          return { ...n };
+          return n;
         });
         this.callbacks.requestRedraw();
         break;
@@ -699,7 +699,7 @@ export class NoteCanvasMouseListener {
             }
             return { ...n, fieldValues: newFields };
           }
-          return { ...n };
+          return n;
         });
         this.callbacks.requestRedraw();
         break;
