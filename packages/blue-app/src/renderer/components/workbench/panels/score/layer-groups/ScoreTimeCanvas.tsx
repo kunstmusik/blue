@@ -52,6 +52,7 @@ import type {
   ScoreObjectEditorTargetSnapshot,
 } from '../../../../../../shared/project-editor';
 import { createFrameSnapContext, deriveSnapLineBeats, snapBeatToGrid } from '../snap-grid-utils';
+import { useScoreViewportBounds } from '../score-viewport-scroll';
 import { toast } from 'sonner';
 import {
   canHydrateClipboardEntries,
@@ -304,8 +305,8 @@ const MIN_SCORE_OBJECT_DURATION = 0.25;
 
 export default function ScoreTimeCanvas({
   group,
-  visibleStartBeats,
-  visibleEndBeats,
+  visibleStartBeats: propVisibleStartBeats,
+  visibleEndBeats: propVisibleEndBeats,
   allLayerGroups,
   projectSessionId,
   projectRevision,
@@ -322,6 +323,11 @@ export default function ScoreTimeCanvas({
   meterMap,
   onDoubleClickObject,
 }: Props) {
+  const { visibleStartBeats, visibleEndBeats } = useScoreViewportBounds(
+    pixelsPerBeat,
+    propVisibleStartBeats,
+    propVisibleEndBeats,
+  );
   const frameSnapContext = useMemo(
     () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
     [tempoMap, smpteFrameRate, tempo],
@@ -526,8 +532,12 @@ export default function ScoreTimeCanvas({
     : 0;
   const pixelsPerSecond = tempo > 0 ? pixelsPerBeat * (tempo / 60) : pixelsPerBeat;
   const contentWidth = totalBeats * pixelsPerBeat;
+  const snapLineMinBeat =
+    visibleStartBeats !== undefined ? Math.max(0, Math.floor(visibleStartBeats)) : 0;
+  const snapLineMaxBeat =
+    visibleEndBeats !== undefined ? Math.min(totalBeats, Math.ceil(visibleEndBeats)) : totalBeats;
   const snapLineXPositions = useMemo(() => {
-    if (!snapEnabled || snapBeats <= 0) {
+    if (!snapEnabled || snapBeats <= 0 || snapLineMaxBeat < snapLineMinBeat) {
       return [] as number[];
     }
 
@@ -535,11 +545,21 @@ export default function ScoreTimeCanvas({
       snapValue,
       snapBeats,
       meterMap,
-      totalBeats,
+      snapLineMaxBeat,
       frameSnapContext,
       pixelsPerBeat,
+      snapLineMinBeat,
     ).map((beat) => Math.round(beat * pixelsPerBeat) + 0.5);
-  }, [meterMap, pixelsPerBeat, snapBeats, snapEnabled, snapValue, totalBeats, frameSnapContext]);
+  }, [
+    meterMap,
+    pixelsPerBeat,
+    snapBeats,
+    snapEnabled,
+    snapLineMaxBeat,
+    snapLineMinBeat,
+    snapValue,
+    frameSnapContext,
+  ]);
 
   const snapBeatValueMove = useCallback(
     (beats: number): number => {

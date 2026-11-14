@@ -26,6 +26,7 @@ import TempoLineView from './TempoLineView';
 import TempoPointDialog from './TempoPointDialog';
 import MeterEntryDialog from './MeterEntryDialog';
 import { useLiveTimePointerBeats } from './use-live-time-pointer-beats';
+import { useScoreViewportBounds } from './score-viewport-scroll';
 import { cn } from '../../../../lib/cn';
 
 interface Props {
@@ -275,6 +276,7 @@ function TimeBar({
   timePointerBeats?: number | null;
   onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
+  const { visibleStartBeats, visibleEndBeats } = useScoreViewportBounds(pixelsPerBeat);
   const marks = useMemo(
     () =>
       computeMarks(
@@ -286,6 +288,8 @@ function TimeBar({
         smpteFrameRate,
         sampleRate,
         smpteDropFrame,
+        visibleStartBeats,
+        visibleEndBeats,
       ),
     [
       timeDisplay,
@@ -296,6 +300,8 @@ function TimeBar({
       smpteFrameRate,
       sampleRate,
       smpteDropFrame,
+      visibleStartBeats,
+      visibleEndBeats,
     ],
   );
   const ROW_HEIGHT = 20;
@@ -371,22 +377,67 @@ function computeMarks(
   smpteFrameRate: number,
   sampleRate: number,
   smpteDropFrame = false,
+  visibleStartBeats?: number,
+  visibleEndBeats?: number,
 ): Mark[] {
+  if (
+    !Number.isFinite(totalBeats) ||
+    totalBeats < 0 ||
+    !Number.isFinite(pixelsPerBeat) ||
+    pixelsPerBeat <= 0
+  ) {
+    return [];
+  }
+
+  const padBeats = 50 / pixelsPerBeat;
+  const minBeat = visibleStartBeats !== undefined ? Math.max(0, visibleStartBeats - padBeats) : 0;
+  const maxBeat =
+    visibleEndBeats !== undefined ? Math.min(totalBeats, visibleEndBeats + padBeats) : totalBeats;
+
+  let marks: Mark[];
   switch (timeDisplay) {
     case TimeBase.TIME:
     case TimeBase.SECONDS:
-      return computeTimeMarks(totalBeats, pixelsPerBeat, tempoMap, timeDisplay);
+      marks = computeTimeMarks(totalBeats, pixelsPerBeat, tempoMap, timeDisplay, minBeat, maxBeat);
+      break;
     case TimeBase.SMPTE:
-      return computeSmpteMarks(totalBeats, pixelsPerBeat, tempoMap, smpteFrameRate, smpteDropFrame);
+      marks = computeSmpteMarks(
+        totalBeats,
+        pixelsPerBeat,
+        tempoMap,
+        smpteFrameRate,
+        smpteDropFrame,
+        minBeat,
+        maxBeat,
+      );
+      break;
     case TimeBase.FRAME:
-      return computeSamplesMarks(totalBeats, pixelsPerBeat, tempoMap, sampleRate);
+      marks = computeSamplesMarks(
+        totalBeats,
+        pixelsPerBeat,
+        tempoMap,
+        sampleRate,
+        minBeat,
+        maxBeat,
+      );
+      break;
     case TimeBase.BBT:
     case TimeBase.BBST:
     case TimeBase.BBF:
-      return computeMeasureMarks(totalBeats, pixelsPerBeat, meters);
+      marks = computeMeasureMarks(totalBeats, pixelsPerBeat, meters, minBeat, maxBeat);
+      break;
     default:
-      return computeBeatsMarks(totalBeats, pixelsPerBeat);
+      marks = computeBeatsMarks(totalBeats, pixelsPerBeat, minBeat, maxBeat);
+      break;
   }
+
+  if (visibleStartBeats === undefined && visibleEndBeats === undefined) {
+    return marks;
+  }
+
+  const minX = visibleStartBeats !== undefined ? visibleStartBeats * pixelsPerBeat - 50 : -Infinity;
+  const maxX = visibleEndBeats !== undefined ? visibleEndBeats * pixelsPerBeat + 50 : Infinity;
+  return marks.filter((mark) => mark.x >= minX && mark.x <= maxX);
 }
 
 function normalizeTempoPoints(snapshot: TempoMapSnapshot): TempoPointSnapshot[] {
@@ -528,11 +579,29 @@ function niceNum(x: number, round: boolean): number {
   return nf * Math.pow(10, exp);
 }
 
-function computeBeatsMarks(totalBeats: number, pixelsPerBeat: number): Mark[] {
+function computeBeatsMarks(
+  totalBeats: number,
+  pixelsPerBeat: number,
+  minBeat = 0,
+  maxBeat = totalBeats,
+): Mark[] {
+  if (
+    !Number.isFinite(totalBeats) ||
+    totalBeats < 0 ||
+    !Number.isFinite(pixelsPerBeat) ||
+    pixelsPerBeat <= 0 ||
+    !Number.isFinite(maxBeat)
+  ) {
+    return [];
+  }
   const majorBeatUnit = calcMajorBeatUnit(pixelsPerBeat);
+  const startStep = minBeat > 0 ? Math.max(0, Math.floor((minBeat - 1e-9) / majorBeatUnit)) : 0;
+  const endBeatLimit = Math.min(totalBeats, maxBeat) + majorBeatUnit * 0.5;
   const marks: Mark[] = [];
 
-  for (let beat = 0; beat <= totalBeats + majorBeatUnit * 0.5; beat += majorBeatUnit) {
+  for (let step = startStep; ; step += 1) {
+    const beat = step * majorBeatUnit;
+    if (beat > endBeatLimit) break;
     marks.push({
       x: beat * pixelsPerBeat,
       label: formatBeat(beat),
@@ -558,6 +627,8 @@ function computeTimeMarks(
   pixelsPerBeat: number,
   tempoMap: TempoMapSnapshot,
   format: string,
+  minBeat = 0,
+  maxBeat = totalBeats,
 ): Mark[] {
   const tempoAdapter = createTempoMapAdapter(tempoMap);
   const approxWidth = totalBeats * pixelsPerBeat;
@@ -570,14 +641,22 @@ function computeTimeMarks(
   const range = niceNum(endSeconds - startSeconds, false);
   if (range === 0) return [];
   const d = niceNum(range / (nticks - 1), true);
-  if (d === 0) return [];
+  if (!Number.isFinite(d) || d <= 0) return [];
   const graphMin = Math.floor(startSeconds / d) * d;
   const graphMax = Math.ceil(endSeconds / d) * d;
   const nfrac = Math.max(-Math.floor(Math.log10(d)), 0);
+  const visStartSeconds = tempoAdapter.beatsToSeconds(Math.max(0, minBeat));
+  const visEndSeconds = tempoAdapter.beatsToSeconds(Math.min(totalBeats, maxBeat));
+  const startStep = Math.max(0, Math.floor((visStartSeconds - 0.5 * d - graphMin) / d));
+  const endTick = Math.min(graphMax + 0.5 * d, visEndSeconds + 0.5 * d);
+  const endStep = Math.ceil((endTick - graphMin) / d);
+  if (!Number.isSafeInteger(startStep) || !Number.isSafeInteger(endStep)) return [];
 
   const marks: Mark[] = [];
 
-  for (let seconds = graphMin; seconds < graphMax + 0.5 * d; seconds += d) {
+  for (let step = startStep; step < endStep; step += 1) {
+    const seconds = graphMin + step * d;
+    if (seconds >= endTick) break;
     if (seconds < 0) continue;
     const beatPos = tempoAdapter.secondsToBeats(seconds);
     const x = totalBeats > 0 ? ((beatPos - startBeat) / totalBeats) * approxWidth : 0;
@@ -629,7 +708,10 @@ function computeSmpteMarks(
   tempoMap: TempoMapSnapshot,
   frameRate: number,
   dropFrame: boolean,
+  minBeat = 0,
+  maxBeat = totalBeats,
 ): Mark[] {
+  if (!Number.isFinite(pixelsPerBeat) || pixelsPerBeat <= 0) return [];
   const rate = resolveSmpteRate(frameRate);
   if (!rate) return [];
   const adapter = createTempoMapAdapter(tempoMap);
@@ -652,8 +734,26 @@ function computeSmpteMarks(
     600 * rate.nominal,
   ];
   const stride = strides.find((value) => value >= minimumStride) ?? Math.ceil(minimumStride);
+  const startFrame =
+    minBeat > 0
+      ? Math.max(
+          0,
+          Math.floor(
+            (secondsToSmpteFrame(adapter.beatsToSeconds(minBeat), frameRate, 'floor') ?? 0) /
+              stride,
+          ) * stride,
+        )
+      : 0;
+  const endFrameLimit =
+    maxBeat < totalBeats
+      ? Math.min(
+          lastFrame,
+          (secondsToSmpteFrame(adapter.beatsToSeconds(maxBeat), frameRate, 'nearest') ??
+            lastFrame) + stride,
+        )
+      : lastFrame;
   const marks: Mark[] = [];
-  for (let frame = 0; frame <= lastFrame; frame += stride) {
+  for (let frame = startFrame; frame <= endFrameLimit; frame += stride) {
     const seconds = smpteFrameToSeconds(frame, frameRate)!;
     marks.push({
       x: adapter.secondsToBeats(seconds) * pixelsPerBeat,
@@ -669,6 +769,8 @@ function computeSamplesMarks(
   pixelsPerBeat: number,
   tempoMap: TempoMapSnapshot,
   sampleRate: number,
+  minBeat = 0,
+  maxBeat = totalBeats,
 ): Mark[] {
   const tempoAdapter = createTempoMapAdapter(tempoMap);
   const safeSampleRate = sampleRate > 0 ? sampleRate : 44100;
@@ -682,14 +784,22 @@ function computeSamplesMarks(
   const range = niceNum(endSample - startSample, false);
   if (range === 0) return [];
   const d = niceNum(range / (nticks - 1), true);
-  if (d === 0) return [];
+  if (!Number.isFinite(d) || d <= 0) return [];
   const graphMin = Math.floor(startSample / d) * d;
   const graphMax = Math.ceil(endSample / d) * d;
   const nfrac = Math.max(-Math.floor(Math.log10(d)), 0);
+  const visStartSample = tempoAdapter.beatsToSeconds(Math.max(0, minBeat)) * safeSampleRate;
+  const visEndSample = tempoAdapter.beatsToSeconds(Math.min(totalBeats, maxBeat)) * safeSampleRate;
+  const startStep = Math.max(0, Math.floor((visStartSample - 0.5 * d - graphMin) / d));
+  const endTick = Math.min(graphMax + 0.5 * d, visEndSample + 0.5 * d);
+  const endStep = Math.ceil((endTick - graphMin) / d);
+  if (!Number.isSafeInteger(startStep) || !Number.isSafeInteger(endStep)) return [];
 
   const marks: Mark[] = [];
 
-  for (let sample = graphMin; sample < graphMax + 0.5 * d; sample += d) {
+  for (let step = startStep; step < endStep; step += 1) {
+    const sample = graphMin + step * d;
+    if (sample >= endTick) break;
     if (sample < 0) continue;
     const seconds = sample / safeSampleRate;
     const beatPos = tempoAdapter.secondsToBeats(seconds);
@@ -737,6 +847,8 @@ function computeMeasureMarks(
   totalBeats: number,
   pixelsPerBeat: number,
   meters: MeterSnapshot[],
+  minBeat = 0,
+  maxBeat = totalBeats,
 ): Mark[] {
   const meterTimeline = normalizeMeterEntries(meters);
   const firstMeter = meterTimeline[0]!;
@@ -756,12 +868,34 @@ function computeMeasureMarks(
     showBeats = true;
   }
 
-  const marks: Mark[] = [];
   let currentMeasure = 1;
+  if (minBeat > 0) {
+    let activeEntry = meterTimeline[0]!;
+    for (let i = 1; i < meterTimeline.length; i += 1) {
+      const candidate = meterTimeline[i]!;
+      if (candidate.startBeat <= minBeat) {
+        activeEntry = candidate;
+      } else {
+        break;
+      }
+    }
+    const measuresPastEntry =
+      activeEntry.beatsPerMeasure > 0
+        ? Math.max(0, Math.floor((minBeat - activeEntry.startBeat) / activeEntry.beatsPerMeasure))
+        : 0;
+    const approxMeasure = Math.max(1, activeEntry.measure + measuresPastEntry - 1);
+    currentMeasure = Math.max(
+      1,
+      1 + Math.floor((approxMeasure - 1) / measureGrouping) * measureGrouping,
+    );
+  }
+
+  const maxMeasureBeatLimit = Math.min(totalBeats, maxBeat) + beatsPerMeasure;
+  const marks: Mark[] = [];
 
   while (true) {
     const measureStartBeat = getMeasureStartBeat(meterTimeline, currentMeasure);
-    if (measureStartBeat > totalBeats + beatsPerMeasure) break;
+    if (measureStartBeat > maxMeasureBeatLimit) break;
 
     const x = measureStartBeat * pixelsPerBeat;
     if (x >= -50 && x <= totalBeats * pixelsPerBeat + 50) {

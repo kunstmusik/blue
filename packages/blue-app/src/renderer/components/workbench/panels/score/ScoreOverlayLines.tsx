@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { useScoreSelectionStore } from '../../../../stores/score-selection-store';
 import { useLiveTimePointerBeats } from './use-live-time-pointer-beats';
+import { useScoreViewportScrollLeft } from './score-viewport-scroll';
 
 interface Props {
   renderStartTime: number;
@@ -8,7 +9,7 @@ interface Props {
   timePointerBeats?: number | null;
   pixelsPerBeat: number;
   totalBeats: number;
-  scrollLeft: number;
+  scrollLeft?: number;
   audioDropGuideBeat?: number | null;
 }
 
@@ -18,9 +19,10 @@ export default memo(function ScoreOverlayLines({
   timePointerBeats,
   pixelsPerBeat,
   totalBeats,
-  scrollLeft,
+  scrollLeft: propScrollLeft,
   audioDropGuideBeat: propGuideBeat,
 }: Props) {
+  const scrollLeft = useScoreViewportScrollLeft(propScrollLeft);
   const storeGuideBeat = useScoreSelectionStore((s) => s.audioDropGuideBeat);
   const activeGuideBeat = propGuideBeat !== undefined ? propGuideBeat : storeGuideBeat;
   const resolvedTimePointerBeats = useLiveTimePointerBeats(timePointerBeats);

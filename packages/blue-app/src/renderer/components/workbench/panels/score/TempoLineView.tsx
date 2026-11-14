@@ -11,6 +11,7 @@ import type { ProjectDocumentCommitMetadata } from '../../../../../shared/projec
 import { type SnapValueName, snapValueToBeats } from '@blue/data';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { deriveSnapLineBeats } from './snap-grid-utils';
+import { useScoreViewportBounds } from './score-viewport-scroll';
 import {
   beatToScreenX,
   screenXToBeat,
@@ -52,6 +53,8 @@ interface TempoLineViewProps {
   meterMap: MeterMapSnapshot;
   totalBeats: number;
   pixelsPerBeat: number;
+  visibleStartBeats?: number;
+  visibleEndBeats?: number;
   snapEnabled: boolean;
   snapValue: SnapValueName;
   smpteFrameRate?: number;
@@ -80,6 +83,8 @@ export default function TempoLineView({
   meterMap,
   totalBeats,
   pixelsPerBeat,
+  visibleStartBeats: propVisibleStartBeats,
+  visibleEndBeats: propVisibleEndBeats,
   snapEnabled,
   snapValue,
   smpteFrameRate = 24,
@@ -88,6 +93,11 @@ export default function TempoLineView({
   scrollContainerRef,
   onTempoPatch,
 }: TempoLineViewProps) {
+  const { visibleStartBeats, visibleEndBeats } = useScoreViewportBounds(
+    pixelsPerBeat,
+    propVisibleStartBeats,
+    propVisibleEndBeats,
+  );
   const frameSnapContext = useMemo(
     () => createFrameSnapContext(tempoMap, smpteFrameRate),
     [tempoMap, smpteFrameRate],
@@ -459,8 +469,12 @@ export default function TempoLineView({
 
   const curveColor = enabled ? '#22c55e' : '#555';
 
+  const snapLineMinBeat =
+    visibleStartBeats !== undefined ? Math.max(0, Math.floor(visibleStartBeats)) : 0;
+  const snapLineMaxBeat =
+    visibleEndBeats !== undefined ? Math.min(totalBeats, Math.ceil(visibleEndBeats)) : totalBeats;
   const snapLines: number[] = [];
-  if (snapEnabled) {
+  if (snapEnabled && snapLineMaxBeat >= snapLineMinBeat) {
     const snapBeats = snapValueToBeats(
       snapValue,
       points[0]?.tempo ?? 60,
@@ -473,9 +487,10 @@ export default function TempoLineView({
         snapValue,
         snapBeats,
         meterMap,
-        totalBeats,
+        snapLineMaxBeat,
         frameSnapContext,
         pixelsPerBeat,
+        snapLineMinBeat,
       )) {
         snapLines.push(beatToScreenX(beat, pixelsPerBeat));
       }

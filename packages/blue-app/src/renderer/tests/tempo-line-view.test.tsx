@@ -589,4 +589,42 @@ describe('TempoLineView', () => {
     useProjectStore.setState({ sessionId: origSessionId });
     act(() => root.unmount());
   });
+
+  it('culls tempo snap grid lines to visible viewport bounds', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const scrollContainer = document.createElement('div');
+
+    act(() => {
+      root.render(
+        <TempoLineView
+          tempoMap={BASE_TEMPO_MAP}
+          meterMap={{ entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+          totalBeats={1000}
+          pixelsPerBeat={20}
+          visibleStartBeats={100}
+          visibleEndBeats={103}
+          snapEnabled={true}
+          snapValue="BEAT"
+          rootTimelineOnly={true}
+          scrollContainerRef={{ current: scrollContainer }}
+          onTempoPatch={vi.fn()}
+        />,
+      );
+    });
+
+    const snapGridLines = Array.from(container.querySelectorAll('svg line')).filter(
+      (line) => line.getAttribute('stroke') === '#333',
+    );
+    expect(snapGridLines.map((line) => line.getAttribute('x1'))).toEqual([
+      '2000',
+      '2020',
+      '2040',
+      '2060',
+    ]);
+
+    act(() => root.unmount());
+    container.remove();
+  });
 });

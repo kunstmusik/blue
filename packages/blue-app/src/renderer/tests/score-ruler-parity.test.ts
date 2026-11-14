@@ -101,3 +101,82 @@ it('places DF labels on physical frame starts at skipped and tenth minutes', () 
   expect(marks.find((mark) => mark.label === '00:01:00;02')?.x).toBeCloseTo(60.06 * 2400, 6);
   expect(marks.find((mark) => mark.label === '00:10:00;00')?.x).toBeCloseTo(599.9994 * 2400, 6);
 });
+
+describe('computeMarks viewport bounds culling', () => {
+  it.each([TimeBase.TIME, TimeBase.SECONDS, TimeBase.FRAME])(
+    'returns no %s marks when a finite tempo overflows conversion',
+    (timeDisplay) => {
+      const tempoMap: TempoMapSnapshot = {
+        ...TEMPO_60,
+        points: [{ beat: 0, tempo: 1e-309, curveType: 'constant' }],
+      };
+      expect(
+        __testOnly.computeMarks(timeDisplay, 80, 100, tempoMap, METERS_4_4, 24, 44100),
+      ).toEqual([]);
+    },
+  );
+
+  it.each([TimeBase.BEATS, TimeBase.BBT, TimeBase.TIME, TimeBase.SMPTE, TimeBase.FRAME])(
+    'keeps %s marks bounded and aligned with full-timeline marks',
+    (timeDisplay) => {
+      const totalBeats = 10000;
+      const pixelsPerBeat = 24;
+      const visibleStartBeats = 5000;
+      const visibleEndBeats = 5020;
+
+      const fullMarks = __testOnly.computeMarks(
+        timeDisplay,
+        totalBeats,
+        pixelsPerBeat,
+        TEMPO_60,
+        METERS_4_4,
+        24,
+        44100,
+        false,
+      );
+      const slicedMarks = __testOnly.computeMarks(
+        timeDisplay,
+        totalBeats,
+        pixelsPerBeat,
+        TEMPO_60,
+        METERS_4_4,
+        24,
+        44100,
+        false,
+        visibleStartBeats,
+        visibleEndBeats,
+      );
+
+      const minX = visibleStartBeats * pixelsPerBeat - 50 - 1e-6;
+      const maxX = visibleEndBeats * pixelsPerBeat + 50 + 1e-6;
+      const expectedSlice = fullMarks.filter((mark) => mark.x >= minX && mark.x <= maxX);
+
+      expect(slicedMarks.length).toBeGreaterThan(0);
+      expect(slicedMarks.length).toBeLessThan(200);
+      expect(slicedMarks).toEqual(expectedSlice);
+    },
+  );
+
+  it.each([TimeBase.BEATS, TimeBase.BBT, TimeBase.TIME, TimeBase.SMPTE, TimeBase.FRAME])(
+    'returns no marks when %s receives zero or non-finite pixelsPerBeat or totalBeats',
+    (timeDisplay) => {
+      expect(__testOnly.computeMarks(timeDisplay, 100, 0, TEMPO_60, METERS_4_4, 24, 44100)).toEqual(
+        [],
+      );
+      expect(
+        __testOnly.computeMarks(timeDisplay, 100, Number.NaN, TEMPO_60, METERS_4_4, 24, 44100),
+      ).toEqual([]);
+      expect(
+        __testOnly.computeMarks(
+          timeDisplay,
+          Number.POSITIVE_INFINITY,
+          24,
+          TEMPO_60,
+          METERS_4_4,
+          24,
+          44100,
+        ),
+      ).toEqual([]);
+    },
+  );
+});

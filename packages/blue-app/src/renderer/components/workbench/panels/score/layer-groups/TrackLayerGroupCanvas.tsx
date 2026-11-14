@@ -36,6 +36,7 @@ import { attachHostGesture } from '../../../../../lib/host-gesture';
 import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { createFrameSnapContext, snapBeatToGrid } from '../snap-grid-utils';
+import { useScoreViewportBounds } from '../score-viewport-scroll';
 import {
   canHydrateClipboardEntries,
   clipboardNeedsXmlHydration,
@@ -203,8 +204,8 @@ function clampBeat(value: number, totalBeats: number): number {
 
 export default function TrackLayerGroupCanvas({
   group,
-  visibleStartBeats,
-  visibleEndBeats,
+  visibleStartBeats: propVisibleStartBeats,
+  visibleEndBeats: propVisibleEndBeats,
   allLayerGroups = [group],
   projectSessionId,
   projectRevision,
@@ -221,6 +222,11 @@ export default function TrackLayerGroupCanvas({
   meterMap,
   onDoubleClickObject,
 }: Props) {
+  const { visibleStartBeats, visibleEndBeats } = useScoreViewportBounds(
+    pixelsPerBeat,
+    propVisibleStartBeats,
+    propVisibleEndBeats,
+  );
   const frameSnapContext = useMemo(
     () => createFrameSnapContext(tempoMap, smpteFrameRate, tempo),
     [tempoMap, smpteFrameRate, tempo],

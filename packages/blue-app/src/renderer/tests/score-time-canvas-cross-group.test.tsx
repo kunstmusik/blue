@@ -817,6 +817,50 @@ describe('ScoreTimeCanvas cross-group gestures', () => {
     });
   });
 
+  it('culls snap line path commands to visible viewport bounds', () => {
+    const soundGroup = createSoundGroup([[createSoundItem('sound-1', 'Sine', 0, 0, 100, 2)]]);
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(
+        <ScoreTimeCanvas
+          group={soundGroup}
+          allLayerGroups={[soundGroup]}
+          rootGroupIndex={0}
+          projectSessionId={1}
+          projectRevision={0}
+          scoreRootGroupId={soundGroup.groupId}
+          scoreContainerPath={[]}
+          totalBeats={1000}
+          pixelsPerBeat={25}
+          visibleStartBeats={100}
+          visibleEndBeats={104}
+          snapEnabled={true}
+          snapValue="BEAT"
+          tempo={60}
+          smpteFrameRate={24}
+          meterMap={{
+            entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }],
+          }}
+        />,
+      );
+    });
+
+    const snapLines = container.querySelector('[data-snap-lines-layer="sound-group-layer-0"]');
+    const pathD = snapLines?.querySelector('path')?.getAttribute('d') ?? '';
+    expect(snapLines?.getAttribute('width')).toBe('25000');
+    expect(pathD).toContain('M 2500.5 0 V 44');
+    expect(pathD).toContain('M 2600.5 0 V 44');
+    expect(pathD).not.toContain('M 0.5 0 V 44');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('imports a context-normalized SoundObject at the requested score position', async () => {
     const serializedXml = '<soundObject type="blue.soundObject.GenericScore" />';
     window.blueAPI = {

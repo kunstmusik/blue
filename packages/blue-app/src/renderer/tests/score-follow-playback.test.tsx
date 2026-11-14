@@ -1069,4 +1069,81 @@ describe('ScorePanel once-only follow-on-start and terminal restoration (US4 / T
 
     cleanupPanel(rendered);
   });
+
+  it('moves horizontal overlay scroll offset without re-rendering LayerPanel or ColumnHeader', () => {
+    seedLoadedProject();
+    const rendered = renderPanel();
+    const { body, header } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
+
+    mockLayerPanelRender.mockClear();
+    mockColumnHeaderRender.mockClear();
+
+    act(() => {
+      body.scrollLeft = 450;
+      body.dispatchEvent(new Event('scroll'));
+    });
+
+    const overlayContent = rendered.container.querySelector(
+      '[data-score-overlay-content]',
+    ) as HTMLElement | null;
+    expect(overlayContent).not.toBeNull();
+    expect(overlayContent?.style.transform).toBe('translateX(-450px)');
+    expect(header.scrollLeft).toBe(450);
+    expect(mockLayerPanelRender).toHaveBeenCalledTimes(0);
+    expect(mockColumnHeaderRender).toHaveBeenCalledTimes(0);
+
+    act(() => {
+      header.scrollLeft = 1200;
+      header.dispatchEvent(new Event('scroll'));
+    });
+
+    expect(overlayContent?.style.transform).toBe('translateX(-1200px)');
+    expect(body.scrollLeft).toBe(1200);
+    expect(mockLayerPanelRender).toHaveBeenCalledTimes(0);
+    expect(mockColumnHeaderRender).toHaveBeenCalledTimes(0);
+
+    cleanupPanel(rendered);
+  });
+
+  it('resets horizontal scroll store state when closing and reopening a project at the same panel width', () => {
+    seedLoadedProject();
+    const rendered = renderPanel();
+    const { body } = getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
+
+    act(() => {
+      body.scrollLeft = 2000;
+      body.dispatchEvent(new Event('scroll'));
+    });
+    expect(
+      (rendered.container.querySelector('[data-score-overlay-content]') as HTMLElement | null)
+        ?.style.transform,
+    ).toBe('translateX(-2000px)');
+
+    // Close project, then load a new project in the same panel width
+    act(() => {
+      useProjectStore.setState({ loaded: false });
+    });
+    act(() => {
+      seedLoadedProject();
+      useProjectStore.setState({ sessionId: 2 });
+    });
+    getScoreSurface(rendered.container, {
+      clientWidth: 1000,
+      scrollWidth: 10000,
+    });
+
+    const reopenedOverlay = rendered.container.querySelector(
+      '[data-score-overlay-content]',
+    ) as HTMLElement | null;
+    expect(reopenedOverlay).not.toBeNull();
+    expect(['translateX(0px)', 'translateX(-0px)']).toContain(reopenedOverlay?.style.transform);
+
+    cleanupPanel(rendered);
+  });
 });

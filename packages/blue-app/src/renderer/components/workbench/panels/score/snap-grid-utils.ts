@@ -25,6 +25,21 @@ export function createFrameSnapContext(
 }
 
 const EPSILON = 1e-9;
+const MIN_GRID_LINE_SPACING_PX = 8;
+
+function measureBeatForEntry(entry: MeterSnapshot, measure: number): number {
+  return entry.startBeat + (measure - entry.measure) * getBeatsPerMeasure(entry);
+}
+
+function resolveGridStepStride(stepBeats: number, pixelsPerBeat: number): number {
+  if (!Number.isFinite(stepBeats) || stepBeats <= 0) {
+    return 1;
+  }
+  const effectivePixelsPerBeat =
+    Number.isFinite(pixelsPerBeat) && pixelsPerBeat > 0 ? pixelsPerBeat : 100;
+  const spacingPx = stepBeats * effectivePixelsPerBeat;
+  return Math.max(1, Math.ceil(MIN_GRID_LINE_SPACING_PX / spacingPx));
+}
 
 function normalizeMeterEntries(meterMap: MeterMapSnapshot | null | undefined): MeterSnapshot[] {
   const entries = meterMap?.entries.length
@@ -36,10 +51,6 @@ function normalizeMeterEntries(meterMap: MeterMapSnapshot | null | undefined): M
 
 function getBeatsPerMeasure(entry: MeterSnapshot): number {
   return entry.numBeats * (4.0 / entry.beatLength);
-}
-
-function getMaxBeatsPerMeasure(entries: MeterSnapshot[]): number {
-  return entries.reduce((max, entry) => Math.max(max, getBeatsPerMeasure(entry)), 4);
 }
 
 function usesMeterBoundarySnap(snapValue: SnapValueName, snapBeats: number): boolean {
@@ -58,70 +69,130 @@ function pushUnique(lines: number[], beat: number): void {
   }
 }
 
-export function deriveBarSnapLineBeats(
-  meterMap: MeterMapSnapshot | null | undefined,
-  maxBeat: number,
-): number[] {
-  const entries = normalizeMeterEntries(meterMap);
-  const lines: number[] = [];
-  let entryIndex = 0;
-  let currentMeasure = entries[0]!.measure;
-  let currentBeat = entries[0]!.startBeat;
-
-  while (currentBeat <= maxBeat + EPSILON) {
-    pushUnique(lines, currentBeat);
-
-    const nextMeasure = currentMeasure + 1;
-    const nextEntry = entries[entryIndex + 1];
-    if (nextEntry && nextMeasure >= nextEntry.measure) {
-      entryIndex += 1;
-      currentMeasure = nextEntry.measure;
-      currentBeat = nextEntry.startBeat;
-    } else {
-      currentBeat += getBeatsPerMeasure(entries[entryIndex]!);
-      currentMeasure = nextMeasure;
-    }
-  }
-
-  return lines;
+interface MeterPosition {
+  entryIndex: number;
+  measure: number;
+  beat: number;
 }
 
-function deriveMeterAnchoredAutoSnapLineBeats(
+function findMeterEntryIndex(entries: MeterSnapshot[], targetBeat: number): number {
+  let lo = 0;
+  let hi = entries.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >>> 1;
+    if (entries[mid]!.startBeat <= targetBeat) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return lo;
+}
+
+function advanceMeasure(
+  entries: MeterSnapshot[],
+  entryIndex: number,
+  currentMeasure: number,
+  stride = 1,
+): MeterPosition {
+  const nextMeasure = currentMeasure + stride;
+  const nextEntry = entries[entryIndex + 1];
+  if (nextEntry && nextMeasure >= nextEntry.measure) {
+    return {
+      entryIndex: entryIndex + 1,
+      measure: nextEntry.measure,
+      beat: nextEntry.startBeat,
+    };
+  }
+  return {
+    entryIndex,
+    measure: nextMeasure,
+    beat: measureBeatForEntry(entries[entryIndex]!, nextMeasure),
+  };
+}
+
+function locateMeterStartPosition(
+  entries: MeterSnapshot[],
+  targetBeat: number,
+  extraPrecedingMeasures = 0,
+): MeterPosition {
+  const first = entries[0]!;
+  if (targetBeat <= first.startBeat) {
+    return { entryIndex: 0, measure: first.measure, beat: first.startBeat };
+  }
+
+  const entryIndex = findMeterEntryIndex(entries, targetBeat);
+  const entry = entries[entryIndex]!;
+  const nextEntry = entries[entryIndex + 1];
+  const beatsPerMeasure = getBeatsPerMeasure(entry);
+  const maxOffset =
+    nextEntry !== undefined
+      ? Math.max(0, nextEntry.measure - entry.measure - 1)
+      : Number.POSITIVE_INFINITY;
+  const rawOffset =
+    beatsPerMeasure > 0 ? Math.floor((targetBeat - entry.startBeat) / beatsPerMeasure) : 0;
+  const clampedOffset = Math.min(maxOffset, Math.max(0, rawOffset));
+  const adjustedOffset = Math.max(0, clampedOffset - extraPrecedingMeasures);
+  const targetMeasure = entry.measure + adjustedOffset;
+
+  return {
+    entryIndex,
+    measure: targetMeasure,
+    beat: measureBeatForEntry(entry, targetMeasure),
+  };
+}
+
+function deriveMeterSnapLineBeats(
   snapBeats: number,
   meterMap: MeterMapSnapshot | null | undefined,
   maxBeat: number,
+  minBeat: number,
+  pixelsPerBeat: number,
 ): number[] {
   const entries = normalizeMeterEntries(meterMap);
+  const start = locateMeterStartPosition(entries, minBeat - EPSILON, 1);
+  const subStride = resolveGridStepStride(snapBeats, pixelsPerBeat);
   const lines: number[] = [];
-  let entryIndex = 0;
-  let currentMeasure = entries[0]!.measure;
-  let currentBeat = entries[0]!.startBeat;
+  let { entryIndex } = start;
+  let entry = entries[entryIndex]!;
+  let measureStride = resolveGridStepStride(getBeatsPerMeasure(entry), pixelsPerBeat);
+  // Anchor each stride to the meter entry so scrolling cannot shift the grid.
+  let currentMeasure =
+    entry.measure + Math.floor((start.measure - entry.measure) / measureStride) * measureStride;
+  let currentBeat = measureBeatForEntry(entry, currentMeasure);
 
   while (currentBeat <= maxBeat + EPSILON) {
-    const nextMeasure = currentMeasure + 1;
-    const nextEntry = entries[entryIndex + 1];
-    const nextBeat =
-      nextEntry && nextMeasure >= nextEntry.measure
-        ? nextEntry.startBeat
-        : currentBeat + getBeatsPerMeasure(entries[entryIndex]!);
+    const next = advanceMeasure(entries, entryIndex, currentMeasure, measureStride);
+    const nextBeat = next.beat;
 
-    pushUnique(lines, currentBeat);
-    for (
-      let beat = currentBeat + snapBeats;
-      beat <= maxBeat + EPSILON && beat < nextBeat - EPSILON;
-      beat += snapBeats
-    ) {
-      pushUnique(lines, beat);
+    if (currentBeat >= minBeat - EPSILON) {
+      pushUnique(lines, currentBeat);
     }
 
-    if (nextEntry && nextMeasure >= nextEntry.measure) {
-      entryIndex += 1;
-      currentMeasure = nextEntry.measure;
-      currentBeat = nextEntry.startBeat;
-    } else {
-      currentMeasure = nextMeasure;
-      currentBeat = nextBeat;
+    if (snapBeats > 0 && measureStride === 1) {
+      const subStep = snapBeats * subStride;
+      const firstSubIndex = Math.max(1, Math.floor((minBeat - EPSILON - currentBeat) / subStep));
+      for (let subIndex = firstSubIndex; Number.isSafeInteger(subIndex); subIndex += 1) {
+        const beat = currentBeat + subIndex * subStep;
+        if (beat > maxBeat + EPSILON || beat >= nextBeat - EPSILON) {
+          break;
+        }
+        if (beat >= minBeat - EPSILON) {
+          pushUnique(lines, beat);
+        }
+      }
     }
+
+    if (next.entryIndex === entryIndex && next.beat <= currentBeat) {
+      break;
+    }
+    if (entryIndex !== next.entryIndex) {
+      entryIndex = next.entryIndex;
+      entry = entries[entryIndex]!;
+      measureStride = resolveGridStepStride(getBeatsPerMeasure(entry), pixelsPerBeat);
+    }
+    currentMeasure = next.measure;
+    currentBeat = nextBeat;
   }
 
   return lines;
@@ -134,35 +205,66 @@ export function deriveSnapLineBeats(
   maxBeat: number,
   context?: TimeConversionContext,
   pixelsPerBeat = 100,
+  minBeat = 0,
 ): number[] {
+  if (!Number.isFinite(maxBeat) || !Number.isFinite(minBeat) || maxBeat < minBeat - EPSILON) {
+    return [];
+  }
+
   if (snapValue === 'FRAME' && context) {
     const rate = context.smpteFrameRate ?? 24;
     const last = secondsToSmpteFrame(beatsToSeconds(maxBeat, context), rate);
     const descriptor = resolveSmpteRate(rate);
     if (last === null || !descriptor) return [];
-    const spacing =
-      secondsToBeats(descriptor.denominator / descriptor.numerator, context) * pixelsPerBeat;
-    const stride = Math.max(1, Math.ceil(8 / Math.max(spacing, Number.EPSILON)));
+    // The slowest tempo gives a lower bound on beat spacing across every frame,
+    // including ramps. A score-wide stride keeps frame marks stable while scrolling.
+    const tempoPoints = context.tempoPoints;
+    const minTempo = !context.tempoEnabled
+      ? 60
+      : tempoPoints?.length
+        ? tempoPoints.reduce((min, point) => Math.min(min, point.tempo), Infinity)
+        : context.initialTempo;
+    const frameBeats = (minTempo / 60) * (descriptor.denominator / descriptor.numerator);
+    if (!Number.isFinite(frameBeats) || frameBeats <= 0) return [];
+    const stride = resolveGridStepStride(frameBeats, pixelsPerBeat);
+    if (!Number.isSafeInteger(stride)) return [];
+    const firstFrameRaw =
+      minBeat > 0 ? (secondsToSmpteFrame(beatsToSeconds(minBeat, context), rate, 'floor') ?? 0) : 0;
+    const startFrame = Math.max(0, Math.floor(firstFrameRaw / stride) * stride);
     const lines: number[] = [];
-    for (let frame = 0; frame <= last; frame += stride)
-      lines.push(secondsToBeats(smpteFrameToSeconds(frame, rate)!, context));
+    for (let frame = startFrame; frame <= last; frame += stride) {
+      const frameBeat = secondsToBeats(smpteFrameToSeconds(frame, rate)!, context);
+      if (frameBeat >= minBeat - EPSILON) {
+        lines.push(frameBeat);
+      }
+    }
     return lines;
   }
   if (usesMeterBoundarySnap(snapValue, snapBeats)) {
-    return deriveBarSnapLineBeats(meterMap, maxBeat);
+    return deriveMeterSnapLineBeats(0, meterMap, maxBeat, minBeat, pixelsPerBeat);
   }
 
-  if (usesMeterAnchoredAutoSnap(snapValue, snapBeats)) {
-    return deriveMeterAnchoredAutoSnapLineBeats(snapBeats, meterMap, maxBeat);
+  if (Number.isFinite(snapBeats) && usesMeterAnchoredAutoSnap(snapValue, snapBeats)) {
+    return deriveMeterSnapLineBeats(snapBeats, meterMap, maxBeat, minBeat, pixelsPerBeat);
   }
 
-  if (snapBeats <= 0) {
+  if (!Number.isFinite(snapBeats) || snapBeats <= 0) {
     return [];
   }
 
+  const stride = resolveGridStepStride(snapBeats, pixelsPerBeat);
+  const strideBeats = snapBeats * stride;
+  const startStep =
+    minBeat > 0 ? Math.max(0, Math.floor((minBeat - EPSILON) / strideBeats)) * stride : 0;
   const lines: number[] = [];
-  for (let beat = 0; beat <= maxBeat + EPSILON; beat += snapBeats) {
-    lines.push(beat);
+  for (let step = startStep; Number.isSafeInteger(step); step += stride) {
+    const beat = step * snapBeats;
+    if (beat > maxBeat + EPSILON) {
+      break;
+    }
+    if (beat >= minBeat - EPSILON) {
+      lines.push(beat);
+    }
   }
   return lines;
 }
@@ -184,28 +286,63 @@ export function snapBeatToGrid(
     !usesMeterBoundarySnap(snapValue, snapBeats) &&
     !usesMeterAnchoredAutoSnap(snapValue, snapBeats)
   ) {
-    if (snapBeats <= 0) return beat;
+    if (!Number.isFinite(snapBeats) || snapBeats <= 0) return beat;
     return mode === 'floor'
       ? Math.floor(beat / snapBeats) * snapBeats
       : Math.round(beat / snapBeats) * snapBeats;
   }
 
   const entries = normalizeMeterEntries(meterMap);
-  const lookahead = Math.max(getMaxBeatsPerMeasure(entries), snapBeats) + 1;
-  const lines = usesMeterBoundarySnap(snapValue, snapBeats)
-    ? deriveBarSnapLineBeats(meterMap, Math.max(0, beat) + lookahead)
-    : deriveMeterAnchoredAutoSnapLineBeats(snapBeats, meterMap, Math.max(0, beat) + lookahead);
-  let previous = lines[0] ?? 0;
+  const start = locateMeterStartPosition(entries, beat - EPSILON, 1);
+  const meterBoundaryOnly = usesMeterBoundarySnap(snapValue, snapBeats);
+  let { entryIndex, measure: currentMeasure, beat: currentBeat } = start;
+  let previous = currentBeat;
   let next = previous;
+  let foundNext = false;
 
-  for (const line of lines) {
-    if (line <= beat + EPSILON) {
-      previous = line;
+  const inspectCandidate = (candidate: number): boolean => {
+    if (candidate <= beat + EPSILON) {
+      previous = candidate;
     }
-    if (line >= beat - EPSILON) {
-      next = line;
+    if (candidate >= beat - EPSILON) {
+      next = candidate;
+      foundNext = true;
+      return true;
+    }
+    return false;
+  };
+
+  while (!foundNext) {
+    const nextPos = advanceMeasure(entries, entryIndex, currentMeasure);
+    if (inspectCandidate(currentBeat)) {
       break;
     }
+
+    if (!meterBoundaryOnly) {
+      const startSubIndex =
+        beat > currentBeat
+          ? Math.max(1, Math.floor((beat - EPSILON - currentBeat) / snapBeats) - 1)
+          : 1;
+      for (let subIndex = startSubIndex; ; subIndex += 1) {
+        const subBeat = currentBeat + subIndex * snapBeats;
+        if (subBeat >= nextPos.beat - EPSILON) {
+          break;
+        }
+        if (inspectCandidate(subBeat)) {
+          break;
+        }
+      }
+      if (foundNext) {
+        break;
+      }
+    }
+
+    if (nextPos.entryIndex === entryIndex && nextPos.beat <= currentBeat) {
+      break;
+    }
+    entryIndex = nextPos.entryIndex;
+    currentMeasure = nextPos.measure;
+    currentBeat = nextPos.beat;
   }
 
   if (mode === 'floor') {

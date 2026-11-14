@@ -54,6 +54,10 @@ import { useScoreRulerSelection } from './score/useScoreRulerSelection';
 import { ScorePlaybackAutoFollow } from './score/use-live-time-pointer-beats';
 import { usePlaybackDisplayTicker, usePlaybackStore } from '../../../stores/playback-store';
 import ScoreOverlayLines from './score/ScoreOverlayLines';
+import {
+  createScoreViewportScrollStore,
+  ScoreViewportScrollProvider,
+} from './score/score-viewport-scroll';
 import NoteProcessorChainDialog from './score-object/note-processors/NoteProcessorChainDialog';
 import TrackInstrumentControl from './score/TrackInstrumentControl';
 import ColorPickerButton from '../../ColorPicker';
@@ -278,7 +282,7 @@ export default function ScorePanel() {
   const leftHeaderRef = useRef<HTMLDivElement>(null);
   const timelineHeaderRef = useRef<HTMLDivElement>(null);
   const [nestedSnapshot, setNestedSnapshot] = useState<PolyObjectLayerGroupSnapshot | null>(null);
-  const [scrollOverlayLeft, setScrollOverlayLeft] = useState(0);
+  const [viewportScrollStore] = useState(() => createScoreViewportScrollStore());
   const [containerWidth, setContainerWidth] = useState(0);
 
   // Follow-navigation provenance (FR-007): programmatic horizontal writes
@@ -350,9 +354,9 @@ export default function ScorePanel() {
       if (header && header.scrollLeft !== resolvedScrollLeft) {
         header.scrollLeft = resolvedScrollLeft;
       }
-      setScrollOverlayLeft(resolvedScrollLeft);
+      viewportScrollStore.setScrollLeft(resolvedScrollLeft);
     },
-    [scrollContainerRef],
+    [scrollContainerRef, viewportScrollStore],
   );
 
   const applyProgrammaticHorizontalScroll = useCallback(
@@ -463,12 +467,17 @@ export default function ScorePanel() {
 
   // Track the scroll container width so totalBeats can fill the visible area when zoomed out.
   useLayoutEffect(() => {
-    if (!loaded) return;
+    if (!loaded) {
+      viewportScrollStore.setContainerWidth(0);
+      viewportScrollStore.setScrollLeft(0);
+      return;
+    }
     const update = () => {
       const width =
         scrollContainerRef.current?.clientWidth || timelineHeaderRef.current?.clientWidth || 0;
       if (width > 0) {
-        setContainerWidth(width);
+        viewportScrollStore.setContainerWidth(width);
+        setContainerWidth((prev) => (prev === width ? prev : width));
       }
     };
     update();
@@ -477,7 +486,7 @@ export default function ScorePanel() {
     if (scrollContainerRef.current) observer.observe(scrollContainerRef.current);
     if (timelineHeaderRef.current) observer.observe(timelineHeaderRef.current);
     return () => observer.disconnect();
-  }, [loaded, scrollContainerRef]);
+  }, [loaded, sessionId, scrollContainerRef, viewportScrollStore]);
 
   const visibleBeats = containerWidth > 0 ? containerWidth / pixelsPerBeat : 0;
   const totalBeats = Math.max(computeTotalBeats(effectiveLayerGroups), visibleBeats);
@@ -536,19 +545,26 @@ export default function ScorePanel() {
 
   useLayoutEffect(() => {
     const timeline = scrollContainerRef.current;
-    if (timeline) {
-      // Body/header alignment after layout changes is layout-sync, never user
-      // navigation; consume the events it induces on both surfaces.
-      markExpectedHorizontalScroll(timeline.scrollLeft);
-      synchronizeHorizontalScroll(timeline.scrollLeft);
+    if (!loaded || !timeline) {
+      viewportScrollStore.setScrollLeft(0);
+      lastScrollPositionsRef.current = { body: null, header: null };
+      expectedHorizontalScrollsRef.current = { body: null, header: null };
+      return;
     }
+    // Body/header alignment after layout changes is layout-sync, never user
+    // navigation; consume the events it induces on both surfaces.
+    markExpectedHorizontalScroll(timeline.scrollLeft);
+    synchronizeHorizontalScroll(timeline.scrollLeft);
   }, [
+    loaded,
+    sessionId,
     session.activeGroupId,
     pixelsPerBeat,
     totalBeats,
     scrollContainerRef,
     synchronizeHorizontalScroll,
     markExpectedHorizontalScroll,
+    viewportScrollStore,
   ]);
 
   const handleTimelineScroll = useCallback(() => {
@@ -828,163 +844,159 @@ export default function ScorePanel() {
             return group?.noteProcessorChain;
           }}
         />
-        <SplitPane
-          ariaLabel="Resize score layer headers and timeline"
-          className="flex-1 min-h-0 bg-app-canvas"
-          firstClassName="min-h-0"
-          secondClassName="min-w-0"
-          splitId="score.main"
-          controlledPane="first"
-          defaultSizePx={200}
-          minFirstSize={80}
-          minSecondSize={200}
-          orientation="horizontal"
-          first={
-            <LeftPanel
-              timeState={timeState}
-              tempoMapEnabled={transport.tempoMap.enabled}
-              tempoMapVisible={transport.tempoMap.visible}
-              onTempoEnabledChange={handleTempoEnabledChange}
-              onTempoVisibleChange={handleTempoVisibleChange}
-              onRowVisibilityChange={handleRowVisibilityChange}
-              layerGroups={displayLayerGroups}
-              visibleLayers={visibleLayers}
-              scopeKey={scopeKey}
-              scopeGroupId={session.activeGroupId ?? null}
-              projectSessionId={sessionId}
-              projectRevision={getProjectDocumentRevision()}
-              leftHeaderRef={leftHeaderRef}
-              onLeftScroll={handleLeftHeaderScroll}
-              onManage={() => setManageDialogOpen(true)}
-              onLayerGroupNoteProcessorChain={(groupId) =>
-                setChainDialogTarget({ scope: 'layerGroup', groupId })
-              }
-              onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) =>
-                setChainDialogTarget(
-                  trackId
-                    ? { scope: 'track', groupId, trackId, layerIndex }
-                    : { scope: 'soundLayer', groupId, layerIndex },
-                )
-              }
-            />
-          }
-          second={
-            <div className="h-full w-full flex flex-col">
-              <ScorePlaybackAutoFollow
-                isRootTimeline={isRootTimeline}
-                pixelsPerBeat={pixelsPerBeat}
-                scrollContainerRef={scrollContainerRef}
-                applyProgrammaticHorizontalScroll={applyProgrammaticHorizontalScroll}
+        <ScoreViewportScrollProvider store={viewportScrollStore}>
+          <SplitPane
+            ariaLabel="Resize score layer headers and timeline"
+            className="flex-1 min-h-0 bg-app-canvas"
+            firstClassName="min-h-0"
+            secondClassName="min-w-0"
+            splitId="score.main"
+            controlledPane="first"
+            defaultSizePx={200}
+            minFirstSize={80}
+            minSecondSize={200}
+            orientation="horizontal"
+            first={
+              <LeftPanel
+                timeState={timeState}
+                tempoMapEnabled={transport.tempoMap.enabled}
+                tempoMapVisible={transport.tempoMap.visible}
+                onTempoEnabledChange={handleTempoEnabledChange}
+                onTempoVisibleChange={handleTempoVisibleChange}
+                onRowVisibilityChange={handleRowVisibilityChange}
+                layerGroups={displayLayerGroups}
+                visibleLayers={visibleLayers}
+                scopeKey={scopeKey}
+                scopeGroupId={session.activeGroupId ?? null}
+                projectSessionId={sessionId}
+                projectRevision={getProjectDocumentRevision()}
+                leftHeaderRef={leftHeaderRef}
+                onLeftScroll={handleLeftHeaderScroll}
+                onManage={() => setManageDialogOpen(true)}
+                onLayerGroupNoteProcessorChain={(groupId) =>
+                  setChainDialogTarget({ scope: 'layerGroup', groupId })
+                }
+                onSoundLayerNoteProcessorChain={(groupId, layerIndex, trackId) =>
+                  setChainDialogTarget(
+                    trackId
+                      ? { scope: 'track', groupId, trackId, layerIndex }
+                      : { scope: 'soundLayer', groupId, layerIndex },
+                  )
+                }
               />
-              <div
-                ref={timelineHeaderRef}
-                data-score-timeline-header
-                className="shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                onScroll={handleTimelineHeaderScroll}
-              >
-                <ColumnHeader
-                  timeState={timeState}
-                  markers={score.markers}
-                  meters={transport.meterMap.entries}
-                  meterMap={transport.meterMap}
-                  tempoMap={transport.tempoMap}
-                  totalBeats={totalBeats}
+            }
+            second={
+              <div className="h-full w-full flex flex-col">
+                <ScorePlaybackAutoFollow
+                  isRootTimeline={isRootTimeline}
                   pixelsPerBeat={pixelsPerBeat}
-                  sampleRate={transport.sampleRate}
-                  renderStartTime={transport.renderStartTime}
-                  renderEndTime={transport.renderEndTime}
-                  snapEnabled={snapEnabled}
-                  snapValue={snapValue}
                   scrollContainerRef={scrollContainerRef}
-                  rootTimelineOnly={isRootTimeline}
-                  tempo={initialTempo}
-                  rulerMouseDown={rulerMouseDown}
-                  onTempoPatch={handleTempoPatch}
-                  onMeterPatch={handleMeterPatch}
+                  applyProgrammaticHorizontalScroll={applyProgrammaticHorizontalScroll}
                 />
-              </div>
-              <div className="relative flex-1 min-h-0">
                 <div
-                  ref={scrollContainerRef}
-                  data-library-autoscroll
-                  className="score-timeline-scroll absolute inset-0 overflow-auto"
-                  onScroll={handleTimelineScroll}
-                  onMouseDownCapture={(e) => {
-                    // Capture phase runs before portal-internal stopPropagation
-                    // guards, so presses inside the canvases' portaled context
-                    // menus must be exempted here explicitly.
-                    if (
-                      isEventInsidePortalPopup(e.target) ||
-                      (e.target as HTMLElement)?.closest?.('[data-layer-resize-handle]')
-                    )
-                      return;
-                    void stopAuditioning();
-                  }}
-                  onMouseDown={(e) => {
-                    if ((e.target as HTMLElement)?.closest?.('[data-layer-resize-handle]')) return;
-                    handleTimelineBackgroundMouseDown(e);
-                  }}
+                  ref={timelineHeaderRef}
+                  data-score-timeline-header
+                  className="shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  onScroll={handleTimelineHeaderScroll}
                 >
-                  <LayerPanel
-                    layerGroups={displayLayerGroups}
-                    visibleStartBeats={
-                      containerWidth > 0 ? (scrollOverlayLeft - 128) / pixelsPerBeat : undefined
-                    }
-                    visibleEndBeats={
-                      containerWidth > 0
-                        ? (scrollOverlayLeft + containerWidth + 128) / pixelsPerBeat
-                        : undefined
-                    }
-                    onOpenNested={navigateToGroup}
-                    projectSessionId={sessionId}
-                    projectRevision={getProjectDocumentRevision()}
-                    scoreRootGroupId={activeSegment?.scorePath?.rootGroupId}
-                    scoreContainerPath={activeSegment?.scorePath?.containerPath}
-                    mode={mode}
-                    pixelsPerBeat={pixelsPerBeat}
-                    totalBeats={totalBeats}
-                    snapEnabled={snapEnabled}
-                    snapValue={snapValue}
+                  <ColumnHeader
+                    timeState={timeState}
+                    markers={score.markers}
+                    meters={transport.meterMap.entries}
                     meterMap={transport.meterMap}
                     tempoMap={transport.tempoMap}
-                    tempo={
-                      transport.tempoMap.points.length > 0 ? transport.tempoMap.points[0].tempo : 60
-                    }
-                    smpteFrameRate={timeState.smpteFrameRate || 24}
+                    totalBeats={totalBeats}
+                    pixelsPerBeat={pixelsPerBeat}
+                    sampleRate={transport.sampleRate}
+                    renderStartTime={transport.renderStartTime}
+                    renderEndTime={transport.renderEndTime}
+                    snapEnabled={snapEnabled}
+                    snapValue={snapValue}
+                    scrollContainerRef={scrollContainerRef}
+                    rootTimelineOnly={isRootTimeline}
+                    tempo={initialTempo}
+                    rulerMouseDown={rulerMouseDown}
+                    onTempoPatch={handleTempoPatch}
+                    onMeterPatch={handleMeterPatch}
                   />
                 </div>
-                <ScoreOverlayLines
-                  renderStartTime={transport.renderStartTime}
-                  renderEndTime={transport.renderEndTime}
-                  pixelsPerBeat={pixelsPerBeat}
-                  totalBeats={totalBeats}
-                  scrollLeft={scrollOverlayLeft}
-                />
-                {(() => {
-                  if (!bgMarquee) return null;
-                  const rect = scrollContainerRef.current?.getBoundingClientRect();
-                  if (!rect) return null;
-                  return (
-                    <div
-                      className="absolute pointer-events-none"
-                      style={{
-                        left: Math.min(bgMarquee.startClientX, bgMarquee.endClientX) - rect.left,
-                        top: Math.min(bgMarquee.startClientY, bgMarquee.endClientY) - rect.top,
-                        width: Math.abs(bgMarquee.endClientX - bgMarquee.startClientX),
-                        height: Math.abs(bgMarquee.endClientY - bgMarquee.startClientY),
-                        zIndex: 20,
-                        backgroundColor:
-                          'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
-                        border:
-                          '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
-                      }}
+                <div className="relative flex-1 min-h-0">
+                  <div
+                    ref={scrollContainerRef}
+                    data-library-autoscroll
+                    className="score-timeline-scroll absolute inset-0 overflow-auto"
+                    onScroll={handleTimelineScroll}
+                    onMouseDownCapture={(e) => {
+                      // Capture phase runs before portal-internal stopPropagation
+                      // guards, so presses inside the canvases' portaled context
+                      // menus must be exempted here explicitly.
+                      if (
+                        isEventInsidePortalPopup(e.target) ||
+                        (e.target as HTMLElement)?.closest?.('[data-layer-resize-handle]')
+                      )
+                        return;
+                      void stopAuditioning();
+                    }}
+                    onMouseDown={(e) => {
+                      if ((e.target as HTMLElement)?.closest?.('[data-layer-resize-handle]'))
+                        return;
+                      handleTimelineBackgroundMouseDown(e);
+                    }}
+                  >
+                    <LayerPanel
+                      layerGroups={displayLayerGroups}
+                      onOpenNested={navigateToGroup}
+                      projectSessionId={sessionId}
+                      projectRevision={getProjectDocumentRevision()}
+                      scoreRootGroupId={activeSegment?.scorePath?.rootGroupId}
+                      scoreContainerPath={activeSegment?.scorePath?.containerPath}
+                      mode={mode}
+                      pixelsPerBeat={pixelsPerBeat}
+                      totalBeats={totalBeats}
+                      snapEnabled={snapEnabled}
+                      snapValue={snapValue}
+                      meterMap={transport.meterMap}
+                      tempoMap={transport.tempoMap}
+                      tempo={
+                        transport.tempoMap.points.length > 0
+                          ? transport.tempoMap.points[0].tempo
+                          : 60
+                      }
+                      smpteFrameRate={timeState.smpteFrameRate || 24}
                     />
-                  );
-                })()}
+                  </div>
+                  <ScoreOverlayLines
+                    renderStartTime={transport.renderStartTime}
+                    renderEndTime={transport.renderEndTime}
+                    pixelsPerBeat={pixelsPerBeat}
+                    totalBeats={totalBeats}
+                  />
+                  {(() => {
+                    if (!bgMarquee) return null;
+                    const rect = scrollContainerRef.current?.getBoundingClientRect();
+                    if (!rect) return null;
+                    return (
+                      <div
+                        className="absolute pointer-events-none"
+                        style={{
+                          left: Math.min(bgMarquee.startClientX, bgMarquee.endClientX) - rect.left,
+                          top: Math.min(bgMarquee.startClientY, bgMarquee.endClientY) - rect.top,
+                          width: Math.abs(bgMarquee.endClientX - bgMarquee.startClientX),
+                          height: Math.abs(bgMarquee.endClientY - bgMarquee.startClientY),
+                          zIndex: 20,
+                          backgroundColor:
+                            'color-mix(in srgb, var(--color-app-text-strong) 6%, var(--color-app-clear))',
+                          border:
+                            '1px solid color-mix(in srgb, var(--color-app-text-strong) 50%, var(--color-app-clear))',
+                        }}
+                      />
+                    );
+                  })()}
+                </div>
               </div>
-            </div>
-          }
-        />
+            }
+          />
+        </ScoreViewportScrollProvider>
 
         {rulerDialogOpen && (
           <RulerConfigDialog
