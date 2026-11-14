@@ -32,12 +32,12 @@ interface Node {
   metadata: GraphEditorMetadata;
   frozen: boolean;
 }
-interface TextSpan {
+export interface TextSpan {
   start: number;
   before: string;
   after: string;
 }
-interface TextChange {
+export interface TextChange {
   edits: TextSpan[];
   beforeHash: string;
   afterHash: string;
@@ -164,6 +164,26 @@ function textSpans(before: string, after: string): TextSpan[] {
   diff(before, after, 0, 0);
   return edits;
 }
+export function createTextChange(before: string, after: string): TextChange | null {
+  if (before.length + after.length <= 1024) return null;
+  const edits = textSpans(before, after);
+  if (
+    edits.reduce((size, edit) => size + edit.before.length + edit.after.length + 64, 0) >=
+    before.length + after.length - 256
+  ) {
+    return null;
+  }
+  return { edits, beforeHash: textHash(before), afterHash: textHash(after) };
+}
+
+export function estimateTextChangeBytes(change: TextChange): number {
+  let bytes = 64 + (change.beforeHash.length + change.afterHash.length) * 2;
+  for (const edit of change.edits) {
+    bytes += 64 + (edit.before.length + edit.after.length) * 2;
+  }
+  return bytes;
+}
+
 function fieldChange(
   id: number,
   key: PropertyKey,
@@ -172,23 +192,21 @@ function fieldChange(
 ): FieldChange {
   const a = before?.value,
     b = after?.value;
-  if (typeof a === 'string' && typeof b === 'string' && a.length + b.length > 1024) {
-    const edits = textSpans(a, b);
-    if (
-      edits.reduce((size, edit) => size + edit.before.length + edit.after.length + 64, 0) <
-      a.length + b.length - 256
-    )
+  if (typeof a === 'string' && typeof b === 'string') {
+    const text = createTextChange(a, b);
+    if (text) {
       return {
         id,
         key,
         before: { ...before, value: undefined },
         after: { ...after, value: undefined },
-        text: { edits, beforeHash: textHash(a), afterHash: textHash(b) },
+        text,
       };
+    }
   }
   return { id, key, before, after };
 }
-function applyTextChange(
+export function applyTextChange(
   value: unknown,
   change: TextChange,
   direction: 'before' | 'after',

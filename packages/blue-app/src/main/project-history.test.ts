@@ -12,6 +12,7 @@ import {
   cloneBlueX7Voice,
 } from '@blue/data';
 import { ProjectSession } from './project-session';
+import { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
 import {
   ProjectHistory,
   DEFAULT_RETAINED_ENTRY_LIMIT,
@@ -2738,6 +2739,152 @@ describe('ProjectHistory coordinator', () => {
         { time: 4, value: 350 },
         { time: 10, value: 500 },
       ]);
+    });
+
+    it('commits, coalesces, undoes, redoes, and cancels >1024-char text edits without calling historyCopy()', async () => {
+      const { session, data, history, context } = setupHistory();
+      const baseText = Array.from({ length: 120 }, (_, i) => `k${i} = ${i}\n`).join('');
+      data.getGlobalOrcSco().setGlobalOrc(baseText);
+      data.getProjectProperties().notes = `${baseText}notes`;
+      session.replace(data, '/tmp/large-text.blue');
+      const docId = session.read().documentId!;
+      history.clear();
+      history.checkpointSave();
+
+      const historyCopySpy = vi.spyOn(data, 'historyCopy');
+      const edited1 = `${baseText}k120 = 1\n`;
+      const edited2 = `${baseText}k120 = 1\nk121 = 2\n`;
+
+      const commit1 = await history.commit(
+        context.nextCommitRequest(docId, 0, 'Edit Global Orchestra', [{ globalOrc: edited1 }], {
+          gestureId: 'typing-orc',
+          fieldId: 'globalOrc',
+          phase: 'begin',
+        }),
+      );
+      expect(commit1.status).toBe('committed');
+      expect(historyCopySpy).not.toHaveBeenCalled();
+
+      const commit2 = await history.commit(
+        context.nextCommitRequest(docId, 1, 'Edit Global Orchestra', [{ globalOrc: edited2 }], {
+          gestureId: 'typing-orc',
+          fieldId: 'globalOrc',
+          phase: 'update',
+        }),
+      );
+      expect(commit2.status).toBe('committed');
+      expect(historyCopySpy).not.toHaveBeenCalled();
+      expect(history.read().length).toBe(1);
+
+      const endCommit = await history.commit(
+        context.nextCommitRequest(docId, 2, 'Edit Global Orchestra', [], {
+          gestureId: 'typing-orc',
+          fieldId: 'globalOrc',
+          phase: 'end',
+        }),
+      );
+      expect(endCommit.status).toBe('unchanged');
+
+      // Undo restores original large orchestra text exactly
+      const undo = await history.undo({
+        documentId: docId,
+        operationId: 'undo-large-orc',
+        expectedRevision: session.read().revision,
+        contextSequence: 4,
+      });
+      expect(undo.status).toBe('committed');
+      expect(session.read().data?.getGlobalOrcSco().getGlobalOrc()).toBe(baseText);
+
+      // Redo restores coalesced final text
+      const redo = await history.redo({
+        documentId: docId,
+        operationId: 'redo-large-orc',
+        expectedRevision: session.read().revision,
+        contextSequence: 5,
+      });
+      expect(redo.status).toBe('committed');
+      expect(session.read().data?.getGlobalOrcSco().getGlobalOrc()).toBe(edited2);
+
+      // Whole-string replacement (>1024 chars where diff gives no savings) still avoids historyCopy()
+      const replaced = 'z'.repeat(2400);
+      const replaceCommit = await history.commit(
+        context.nextCommitRequest(docId, session.read().revision, 'Replace Global Orchestra', [
+          { globalOrc: replaced },
+        ]),
+      );
+      expect(replaceCommit.status).toBe('committed');
+      expect(historyCopySpy).not.toHaveBeenCalled();
+
+      // Net-zero coalesced gesture on long text collapses cleanly
+      const startRev = session.read().revision;
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          startRev,
+          'Edit Notes',
+          [{ projectProperties: { notes: `${baseText}notes!` } }],
+          { gestureId: 'typing-notes', fieldId: 'notes', phase: 'begin' },
+        ),
+      );
+      const netZeroCommit = await history.commit(
+        context.nextCommitRequest(
+          docId,
+          startRev + 1,
+          'Edit Notes',
+          [{ projectProperties: { notes: `${baseText}notes` } }],
+          { gestureId: 'typing-notes', fieldId: 'notes', phase: 'end' },
+        ),
+      );
+      expect(netZeroCommit.status).toBe('unchanged');
+      expect(historyCopySpy).not.toHaveBeenCalled();
+      expect(history.read().length).toBe(2);
+      expect(session.read().data?.getProjectProperties().notes).toBe(`${baseText}notes`);
+
+      const undoReplace = await history.undo({
+        documentId: docId,
+        operationId: 'undo-replace-orc',
+        expectedRevision: session.read().revision,
+        contextSequence: 9,
+      });
+      expect(undoReplace.status).toBe('committed');
+      expect(session.read().data?.getGlobalOrcSco().getGlobalOrc()).toBe(edited2);
+    });
+
+    it('does not emit spurious orchestra restart-required when undoing grouped large cosmetic edits', async () => {
+      const runtimeReconciliation = new ProjectRuntimeReconciliation();
+      runtimeReconciliation.registerPerformance('timeline', 1, {
+        applyOperation: async () => ({ status: 'applied' }),
+      });
+      const { session, history, context } = setupHistory({ reconciliation: runtimeReconciliation });
+      const docId = session.read().documentId!;
+      const scratchBase = 'note '.repeat(300);
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'Edit Scratch Pad',
+          [{ scratchPad: { text: `${scratchBase}A` } }],
+          { gestureId: 'scratch-group', fieldId: 'scratchPad', phase: 'begin' },
+        ),
+      );
+      await history.commit(
+        context.nextCommitRequest(
+          docId,
+          session.read().revision,
+          'Edit Scratch Pad',
+          [{ scratchPad: { text: `${scratchBase}AB` } }],
+          { gestureId: 'scratch-group', fieldId: 'scratchPad', phase: 'end' },
+        ),
+      );
+      const undoScratch = await history.undo({
+        documentId: docId,
+        operationId: 'undo-grouped-scratch',
+        expectedRevision: session.read().revision,
+        contextSequence: 12,
+      });
+      expect(undoScratch.status).toBe('committed');
+      expect(session.read().data?.getScratchPadData().getScratchText()).toBe('');
+      expect(runtimeReconciliation.getOutcome('timeline')).toBeNull();
     });
   });
 });

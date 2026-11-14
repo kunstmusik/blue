@@ -1,7 +1,9 @@
 import {
+  applyTextChange,
   captureProjectGraphDelta,
   isNetZeroProjectGraphDelta,
   type ProjectGraphDelta,
+  type TextChange,
 } from './project-history-graph';
 import { isRejectedMixerChannelUpdate } from '../shared/project-editor/patch-mixer-bluelive';
 import { prepareBsbTransaction, type PreparedBsbTransaction } from './project-history-bsb';
@@ -50,6 +52,7 @@ export interface ScalarFieldRecord {
   field: string;
   beforeValue: unknown;
   afterValue: unknown;
+  textDelta?: TextChange;
 }
 
 export interface PreparedEmptyTransaction {
@@ -579,12 +582,36 @@ export function captureScalarFieldRecords(
   return records;
 }
 
+function readScalarFieldValue(data: BlueData, record: ScalarFieldRecord): unknown {
+  if (record.targetType === 'text') {
+    if (record.targetId === 'globalOrc') return data.getGlobalOrcSco().getGlobalOrc();
+    if (record.targetId === 'globalSco') return data.getGlobalOrcSco().getGlobalSco();
+    if (record.targetId === 'tablesText') return data.getTableSet().getTables();
+    if (record.targetId === 'scratchPad') {
+      if (record.field === 'text') return data.getScratchPadData().getScratchText();
+      if (record.field === 'wordWrapEnabled') return data.getScratchPadData().isWordWrapEnabled();
+    }
+  } else if (record.targetType === 'property') {
+    const props = data.getProjectProperties() as unknown as Record<string, unknown>;
+    return props[record.field];
+  }
+  return undefined;
+}
+
 export function applyScalarFieldRecord(
   data: BlueData,
   record: ScalarFieldRecord,
   direction: 'forward' | 'reverse',
 ): void {
-  const value = direction === 'forward' ? record.afterValue : record.beforeValue;
+  const value = record.textDelta
+    ? applyTextChange(
+        readScalarFieldValue(data, record),
+        record.textDelta,
+        direction === 'forward' ? 'after' : 'before',
+      )
+    : direction === 'forward'
+      ? record.afterValue
+      : record.beforeValue;
 
   switch (record.targetType) {
     case 'text':

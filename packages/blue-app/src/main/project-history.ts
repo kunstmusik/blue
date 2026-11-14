@@ -2,6 +2,9 @@ import { compactHistoryRuntimePatches } from './project-history-runtime-patches'
 import {
   captureProjectGraphDelta,
   applyProjectGraphDelta,
+  applyTextChange,
+  createTextChange,
+  estimateTextChangeBytes,
   mergeProjectGraphDeltas,
   isNetZeroProjectGraphDelta,
   estimateProjectGraphDeltaBytes,
@@ -360,10 +363,16 @@ interface ActiveBarrierState {
   readonly timeoutHandle: ReturnType<typeof setTimeout>;
 }
 
+export interface ProjectHistorySnapshotCaptureContext {
+  readonly reason: 'commit' | 'direct-structure' | 'undo' | 'redo' | 'rollback';
+  readonly operationId?: string;
+  readonly originContextId?: string;
+}
+
 export interface ProjectHistoryDependencies {
   readonly session: ProjectSession;
   /** Captures an immutable renderer-safe snapshot at publication time. */
-  readonly captureSnapshot?: () => unknown;
+  readonly captureSnapshot?: (context: ProjectHistorySnapshotCaptureContext) => unknown;
   readonly publishUpdated?: (event: ProjectDocumentUpdatedEvent) => void | Promise<void>;
   readonly retainedEntryLimit?: number;
   readonly retainedBytesLimit?: number;
@@ -385,12 +394,12 @@ export function scalarRecordsToInversePatches(
     switch (rec.targetType) {
       case 'text':
         if (rec.targetId === 'globalOrc') {
-          patches.push({ globalOrc: String(rec.beforeValue ?? '') });
+          patches.push({ globalOrc: rec.textDelta ? '' : String(rec.beforeValue ?? '') });
         } else if (rec.targetId === 'globalSco') {
-          patches.push({ globalSco: String(rec.beforeValue ?? '') });
+          patches.push({ globalSco: rec.textDelta ? '' : String(rec.beforeValue ?? '') });
         } else if (rec.targetId === 'tablesText') {
-          patches.push({ tablesText: String(rec.beforeValue ?? '') });
-        } else if (rec.targetId === 'scratchPad') {
+          patches.push({ tablesText: rec.textDelta ? '' : String(rec.beforeValue ?? '') });
+        } else if (rec.targetId === 'scratchPad' && !rec.textDelta) {
           patches.push({
             scratchPad: { [rec.field]: rec.beforeValue } as NonNullable<
               ProjectDocumentPatch['scratchPad']
@@ -399,11 +408,13 @@ export function scalarRecordsToInversePatches(
         }
         break;
       case 'property':
-        patches.push({
-          projectProperties: { [rec.field]: rec.beforeValue } as NonNullable<
-            ProjectDocumentPatch['projectProperties']
-          >,
-        });
+        if (!rec.textDelta) {
+          patches.push({
+            projectProperties: { [rec.field]: rec.beforeValue } as NonNullable<
+              ProjectDocumentPatch['projectProperties']
+            >,
+          });
+        }
         break;
       case 'transport':
         patches.push({
@@ -452,12 +463,12 @@ export function scalarRecordsToForwardPatches(
     switch (rec.targetType) {
       case 'text':
         if (rec.targetId === 'globalOrc') {
-          patches.push({ globalOrc: String(rec.afterValue ?? '') });
+          patches.push({ globalOrc: rec.textDelta ? '' : String(rec.afterValue ?? '') });
         } else if (rec.targetId === 'globalSco') {
-          patches.push({ globalSco: String(rec.afterValue ?? '') });
+          patches.push({ globalSco: rec.textDelta ? '' : String(rec.afterValue ?? '') });
         } else if (rec.targetId === 'tablesText') {
-          patches.push({ tablesText: String(rec.afterValue ?? '') });
-        } else if (rec.targetId === 'scratchPad') {
+          patches.push({ tablesText: rec.textDelta ? '' : String(rec.afterValue ?? '') });
+        } else if (rec.targetId === 'scratchPad' && !rec.textDelta) {
           patches.push({
             scratchPad: { [rec.field]: rec.afterValue } as NonNullable<
               ProjectDocumentPatch['scratchPad']
@@ -466,11 +477,13 @@ export function scalarRecordsToForwardPatches(
         }
         break;
       case 'property':
-        patches.push({
-          projectProperties: { [rec.field]: rec.afterValue } as NonNullable<
-            ProjectDocumentPatch['projectProperties']
-          >,
-        });
+        if (!rec.textDelta) {
+          patches.push({
+            projectProperties: { [rec.field]: rec.afterValue } as NonNullable<
+              ProjectDocumentPatch['projectProperties']
+            >,
+          });
+        }
         break;
       case 'transport':
         patches.push({
@@ -514,7 +527,7 @@ export function scalarRecordsToForwardPatches(
 export function hasConcreteInversePatches(
   patches: readonly ProjectDocumentPatch[] | undefined,
 ): patches is readonly ProjectDocumentPatch[] {
-  if (!patches || patches.length === 0) return false;
+  if (!patches) return false;
   return !(
     patches.length === 1 &&
     (patches[0].orchestra as unknown as { type?: string })?.type === 'structuralChange'
@@ -564,8 +577,11 @@ export function accumulateConcreteInversePatches(
   priorInverses: readonly ProjectDocumentPatch[] | undefined,
   newInverses: readonly ProjectDocumentPatch[] | null,
 ): readonly ProjectDocumentPatch[] | null {
-  if (!priorInverses || !hasConcreteInversePatches(priorInverses)) {
+  if (priorInverses === undefined) {
     return newInverses && hasConcreteInversePatches(newInverses) ? newInverses : null;
+  }
+  if (!hasConcreteInversePatches(priorInverses)) {
+    return null;
   }
   if (!newInverses || !hasConcreteInversePatches(newInverses)) {
     return null;
@@ -992,6 +1008,40 @@ function payloadFingerprint(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
+function compressScalarTextRecord(record: ScalarFieldRecord): ScalarFieldRecord {
+  if (
+    !record.textDelta &&
+    typeof record.beforeValue === 'string' &&
+    typeof record.afterValue === 'string'
+  ) {
+    const textDelta = createTextChange(record.beforeValue, record.afterValue);
+    if (textDelta) {
+      return {
+        targetType: record.targetType,
+        targetId: record.targetId,
+        field: record.field,
+        beforeValue: undefined,
+        afterValue: undefined,
+        textDelta,
+      };
+    }
+  }
+  return record;
+}
+
+function compressScalarTextRecords(records: readonly ScalarFieldRecord[]): ScalarFieldRecord[] {
+  return records.map(compressScalarTextRecord);
+}
+
+function isLargeScalarTextRecord(record: ScalarFieldRecord): boolean {
+  return (
+    record.textDelta !== undefined ||
+    (typeof record.beforeValue === 'string' &&
+      typeof record.afterValue === 'string' &&
+      record.beforeValue.length + record.afterValue.length > 1024)
+  );
+}
+
 function mergeScalarRecords(
   prior: readonly ScalarFieldRecord[],
   next: readonly ScalarFieldRecord[],
@@ -1002,7 +1052,15 @@ function mergeScalarRecords(
   for (const r of next) {
     const key = JSON.stringify([r.targetType, r.targetId, r.field]);
     const previous = records.get(key);
-    records.set(key, { ...r, beforeValue: previous ? previous.beforeValue : r.beforeValue });
+    if (!previous) {
+      records.set(key, compressScalarTextRecord(r));
+      continue;
+    }
+    const beforeValue =
+      previous.textDelta && typeof r.beforeValue === 'string'
+        ? applyTextChange(r.beforeValue, previous.textDelta, 'before')
+        : previous.beforeValue;
+    records.set(key, compressScalarTextRecord({ ...r, beforeValue }));
   }
   return [...records.values()];
 }
@@ -1010,7 +1068,11 @@ function mergeScalarRecords(
 function isNetZeroRecord(record: HistoryRecord | undefined): boolean {
   if (!record) return false;
   if (record.kind !== 'values') return isNetZeroProjectGraphDelta(record.delta);
-  return record.records.every((r) => r.beforeValue === r.afterValue);
+  return record.records.every((r) =>
+    r.textDelta
+      ? r.textDelta.edits.length === 0 && r.textDelta.beforeHash === r.textDelta.afterHash
+      : r.beforeValue === r.afterValue,
+  );
 }
 
 function restoreHistoryRecord(
@@ -1042,6 +1104,7 @@ function estimateEntryBytes(record: HistoryRecord): number {
       bytes += (r.targetId.length + r.field.length) * 2;
       if (typeof r.beforeValue === 'string') bytes += r.beforeValue.length * 2;
       if (typeof r.afterValue === 'string') bytes += r.afterValue.length * 2;
+      if (r.textDelta) bytes += estimateTextChangeBytes(r.textDelta);
     }
     return bytes;
   } else return estimateProjectGraphDeltaBytes(record.delta);
@@ -1049,7 +1112,7 @@ function estimateEntryBytes(record: HistoryRecord): number {
 
 export class ProjectHistory {
   private readonly session: ProjectSession;
-  private readonly captureSnapshot?: () => unknown;
+  private readonly captureSnapshot?: (context: ProjectHistorySnapshotCaptureContext) => unknown;
   private readonly publishUpdated?: (event: ProjectDocumentUpdatedEvent) => void | Promise<void>;
   private readonly retainedEntryLimit: number;
   private readonly retainedBytesLimit: number;
@@ -1146,8 +1209,8 @@ export class ProjectHistory {
     });
   }
 
-  private capturePublishedSnapshot(): unknown {
-    return this.captureSnapshot?.() ?? null;
+  private capturePublishedSnapshot(context: ProjectHistorySnapshotCaptureContext): unknown {
+    return this.captureSnapshot?.(context) ?? null;
   }
 
   getCursor(): number {
@@ -1281,7 +1344,11 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
-    const publishedSnapshot = this.capturePublishedSnapshot();
+    const publishedSnapshot = this.capturePublishedSnapshot({
+      reason: 'rollback',
+      operationId: request.operationId,
+      originContextId: request.origin?.contextId,
+    });
 
     const inversePatches =
       entry?.inversePatches ??
@@ -2002,7 +2069,11 @@ export class ProjectHistory {
         const updatedSnap = this.session.read();
         const projection = this.read();
         const publishedIsDirty = this.isDirty();
-        const publishedSnapshot = this.capturePublishedSnapshot();
+        const publishedSnapshot = this.capturePublishedSnapshot({
+          reason: 'rollback',
+          operationId: request.operationId,
+          originContextId: request.origin?.contextId,
+        });
 
         const inversePatches =
           entry?.inversePatches ??
@@ -2218,22 +2289,8 @@ export class ProjectHistory {
 
     let historyRecord: HistoryRecord;
     if (transaction.kind === 'scalar') {
-      if (
-        transaction.records.some(
-          (record) =>
-            typeof record.beforeValue === 'string' &&
-            typeof record.afterValue === 'string' &&
-            record.beforeValue.length + record.afterValue.length > 1024,
-        )
-      ) {
-        const before = current.data.historyCopy();
-        transferProjectEditorIdentities(current.data, before);
-        rollbackScalarRecords(before, transaction.records);
-        historyRecord = {
-          kind: 'structure',
-          delta: captureProjectGraphDelta(before, current.data),
-        };
-      } else historyRecord = { kind: 'values', records: transaction.records };
+      const compressedRecords = compressScalarTextRecords(transaction.records);
+      historyRecord = { kind: 'values', records: compressedRecords };
     } else if (transaction.kind === 'bsb') {
       historyRecord = { kind: 'bsb', delta: transaction.delta };
     } else {
@@ -2243,6 +2300,8 @@ export class ProjectHistory {
       };
     }
 
+    const shouldCompactScalarRuntimePatches =
+      transaction.kind === 'scalar' && transaction.records.some(isLargeScalarTextRecord);
     const forwardPatches = request.patches ? [...request.patches] : [];
     const rawComputedInverses =
       transaction.kind === 'scalar'
@@ -2252,7 +2311,7 @@ export class ProjectHistory {
           ]);
 
     const computedInverses =
-      historyRecord.kind !== 'values'
+      historyRecord.kind !== 'values' || shouldCompactScalarRuntimePatches
         ? compactHistoryRuntimePatches(rawComputedInverses, 'first')
         : rawComputedInverses;
 
@@ -2272,7 +2331,7 @@ export class ProjectHistory {
       }).length *
         2;
     const initialForwardPatches =
-      historyRecord.kind !== 'values'
+      historyRecord.kind !== 'values' || shouldCompactScalarRuntimePatches
         ? compactHistoryRuntimePatches(forwardPatches)
         : forwardPatches;
     const estimatedBytes = entryBytes(historyRecord, initialForwardPatches, computedInverses);
@@ -2290,7 +2349,10 @@ export class ProjectHistory {
       if (top.record.kind === 'values' && historyRecord.kind === 'values') {
         candidateMergedRecord = {
           kind: 'values',
-          records: mergeScalarRecords(top.record.records, historyRecord.records),
+          records: mergeScalarRecords(
+            top.record.records,
+            transaction.kind === 'scalar' ? transaction.records : historyRecord.records,
+          ),
         };
       } else if (top.record.kind !== 'values' && historyRecord.kind !== 'values') {
         candidateMergedRecord = {
@@ -2332,9 +2394,16 @@ export class ProjectHistory {
         };
       }
       const mergedRecord = candidateMergedRecord!;
+      const mergedHasLargeScalarText =
+        mergedRecord.kind === 'values' && mergedRecord.records.some(isLargeScalarTextRecord);
       candidateForwardPatches =
         mergedRecord.kind === 'values'
-          ? scalarRecordsToForwardPatches(mergedRecord.records)
+          ? mergedHasLargeScalarText
+            ? compactHistoryRuntimePatches([
+                ...(top.forwardPatches ?? []),
+                ...initialForwardPatches,
+              ])
+            : scalarRecordsToForwardPatches(mergedRecord.records)
           : compactHistoryRuntimePatches(
               consolidateForwardPatchesForRedo(
                 [...(top.forwardPatches ?? []), ...initialForwardPatches],
@@ -2343,7 +2412,14 @@ export class ProjectHistory {
             );
       candidateInversePatches =
         mergedRecord.kind === 'values'
-          ? scalarRecordsToInversePatches(mergedRecord.records)
+          ? mergedHasLargeScalarText
+            ? compactHistoryRuntimePatches(
+                accumulateConcreteInversePatches(top.inversePatches, computedInverses) ?? [
+                  { orchestra: { type: 'structuralChange' } as never },
+                ],
+                'first',
+              )
+            : scalarRecordsToInversePatches(mergedRecord.records)
           : compactHistoryRuntimePatches(
               [
                 ...(accumulateConcreteInversePatches(top.inversePatches, computedInverses) ?? [
@@ -2582,7 +2658,11 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
-    const publishedSnapshot = this.capturePublishedSnapshot();
+    const publishedSnapshot = this.capturePublishedSnapshot({
+      reason: 'commit',
+      operationId: request.operationId,
+      originContextId: request.origin?.contextId,
+    });
 
     const reconciliationPromise = this.reconciliation
       ? this.reconciliation.reconcileCommit({
@@ -2810,7 +2890,10 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
-    const publishedSnapshot = this.capturePublishedSnapshot();
+    const publishedSnapshot = this.capturePublishedSnapshot({
+      reason: 'direct-structure',
+      originContextId: options.origin?.contextId,
+    });
 
     const reconciliationPromise = this.reconciliation
       ? this.reconciliation.reconcileCommit({
@@ -2974,7 +3057,11 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
-    const publishedSnapshot = this.capturePublishedSnapshot();
+    const publishedSnapshot = this.capturePublishedSnapshot({
+      reason: 'undo',
+      operationId: request.operationId,
+      originContextId: request.origin?.contextId,
+    });
 
     const inversePatches =
       entry.inversePatches ??
@@ -3155,7 +3242,11 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
-    const publishedSnapshot = this.capturePublishedSnapshot();
+    const publishedSnapshot = this.capturePublishedSnapshot({
+      reason: 'redo',
+      operationId: request.operationId,
+      originContextId: request.origin?.contextId,
+    });
 
     let forwardPatches = entry.forwardPatches;
     if (!forwardPatches) {
