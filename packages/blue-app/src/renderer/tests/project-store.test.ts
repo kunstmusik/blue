@@ -1240,3 +1240,269 @@ describe('project-store — pattern layer optimistic projection', () => {
     expect(commitSpy).not.toHaveBeenCalled();
   });
 });
+
+describe('project-store — optimistic score indexing and Instance targets', () => {
+  beforeEach(() => {
+    useProjectStore.getState().clearProject();
+    __testClearPendingPatches();
+    acceptProjectDocumentRevision(0, 0);
+  });
+
+  it.each(['reindex', 'delayed cut'] as const)(
+    'projects optimistic score edits by identity - %s',
+    async (scenario) => {
+      (window as unknown as { blueAPI?: unknown }).blueAPI = {
+        commitProjectDocumentPatches: vi.fn().mockResolvedValue({
+          revision: 1,
+          sessionId: 1,
+          changed: true,
+          documentId: 'doc-idx',
+          stateId: 'state-1',
+          patchChanged: [true],
+        }),
+        getProjectDocument: async () => null,
+      };
+
+      const info = createFocusSnapshot(1);
+      info.score!.layerGroups = [
+        {
+          groupId: 'poly-1',
+          groupType: 'polyObject',
+          name: 'Poly',
+          defaultHeightIndex: 1,
+          layerCount: 2,
+          isOpenableContainer: true,
+          layers: [
+            {
+              layerId: 'layer-0',
+              name: 'Layer 0',
+              height: 44,
+              muted: false,
+              solo: false,
+              items: [
+                {
+                  objectId: 'obj-0',
+                  objectType: 'GenericScore',
+                  name: 'First',
+                  startBeats: 0,
+                  durationBeats: 2,
+                  startTimeBase: 'BEATS',
+                  durationTimeBase: 'BEATS',
+                  backgroundColor: 0,
+                  isContainer: false,
+                  barRenderer: {
+                    kind: 'generic',
+                    labelLines: ['First'],
+                    timeBehavior: 'NONE',
+                    repeatPointBeats: null,
+                  },
+                  editorTarget: {
+                    selectionId: 'obj-0',
+                    selectedObjectType: 'GenericScore',
+                    editorObjectType: 'GenericScore',
+                    ownerKind: 'timeline',
+                    displayContext: 'timeline',
+                    location: {
+                      rootGroupIndex: 0,
+                      containerPath: [],
+                      layerIndex: 0,
+                      objectIndex: 0,
+                    },
+                    supportsTimeBehavior: true,
+                    supportsRepeatPoint: true,
+                    supportsNoteProcessorChain: true,
+                  },
+                },
+                {
+                  objectId: 'obj-1',
+                  objectType: 'GenericScore',
+                  name: 'Second',
+                  startBeats: 2,
+                  durationBeats: 2,
+                  startTimeBase: 'BEATS',
+                  durationTimeBase: 'BEATS',
+                  backgroundColor: 0,
+                  isContainer: false,
+                  barRenderer: {
+                    kind: 'generic',
+                    labelLines: ['Second'],
+                    timeBehavior: 'NONE',
+                    repeatPointBeats: null,
+                  },
+                  editorTarget: {
+                    selectionId: 'obj-1',
+                    selectedObjectType: 'GenericScore',
+                    editorObjectType: 'GenericScore',
+                    ownerKind: 'timeline',
+                    displayContext: 'timeline',
+                    location: {
+                      rootGroupIndex: 0,
+                      containerPath: [],
+                      layerIndex: 0,
+                      objectIndex: 1,
+                    },
+                    supportsTimeBehavior: true,
+                    supportsRepeatPoint: true,
+                    supportsNoteProcessorChain: true,
+                  },
+                },
+                {
+                  objectId: 'inst-2',
+                  objectType: 'Instance',
+                  name: 'Inst',
+                  startBeats: 4,
+                  durationBeats: 2,
+                  startTimeBase: 'BEATS',
+                  durationTimeBase: 'BEATS',
+                  backgroundColor: 0,
+                  isContainer: false,
+                  barRenderer: {
+                    kind: 'generic',
+                    labelLines: ['Inst'],
+                    timeBehavior: 'NONE',
+                    repeatPointBeats: null,
+                  },
+                  editorTarget: {
+                    selectionId: 'inst-2',
+                    selectedObjectType: 'Instance',
+                    editorObjectType: 'GenericScore',
+                    ownerKind: 'library',
+                    displayContext: 'instance',
+                    sourceInstanceLocation: {
+                      rootGroupIndex: 0,
+                      containerPath: [],
+                      layerIndex: 0,
+                      objectIndex: 2,
+                    },
+                    supportsTimeBehavior: true,
+                    supportsRepeatPoint: true,
+                    supportsNoteProcessorChain: true,
+                  },
+                },
+              ],
+            },
+            {
+              layerId: 'layer-1',
+              name: 'Layer 1',
+              height: 44,
+              muted: false,
+              solo: false,
+              items: [],
+            },
+          ],
+        },
+      ];
+      useProjectStore.getState().setProjectInfo(info);
+
+      if (scenario === 'delayed cut') {
+        const target = info.score!.layerGroups[0]!.layers[0]!.items[0]!.editorTarget!;
+        useProjectStore.getState().moveScoreObjects([
+          {
+            objectId: target.selectionId,
+            targetStartBeats: 5,
+            targetLayerIndex: 1,
+            targetGroupId: 'poly-1',
+          },
+        ]);
+        await useProjectStore
+          .getState()
+          .applyProjectDocumentPatch(
+            { score: { type: 'removeScoreObjects', targets: [target] } },
+            { label: 'Cut Score Objects' },
+          );
+        await __testFlushPendingPatches();
+        const { layers } = useProjectStore.getState().score.layerGroups[0]!;
+        expect(layers[0]!.items.map((item) => item.objectId)).toEqual(['obj-1', 'inst-2']);
+        expect(layers[1]!.items).toEqual([]);
+        return;
+      }
+
+      useProjectStore.getState().removeScoreObjects(new Set(['obj-0']));
+      const afterRemoveItems = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items;
+      expect(afterRemoveItems.map((item) => item.objectId)).toEqual(['obj-1', 'inst-2']);
+      expect(afterRemoveItems[0]!.editorTarget?.location?.objectIndex).toBe(0);
+      expect(afterRemoveItems[1]!.editorTarget?.sourceInstanceLocation?.objectIndex).toBe(1);
+
+      useProjectStore.getState().moveScoreObjects([
+        {
+          objectId: 'obj-1',
+          targetStartBeats: 5,
+          targetLayerIndex: 1,
+          targetGroupId: 'poly-1',
+        },
+      ]);
+
+      const afterMoveLayer0 = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items;
+      const afterMoveLayer1 = useProjectStore.getState().score.layerGroups[0]!.layers[1]!.items;
+      expect(afterMoveLayer0.map((item) => item.objectId)).toEqual(['inst-2']);
+      expect(afterMoveLayer0[0]!.editorTarget?.sourceInstanceLocation).toEqual({
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      });
+      expect(afterMoveLayer1[0]!.editorTarget?.location).toEqual({
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 1,
+        objectIndex: 0,
+      });
+    },
+  );
+
+  it('preserves library Instance editorTarget metadata when optimistically adding an Instance', () => {
+    (window as unknown as { blueAPI?: unknown }).blueAPI = {
+      commitProjectDocumentPatches: vi.fn().mockResolvedValue({
+        revision: 1,
+        sessionId: 1,
+        changed: true,
+        documentId: 'doc-inst',
+        stateId: 'state-1',
+        patchChanged: [true],
+      }),
+      getProjectDocument: async () => null,
+    };
+
+    const info = createFocusSnapshot(1);
+    useProjectStore.getState().setProjectInfo(info);
+
+    useProjectStore.getState().addScoreObjects([
+      {
+        groupId: 'root-group',
+        layerIndex: 0,
+        objectType: 'Instance',
+        name: 'Shared Inst',
+        startBeats: 2,
+        durationBeats: 4,
+        isContainer: false,
+        editorTarget: {
+          selectionId: 'source-inst',
+          selectedObjectType: 'Instance',
+          editorObjectType: 'GenericScore',
+          ownerKind: 'library',
+          displayContext: 'instance',
+          library: { libraryId: 'lib-1', libraryIndex: 0, objectType: 'GenericScore' },
+          supportsTimeBehavior: true,
+          supportsRepeatPoint: true,
+          supportsNoteProcessorChain: true,
+        },
+      },
+    ]);
+
+    const added = useProjectStore.getState().score.layerGroups[0]!.layers[0]!.items[0]!;
+    expect(added.editorTarget).toMatchObject({
+      selectedObjectType: 'Instance',
+      editorObjectType: 'GenericScore',
+      ownerKind: 'library',
+      displayContext: 'instance',
+      sourceInstanceLocation: {
+        rootGroupIndex: 0,
+        containerPath: [],
+        layerIndex: 0,
+        objectIndex: 0,
+      },
+      library: { libraryId: 'lib-1', libraryIndex: 0, objectType: 'GenericScore' },
+    });
+    expect(added.editorTarget?.location).toBeUndefined();
+  });
+});

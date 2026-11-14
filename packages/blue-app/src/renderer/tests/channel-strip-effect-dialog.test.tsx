@@ -24,6 +24,7 @@ declare global {
       }) => Promise<void>;
       focusEffectEditor: (request: unknown) => Promise<boolean>;
       openEffectInterface: (request: unknown) => Promise<void>;
+      getEffectEditorDocument: (request: unknown) => Promise<EffectEditorSnapshot | null>;
     };
   }
 }
@@ -192,6 +193,7 @@ beforeEach(() => {
     sendMixerRealtimeLevelUpdate: vi.fn().mockResolvedValue(undefined),
     focusEffectEditor: vi.fn().mockResolvedValue(false),
     openEffectInterface: vi.fn().mockResolvedValue(undefined),
+    getEffectEditorDocument: vi.fn().mockResolvedValue(null),
   };
 });
 
@@ -370,6 +372,80 @@ describe('ChannelStrip mixer effect dialog', () => {
     expect(patch.chain).toBe('pre');
     expect(patch.entryId).toBe('fx-1');
     expect(updated.getName()).toBe('Edited Effect');
+
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('hydrates omitted effectXml via getEffectEditorDocument before opening the edit dialog', async () => {
+    const fullEntry = createEffectEntry('sub-1', 'pre');
+    const lazyEntry: MixerEffectEntrySnapshot = { ...fullEntry };
+    delete lazyEntry.effectXml;
+    const editorSnapshot: EffectEditorSnapshot = {
+      ...fullEntry,
+      effectXml: fullEntry.effectXml!,
+      ownerType: 'project',
+      effectId: 'fx-1',
+      projectUdos: [],
+      projectSessionId: 1,
+      projectRevision: 1,
+    };
+    window.blueAPI.getEffectEditorDocument = vi.fn().mockResolvedValue(editorSnapshot);
+
+    const channel: MixerChannelSnapshot = {
+      id: 'sub-1',
+      name: 'SubChannel1',
+      channelKind: 'subChannel',
+      outChannel: 'Master',
+      muted: false,
+      solo: false,
+      level: 0,
+      volume: 1,
+      pan: 0.5,
+      preChain: [lazyEntry],
+      postChain: [],
+    };
+    const onPatch = vi.fn();
+    const { container, root } = renderStrip(channel, onPatch);
+
+    await act(async () => {
+      const button = Array.from(container.querySelectorAll('button')).find(
+        (candidate) => candidate.textContent === 'Edit Effect Definition pre',
+      ) as HTMLButtonElement | undefined;
+      button?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(window.blueAPI.getEffectEditorDocument).toHaveBeenCalledWith({
+      ownerType: 'project',
+      effectId: 'fx-1',
+      projectRef: lazyEntry.projectRef,
+    });
+
+    await act(async () => {
+      const rename = Array.from(container.querySelectorAll('button')).find(
+        (candidate) => candidate.textContent === 'Rename Draft',
+      ) as HTMLButtonElement | undefined;
+      rename?.click();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      const ok = Array.from(container.querySelectorAll('button')).find(
+        (candidate) => candidate.textContent === 'OK',
+      ) as HTMLButtonElement | undefined;
+      ok?.click();
+      await Promise.resolve();
+    });
+
+    expect(onPatch).toHaveBeenCalledOnce();
+    const patch = onPatch.mock.calls[0][0] as { patch: { effectXml: string } };
+    expect(Effect.loadFromXML(Element.parse(patch.patch.effectXml)).getName()).toBe(
+      'Edited Effect',
+    );
 
     act(() => {
       root.unmount();

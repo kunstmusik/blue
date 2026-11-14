@@ -183,6 +183,7 @@ import {
   closeEffectEditorWindowsForOwner,
   broadcastProjectDocumentUpdateToEffectWindows,
   focusEffectEditorWindowMode,
+  hasOpenProjectEffectWindows,
   isEffectEditorWebContents,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
@@ -193,6 +194,7 @@ import {
   closeTrackInstrumentEditorWindowsForGroup,
   closeTrackInstrumentEditorWindowsForTrack,
   focusTrackInstrumentEditorWindow,
+  getOpenTrackInstrumentTargets,
   isTrackInstrumentEditorWebContents,
   openTrackInstrumentEditorWindow,
 } from './track-instrument-editor-window-manager';
@@ -250,11 +252,13 @@ import {
   broadcastToWorkbenchWindows,
   disposeWorkbenchWindowHost,
   getWorkbenchWindowManager,
+  hasFloatingWorkbenchWindows,
   initWorkbenchWindowHost,
   registerFloatingWindow,
   registerMainWindow,
   routeFocusPanel,
   sendToFocusedWorkbenchWindow,
+  sendToMainWindow,
 } from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
 import {
@@ -326,6 +330,8 @@ import {
   isEmptyProjectDocumentPatch,
   isScoreColorPatchAccepted,
   isBsbRealtimeControlUpdate,
+  createScoreObjectPropertiesTarget,
+  resolveEditorTarget,
   resolveTimelineTarget,
   type EffectEditorPatchRequest,
   type EffectEditorRequest,
@@ -430,7 +436,7 @@ import type {
   IpcMainLike,
 } from './ipc/ipc-registration';
 import { createProjectLifecycle } from './project-lifecycle';
-import { createProjectHistory } from './project-history';
+import { createProjectHistory, type ProjectHistorySnapshotCaptureContext } from './project-history';
 import { ProjectSession } from './project-session';
 import {
   PROJECT_HISTORY_COMMIT_CHANNEL,
@@ -477,6 +483,9 @@ import {
 } from './packaged-runtime-verification';
 
 let mainWindow: BrowserWindow | null = null;
+const optimisticMainWindowOperationIds = new Set<string>();
+let lastApplicationMenuStateKey: string | null = null;
+let lastWindowTitle: string | null = null;
 const exampleFactoryManifestProvider = createFactoryManifestProvider();
 const projectSession = new ProjectSession();
 // Load diagnostics belong to a candidate, not canonical project content. Only
@@ -596,22 +605,128 @@ function broadcastHistoryBoundary(
   }
 }
 
+function isMainWindowWebContents(sender: unknown): boolean {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  if (sender === mainWindow.webContents) return true;
+  const senderId = (sender as { id?: number } | null | undefined)?.id;
+  return typeof senderId === 'number' && senderId === mainWindow.webContents.id;
+}
+
+function captureSecondaryWindowPublishedSnapshot(
+  hasEffectWindows: boolean,
+  trackTargets: readonly { rootGroupId: string; trackId: string }[],
+): unknown {
+  const data = getCurrentData();
+  if (!data) return null;
+  const projectUdos = createProjectUdoListSnapshot(data);
+  if (trackTargets.length === 0) {
+    return hasEffectWindows ? { projectUdos } : null;
+  }
+
+  const groupsByRootId = new Map<
+    string,
+    {
+      groupId: string;
+      groupType: 'track';
+      layers: Array<{
+        layerId: string;
+        instrument: {
+          snapshot: NonNullable<
+            ReturnType<typeof createTrackInstrumentEditorSnapshot>
+          >['instrument'];
+        };
+      }>;
+    }
+  >();
+
+  for (const target of trackTargets) {
+    const trackSnapshot = createTrackInstrumentEditorSnapshot(data, {
+      track: {
+        rootGroupId: target.rootGroupId,
+        trackId: target.trackId,
+        projectSessionId: getCurrentProjectSessionId(),
+        projectRevision: getCurrentProjectRevision(),
+      },
+    });
+    if (!trackSnapshot) continue;
+    let group = groupsByRootId.get(target.rootGroupId);
+    if (!group) {
+      group = { groupId: target.rootGroupId, groupType: 'track', layers: [] };
+      groupsByRootId.set(target.rootGroupId, group);
+    }
+    if (!group.layers.some((layer) => layer.layerId === target.trackId)) {
+      group.layers.push({
+        layerId: target.trackId,
+        instrument: { snapshot: trackSnapshot.instrument },
+      });
+    }
+  }
+
+  return {
+    projectUdos,
+    score: {
+      layerGroups: [...groupsByRootId.values()],
+    },
+  };
+}
+
+function captureHistoryPublishedSnapshot(context: ProjectHistorySnapshotCaptureContext): unknown {
+  if (!getCurrentData()) return null;
+  if (context.reason === 'rollback' && context.operationId !== undefined) {
+    // Rollback restores earlier values, so the originating renderer needs the canonical snapshot.
+    optimisticMainWindowOperationIds.delete(context.operationId);
+  }
+  const isMainWindowOptimistic =
+    context.reason === 'commit' &&
+    context.operationId !== undefined &&
+    optimisticMainWindowOperationIds.has(context.operationId);
+
+  if (isMainWindowOptimistic && !hasFloatingWorkbenchWindows()) {
+    const hasEffectWindows = hasOpenProjectEffectWindows();
+    const trackTargets = getOpenTrackInstrumentTargets();
+    if (!hasEffectWindows && trackTargets.length === 0) {
+      return null;
+    }
+    return captureSecondaryWindowPublishedSnapshot(hasEffectWindows, trackTargets);
+  }
+
+  return getCurrentProjectDocument();
+}
+
 const projectHistory = createProjectHistory({
   session: projectSession,
-  captureSnapshot: getCurrentProjectDocument,
+  captureSnapshot: captureHistoryPublishedSnapshot,
   reconciliation: projectRuntimeReconciliation,
   isParticipantActive: isHistorySenderActive,
   publishUpdated: async (event) => {
-    if (event.snapshot === null) {
-      console.error('[project-history] Refusing to publish an event without a canonical snapshot');
+    if (!getCurrentData()) {
+      console.error('[project-history] Refusing to publish an event without an active project');
       return;
     }
-    const fullEvent = event;
-    broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, fullEvent);
-    broadcastProjectDocumentUpdateToEffectWindows(fullEvent as never);
-    broadcastProjectDocumentUpdateToTrackInstrumentWindows(fullEvent as never);
-    rebuildApplicationMenu();
-    updateWindowTitle();
+    const isMainWindowOptimistic =
+      event.acceptedOperationIds?.some((id) => optimisticMainWindowOperationIds.has(id)) ?? false;
+    if (isMainWindowOptimistic && !hasFloatingWorkbenchWindows()) {
+      const mainEvent = event.snapshot === null ? event : { ...event, snapshot: null };
+      sendToMainWindow(PROJECT_DOCUMENT_UPDATED_CHANNEL, mainEvent);
+      if (event.snapshot !== null) {
+        broadcastProjectDocumentUpdateToEffectWindows(event as never);
+        broadcastProjectDocumentUpdateToTrackInstrumentWindows(event as never);
+      }
+    } else {
+      const fullEvent =
+        event.snapshot === null ? { ...event, snapshot: getCurrentProjectDocument() } : event;
+      if (fullEvent.snapshot === null) {
+        console.error(
+          '[project-history] Refusing to publish an event without a canonical snapshot',
+        );
+        return;
+      }
+      broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, fullEvent);
+      broadcastProjectDocumentUpdateToEffectWindows(fullEvent as never);
+      broadcastProjectDocumentUpdateToTrackInstrumentWindows(fullEvent as never);
+    }
+    rebuildApplicationMenuIfChanged();
+    updateWindowTitleIfChanged();
   },
   broadcastPrepareBoundary: async (event) => {
     broadcastHistoryBoundary(PROJECT_HISTORY_BOUNDARY_PREPARE_CHANNEL, event);
@@ -646,8 +761,8 @@ function publishHistoryCheckpoint(): void {
   broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
   broadcastProjectDocumentUpdateToEffectWindows(event as never);
   broadcastProjectDocumentUpdateToTrackInstrumentWindows(event as never);
-  rebuildApplicationMenu();
-  updateWindowTitle();
+  rebuildApplicationMenuIfChanged();
+  updateWindowTitleIfChanged();
 }
 
 const collectedIpcHandlers = new Map<string, IpcMainInvokeHandler>();
@@ -925,6 +1040,7 @@ function getCurrentProjectDocument() {
     getCurrentFilePath(),
     getCurrentProjectSessionId(),
     getCurrentProjectSessionDocumentId(),
+    { includeSerializedXml: false },
   );
 }
 
@@ -1341,9 +1457,49 @@ function findTrackLayerGroupById(
 }
 
 function updateWindowTitle(): void {
-  if (mainWindow) {
-    mainWindow.setTitle(getWindowTitle(getCurrentFilePath(), projectHistory.getSaveState()));
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const title = getWindowTitle(getCurrentFilePath(), projectHistory.getSaveState());
+    lastWindowTitle = title;
+    mainWindow.setTitle(title);
   }
+}
+
+function updateWindowTitleIfChanged(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const nextTitle = getWindowTitle(getCurrentFilePath(), projectHistory.getSaveState());
+  if (nextTitle === lastWindowTitle) return;
+  lastWindowTitle = nextTitle;
+  mainWindow.setTitle(nextTitle);
+}
+
+function computeApplicationMenuStateKey(): string {
+  const historyState = projectHistory.read();
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  const focusedProjection = focusedWindow
+    ? historyAvailabilityBySender.get(focusedWindow.webContents.id)
+    : undefined;
+  return JSON.stringify([
+    hasLoadedProject(),
+    activeRenderOperationId !== null,
+    canAuditionScoreObjects,
+    Boolean(getCurrentFilePath()) && projectHistory.getSaveState() === 'modified',
+    currentFollowPlaybackEnabled,
+    currentFollowPlaybackOnStartEnabled,
+    historyState.canUndo,
+    historyState.canRedo,
+    historyState.undoLabel ?? null,
+    historyState.redoLabel ?? null,
+    focusedWindow?.webContents.id ?? null,
+    focusedProjection ?? null,
+    getRecentProjectFilesSnapshot(),
+  ]);
+}
+
+function rebuildApplicationMenuIfChanged(): void {
+  const nextKey = computeApplicationMenuStateKey();
+  if (nextKey === lastApplicationMenuStateKey) return;
+  lastApplicationMenuStateKey = nextKey;
+  rebuildApplicationMenu();
 }
 
 // ─── Render/Freeze subprocess seam ───
@@ -1427,7 +1583,7 @@ function finishRenderOperation(operationId: string): void {
   activeRenderAction = null;
   activeRenderCancellationSignal = null;
   activeRenderAbortController = null;
-  rebuildApplicationMenu();
+  rebuildApplicationMenuIfChanged();
 }
 
 function launchExternalOutputCommand(
@@ -1545,7 +1701,7 @@ async function handleRenderToDisk(
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
   activeRenderAbortController = new AbortController();
-  rebuildApplicationMenu();
+  rebuildApplicationMenuIfChanged();
 
   try {
     const settings = loadProgramSettings();
@@ -1693,7 +1849,7 @@ async function handleFreezeScoreObjects(
   const cancellationSignal = { cancelled: false };
   activeRenderCancellationSignal = cancellationSignal;
   activeRenderAbortController = new AbortController();
-  rebuildApplicationMenu();
+  rebuildApplicationMenuIfChanged();
 
   const initialDocumentId = getCurrentProjectSessionDocumentId();
   const initialSessionId = getCurrentProjectSessionId();
@@ -1804,7 +1960,7 @@ async function handleCancelRenderOperation(
 
 function syncRecentProjectFiles(files: string[]): void {
   recentProjectFiles = [...files];
-  rebuildApplicationMenu();
+  rebuildApplicationMenuIfChanged();
 }
 
 function getRecentProjectFilesSnapshot(): string[] {
@@ -1863,7 +2019,7 @@ function setAuditionScoreObjectAvailability(enabled: boolean): void {
   const next = Boolean(enabled && getCurrentData());
   if (canAuditionScoreObjects === next) return;
   canAuditionScoreObjects = next;
-  rebuildApplicationMenu();
+  rebuildApplicationMenuIfChanged();
 }
 
 async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
@@ -2183,6 +2339,7 @@ function rebuildApplicationMenu(): void {
             type: 'set-follow-playback',
             enabled: next,
           });
+          lastApplicationMenuStateKey = computeApplicationMenuStateKey();
           rebuildApplicationMenu();
         }
       },
@@ -2195,6 +2352,7 @@ function rebuildApplicationMenu(): void {
             type: 'set-follow-playback-on-render-start',
             enabled: next,
           });
+          lastApplicationMenuStateKey = computeApplicationMenuStateKey();
           rebuildApplicationMenu();
         }
       },
@@ -2544,8 +2702,10 @@ function createWindow(): void {
     }
   });
 
-  rebuildApplicationMenu();
-  updateWindowTitle();
+  lastApplicationMenuStateKey = null;
+  lastWindowTitle = null;
+  rebuildApplicationMenuIfChanged();
+  updateWindowTitleIfChanged();
 }
 
 async function confirmLibraryDraftTransition(
@@ -2782,7 +2942,7 @@ async function doQuit(trigger: ShutdownTrigger = 'user'): Promise<void> {
       projectSession.resetForShutdown();
       canAuditionScoreObjects = false;
       setActiveMissingAudioSession(null);
-      rebuildApplicationMenu();
+      rebuildApplicationMenuIfChanged();
       await runShutdownStep('temporary CSD cleanup', cleanupTempCsdSnapshots);
     } finally {
       // SIGTERM is how vite-plugin-electron asks the old main process to leave
@@ -2886,13 +3046,17 @@ const projectLifecycle = createProjectLifecycle({
   },
   publishProjectLoaded: () => {
     historyAvailabilityBySender.clear();
-    rebuildApplicationMenu();
-    updateWindowTitle();
+    lastApplicationMenuStateKey = null;
+    lastWindowTitle = null;
+    rebuildApplicationMenuIfChanged();
+    updateWindowTitleIfChanged();
   },
   publishProjectClosed: () => {
     historyAvailabilityBySender.clear();
-    rebuildApplicationMenu();
-    updateWindowTitle();
+    lastApplicationMenuStateKey = null;
+    lastWindowTitle = null;
+    rebuildApplicationMenuIfChanged();
+    updateWindowTitleIfChanged();
     broadcastToWorkbenchWindows('project-closed', null);
   },
 });
@@ -3644,8 +3808,8 @@ async function saveFileAsInternal(): Promise<boolean> {
   // (spec 106 FR-009 / T035).
   projectHistory.checkpointSave();
   publishHistoryCheckpoint();
-  updateWindowTitle();
-  rebuildApplicationMenu();
+  updateWindowTitleIfChanged();
+  rebuildApplicationMenuIfChanged();
   mainWindow?.webContents.send('save-complete', { filePath: getCurrentFilePath() });
 
   const nextProjectDir = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
@@ -3809,8 +3973,8 @@ function doSave(filePath: string): boolean {
   // revision to every workbench renderer (spec 106 FR-009 / T035).
   projectHistory.checkpointSave();
   publishHistoryCheckpoint();
-  updateWindowTitle();
-  rebuildApplicationMenu();
+  updateWindowTitleIfChanged();
+  rebuildApplicationMenuIfChanged();
   if (mainWindow) {
     mainWindow.webContents.send('save-complete', { filePath });
   }
@@ -5420,7 +5584,7 @@ ipcRegistration.on('sync-follow-playback-state', (event, enabled: boolean) => {
   if (event.sender !== mainWindow?.webContents) return;
   if (currentFollowPlaybackEnabled !== enabled) {
     currentFollowPlaybackEnabled = enabled;
-    rebuildApplicationMenu();
+    rebuildApplicationMenuIfChanged();
   }
 });
 
@@ -5841,7 +6005,7 @@ function syncPlaybackPreferencesFromSnapshot(snapshot: ProgramSettingsSnapshot):
     });
   }
   if (followChanged || onStartChanged) {
-    rebuildApplicationMenu();
+    rebuildApplicationMenuIfChanged();
   }
 }
 
@@ -5947,7 +6111,7 @@ ipcRegistration.handle('program-settings:update-playback-preferences', (_event, 
     currentFollowPlaybackEnabled = result.snapshot.playback.followPlayback;
     currentSavedFollowPlayback = result.snapshot.playback.followPlayback;
     currentFollowPlaybackOnStartEnabled = result.snapshot.playback.followPlaybackOnStart;
-    rebuildApplicationMenu();
+    rebuildApplicationMenuIfChanged();
   }
   return result;
 });
@@ -6382,6 +6546,18 @@ ipcRegistration.handle('get-project-document', () => {
   return getCurrentProjectDocument();
 });
 
+ipcRegistration.handle(
+  'read-score-object-xml',
+  (_event, target: ScoreObjectEditorTargetSnapshot): string | null => {
+    const data = getCurrentData();
+    if (!data || !target || typeof target !== 'object') {
+      return null;
+    }
+    const resolved = resolveEditorTarget(data, createScoreObjectPropertiesTarget(target));
+    return resolved ? resolved.sObj.saveAsXML().toXml() : null;
+  },
+);
+
 async function commitProjectDocumentPatchBatch(
   patches: ProjectDocumentPatch[],
   options?: ProjectDocumentCommitMetadata & {
@@ -6616,7 +6792,7 @@ ipcRegistration.on(PROJECT_HISTORY_AVAILABILITY_CHANNEL, (event, payload: unknow
   if (typeof sender?.id !== 'number') return;
   historyAvailabilityBySender.set(sender.id, payload);
   trackHistorySender(sender);
-  rebuildApplicationMenu();
+  rebuildApplicationMenuIfChanged();
 });
 
 ipcRegistration.handle(
@@ -6626,7 +6802,25 @@ ipcRegistration.handle(
     if (!validation.valid) return invalidProjectDocumentCommit(validation.reason);
     const senderError = validateHistoryRequestSender(event, validation.value.options?.origin);
     if (senderError) return invalidProjectDocumentCommit(senderError);
-    return commitProjectDocumentPatchBatch(validation.value.patches, validation.value.options);
+    const operationId = validation.value.options?.operationId;
+    const isMainWindowOptimistic = Boolean(
+      operationId &&
+      !validation.value.options?.proposalToken &&
+      isMainWindowWebContents(event.sender),
+    );
+    if (isMainWindowOptimistic && operationId) {
+      optimisticMainWindowOperationIds.add(operationId);
+    }
+    try {
+      return await commitProjectDocumentPatchBatch(
+        validation.value.patches,
+        validation.value.options,
+      );
+    } finally {
+      if (isMainWindowOptimistic && operationId) {
+        optimisticMainWindowOperationIds.delete(operationId);
+      }
+    }
   },
 );
 

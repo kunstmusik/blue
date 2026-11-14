@@ -7,7 +7,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LiveSpaceTab from '../components/workbench/panels/blue-live/LiveSpaceTab';
 import LiveCodeTab from '../components/workbench/panels/blue-live/LiveCodeTab';
 import OptionsTab from '../components/workbench/panels/blue-live/OptionsTab';
-import { useProjectStore } from '../stores/project-store';
+import {
+  __testAwaitPendingPatches,
+  __testClearPendingPatches,
+  __testFlushPendingPatches,
+  acceptProjectDocumentRevision,
+  getProjectDocumentRevision,
+  useProjectStore,
+} from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { BlueLiveProjectSnapshot } from '../../shared/project-editor';
 import { GenericScore } from '@blue/data';
@@ -496,6 +503,71 @@ describe('Blue Live panel tab render tests (T045)', () => {
     expect(pasted.uniqueId).not.toBe('score-copy');
     expect(pasted.soundObjectType).toBe('GenericScore');
     expect(pasted.startBeats).toBe(0);
+  });
+
+  it('hydrates an unhydrated ScoreObject clipboard entry on demand when pasting into Live Space', async () => {
+    seedProject(makeBlueLiveSnapshot());
+    const score = new GenericScore();
+    score.setName('Hydrated Phrase');
+    const scoreXml = score.saveAsXML().toXml();
+    const readScoreObjectXml = vi.fn().mockResolvedValue(scoreXml);
+    const previousBlueApi = (window as unknown as { blueAPI?: unknown }).blueAPI;
+    (window as unknown as { blueAPI: { readScoreObjectXml: typeof readScoreObjectXml } }).blueAPI =
+      {
+        readScoreObjectXml,
+      };
+
+    try {
+      useScoreSelectionStore.getState().copySelected([
+        {
+          objectId: 'score-copy-lazy',
+          objectType: 'GenericScore',
+          name: 'Hydrated Phrase',
+          startBeats: 4,
+          durationBeats: 2,
+          backgroundColor: -1,
+          isContainer: false,
+          layerIndex: 0,
+          groupId: 'score-root',
+          editorTarget: {
+            selectionId: 'score-copy-lazy',
+            selectedObjectType: 'GenericScore',
+            editorObjectType: 'GenericScore',
+            ownerKind: 'timeline',
+            displayContext: 'timeline',
+            timeline: {
+              rootGroupId: 'score-root',
+              containerPath: [],
+              layerId: 'layer-1',
+            },
+            supportsTimeBehavior: true,
+            supportsRepeatPoint: true,
+            supportsNoteProcessorChain: true,
+          },
+        },
+      ]);
+      act(() => {
+        root.render(
+          <HostDocumentContext.Provider value={document}>
+            <LiveSpaceTab />
+          </HostDocumentContext.Provider>,
+        );
+      });
+      await openCellMenu(1, 0);
+      const paste = Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+        (item) => item.textContent?.trim() === 'Paste',
+      );
+      expect(paste?.hasAttribute('data-disabled')).toBe(false);
+      await selectMenuItem('Paste');
+
+      expect(readScoreObjectXml).toHaveBeenCalledTimes(1);
+      const pasted = useProjectStore.getState().blueLive!.bins.cells[1]![0]!;
+      expect(pasted).not.toBeNull();
+      expect(pasted.soundObjectType).toBe('GenericScore');
+      expect(pasted.displayName).toBe('Hydrated Phrase');
+    } finally {
+      (window as unknown as { blueAPI?: unknown }).blueAPI = previousBlueApi;
+    }
   });
 
   it('disables Live Space Paste for multi-object and unsupported Score buffers', async () => {
@@ -1209,5 +1281,321 @@ describe('Blue Live trigger routing tests (T049)', () => {
     await vi.waitFor(() => {
       expect(container.textContent).toContain('No enabled cells to trigger');
     });
+  });
+
+  it('does not overwrite a newer cell edit when delayed lazy XML paste resolves', async () => {
+    seedProject(makeBlueLiveSnapshot());
+    const score = new GenericScore();
+    score.setName('Stale Lazy Paste');
+    const scoreXml = score.saveAsXML().toXml();
+
+    let resolveRead!: (value: string | null) => void;
+    const readScoreObjectXml = vi.fn().mockImplementation(
+      () =>
+        new Promise<string | null>((resolve) => {
+          resolveRead = resolve;
+        }),
+    );
+    const previousBlueApi = (window as unknown as { blueAPI?: unknown }).blueAPI;
+    (window as unknown as { blueAPI: { readScoreObjectXml: typeof readScoreObjectXml } }).blueAPI =
+      {
+        readScoreObjectXml,
+      };
+
+    try {
+      useScoreSelectionStore.getState().copySelected([
+        {
+          objectId: 'score-copy-delayed',
+          objectType: 'GenericScore',
+          name: 'Stale Lazy Paste',
+          startBeats: 0,
+          durationBeats: 2,
+          backgroundColor: -1,
+          isContainer: false,
+          layerIndex: 0,
+          groupId: 'score-root',
+          editorTarget: {
+            selectionId: 'score-copy-delayed',
+            selectedObjectType: 'GenericScore',
+            editorObjectType: 'GenericScore',
+            ownerKind: 'timeline',
+            displayContext: 'timeline',
+            timeline: {
+              rootGroupId: 'score-root',
+              containerPath: [],
+              layerId: 'layer-1',
+            },
+            supportsTimeBehavior: true,
+            supportsRepeatPoint: true,
+            supportsNoteProcessorChain: true,
+          },
+        },
+      ]);
+
+      act(() => {
+        root.render(
+          <HostDocumentContext.Provider value={document}>
+            <LiveSpaceTab />
+          </HostDocumentContext.Provider>,
+        );
+      });
+
+      await openCellMenu(1, 0);
+      await selectMenuItem('Paste');
+      expect(readScoreObjectXml).toHaveBeenCalledTimes(1);
+
+      const newerCell = {
+        uniqueId: 'newer-cell-id',
+        displayName: 'Newer Edit',
+        enabled: true,
+        keyTrigger: 0,
+        midiTrigger: 0,
+        soundObjectType: 'GenericScore',
+        hasSoundObject: true,
+        serializedXml: scoreXml,
+      };
+      act(() => {
+        useProjectStore.getState().applyBlueLivePatch({
+          type: 'setCell',
+          column: 1,
+          row: 0,
+          cell: newerCell,
+        });
+      });
+
+      await act(async () => {
+        resolveRead(scoreXml);
+        await Promise.resolve();
+      });
+
+      const current = useProjectStore.getState().blueLive!.bins.cells[1]![0];
+      expect(current?.uniqueId).toBe('newer-cell-id');
+      expect(current?.displayName).toBe('Newer Edit');
+    } finally {
+      (window as unknown as { blueAPI?: unknown }).blueAPI = previousBlueApi;
+    }
+  });
+
+  it('rolls back optimistic blueLive.setCell when main rejects the patch with patchChanged false', async () => {
+    const canonicalBlueLive = makeBlueLiveSnapshot();
+    seedProject(canonicalBlueLive);
+
+    const sessionId = useProjectStore.getState().sessionId;
+    const initialRevision = getProjectDocumentRevision();
+    const emptySnapshot = createEmptyProjectEditorSnapshot();
+    const getProjectDocument = vi.fn().mockResolvedValue({
+      title: 'BlueLive Test',
+      author: 'Test',
+      sampleRate: '44100',
+      version: '2.10.0',
+      filePath: '/test.blue',
+      loaded: true,
+      globalOrc: emptySnapshot.globalOrc,
+      globalSco: emptySnapshot.globalSco,
+      orchestra: { ...emptySnapshot.orchestra, loaded: true },
+      projectProperties: emptySnapshot.projectProperties,
+      transport: emptySnapshot.transport,
+      blueLive: canonicalBlueLive,
+    });
+    const commitProjectDocumentPatches = vi.fn().mockResolvedValue({
+      changed: false,
+      revision: initialRevision,
+      sessionId,
+      patchChanged: [false],
+    });
+    const previousBlueApi = (window as unknown as { blueAPI?: unknown }).blueAPI;
+    (
+      window as unknown as {
+        blueAPI: {
+          commitProjectDocumentPatches: typeof commitProjectDocumentPatches;
+          getProjectDocument: typeof getProjectDocument;
+          acknowledgeHistoryBoundary: ReturnType<typeof vi.fn>;
+          readProjectHistory: ReturnType<typeof vi.fn>;
+        };
+      }
+    ).blueAPI = {
+      commitProjectDocumentPatches,
+      getProjectDocument,
+      acknowledgeHistoryBoundary: vi.fn().mockResolvedValue(undefined),
+      readProjectHistory: vi.fn().mockResolvedValue(null),
+    };
+
+    try {
+      act(() => {
+        useProjectStore.getState().applyBlueLivePatch({
+          type: 'setCell',
+          column: 0,
+          row: 0,
+          expectedLiveObjectId: 'obj1',
+          cell: null,
+        });
+      });
+
+      expect(useProjectStore.getState().blueLive!.bins.cells[0]![0]).toBeNull();
+
+      await act(async () => {
+        __testFlushPendingPatches();
+        await __testAwaitPendingPatches();
+      });
+
+      expect(commitProjectDocumentPatches).toHaveBeenCalledTimes(1);
+      expect(getProjectDocument).toHaveBeenCalledTimes(1);
+      expect(useProjectStore.getState().blueLive!.bins.cells[0]![0]?.uniqueId).toBe('obj1');
+    } finally {
+      __testClearPendingPatches();
+      (window as unknown as { blueAPI?: unknown }).blueAPI = previousBlueApi;
+    }
+  });
+
+  it('uses the current projectRevision when delayed lazy XML copy resolves after another edit', async () => {
+    const lazyBlueLive = makeBlueLiveSnapshot();
+    lazyBlueLive.bins.cells[0]![0] = {
+      ...lazyBlueLive.bins.cells[0]![0]!,
+      serializedXml: undefined,
+    };
+    seedProject(lazyBlueLive);
+
+    const score = new GenericScore();
+    score.setName('OSC1');
+    const scoreXml = score.saveAsXML().toXml();
+
+    let resolveRead!: (value: string | null) => void;
+    const readScoreObjectXml = vi.fn().mockImplementation(
+      () =>
+        new Promise<string | null>((resolve) => {
+          resolveRead = resolve;
+        }),
+    );
+    const previousBlueApi = (window as unknown as { blueAPI?: unknown }).blueAPI;
+    (window as unknown as { blueAPI: { readScoreObjectXml: typeof readScoreObjectXml } }).blueAPI =
+      {
+        readScoreObjectXml,
+      };
+
+    try {
+      act(() => {
+        root.render(
+          <HostDocumentContext.Provider value={document}>
+            <LiveSpaceTab />
+          </HostDocumentContext.Provider>,
+        );
+      });
+
+      const initialRevision = getProjectDocumentRevision();
+      const updatedRevision = initialRevision + 5;
+
+      await openCellMenu(0, 0);
+      await selectMenuItem('Copy');
+      expect(readScoreObjectXml).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        acceptProjectDocumentRevision(useProjectStore.getState().sessionId, updatedRevision);
+      });
+
+      await act(async () => {
+        resolveRead(scoreXml);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(captureBlueLiveSoundObject).toHaveBeenCalledWith({
+        projectSessionId: useProjectStore.getState().sessionId,
+        projectRevision: updatedRevision,
+        liveObjectId: 'obj1',
+      });
+      expect(useScoreSelectionStore.getState().clipboard).toEqual([
+        expect.objectContaining({
+          objectId: 'obj1',
+          serializedXml: scoreXml,
+        }),
+      ]);
+    } finally {
+      (window as unknown as { blueAPI?: unknown }).blueAPI = previousBlueApi;
+    }
+  });
+
+  it('aborts delayed lazy XML paste into an empty cell when grid structure changes', async () => {
+    const blueLive = makeBlueLiveSnapshot();
+    blueLive.bins.cells[1] = [null, null];
+    seedProject(blueLive);
+
+    const score = new GenericScore();
+    score.setName('Stale Empty Paste');
+    const scoreXml = score.saveAsXML().toXml();
+
+    let resolveRead!: (value: string | null) => void;
+    const readScoreObjectXml = vi.fn().mockImplementation(
+      () =>
+        new Promise<string | null>((resolve) => {
+          resolveRead = resolve;
+        }),
+    );
+    const previousBlueApi = (window as unknown as { blueAPI?: unknown }).blueAPI;
+    (window as unknown as { blueAPI: { readScoreObjectXml: typeof readScoreObjectXml } }).blueAPI =
+      {
+        readScoreObjectXml,
+      };
+
+    try {
+      useScoreSelectionStore.getState().copySelected([
+        {
+          objectId: 'score-copy-empty-resize',
+          objectType: 'GenericScore',
+          name: 'Stale Empty Paste',
+          startBeats: 0,
+          durationBeats: 2,
+          backgroundColor: -1,
+          isContainer: false,
+          layerIndex: 0,
+          groupId: 'score-root',
+          editorTarget: {
+            selectionId: 'score-copy-empty-resize',
+            selectedObjectType: 'GenericScore',
+            editorObjectType: 'GenericScore',
+            ownerKind: 'timeline',
+            displayContext: 'timeline',
+            timeline: {
+              rootGroupId: 'score-root',
+              containerPath: [],
+              layerId: 'layer-1',
+            },
+            supportsTimeBehavior: true,
+            supportsRepeatPoint: true,
+            supportsNoteProcessorChain: true,
+          },
+        },
+      ]);
+
+      act(() => {
+        root.render(
+          <HostDocumentContext.Provider value={document}>
+            <LiveSpaceTab />
+          </HostDocumentContext.Provider>,
+        );
+      });
+
+      await openCellMenu(1, 0);
+      await selectMenuItem('Paste');
+      expect(readScoreObjectXml).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        useProjectStore.getState().applyBlueLivePatch({
+          type: 'removeRow',
+          index: 0,
+        });
+      });
+
+      await act(async () => {
+        resolveRead(scoreXml);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(useProjectStore.getState().blueLive!.bins.rows).toBe(1);
+      expect(useProjectStore.getState().blueLive!.bins.cells[1]![0]).toBeNull();
+    } finally {
+      __testClearPendingPatches();
+      (window as unknown as { blueAPI?: unknown }).blueAPI = previousBlueApi;
+    }
   });
 });

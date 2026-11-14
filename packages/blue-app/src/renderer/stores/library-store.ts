@@ -29,7 +29,13 @@ import {
 import { libraryEditorPanelId, useLibraryEditorStore } from './library-editor-store';
 import { useWorkbenchStore } from './workbench-store';
 import { useBsbClipboardStore } from './bsb-clipboard-store';
-import { flushProjectDocumentPatches, getProjectDocumentRevision } from './project-store';
+import {
+  flushProjectDocumentPatches,
+  getBlueLiveGridStructureVersion,
+  getProjectDocumentRevision,
+  hasPendingProjectDocumentPatches,
+  useProjectStore,
+} from './project-store';
 import { toast } from 'sonner';
 
 const EMPTY_NODES: Record<LibraryType, LibraryBrowseNode[]> = {
@@ -43,6 +49,34 @@ function receiveSharedCopyBuffers(snapshot: LibraryServiceSnapshot): void {
   if (snapshot.bsbClipboard !== undefined) {
     useBsbClipboardStore.getState().receiveClipboard(snapshot.bsbClipboard);
   }
+}
+
+async function captureWithSettledProject<T extends { readonly projectRevision: number }, R>(
+  request: T,
+  invoke: (settledRequest: T) => Promise<LibraryResult<R>>,
+): Promise<LibraryResult<R>> {
+  let settledRequest = request;
+  if (
+    typeof hasPendingProjectDocumentPatches === 'function' &&
+    hasPendingProjectDocumentPatches()
+  ) {
+    try {
+      const settledRevision = await flushProjectDocumentPatches();
+      if (settledRevision > request.projectRevision) {
+        settledRequest = { ...request, projectRevision: settledRevision };
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        error: {
+          code: 'storage-failure',
+          message: error instanceof Error ? error.message : 'Unable to save project changes.',
+          retryable: true,
+        },
+      };
+    }
+  }
+  return invoke(settledRequest);
 }
 
 interface LibraryState {
@@ -62,6 +96,7 @@ interface LibraryState {
   clipboard: LibraryInteractionClipboard | null;
   transferPreview: LibraryTransferPreview | null;
   transferSource: LibraryTransferSourceReference | null;
+  transferBlueLiveGridVersion: number | null;
   deletePreview: (LibraryMutationPreview & { readonly displayName: string }) | null;
   importPreview: ManualLibraryImportPreview | null;
   importResult: ManualLibraryImportResult | null;
@@ -119,6 +154,8 @@ let unsubscribeSnapshot: (() => void) | null = null;
 let unsubscribeChanged: (() => void) | null = null;
 let refreshGeneration = 0;
 let searchGeneration = 0;
+// Cancel and replacement invalidate pending work before it can submit a preview token.
+let transferGeneration = 0;
 const expandGenerations = new Map<string, number>();
 
 async function browseAllChildren(
@@ -207,6 +244,7 @@ function initialState() {
     clipboard: null,
     transferPreview: null,
     transferSource: null,
+    transferBlueLiveGridVersion: null,
     deletePreview: null,
     importPreview: null,
     importResult: null,
@@ -260,6 +298,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     unsubscribeChanged = null;
     refreshGeneration += 1;
     searchGeneration += 1;
+    transferGeneration += 1;
     expandGenerations.clear();
   },
 
@@ -583,7 +622,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   captureScoreSoundObject: async (request) => {
-    const result = await window.blueAPI.captureScoreSoundObjectClipboard(request);
+    const result = await captureWithSettledProject(request, (settled) =>
+      window.blueAPI.captureScoreSoundObjectClipboard(settled),
+    );
     if (!result.ok) {
       set({ error: formatLibraryError(result.error) });
       toast.error(formatLibraryError(result.error));
@@ -594,7 +635,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   captureTrackInstrument: async (request) => {
-    const result = await window.blueAPI.captureTrackInstrumentClipboard(request);
+    const result = await captureWithSettledProject(request, (settled) =>
+      window.blueAPI.captureTrackInstrumentClipboard(settled),
+    );
     if (!result.ok) {
       set({ error: formatLibraryError(result.error) });
       toast.error(formatLibraryError(result.error));
@@ -605,7 +648,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   captureBlueLiveSoundObject: async (request) => {
-    const result = await window.blueAPI.captureBlueLiveSoundObjectClipboard(request);
+    const result = await captureWithSettledProject(request, (settled) =>
+      window.blueAPI.captureBlueLiveSoundObjectClipboard(settled),
+    );
     if (!result.ok) {
       set({ error: formatLibraryError(result.error) });
       toast.error(formatLibraryError(result.error));
@@ -616,7 +661,9 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   addScoreSoundObjectToProjectLibrary: async (request) => {
-    const result = await window.blueAPI.addScoreSoundObjectToProjectLibrary(request);
+    const result = await captureWithSettledProject(request, (settled) =>
+      window.blueAPI.addScoreSoundObjectToProjectLibrary(settled),
+    );
     if (!result.ok) {
       set({ error: formatLibraryError(result.error) });
       toast.error(formatLibraryError(result.error));
@@ -758,34 +805,106 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   },
 
   transferToProject: async (source, target, mode = 'independent') => {
+    const generation = ++transferGeneration;
+    const initialBlueLiveGridVersion =
+      target.kind === 'blueLive' && typeof getBlueLiveGridStructureVersion === 'function'
+        ? getBlueLiveGridStructureVersion()
+        : 0;
+    const initialBlueLiveBins =
+      target.kind === 'blueLive' ? useProjectStore?.getState?.()?.blueLive?.bins : undefined;
     let settledRevision: number;
     try {
       settledRevision = await flushProjectDocumentPatches();
     } catch (error) {
+      if (generation !== transferGeneration) return false;
       const message = error instanceof Error ? error.message : 'Unable to save project changes.';
-      set({ error: null, transferPreview: null, transferSource: null });
+      set({
+        error: null,
+        transferPreview: null,
+        transferSource: null,
+        transferBlueLiveGridVersion: null,
+      });
       toast.error(message);
       return false;
     }
-    const settledTarget =
-      settledRevision > target.projectRevision
+    if (generation !== transferGeneration) return false;
+    const blueLiveBins =
+      target.kind === 'blueLive' ? useProjectStore?.getState?.()?.blueLive?.bins : undefined;
+    if (
+      target.kind === 'blueLive' &&
+      ((typeof getBlueLiveGridStructureVersion === 'function' &&
+        getBlueLiveGridStructureVersion() !== initialBlueLiveGridVersion) ||
+        (initialBlueLiveBins &&
+          blueLiveBins &&
+          (blueLiveBins.columns !== initialBlueLiveBins.columns ||
+            blueLiveBins.rows !== initialBlueLiveBins.rows)))
+    ) {
+      set({
+        error: null,
+        transferPreview: null,
+        transferSource: null,
+        transferBlueLiveGridVersion: null,
+      });
+      toast.error('The Blue Live cell changed.');
+      return false;
+    }
+    const resolvedBins = initialBlueLiveBins ?? blueLiveBins;
+    const baseTarget: LibraryExactTransferTarget =
+      target.kind === 'blueLive' && resolvedBins
         ? {
             ...target,
+            liveCell: {
+              ...target.liveCell,
+              expectedColumns: target.liveCell.expectedColumns ?? resolvedBins.columns,
+              expectedRows: target.liveCell.expectedRows ?? resolvedBins.rows,
+            },
+          }
+        : target;
+    const settledTarget: LibraryExactTransferTarget =
+      settledRevision > baseTarget.projectRevision
+        ? {
+            ...baseTarget,
             projectRevision: settledRevision,
-            ...(target.kind === 'score' &&
-            target.timeContextRevision === String(target.projectRevision)
+            ...(baseTarget.kind === 'score' &&
+            baseTarget.timeContextRevision === String(baseTarget.projectRevision)
               ? { timeContextRevision: String(settledRevision) }
               : {}),
           }
-        : target;
+        : baseTarget;
     const result = await window.blueAPI.previewLibraryTransfer({
       source,
       target: settledTarget,
       mode,
     });
+    if (generation !== transferGeneration) return false;
     if (!result.ok) {
-      set({ error: null, transferPreview: null, transferSource: null });
+      set({
+        error: null,
+        transferPreview: null,
+        transferSource: null,
+        transferBlueLiveGridVersion: null,
+      });
       toast.error(formatLibraryError(result.error));
+      return false;
+    }
+    const afterPreviewBins =
+      target.kind === 'blueLive' ? useProjectStore?.getState?.()?.blueLive?.bins : undefined;
+    if (
+      target.kind === 'blueLive' &&
+      ((typeof getBlueLiveGridStructureVersion === 'function' &&
+        getBlueLiveGridStructureVersion() !== initialBlueLiveGridVersion) ||
+        (resolvedBins &&
+          afterPreviewBins &&
+          (afterPreviewBins.columns !== resolvedBins.columns ||
+            afterPreviewBins.rows !== resolvedBins.rows)))
+    ) {
+      set({
+        error: null,
+        transferPreview: null,
+        transferSource: null,
+        transferBlueLiveGridVersion: null,
+      });
+      toast.error('The Blue Live cell changed.');
       return false;
     }
     if (!result.value.canApply) {
@@ -793,21 +912,28 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
         error: null,
         transferPreview: null,
         transferSource: null,
+        transferBlueLiveGridVersion: null,
       });
       toast.error(result.value.blockingReasons.join(' '));
       return false;
     }
     if (result.value.allowedModes.length > 1 && mode === 'independent') {
-      set({ transferPreview: result.value, transferSource: source, error: null });
+      set({
+        transferPreview: result.value,
+        transferSource: source,
+        transferBlueLiveGridVersion: target.kind === 'blueLive' ? initialBlueLiveGridVersion : null,
+        error: null,
+      });
       return true;
     }
+    set({ transferPreview: null, transferSource: null, transferBlueLiveGridVersion: null });
     const applyResult = await window.blueAPI.applyLibraryTransfer(result.value.previewToken);
+    if (generation !== transferGeneration) return applyResult.ok;
+    set({ error: null });
     if (!applyResult.ok) {
-      set({ error: null, transferPreview: null, transferSource: null });
       toast.error(formatLibraryError(applyResult.error));
       return false;
     }
-    set({ transferPreview: null, transferSource: null, error: null });
     toast.success(applyResult.value.message);
     return true;
   },
@@ -815,25 +941,82 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   applyTransfer: async (mode) => {
     const preview = get().transferPreview;
     if (!preview) return false;
+    const generation = ++transferGeneration;
+    const expectedGridVersion = get().transferBlueLiveGridVersion;
+    const hasBlueLiveMismatch = (): boolean => {
+      if (preview.target.kind !== 'blueLive') return false;
+      if (
+        expectedGridVersion !== null &&
+        typeof getBlueLiveGridStructureVersion === 'function' &&
+        getBlueLiveGridStructureVersion() !== expectedGridVersion
+      ) {
+        return true;
+      }
+      const currentBins = useProjectStore?.getState?.()?.blueLive?.bins;
+      if (!currentBins) return false;
+      const { expectedColumns, expectedRows } = preview.target.liveCell;
+      return (
+        (typeof expectedColumns === 'number' && currentBins.columns !== expectedColumns) ||
+        (typeof expectedRows === 'number' && currentBins.rows !== expectedRows)
+      );
+    };
+    const abortBlueLiveTransfer = (): false => {
+      set({
+        error: null,
+        transferPreview: null,
+        transferSource: null,
+        transferBlueLiveGridVersion: null,
+      });
+      toast.error('The Blue Live cell changed.');
+      return false;
+    };
+    if (hasBlueLiveMismatch()) return abortBlueLiveTransfer();
+    if (
+      preview.target.kind === 'blueLive' &&
+      typeof hasPendingProjectDocumentPatches === 'function' &&
+      hasPendingProjectDocumentPatches()
+    ) {
+      try {
+        await flushProjectDocumentPatches();
+      } catch (error) {
+        if (generation !== transferGeneration) return false;
+        const message = error instanceof Error ? error.message : 'Unable to save project changes.';
+        set({
+          error: null,
+          transferPreview: null,
+          transferSource: null,
+          transferBlueLiveGridVersion: null,
+        });
+        toast.error(message);
+        return false;
+      }
+      if (generation !== transferGeneration) return false;
+      if (hasBlueLiveMismatch()) return abortBlueLiveTransfer();
+    }
     if (mode && mode !== preview.requestedMode) {
       const source = get().transferSource;
       if (!source) return false;
       return get().transferToProject(source, preview.target, mode);
     }
+    set({ transferPreview: null, transferSource: null, transferBlueLiveGridVersion: null });
     const result = await window.blueAPI.applyLibraryTransfer(preview.previewToken);
+    if (generation !== transferGeneration) return result.ok;
     if (!result.ok) {
-      set({ error: formatLibraryError(result.error), transferPreview: null, transferSource: null });
+      set({ error: formatLibraryError(result.error) });
       toast.error(formatLibraryError(result.error));
       return false;
     }
-    set({ transferPreview: null, transferSource: null, error: null });
+    set({ error: null });
     if (result.value.diagnostics?.length)
       toast.warning(formatXmlDiagnostics(result.value.diagnostics));
     toast.success(result.value.message);
     return true;
   },
 
-  cancelTransfer: () => set({ transferPreview: null, transferSource: null }),
+  cancelTransfer: () => {
+    transferGeneration += 1;
+    set({ transferPreview: null, transferSource: null, transferBlueLiveGridVersion: null });
+  },
 
   prepareDelete: async (node) => {
     if (node.scope !== 'user' || typeof node.revision !== 'number') return false;

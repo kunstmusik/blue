@@ -109,6 +109,7 @@ const LAYER_GROUP_ID_MAP = new WeakMap<object, string>();
 let nextLayerGroupId = 1;
 
 const SCORE_OBJECT_ID_MAP = new WeakMap<object, string>();
+const DATA_ASSIGNED_SCORE_OBJECT_IDS = new WeakMap<BlueData, Set<string>>();
 let nextScoreObjectId = 1;
 
 const PATTERN_LAYER_ID_MAP = new WeakMap<object, string>();
@@ -217,7 +218,9 @@ export function getLayerGroupId(obj: object): string | undefined {
 
 export function assignScoreObjectId(obj: object, prefix: 'sobj' | 'aclp' = 'sobj'): string {
   const existing = SCORE_OBJECT_ID_MAP.get(obj);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const id = `${prefix}-${nextScoreObjectId++}`;
   SCORE_OBJECT_ID_MAP.set(obj, id);
   return id;
@@ -229,6 +232,28 @@ export function assignExplicitScoreObjectId(obj: object, id: string): void {
 
 export function getScoreObjectId(obj: object): string | undefined {
   return SCORE_OBJECT_ID_MAP.get(obj);
+}
+
+/**
+ * Tracks a score object ID that has been bound within `data` so timeline
+ * resolution can distinguish a deleted object from an un-ID'd object in a
+ * fresh workspace `BlueData` instance.
+ */
+export function recordScoreObjectIdForData(data: BlueData, id: string): void {
+  const trimmed = id.trim();
+  if (trimmed.length === 0) return;
+  let assigned = DATA_ASSIGNED_SCORE_OBJECT_IDS.get(data);
+  if (!assigned) {
+    assigned = new Set();
+    DATA_ASSIGNED_SCORE_OBJECT_IDS.set(data, assigned);
+  }
+  assigned.add(trimmed);
+}
+
+export function wasScoreObjectIdAssignedInData(data: BlueData, id: string): boolean {
+  const trimmed = id.trim();
+  if (trimmed.length === 0) return false;
+  return DATA_ASSIGNED_SCORE_OBJECT_IDS.get(data)?.has(trimmed) ?? false;
 }
 
 // ─── Non-XML Sidecar Maps: Parameters, BSB Widgets, Presets, Dropdown Links, Library References ───
@@ -497,7 +522,10 @@ export function transferProjectEditorIdentities(
     targetToSource.set(tgt, src);
 
     if (SCORE_OBJECT_ID_MAP.has(src)) {
-      SCORE_OBJECT_ID_MAP.set(tgt, SCORE_OBJECT_ID_MAP.get(src)!);
+      const scoreObjectId = SCORE_OBJECT_ID_MAP.get(src)!;
+      SCORE_OBJECT_ID_MAP.set(tgt, scoreObjectId);
+      recordScoreObjectIdForData(source, scoreObjectId);
+      recordScoreObjectIdForData(target, scoreObjectId);
       transferredCount++;
     }
     if (LAYER_GROUP_ID_MAP.has(src)) {
@@ -876,6 +904,12 @@ export function transferProjectEditorIdentities(
     pair(sSets[s], tSets[s]);
   }
 
+  const sourceAssignedIds = DATA_ASSIGNED_SCORE_OBJECT_IDS.get(source);
+  if (sourceAssignedIds) {
+    for (const assignedId of sourceAssignedIds) {
+      recordScoreObjectIdForData(target, assignedId);
+    }
+  }
   transferHistoryNodeIds(source, target, (a, b) =>
     restoreGraphEditorMetadata(b, readGraphEditorMetadata(a)),
   );

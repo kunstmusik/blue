@@ -1290,17 +1290,39 @@ export default React.memo(function ChannelStrip({
         chain,
         entryId: entry.entryId,
       };
-      setEffectDialog({
-        mode: 'edit',
-        chain,
-        entryId: entry.entryId,
-        snapshot: createProjectEffectSnapshotFromXml(
-          entry.effectXml,
-          entry.entryId,
+      if (entry.effectXml !== undefined) {
+        setEffectDialog({
+          mode: 'edit',
+          chain,
+          entryId: entry.entryId,
+          snapshot: createProjectEffectSnapshotFromXml(
+            entry.effectXml,
+            entry.entryId,
+            projectRef,
+            projectUdos,
+          ),
+        });
+        return;
+      }
+
+      const openSessionId = useProjectStore.getState().sessionId;
+      void (async () => {
+        const snapshot = await window.blueAPI?.getEffectEditorDocument?.({
+          effectId: entry.entryId,
+          ownerType: 'project',
           projectRef,
-          projectUdos,
-        ),
-      });
+        });
+        if (!snapshot || useProjectStore.getState().sessionId !== openSessionId) return;
+        setEffectDialog({
+          mode: 'edit',
+          chain,
+          entryId: entry.entryId,
+          snapshot: {
+            ...snapshot,
+            projectUdos: useProjectStore.getState().projectUdos,
+          },
+        });
+      })();
     },
     [channel.id, projectUdos],
   );

@@ -4,6 +4,8 @@ import {
   closeTrackInstrumentEditorWindows,
   closeTrackInstrumentEditorWindowsForGroup,
   closeTrackInstrumentEditorWindowsForTrack,
+  getOpenTrackInstrumentTargets,
+  hasOpenTrackInstrumentWindows,
   isTrackInstrumentEditorWebContents,
   openTrackInstrumentEditorWindow,
 } from './track-instrument-editor-window-manager';
@@ -214,5 +216,65 @@ describe('Track instrument editor window manager', () => {
         },
       }),
     ).toBe(false);
+  });
+
+  it('tracks open targets and scopes broadcasts down to the matching track and projectUdos', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    expect(hasOpenTrackInstrumentWindows()).toBe(false);
+    expect(getOpenTrackInstrumentTargets()).toEqual([]);
+
+    openTrackInstrumentEditorWindow(mainWindow, {
+      track: {
+        rootGroupId: 'group-1',
+        trackId: 'track-2',
+        projectSessionId: 3,
+        projectRevision: 4,
+      },
+    });
+    expect(hasOpenTrackInstrumentWindows()).toBe(true);
+    expect(getOpenTrackInstrumentTargets()).toEqual([
+      { rootGroupId: 'group-1', trackId: 'track-2' },
+    ]);
+
+    const projectUdos = [{ name: 'U1' }];
+    broadcastProjectDocumentUpdateToTrackInstrumentWindows({
+      sessionId: 3,
+      revision: 8,
+      snapshot: {
+        projectUdos,
+        mixer: { enabled: true },
+        score: {
+          layerGroups: [
+            {
+              groupId: 'group-1',
+              groupType: 'track',
+              layers: [
+                { layerId: 'track-1', instrument: { name: 'Ignored' } },
+                { layerId: 'track-2', instrument: { name: 'Target' } },
+              ],
+            },
+            { groupId: 'group-other', groupType: 'track', layers: [] },
+          ],
+        },
+      },
+    } as never);
+
+    expect(electronMock.instances[0]!.webContents.send).toHaveBeenCalledWith(
+      PROJECT_DOCUMENT_UPDATED_CHANNEL,
+      expect.objectContaining({
+        snapshot: {
+          projectUdos,
+          score: {
+            layerGroups: [
+              {
+                groupId: 'group-1',
+                groupType: 'track',
+                layers: [{ layerId: 'track-2', instrument: { name: 'Target' } }],
+              },
+            ],
+          },
+        },
+      }),
+    );
   });
 });

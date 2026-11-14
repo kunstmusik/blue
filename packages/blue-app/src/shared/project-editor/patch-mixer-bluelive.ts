@@ -329,6 +329,7 @@ import {
   assignLayerGroupId,
   assignLayerSelectionId,
   assignScoreObjectId,
+  recordScoreObjectIdForData,
   getScoreObjectId,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
@@ -732,6 +733,12 @@ export function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolea
     case 'setCell': {
       const bins = liveData.getLiveObjectBins();
       if (
+        (patch.expectedColumns !== undefined && bins.getColumnCount() !== patch.expectedColumns) ||
+        (patch.expectedRows !== undefined && bins.getRowCount() !== patch.expectedRows)
+      ) {
+        return false;
+      }
+      if (
         patch.column < 0 ||
         patch.column >= bins.getColumnCount() ||
         patch.row < 0 ||
@@ -740,6 +747,12 @@ export function applyBlueLivePatch(data: BlueData, patch: BlueLivePatch): boolea
         return false;
       }
       const current = bins.getLiveObject(patch.column, patch.row);
+      if (
+        patch.expectedLiveObjectId !== undefined &&
+        (current?.getUniqueId() ?? null) !== patch.expectedLiveObjectId
+      ) {
+        return false;
+      }
       if (patch.cell === null) {
         if (!current) return false;
         bins.setLiveObject(patch.column, patch.row, null);
@@ -1183,11 +1196,14 @@ function applyMixerPatchToChain(
       return false;
     }
     case 'pasteChainEntries': {
+      if (patch.payload.entries.some((entry) => entry.kind === 'effect' && !entry.effectXml)) {
+        return false;
+      }
       const insertIndex = patch.index ?? chain.length;
       for (let i = 0; i < patch.payload.entries.length; i++) {
         const entry = patch.payload.entries[i];
         const newEntryId = patch.newEntryIds?.[i] ?? crypto.randomUUID();
-        if (entry.kind === 'effect') {
+        if (entry.kind === 'effect' && entry.effectXml) {
           const effect = createEffectFromXml(entry.effectXml);
           getMixerEntrySnapshotId(effect, newEntryId);
           chain.splice(Math.min(insertIndex + i, chain.length), 0, effect);
@@ -1462,6 +1478,7 @@ export function createNestedPolyObjectSnapshot(
         objectIndex: j,
       };
       const objectId = assignScoreObjectId(nestedObj, 'sobj');
+      recordScoreObjectIdForData(data, objectId);
       items.push({
         objectId,
         objectType: nestedObj.constructor.name,

@@ -270,6 +270,7 @@ beforeEach(() => {
     exportScoreObject: vi.fn().mockResolvedValue({ status: 'saved' }),
     importScoreObject: vi.fn().mockResolvedValue(null),
   } as typeof window.blueAPI;
+  acceptProjectDocumentRevision(0, 0);
   useScoreSelectionStore.getState().clearSelection();
   useScoreSelectionStore.getState().clearClipboard();
   useMidiRoutingStore.getState().clearFocusForProjectSession();
@@ -286,6 +287,7 @@ afterEach(() => {
   );
   useLibraryStore.setState({ captureScoreSoundObject: originalCaptureScoreSoundObject });
   useScoreSelectionStore.setState({ select: originalSelect });
+  acceptProjectDocumentRevision(0, 0);
   useScoreSelectionStore.getState().clearSelection();
   useScoreSelectionStore.getState().clearClipboard();
   useMidiRoutingStore.getState().clearFocusForProjectSession();
@@ -1126,6 +1128,7 @@ describe('Track layer timeline gestures', () => {
     expect(useLibraryStore.getState().captureScoreSoundObject).toHaveBeenCalledWith({
       projectSessionId: 1,
       projectRevision: 1,
+      selectionId: 'track-object',
       location: { rootGroupIndex: 1, containerPath: [], layerIndex: 0, objectIndex: 0 },
     });
     expect(useScoreSelectionStore.getState().clipboard).toHaveLength(1);

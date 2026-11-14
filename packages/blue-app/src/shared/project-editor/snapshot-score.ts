@@ -263,6 +263,7 @@ import type {
   LayerIndexRange,
   BlueLivePatch,
   ProjectEditorSnapshot,
+  ProjectEditorSnapshotOptions,
   ProjectSummarySnapshot,
   ProjectDocumentPatch,
   ScratchPadSnapshot,
@@ -332,6 +333,8 @@ import {
   assignPatternLayerId,
   assignScoreObjectId,
   getScoreObjectId,
+  recordScoreObjectIdForData,
+  wasScoreObjectIdAssignedInData,
   getMarkerSnapshotIds,
   getTrackInstrumentOwnerIdentity,
 } from './identity';
@@ -734,7 +737,10 @@ function createMarkerSnapshots(data: BlueData): MarkerSnapshot[] {
   return markers;
 }
 
-function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot[] {
+function createScoreLayerGroupSnapshots(
+  data: BlueData,
+  includeSerializedXml = true,
+): ScoreLayerGroupSnapshot[] {
   const score = data.getScore();
   const context = score.getTimeContext();
   const result: ScoreLayerGroupSnapshot[] = [];
@@ -766,6 +772,7 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
           assignedLayerMap,
           projectParameterCatalog,
           sharedAutomationData,
+          includeSerializedXml,
         ),
       );
     } else if (lg instanceof TrackLayerGroup) {
@@ -780,10 +787,11 @@ function createScoreLayerGroupSnapshots(data: BlueData): ScoreLayerGroupSnapshot
           assignedLayerMap,
           projectParameterCatalog,
           sharedAutomationData,
+          includeSerializedXml,
         ),
       );
     } else if (lg instanceof PatternsLayerGroup) {
-      result.push(createPatternsLayerGroupSnapshot(lg, context));
+      result.push(createPatternsLayerGroupSnapshot(lg, context, includeSerializedXml));
     }
   }
 
@@ -803,6 +811,7 @@ function createPolyObjectGroupSnapshot(
     paramMap: Map<string, BlueDataParameter>;
     metadataMap: Map<string, ParameterMetadata>;
   },
+  includeSerializedXml = true,
 ): PolyObjectLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const layers: ScoreLayerSnapshot[] = [];
@@ -831,7 +840,7 @@ function createPolyObjectGroupSnapshot(
         backgroundColor: sObj.getBackgroundColor(),
         isContainer: sObj instanceof PolyObject,
         editorTarget: buildEditorTargetSnapshot(sObj, objectId, location),
-        serializedXml: sObj.saveAsXML().toXml(),
+        ...(includeSerializedXml ? { serializedXml: sObj.saveAsXML().toXml() } : {}),
         barRenderer:
           sObj instanceof AbstractSoundObject
             ? createBarRendererForSoundObject(sObj, context)
@@ -902,6 +911,7 @@ function createTrackLayerGroupSnapshot(
     paramMap: Map<string, BlueDataParameter>;
     metadataMap: Map<string, ParameterMetadata>;
   },
+  includeSerializedXml = true,
 ): TrackLayerGroupSnapshot {
   const groupId = lg.getUniqueId();
   const layers: TrackSnapshot[] = [];
@@ -945,7 +955,7 @@ function createTrackLayerGroupSnapshot(
             supportsRepeatPoint: false,
             supportsNoteProcessorChain: false,
           },
-          serializedXml: item.saveAsXML().toXml(),
+          ...(includeSerializedXml ? { serializedXml: item.saveAsXML().toXml() } : {}),
           barRenderer: createBarRendererForAudioClip(item, context),
         });
         continue;
@@ -962,7 +972,7 @@ function createTrackLayerGroupSnapshot(
         backgroundColor: item.getBackgroundColor(),
         isContainer: item instanceof PolyObject,
         editorTarget: buildEditorTargetSnapshot(item, objectId, location),
-        serializedXml: item.saveAsXML().toXml(),
+        ...(includeSerializedXml ? { serializedXml: item.saveAsXML().toXml() } : {}),
         barRenderer:
           item instanceof AbstractSoundObject
             ? createBarRendererForSoundObject(item, context)
@@ -1054,6 +1064,7 @@ function collectActivePatternCellIndices(layer: PatternLayer): number[] {
 function createPatternsLayerGroupSnapshot(
   lg: PatternsLayerGroup,
   context: TimeContext,
+  includeSerializedXml = true,
 ): PatternsLayerGroupSnapshot {
   const groupId = assignLayerGroupId(lg);
   const rawBeatsLength = lg.getPatternBeatsLength();
@@ -1095,7 +1106,7 @@ function createPatternsLayerGroupSnapshot(
         name: source.getName(),
         backgroundColor: source.getBackgroundColor(),
         editorTarget,
-        serializedXml: source.saveAsXML().toXml(),
+        ...(includeSerializedXml ? { serializedXml: source.saveAsXML().toXml() } : {}),
         barRenderer:
           source instanceof AbstractSoundObject
             ? createBarRendererForSoundObject(source, context)
@@ -1126,14 +1137,19 @@ function createPatternsLayerGroupSnapshot(
   };
 }
 
-export function createScoreDocumentSnapshot(data: BlueData): ScoreDocumentSnapshot {
+export function createScoreDocumentSnapshot(
+  data: BlueData,
+  options?: ProjectEditorSnapshotOptions,
+): ScoreDocumentSnapshot {
   const score = data.getScore();
   const rootChain = score.getNoteProcessorChain();
+  const layerGroups = createScoreLayerGroupSnapshots(data, options?.includeSerializedXml ?? true);
+  recordExistingScoreObjectIds(data);
   return {
     trackLayerMuteSoloMode: score.trackLayerMuteSoloMode,
     timeState: createScoreTimeStateSnapshot(data),
     markers: createMarkerSnapshots(data),
-    layerGroups: createScoreLayerGroupSnapshots(data),
+    layerGroups,
     rootNoteProcessorChain:
       rootChain.getProcessors().length > 0
         ? createNoteProcessorChainSnapshot(rootChain)
@@ -1463,6 +1479,131 @@ export function findPatternsLayerGroupByGroupId(
   return null;
 }
 
+/**
+ * Records all score object IDs currently bound within `data`'s score tree so
+ * subsequent timeline target resolution can tell deleted objects apart from
+ * fresh workspace documents.
+ */
+export function recordExistingScoreObjectIds(data: BlueData): void {
+  const recordObj = (obj: object | null | undefined): void => {
+    if (!obj) return;
+    const id = getScoreObjectId(obj);
+    if (id) {
+      recordScoreObjectIdForData(data, id);
+    }
+  };
+  const walkPolyObject = (poly: PolyObject): void => {
+    recordObj(poly);
+    for (const layer of poly) {
+      for (const item of layer) {
+        recordObj(item);
+        if (item instanceof PolyObject) {
+          walkPolyObject(item);
+        }
+      }
+    }
+  };
+  for (const group of data.getScore()) {
+    if (group instanceof PolyObject) {
+      walkPolyObject(group);
+    } else if (group instanceof TrackLayerGroup) {
+      for (const layer of group) {
+        for (const item of layer) {
+          recordObj(item);
+          if (item instanceof PolyObject) {
+            walkPolyObject(item);
+          }
+        }
+      }
+    } else if (group instanceof PatternsLayerGroup) {
+      for (const layer of group) {
+        recordObj(layer.getSoundObject());
+      }
+    }
+  }
+}
+
+function findTimelineEntryBySelectionId(
+  score: Score,
+  targetId: string,
+): {
+  sObj: SoundObject | AudioClip;
+  layer: Array<SoundObject | AudioClip>;
+  objectIndex: number;
+} | null {
+  const walkLayers = (
+    layers: Iterable<Array<SoundObject | AudioClip>>,
+  ): {
+    sObj: SoundObject | AudioClip;
+    layer: Array<SoundObject | AudioClip>;
+    objectIndex: number;
+  } | null => {
+    for (const layer of layers) {
+      for (let objectIndex = 0; objectIndex < layer.length; objectIndex += 1) {
+        const sObj = layer[objectIndex];
+        if (!sObj) continue;
+        if (getScoreObjectId(sObj) === targetId) {
+          return { sObj, layer, objectIndex };
+        }
+        if (sObj instanceof PolyObject) {
+          const nested = walkLayers(sObj as unknown as Iterable<Array<SoundObject | AudioClip>>);
+          if (nested) return nested;
+        }
+      }
+    }
+    return null;
+  };
+  for (const group of score) {
+    if (group instanceof PolyObject || group instanceof TrackLayerGroup) {
+      const found = walkLayers(group as unknown as Iterable<Array<SoundObject | AudioClip>>);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolves a timeline target at `location`, verifying `selectionId` when present
+ * and locating moved objects by stable identity while rejecting deleted IDs.
+ */
+export function resolveTimelineTargetWithSelectionId(
+  data: BlueData,
+  location: ScoreObjectLocationRef,
+  selectionId?: string,
+): {
+  sObj: SoundObject | AudioClip;
+  layer: Array<SoundObject | AudioClip>;
+  objectIndex: number;
+} | null {
+  const score = data.getScore();
+  const positional = resolveTimelineTarget(score, location);
+  const trimmedId = selectionId?.trim() ?? '';
+  if (trimmedId.length === 0) {
+    return positional;
+  }
+  if (positional && getScoreObjectId(positional.sObj) === trimmedId) {
+    recordScoreObjectIdForData(data, trimmedId);
+    return positional;
+  }
+  const byId = findTimelineEntryBySelectionId(score, trimmedId);
+  if (byId) {
+    recordScoreObjectIdForData(data, trimmedId);
+    return byId;
+  }
+  if (wasScoreObjectIdAssignedInData(data, trimmedId)) {
+    return null;
+  }
+  return positional;
+}
+
+function resolveTimelineObjectForTarget(
+  data: BlueData,
+  location: ScoreObjectLocationRef,
+  selectionId: string,
+): SoundObject | AudioClip | null {
+  return resolveTimelineTargetWithSelectionId(data, location, selectionId)?.sObj ?? null;
+}
+
 export function resolveEditorTarget(
   data: BlueData,
   target: ScoreObjectEditorTargetSnapshot,
@@ -1494,24 +1635,22 @@ export function resolveEditorTarget(
     } else {
       const instLoc = target.sourceInstanceLocation;
       if (instLoc) {
-        const timelineResolved = resolveTimelineTarget(score, instLoc);
-        if (timelineResolved?.sObj instanceof Instance) {
-          sObj = timelineResolved.sObj.getSoundObject();
+        const timelineResolved = resolveTimelineObjectForTarget(data, instLoc, target.selectionId);
+        if (timelineResolved instanceof Instance) {
+          sObj = timelineResolved.getSoundObject();
         }
       }
     }
   } else {
     const loc = target.location;
-    if (!loc) return null;
-    const locationResolved = resolveTimelineTarget(score, loc)?.sObj ?? null;
-    if (locationResolved) {
-      sObj = locationResolved;
+    if (!loc) {
+      sObj =
+        target.selectionId.trim().length > 0
+          ? ((resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
+              SoundObject | AudioClip | null)
+          : null;
     } else {
-      // During an optimistic cross-layer drag the renderer has the destination
-      // location before the main-owned graph commits it. Stable selection
-      // identity keeps the same object editable through that short interval.
-      sObj = (resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
-        SoundObject | AudioClip | null;
+      sObj = resolveTimelineObjectForTarget(data, loc, target.selectionId);
     }
   }
 
@@ -1785,8 +1924,10 @@ export function createScoreObjectEditorDocument(
         const layer = pObj[li];
         for (let oi = 0; oi < layer.length; oi++) {
           const child = layer[oi];
+          const childId = assignScoreObjectId(child, 'sobj');
+          recordScoreObjectIdForData(data, childId);
           children.push({
-            objectId: assignScoreObjectId(child, 'sobj'),
+            objectId: childId,
             name: child.getName(),
             objectType: child.constructor.name,
             startBeats: child.getStartTime().toBeats(context),
@@ -2119,7 +2260,9 @@ export function createProjectEditorSnapshot(
   filePath: string | null,
   sessionId = 0,
   documentId?: string,
+  options?: ProjectEditorSnapshotOptions,
 ): ProjectEditorSnapshot {
+  const includeSerializedXml = options?.includeSerializedXml ?? true;
   const orchestra = createOrchestraSnapshot(data);
   reconcileMixerWithArrangement(data, orchestra);
   return {
@@ -2131,7 +2274,9 @@ export function createProjectEditorSnapshot(
     globalSco: data.getGlobalOrcSco().getGlobalSco(),
     orchestra,
     mixer: {
-      ...createMixerSnapshot(data.getMixer(), data.getScore()),
+      ...createMixerSnapshot(data.getMixer(), data.getScore(), undefined, {
+        includeSerializedXml,
+      }),
       legacyActiveChannelStateNotice: computeLegacyMixerStateNotice(data),
     },
     projectProperties: createProjectPropertiesSnapshot(data.getProjectProperties()),
@@ -2141,9 +2286,11 @@ export function createProjectEditorSnapshot(
     scratchPad: createScratchPadSnapshot(data.getScratchPadData()),
     projectUdos: createProjectUdoListSnapshot(data),
     loaded: true,
-    blueLive: createBlueLiveProjectSnapshot(data.getLiveData(), data.getScore().getTimeContext()),
+    blueLive: createBlueLiveProjectSnapshot(data.getLiveData(), data.getScore().getTimeContext(), {
+      includeSerializedXml,
+    }),
     midiInput: createMidiInputProcessorSnapshot(data.getMidiInputProcessor()),
-    score: createScoreDocumentSnapshot(data),
+    score: createScoreDocumentSnapshot(data, { includeSerializedXml }),
     namedChains: { names: data.getNoteProcessorChainMap().getChainNames() },
   };
 }

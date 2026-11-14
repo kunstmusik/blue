@@ -343,6 +343,7 @@ import {
   assignLayerSelectionId,
   assignPatternLayerId,
   assignScoreObjectId,
+  recordScoreObjectIdForData,
   getLayerSelectionId,
   getScoreObjectId,
   getMixerChannelSnapshotId,
@@ -357,8 +358,9 @@ import {
   createBarRendererForAudioClip,
   createBarRendererForSoundObject,
   findPatternsLayerGroupByGroupId,
+  recordExistingScoreObjectIds,
   resolveEditorTarget,
-  resolveTimelineTarget,
+  resolveTimelineTargetWithSelectionId,
   setCodeText,
 } from './snapshot-score';
 import {
@@ -1175,8 +1177,13 @@ function applyAddScoreObjectsPatch(
       candidate && !(candidate instanceof AudioClip) ? candidate.deepCopy() : null;
     let clip: AudioClip | null = candidate instanceof AudioClip ? candidate : null;
 
-    if (!sObj && !clip && obj.sourceTarget?.location) {
-      const source = resolveTimelineTarget(score, obj.sourceTarget.location);
+    const sourceLocation = obj.sourceTarget?.location ?? obj.sourceTarget?.sourceInstanceLocation;
+    if (!sObj && !clip && sourceLocation) {
+      const source = resolveTimelineTargetWithSelectionId(
+        data,
+        sourceLocation,
+        obj.sourceTarget?.selectionId,
+      );
       if (source) {
         if (source.sObj instanceof AudioClip) {
           clip = AudioClip.copyFrom(source.sObj);
@@ -1198,7 +1205,9 @@ function applyAddScoreObjectsPatch(
     if (!targetObject) continue;
 
     if (obj.selectionId?.trim()) {
-      assignExplicitScoreObjectId(targetObject, obj.selectionId.trim());
+      const trimmedId = obj.selectionId.trim();
+      assignExplicitScoreObjectId(targetObject, trimmedId);
+      recordScoreObjectIdForData(data, trimmedId);
     }
 
     targetObject.setName(obj.name);
@@ -1266,6 +1275,31 @@ function applyAddScoreObjectsPatch(
   return changed;
 }
 
+function compareScoreObjectLocations(
+  a: ScoreObjectLocationRef,
+  aObjectIndex: number,
+  b: ScoreObjectLocationRef,
+  bObjectIndex: number,
+): number {
+  if (a.rootGroupIndex !== b.rootGroupIndex) {
+    return a.rootGroupIndex - b.rootGroupIndex;
+  }
+  const minPathLength = Math.min(a.containerPath.length, b.containerPath.length);
+  for (let i = 0; i < minPathLength; i += 1) {
+    const segA = a.containerPath[i]!;
+    const segB = b.containerPath[i]!;
+    if (segA.layerIndex !== segB.layerIndex) return segA.layerIndex - segB.layerIndex;
+    if (segA.objectIndex !== segB.objectIndex) return segA.objectIndex - segB.objectIndex;
+  }
+  if (a.containerPath.length !== b.containerPath.length) {
+    return a.containerPath.length - b.containerPath.length;
+  }
+  if (a.layerIndex !== b.layerIndex) {
+    return a.layerIndex - b.layerIndex;
+  }
+  return aObjectIndex - bObjectIndex;
+}
+
 function applyMoveScoreObjectsPatch(
   data: BlueData,
   patch: ScorePatch & { type: 'moveScoreObjects' },
@@ -1273,15 +1307,22 @@ function applyMoveScoreObjectsPatch(
   const score = data.getScore();
   const resolvedMoves: Array<{
     move: (typeof patch.moves)[number];
-    sourceResolved: NonNullable<ReturnType<typeof resolveTimelineTarget>>;
+    moveIndex: number;
+    sourceLocation: ScoreObjectLocationRef;
+    sourceResolved: NonNullable<ReturnType<typeof resolveTimelineTargetWithSelectionId>>;
     targetLayer: Array<SoundObject | AudioClip>;
   }> = [];
 
-  for (const move of patch.moves) {
+  for (let moveIndex = 0; moveIndex < patch.moves.length; moveIndex += 1) {
+    const move = patch.moves[moveIndex]!;
     const sourceLocation = move.target.location ?? move.target.sourceInstanceLocation;
     if (!sourceLocation) continue;
 
-    const sourceResolved = resolveTimelineTarget(score, sourceLocation);
+    const sourceResolved = resolveTimelineTargetWithSelectionId(
+      data,
+      sourceLocation,
+      move.target.selectionId,
+    );
     if (!sourceResolved) continue;
 
     const targetGroup = findLayerGroupByGroupId(score, move.targetGroupId);
@@ -1290,7 +1331,13 @@ function applyMoveScoreObjectsPatch(
     if (targetGroup instanceof TrackLayerGroup) {
       const trackLayer = targetGroup[move.targetLayerIndex];
       if (!trackLayer || !trackLayer.accepts(sourceResolved.sObj)) continue;
-      resolvedMoves.push({ move, sourceResolved, targetLayer: trackLayer });
+      resolvedMoves.push({
+        move,
+        moveIndex,
+        sourceLocation,
+        sourceResolved,
+        targetLayer: trackLayer,
+      });
       continue;
     }
 
@@ -1301,12 +1348,22 @@ function applyMoveScoreObjectsPatch(
     const targetLayer = targetGroup[move.targetLayerIndex];
     if (!targetLayer) continue;
 
-    resolvedMoves.push({ move, sourceResolved, targetLayer });
+    resolvedMoves.push({ move, moveIndex, sourceLocation, sourceResolved, targetLayer });
   }
 
-  resolvedMoves.sort((a, b) => b.sourceResolved.objectIndex - a.sourceResolved.objectIndex);
+  resolvedMoves.sort(
+    (a, b) =>
+      b.sourceResolved.objectIndex - a.sourceResolved.objectIndex || a.moveIndex - b.moveIndex,
+  );
 
-  let changed = false;
+  const splicedMoves: Array<{
+    sObj: SoundObject | AudioClip;
+    targetLayer: Array<SoundObject | AudioClip>;
+    sourceLocation: ScoreObjectLocationRef;
+    sourceObjectIndex: number;
+    moveIndex: number;
+  }> = [];
+
   for (const entry of resolvedMoves) {
     // Re-validate the resolved object is still at its index before splicing.
     // A prior splice in this same patch (or a duplicate/stale location) can
@@ -1329,28 +1386,70 @@ function applyMoveScoreObjectsPatch(
       sObj.setStartTime(beatsToTimePosition(targetStartBeats, base, score.getTimeContext()));
     }
 
-    entry.targetLayer.push(sObj);
-    changed = true;
+    splicedMoves.push({
+      sObj,
+      targetLayer: entry.targetLayer,
+      sourceLocation: entry.sourceLocation,
+      sourceObjectIndex: entry.sourceResolved.objectIndex,
+      moveIndex: entry.moveIndex,
+    });
   }
 
-  return changed;
+  splicedMoves.sort(
+    (a, b) =>
+      compareScoreObjectLocations(
+        a.sourceLocation,
+        a.sourceObjectIndex,
+        b.sourceLocation,
+        b.sourceObjectIndex,
+      ) || a.moveIndex - b.moveIndex,
+  );
+
+  for (const entry of splicedMoves) {
+    entry.targetLayer.push(entry.sObj);
+  }
+
+  return splicedMoves.length > 0;
 }
 
-function removeScoreObjectByTarget(
+function removeScoreObjectsByTargets(
   data: BlueData,
-  target: ScoreObjectEditorTargetSnapshot,
+  targets: readonly ScoreObjectEditorTargetSnapshot[],
 ): boolean {
-  const score = data.getScore();
-  const location = target.location ?? target.sourceInstanceLocation;
-  if (!location) return false;
+  const resolvedEntries: Array<{
+    sObj: SoundObject | AudioClip;
+    layer: Array<SoundObject | AudioClip>;
+    objectIndex: number;
+  }> = [];
+  const seenObjects = new Set<SoundObject | AudioClip>();
 
-  const timelineResolved = resolveTimelineTarget(score, location);
-  if (!timelineResolved) return false;
-  const { layer, objectIndex } = timelineResolved;
-  if (objectIndex < 0 || objectIndex >= layer.length) return false;
+  for (const target of targets) {
+    const location = target.location ?? target.sourceInstanceLocation;
+    if (!location) continue;
+    const timelineResolved = resolveTimelineTargetWithSelectionId(
+      data,
+      location,
+      target.selectionId,
+    );
+    if (!timelineResolved || seenObjects.has(timelineResolved.sObj)) continue;
+    seenObjects.add(timelineResolved.sObj);
+    resolvedEntries.push(timelineResolved);
+  }
 
-  layer.splice(objectIndex, 1);
-  return true;
+  // Splice highest indices first and re-verify layer membership so deleting
+  // multiple siblings in the same layer never removes an unintended object.
+  resolvedEntries.sort((a, b) => b.objectIndex - a.objectIndex);
+  let removedAny = false;
+  for (const entry of resolvedEntries) {
+    const index =
+      entry.layer[entry.objectIndex] === entry.sObj
+        ? entry.objectIndex
+        : entry.layer.indexOf(entry.sObj);
+    if (index < 0 || index >= entry.layer.length) continue;
+    entry.layer.splice(index, 1);
+    removedAny = true;
+  }
+  return removedAny;
 }
 
 /**
@@ -1362,11 +1461,10 @@ function applyConvertScoreObjectToObjectBuilder(
   data: BlueData,
   target: ScoreObjectEditorTargetSnapshot,
 ): boolean {
-  const score = data.getScore();
   const location = target.location;
   if (!location) return false;
 
-  const resolved = resolveTimelineTarget(score, location);
+  const resolved = resolveTimelineTargetWithSelectionId(data, location, target.selectionId);
   if (!resolved) return false;
   const { sObj, layer, objectIndex } = resolved;
   if (!(sObj instanceof PythonObject) && !(sObj instanceof External)) return false;
@@ -1394,6 +1492,7 @@ function applyConvertScoreObjectToObjectBuilder(
   const existingId = getScoreObjectId(sObj);
   if (existingId) {
     assignExplicitScoreObjectId(builder, existingId);
+    recordScoreObjectIdForData(data, existingId);
   }
 
   layer.splice(objectIndex, 1);
@@ -2181,6 +2280,7 @@ function setTrackItemTiming(
 function reifyTrackItemTransfer(
   transfer: TrackItemTransfer,
   context: TimeContext,
+  soundObjectLibrary?: SoundObjectLibrary,
 ): TrackLayer[number] | null {
   const typeName = transfer.objectType ?? transfer.type ?? '';
   let item: TrackLayer[number] | null = null;
@@ -2190,7 +2290,13 @@ function reifyTrackItemTransfer(
       if (serialized.getName() === 'audioClip') {
         item = AudioClip.loadFromXML(serialized);
       } else {
-        item = loadSoundObjectFromXML(serialized)?.deepCopy() ?? null;
+        const soundObjectRefMap = new ObjRefLoadMap();
+        if (soundObjectLibrary) {
+          for (const entry of soundObjectLibrary.getEntries()) {
+            soundObjectRefMap.register(entry.libraryId, entry.object);
+          }
+        }
+        item = loadSoundObjectFromXML(serialized, soundObjectRefMap)?.deepCopy() ?? null;
       }
     } catch {
       return null;
@@ -2228,7 +2334,7 @@ function applyTrackScorePatch(
   if (patch.type === 'addTrackItem') {
     const target = resolveTrackRef(score, patch.track, patchContext);
     if (!target) return false;
-    const item = reifyTrackItemTransfer(patch.item, context);
+    const item = reifyTrackItemTransfer(patch.item, context, data.getSoundObjectLibrary());
     if (!item || !target.track.accepts(item)) return false;
     if (!patch.item.serializedXml && patch.item.backgroundColor === undefined) {
       item.setBackgroundColor(target.track.getBackgroundColor());
@@ -2241,7 +2347,18 @@ function applyTrackScorePatch(
       patch.item.startTimeBase,
       patch.item.durationTimeBase,
     );
+    if (patch.item.selectionId && patch.item.selectionId.trim().length > 0) {
+      const trimmedId = patch.item.selectionId.trim();
+      assignExplicitScoreObjectId(item, trimmedId);
+      recordScoreObjectIdForData(data, trimmedId);
+    }
     target.track.push(item);
+    if (item instanceof AbstractSoundObject) {
+      const instances = collectInstanceSoundObjects([item]);
+      if (instances.length > 0) {
+        data.getSoundObjectLibrary().checkAndAddInstanceSoundObjects(instances);
+      }
+    }
     return true;
   }
 
@@ -2380,7 +2497,7 @@ function applyConvertToPolyObjectPatch(
         : target.location;
     if (!location) return false;
 
-    const resolved = resolveTimelineTarget(score, location);
+    const resolved = resolveTimelineTargetWithSelectionId(data, location, target.selectionId);
     if (!resolved || resolved.sObj instanceof AudioClip || seenObjects.has(resolved.sObj))
       return false;
 
@@ -2487,7 +2604,9 @@ function applyConvertToPolyObjectPatch(
   pObj.setStartTime(TimePosition.beats(startBeatsMin));
 
   if (patch.selectionId?.trim()) {
-    assignExplicitScoreObjectId(pObj, patch.selectionId.trim());
+    const trimmedId = patch.selectionId.trim();
+    assignExplicitScoreObjectId(pObj, trimmedId);
+    recordScoreObjectIdForData(data, trimmedId);
   }
 
   destLayer.push(pObj);
@@ -2693,6 +2812,7 @@ export function applyScoreObjectPatch(
   patch: ScorePatch,
   patchContext?: ProjectDocumentPatchContext,
 ): boolean {
+  recordExistingScoreObjectIds(data);
   if (patch.type === 'updateTrackLayerMuteSoloMode') {
     if (!isTrackLayerMuteSoloMode(patch.mode)) return false;
     const score = data.getScore();
@@ -2727,13 +2847,7 @@ export function applyScoreObjectPatch(
   }
 
   if (patch.type === 'removeScoreObjects') {
-    let removedAny = false;
-    for (const target of patch.targets) {
-      if (removeScoreObjectByTarget(data, target)) {
-        removedAny = true;
-      }
-    }
-    return removedAny;
+    return removeScoreObjectsByTargets(data, patch.targets);
   }
 
   if (patch.type === 'convertScoreObjectToObjectBuilder') {

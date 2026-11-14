@@ -8,6 +8,7 @@ import {
   type SoundEditorPayload,
   type SoundAutomationParameterSnapshot,
 } from '../../shared/project-editor';
+import { assignExplicitScoreObjectId } from '../../shared/project-editor/identity';
 
 function createDataWithSound(bsbXml?: string): {
   data: BlueData;
@@ -27,6 +28,7 @@ function createDataWithSound(bsbXml?: string): {
   layer.push(sound);
   poly.push(layer);
   data.getScore().push(poly);
+  assignExplicitScoreObjectId(sound, 'sobj-0-0');
 
   const target: ScoreObjectEditorTargetSnapshot = {
     selectionId: 'sobj-0-0',

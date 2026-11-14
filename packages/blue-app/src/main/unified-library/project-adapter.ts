@@ -33,7 +33,7 @@ import {
   applyProjectDocumentPatch,
   createMixerSnapshot,
   resolveScoreInsertionLocation,
-  resolveTimelineTarget,
+  resolveTimelineTargetWithSelectionId,
 } from '../../shared/project-editor';
 import { getAvailableNumericArrangementId } from '../../shared/unified-library';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
@@ -356,8 +356,13 @@ export class UnifiedLibraryProjectAdapter {
     }
     if (target.kind === 'blueLive') {
       const bins = project.data.getLiveData().getLiveObjectBins();
-      const { column, row, expectedLiveObjectId } = target.liveCell;
-      if (column >= bins.getColumnCount() || row >= bins.getRowCount()) {
+      const { column, row, expectedLiveObjectId, expectedColumns, expectedRows } = target.liveCell;
+      if (
+        (expectedColumns !== undefined && bins.getColumnCount() !== expectedColumns) ||
+        (expectedRows !== undefined && bins.getRowCount() !== expectedRows) ||
+        column >= bins.getColumnCount() ||
+        row >= bins.getRowCount()
+      ) {
         return 'The Blue Live cell changed.';
       }
       const currentId = bins.getLiveObject(column, row)?.getUniqueId() ?? null;
@@ -561,7 +566,7 @@ export class UnifiedLibraryProjectAdapter {
               breadcrumb: [channel.name, chain === 'pre' ? 'Pre Effects' : 'Post Effects'],
               supportStatus: 'supported' as const,
               objectType: 'Effect',
-              revision: hashText(entry.effectXml),
+              revision: hashText(entry.effectXml ?? ''),
             })),
         ),
       );
@@ -1036,12 +1041,16 @@ export class UnifiedLibraryProjectAdapter {
     if ((project.revision ?? 0) !== request.projectRevision) {
       throw new Error('The selected SoundObject changed. Copy it again.');
     }
-    const resolved = resolveTimelineTarget(project.data.getScore(), {
-      rootGroupIndex: request.location.rootGroupIndex,
-      containerPath: request.location.containerPath.map((segment) => ({ ...segment })),
-      layerIndex: request.location.layerIndex,
-      objectIndex: request.location.objectIndex,
-    });
+    const resolved = resolveTimelineTargetWithSelectionId(
+      project.data,
+      {
+        rootGroupIndex: request.location.rootGroupIndex,
+        containerPath: request.location.containerPath.map((segment) => ({ ...segment })),
+        layerIndex: request.location.layerIndex,
+        objectIndex: request.location.objectIndex,
+      },
+      request.selectionId,
+    );
     if (!resolved) throw new Error('The selected timeline SoundObject is no longer available.');
     if (resolved.sObj instanceof AudioClip) {
       throw new Error('Audio clips cannot be stored in the SoundObject Library.');
@@ -1120,7 +1129,9 @@ export class UnifiedLibraryProjectAdapter {
       const entry = chain?.find(
         (candidate) => candidate.kind === 'effect' && candidate.entryId === locator.entryId,
       );
-      if (!entry || entry.kind !== 'effect') throw new Error('Project Effect not found');
+      if (!entry || entry.kind !== 'effect' || entry.effectXml === undefined) {
+        throw new Error('Project Effect not found');
+      }
       return {
         displayName: entry.name || 'Unnamed Effect',
         value: Effect.loadFromXML(Element.parse(entry.effectXml)),
@@ -1264,6 +1275,15 @@ export class UnifiedLibraryProjectAdapter {
           const target = input.target.liveCell;
           if (!target) throw new Error('Blue Live target is incomplete');
           const bins = project.data.getLiveData().getLiveObjectBins();
+          if (
+            (target.expectedColumns !== undefined &&
+              bins.getColumnCount() !== target.expectedColumns) ||
+            (target.expectedRows !== undefined && bins.getRowCount() !== target.expectedRows) ||
+            target.column >= bins.getColumnCount() ||
+            target.row >= bins.getRowCount()
+          ) {
+            throw new Error('The Blue Live cell changed.');
+          }
           const currentId = bins.getLiveObject(target.column, target.row)?.getUniqueId() ?? null;
           if (currentId !== target.expectedLiveObjectId) {
             throw new Error('The Blue Live cell changed.');

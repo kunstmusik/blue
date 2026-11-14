@@ -26,6 +26,7 @@ import type {
   NoteProcessorChainSnapshot,
   ScoreObjectEditorRequest,
   ScoreObjectEditorDocumentSnapshot,
+  ScoreObjectEditorTargetSnapshot,
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
   AudioFileSelectionResult,
@@ -511,6 +512,7 @@ declare global {
       exportPresetFile: (xmlText: string, presetName: string) => Promise<void>;
       exportScoreObject: (xmlText: string, objectName: string) => Promise<ScoreObjectExportResult>;
       importScoreObject: () => Promise<ScoreObjectImportResult | null>;
+      readScoreObjectXml: (target: ScoreObjectEditorTargetSnapshot) => Promise<string | null>;
       readCsoundRC: () => Promise<{ filePath: string; content: string }>;
       writeCsoundRC: (text: string) => Promise<{ success: boolean; filePath: string }>;
       onProjectLoaded: (cb: (info: ProjectLoadedPayload) => void) => () => void;

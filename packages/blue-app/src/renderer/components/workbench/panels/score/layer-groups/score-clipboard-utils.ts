@@ -46,6 +46,56 @@ interface FlatLayerRef {
   localIndex: number;
 }
 
+export function clipboardNeedsXmlHydration(entries: readonly ScoreObjectClipboardEntry[]): boolean {
+  return entries.some(
+    (entry) => entry.serializedXml === undefined && entry.editorTarget !== undefined,
+  );
+}
+
+export function canHydrateClipboardEntries(entries: readonly ScoreObjectClipboardEntry[]): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.blueAPI?.readScoreObjectXml === 'function' &&
+    clipboardNeedsXmlHydration(entries)
+  );
+}
+
+export async function readScoreEntryXml(
+  entry: ScoreObjectClipboardEntry,
+): Promise<string | undefined> {
+  if (entry.serializedXml !== undefined) return entry.serializedXml;
+  if (!entry.editorTarget || typeof window === 'undefined' || !window.blueAPI?.readScoreObjectXml) {
+    return undefined;
+  }
+  try {
+    return (await window.blueAPI.readScoreObjectXml(entry.editorTarget)) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function hydrateClipboardEntriesXml(
+  entries: readonly ScoreObjectClipboardEntry[],
+  readXml?: (target: ScoreObjectEditorTargetSnapshot) => Promise<string | null>,
+): Promise<ScoreObjectClipboardEntry[]> {
+  const reader =
+    readXml ?? (typeof window !== 'undefined' ? window.blueAPI?.readScoreObjectXml : undefined);
+  if (!reader) return [...entries];
+  return Promise.all(
+    entries.map(async (entry) => {
+      if (entry.serializedXml !== undefined || !entry.editorTarget) {
+        return entry;
+      }
+      try {
+        const serializedXml = await reader(entry.editorTarget);
+        return serializedXml !== null ? { ...entry, serializedXml } : entry;
+      } catch {
+        return entry;
+      }
+    }),
+  );
+}
+
 export function collectClipboardEntriesForSelection(
   groups: ScoreLayerGroupSnapshot[],
   selectedObjectIds: ReadonlySet<string>,

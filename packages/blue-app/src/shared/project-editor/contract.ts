@@ -760,6 +760,7 @@ export interface TrackItemResize {
 }
 
 export interface TrackItemTransfer {
+  readonly selectionId?: string;
   readonly objectType?: string;
   readonly type?: string;
   readonly serializedXml?: string;
@@ -1356,7 +1357,7 @@ export type MixerChannelKind = 'instrument' | 'subChannel' | 'master';
 export type MixerChainKind = 'pre' | 'post';
 
 export interface EffectSnapshot {
-  effectXml: string;
+  effectXml?: string;
   name: string;
   enabled: boolean;
   numIns: number;
@@ -1373,6 +1374,7 @@ export interface EffectSnapshot {
 }
 
 export interface EffectEditorSnapshot extends EffectSnapshot {
+  effectXml: string;
   effectId: string;
   ownerType: 'project' | 'library';
   projectRef?: ProjectEffectRef;
@@ -1639,8 +1641,14 @@ export interface EffectsLibraryCategorySnapshot {
 }
 
 export interface LibraryEffectSnapshot extends EffectSnapshot {
+  effectXml: string;
   libraryEffectId: string;
   categoryId?: string;
+}
+
+export interface ProjectEditorSnapshotOptions {
+  /** Include eager per-object `serializedXml` / per-effect `effectXml` payloads (defaults to true). */
+  readonly includeSerializedXml?: boolean;
 }
 
 export interface EffectsLibrarySnapshot {
@@ -1819,7 +1827,15 @@ export type BlueLivePatch =
     }
   | { type: 'updateLiveCodeText'; text: string }
   | { type: 'setCellEnabled'; column: number; row: number; enabled: boolean }
-  | { type: 'setCell'; column: number; row: number; cell: LiveObjectCellSnapshot | null }
+  | {
+      type: 'setCell';
+      column: number;
+      row: number;
+      cell: LiveObjectCellSnapshot | null;
+      expectedLiveObjectId?: string | null;
+      expectedColumns?: number;
+      expectedRows?: number;
+    }
   | { type: 'insertRow'; index: number }
   | { type: 'removeRow'; index: number }
   | { type: 'insertColumn'; index: number }

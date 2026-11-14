@@ -223,6 +223,10 @@ export function getWorkbenchWindowManager(): WorkbenchWindowManager {
   return getManager();
 }
 
+export function hasFloatingWorkbenchWindows(): boolean {
+  return getManager().hasFloatingWindows();
+}
+
 /**
  * Sends a message to every live registered workbench renderer (main + floating).
  * Used to broadcast project, playback, and layout-reset events so floating

@@ -12,6 +12,8 @@ const source = createSourceFile(
   ScriptTarget.Latest,
 );
 const functionNames = new Set([
+  'computeApplicationMenuStateKey',
+  'rebuildApplicationMenuIfChanged',
   'rebuildApplicationMenu',
   'applyWindowMenuBarVisibility',
   'handleBrowserWindowCreated',
@@ -53,13 +55,25 @@ function setup(platform: NodeJS.Platform) {
     runInContext('handleBrowserWindowCreated({}, createdWindow);', context);
     return window;
   }
+  const historyState = {
+    canUndo: false,
+    canRedo: false,
+    undoLabel: null as string | null,
+    redoLabel: null as string | null,
+  };
+  let rebuildCount = 0;
+  let lastApplicationMenuStateKey: string | null = null;
   const context = createContext({
     process: { platform },
     mainWindow: null,
+    lastApplicationMenuStateKey,
     BrowserWindow: { getFocusedWindow: () => null, getAllWindows: () => windows },
     appZoomController: { applyToWindow() {} },
     Menu: {
-      buildFromTemplate: (items: unknown[]) => ({ items }),
+      buildFromTemplate: (items: unknown[]) => {
+        rebuildCount += 1;
+        return { items };
+      },
       setApplicationMenu(menu: unknown) {
         applicationMenu = menu;
         // Electron applies application menus to every existing window on Linux/Windows.
@@ -67,7 +81,11 @@ function setup(platform: NodeJS.Platform) {
       },
     },
     buildApplicationMenuTemplate,
-    projectHistory: { read: () => ({ canUndo: false, canRedo: false }) },
+    projectHistory: {
+      read: () => historyState,
+      getSaveState: () => 'none',
+    },
+    historyAvailabilityBySender: new Map(),
     hasLoadedProject: () => false,
     getCurrentFilePath: () => null,
     getRecentProjectFilesSnapshot: () => [],
@@ -76,13 +94,19 @@ function setup(platform: NodeJS.Platform) {
     currentFollowPlaybackEnabled: false,
     currentFollowPlaybackOnStartEnabled: false,
   });
-  runInContext(executable, context);
+  runInContext('var lastApplicationMenuStateKey = null;\n' + executable, context);
   const mainWindow = createWindow();
   context.mainWindow = mainWindow;
   return {
     mainWindow,
     createWindow,
     rebuild: () => runInContext('rebuildApplicationMenu();', context),
+    rebuildIfChanged: () => runInContext('rebuildApplicationMenuIfChanged();', context),
+    getRebuildCount: () => rebuildCount,
+    setHistoryUndoLabel: (label: string | null) => {
+      historyState.canUndo = label !== null;
+      historyState.undoLabel = label;
+    },
     getApplicationMenu: () => applicationMenu,
   };
 }
@@ -122,5 +146,22 @@ describe('application menu bar visibility', () => {
     expect(app.mainWindow.menu).toBeNull();
     expect(popup.menuBarVisible).toBe(true);
     expect(popup.autoHideMenuBar).toBe(true);
+  });
+
+  it('skips redundant application menu rebuilds when menu state is unchanged', () => {
+    const app = setup('darwin');
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(1);
+
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(1);
+
+    app.setHistoryUndoLabel('Edit Global Orchestra');
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(2);
+
+    // Same undo label across coalesced keystrokes must not rebuild the menu again.
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(2);
   });
 });

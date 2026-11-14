@@ -1,6 +1,10 @@
 export * from './contract';
 
 export {
+  assignExplicitScoreObjectId,
+  assignScoreObjectId,
+  getScoreObjectId,
+  recordScoreObjectIdForData,
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   assignClojureLibraryEntrySnapshotId,
@@ -35,7 +39,9 @@ export {
   createBlueLiveEditorTargetSnapshot,
   createScoreObjectPropertiesTarget,
   setCodeText,
+  recordExistingScoreObjectIds,
   resolveTimelineTarget,
+  resolveTimelineTargetWithSelectionId,
   resolveEditorTarget,
   createNoteProcessorChainSnapshot,
   createScoreObjectEditorDocument,

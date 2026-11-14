@@ -1,10 +1,14 @@
 import { BlueData, GenericScore } from '@blue/data';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createDefaultBsbWidgetSnapshot,
   createProjectEditorSnapshot,
 } from '../../shared/project-editor';
-import { translateClipboardEntriesForPaste } from '../components/workbench/panels/score/layer-groups/score-clipboard-utils';
+import {
+  clipboardNeedsXmlHydration,
+  hydrateClipboardEntriesXml,
+  translateClipboardEntriesForPaste,
+} from '../components/workbench/panels/score/layer-groups/score-clipboard-utils';
 import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 import {
   useScoreSelectionStore,
@@ -81,5 +85,48 @@ describe('shared Score and Blue Live clipboard', () => {
 
     useBsbClipboardStore.getState().clearClipboard();
     expect(useScoreSelectionStore.getState().clipboard).toEqual([scoreEntry]);
+  });
+
+  it('hydrates missing serializedXml on clipboard entries via readScoreObjectXml', async () => {
+    const score = new GenericScore();
+    score.setName('Lazy Score Object');
+    const xml = score.saveAsXML().toXml();
+    const entryWithoutXml: ScoreObjectClipboardEntry = {
+      objectId: 'obj-lazy',
+      objectType: 'GenericScore',
+      name: 'Lazy Score Object',
+      startBeats: 0,
+      durationBeats: 4,
+      backgroundColor: '#334455',
+      isContainer: false,
+      layerIndex: 0,
+      groupId: 'group-1',
+      editorTarget: {
+        source: 'timeline',
+        objectId: 'obj-lazy',
+        rootGroupId: 'group-1',
+        containerPath: [],
+        layerId: 'layer-1',
+        objectIdentity: 'obj-lazy',
+        isInstance: false,
+        instanceSourceId: null,
+        isSoundObjectLibraryInstance: false,
+        soundObjectLibraryId: null,
+      },
+    };
+    const alreadyHydrated = createLiveClipboardEntry();
+    const readScoreObjectXml = vi.fn().mockResolvedValue(xml);
+
+    expect(clipboardNeedsXmlHydration([alreadyHydrated])).toBe(false);
+    expect(clipboardNeedsXmlHydration([entryWithoutXml, alreadyHydrated])).toBe(true);
+
+    const hydrated = await hydrateClipboardEntriesXml(
+      [entryWithoutXml, alreadyHydrated],
+      readScoreObjectXml,
+    );
+    expect(readScoreObjectXml).toHaveBeenCalledTimes(1);
+    expect(readScoreObjectXml).toHaveBeenCalledWith(entryWithoutXml.editorTarget);
+    expect(hydrated[0]?.serializedXml).toBe(xml);
+    expect(hydrated[1]).toBe(alreadyHydrated);
   });
 });

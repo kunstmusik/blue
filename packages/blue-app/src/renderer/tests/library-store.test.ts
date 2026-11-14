@@ -1211,4 +1211,364 @@ describe('library store', () => {
     ]);
     expect(applyLibraryTransfer).not.toHaveBeenCalled();
   });
+
+  it('flushes pending patches before capturing a Blue Live SoundObject with the settled revision', async () => {
+    const callOrder: string[] = [];
+    acceptProjectDocumentRevision(7, 2);
+    useProjectStore.setState({ loaded: true, sessionId: 7, documentId: 'doc-7', isDirty: false });
+    const commitProjectDocumentPatches = vi.fn(async () => {
+      callOrder.push('commit');
+      return {
+        revision: 4,
+        sessionId: 7,
+        changed: true,
+        documentId: 'doc-7',
+        stateId: 'state-4',
+        patchChanged: [true],
+      };
+    });
+    const captureBlueLiveSoundObjectClipboard = vi.fn(async () => {
+      callOrder.push('capture');
+      return {
+        ok: true as const,
+        value: {
+          operation: 'copy' as const,
+          source: {
+            kind: 'buffer' as const,
+            clipboardId: 'bl-1',
+            libraryType: 'soundObject' as const,
+          },
+          capturedAt: 100,
+        },
+      };
+    });
+    window.blueAPI.commitProjectDocumentPatches = commitProjectDocumentPatches;
+    window.blueAPI.captureBlueLiveSoundObjectClipboard = captureBlueLiveSoundObjectClipboard;
+
+    await useProjectStore.getState().updateGlobalOrc('instr 1\nendin');
+    const captured = await useLibraryStore.getState().captureBlueLiveSoundObject({
+      projectSessionId: 7,
+      projectRevision: 2,
+      liveObjectId: 'live-1',
+    });
+
+    expect(captured).toBe(true);
+    expect(callOrder).toEqual(['commit', 'capture']);
+    expect(captureBlueLiveSoundObjectClipboard).toHaveBeenCalledWith({
+      projectSessionId: 7,
+      projectRevision: 4,
+      liveObjectId: 'live-1',
+    });
+  });
+
+  it('aborts blueLive library transfer if grid structure changes during flush or preview', async () => {
+    acceptProjectDocumentRevision(7, 2);
+    window.blueAPI.commitProjectDocumentPatches = vi.fn().mockResolvedValue({
+      revision: 3,
+      sessionId: 7,
+      changed: true,
+      documentId: 'doc-7',
+      stateId: 'state-3',
+      patchChanged: [true],
+    });
+    useProjectStore.setState({
+      loaded: true,
+      sessionId: 7,
+      documentId: 'doc-7',
+      isDirty: false,
+      blueLive: {
+        tempo: 120,
+        repeat: 4,
+        repeatEnabled: false,
+        commandLine: '',
+        commandLineEnabled: false,
+        commandLineOverride: false,
+        liveCodeText: '',
+        bins: {
+          columns: 2,
+          rows: 2,
+          cells: [
+            [null, null],
+            [null, null],
+          ],
+        },
+        sets: [],
+      },
+    });
+    let resolvePreview!: (value: Awaited<ReturnType<typeof previewLibraryTransfer>>) => void;
+    previewLibraryTransfer.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePreview = resolve;
+        }),
+    );
+
+    const transferPromise = useLibraryStore.getState().transferToProject(
+      {
+        kind: 'clipboard',
+        source: { kind: 'buffer', clipboardId: 'buf-1', libraryType: 'soundObject' },
+      },
+      {
+        kind: 'blueLive',
+        projectSessionId: 7,
+        projectRevision: 2,
+        liveCell: { column: 0, row: 1, expectedLiveObjectId: null },
+      },
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+
+    useProjectStore.getState().applyBlueLivePatch({ type: 'removeRow', index: 0 });
+    resolvePreview({
+      ok: true,
+      value: {
+        previewToken: 'tok-bl',
+        item: {
+          key: { scope: 'user', libraryType: 'soundObject', nodeId: 's-1' },
+          displayName: 'Pad',
+          libraryType: 'soundObject',
+          scope: 'user',
+          objectType: 'GenericScore',
+          supportStatus: 'supported',
+          supportMessage: null,
+          fields: {},
+          dependencies: { itemOwned: [], unresolvedExternal: [] },
+        },
+        target: {
+          kind: 'blueLive',
+          projectSessionId: 7,
+          projectRevision: 2,
+          liveCell: { column: 0, row: 1, expectedLiveObjectId: null },
+        },
+        requestedMode: 'independent',
+        allowedModes: ['independent'],
+        canApply: true,
+        blockingReasons: [],
+      },
+    });
+
+    expect(await transferPromise).toBe(false);
+    expect(applyLibraryTransfer).not.toHaveBeenCalled();
+  });
+
+  it('includes expectedColumns and expectedRows for idle blueLive transferToProject', async () => {
+    acceptProjectDocumentRevision(7, 2);
+    useProjectStore.setState({
+      loaded: true,
+      sessionId: 7,
+      documentId: 'doc-7',
+      isDirty: false,
+      blueLive: {
+        tempo: 120,
+        repeat: 4,
+        repeatEnabled: false,
+        commandLine: '',
+        commandLineEnabled: false,
+        commandLineOverride: false,
+        liveCodeText: '',
+        bins: {
+          columns: 3,
+          rows: 4,
+          cells: Array.from({ length: 3 }, () => Array.from({ length: 4 }, () => null)),
+        },
+        sets: [],
+      },
+    });
+    previewLibraryTransfer.mockResolvedValueOnce({
+      ok: true,
+      value: {
+        previewToken: 'tok-bl-idle',
+        item: {
+          key: { scope: 'user', libraryType: 'soundObject', nodeId: 's-1' },
+          displayName: 'Pad',
+          libraryType: 'soundObject',
+          scope: 'user',
+          objectType: 'GenericScore',
+          supportStatus: 'supported',
+          supportMessage: null,
+          fields: {},
+          dependencies: { itemOwned: [], unresolvedExternal: [] },
+        },
+        target: {
+          kind: 'blueLive',
+          projectSessionId: 7,
+          projectRevision: 2,
+          liveCell: {
+            column: 1,
+            row: 2,
+            expectedLiveObjectId: null,
+            expectedColumns: 3,
+            expectedRows: 4,
+          },
+        },
+        requestedMode: 'independent',
+        allowedModes: ['independent'],
+        canApply: true,
+        blockingReasons: [],
+      },
+    });
+    applyLibraryTransfer.mockResolvedValueOnce({
+      ok: true,
+      value: {
+        message: 'Inserted Pad.',
+        diagnostics: [],
+        warnings: [],
+      },
+    });
+
+    const applied = await useLibraryStore.getState().transferToProject(
+      {
+        kind: 'clipboard',
+        source: { kind: 'buffer', clipboardId: 'buf-1', libraryType: 'soundObject' },
+      },
+      {
+        kind: 'blueLive',
+        projectSessionId: 7,
+        projectRevision: 2,
+        liveCell: { column: 1, row: 2, expectedLiveObjectId: null },
+      },
+    );
+
+    expect(applied).toBe(true);
+    expect(previewLibraryTransfer).toHaveBeenCalledWith({
+      source: {
+        kind: 'clipboard',
+        source: { kind: 'buffer', clipboardId: 'buf-1', libraryType: 'soundObject' },
+      },
+      target: {
+        kind: 'blueLive',
+        projectSessionId: 7,
+        projectRevision: 2,
+        liveCell: {
+          column: 1,
+          row: 2,
+          expectedLiveObjectId: null,
+          expectedColumns: 3,
+          expectedRows: 4,
+        },
+      },
+      mode: 'independent',
+    });
+    expect(applyLibraryTransfer).toHaveBeenCalledWith('tok-bl-idle');
+  });
+
+  it.each(['grid change', 'cancel while saving'] as const)(
+    'aborts a pending Blue Live transfer after %s',
+    async (scenario) => {
+      acceptProjectDocumentRevision(7, 2);
+      window.blueAPI.commitProjectDocumentPatches = vi.fn().mockResolvedValue({
+        revision: 3,
+        sessionId: 7,
+        changed: true,
+        documentId: 'doc-7',
+        stateId: 'state-3',
+        patchChanged: [true],
+      });
+      useProjectStore.setState({
+        loaded: true,
+        sessionId: 7,
+        documentId: 'doc-7',
+        isDirty: false,
+        blueLive: {
+          tempo: 120,
+          repeat: 4,
+          repeatEnabled: false,
+          commandLine: '',
+          commandLineEnabled: false,
+          commandLineOverride: false,
+          liveCodeText: '',
+          bins: {
+            columns: 2,
+            rows: 2,
+            cells: [
+              [null, null],
+              [null, null],
+            ],
+          },
+          sets: [],
+        },
+      });
+      previewLibraryTransfer.mockResolvedValueOnce({
+        ok: true,
+        value: {
+          previewToken: 'tok-bl-modal',
+          item: {
+            key: { scope: 'user', libraryType: 'soundObject', nodeId: 's-1' },
+            displayName: 'Pad',
+            libraryType: 'soundObject',
+            scope: 'user',
+            objectType: 'GenericScore',
+            supportStatus: 'supported',
+            supportMessage: null,
+            fields: {},
+            dependencies: { itemOwned: [], unresolvedExternal: [] },
+          },
+          target: {
+            kind: 'blueLive',
+            projectSessionId: 7,
+            projectRevision: 2,
+            liveCell: {
+              column: 0,
+              row: 1,
+              expectedLiveObjectId: null,
+              expectedColumns: 2,
+              expectedRows: 2,
+            },
+          },
+          requestedMode: 'independent',
+          allowedModes: ['independent', 'sharedInstance'],
+          canApply: true,
+          blockingReasons: [],
+        },
+      });
+
+      expect(
+        await useLibraryStore.getState().transferToProject(
+          {
+            kind: 'clipboard',
+            source: { kind: 'buffer', clipboardId: 'buf-1', libraryType: 'soundObject' },
+          },
+          {
+            kind: 'blueLive',
+            projectSessionId: 7,
+            projectRevision: 2,
+            liveCell: { column: 0, row: 1, expectedLiveObjectId: null },
+          },
+        ),
+      ).toBe(true);
+      expect(useLibraryStore.getState().transferPreview).not.toBeNull();
+
+      if (scenario === 'grid change') {
+        useProjectStore.getState().applyBlueLivePatch({ type: 'removeRow', index: 0 });
+        expect(await useLibraryStore.getState().applyTransfer()).toBe(false);
+      } else {
+        let acknowledge!: (receipt: {
+          revision: number;
+          sessionId: number;
+          changed: boolean;
+          patchChanged: boolean[];
+        }) => void;
+        const commit = vi.fn(
+          () =>
+            new Promise<Parameters<typeof acknowledge>[0]>((resolve) => {
+              acknowledge = resolve;
+            }),
+        );
+        window.blueAPI.commitProjectDocumentPatches = commit;
+        window.blueAPI.getProjectDocument = vi.fn().mockResolvedValue(null);
+        useProjectStore
+          .getState()
+          .applyBlueLivePatch({ type: 'updateTempoRepeat', patch: { tempo: 120 } });
+        const applying = useLibraryStore.getState().applyTransfer('independent');
+        await vi.waitFor(() => expect(commit).toHaveBeenCalledOnce());
+        useLibraryStore.getState().cancelTransfer();
+        acknowledge({ revision: 2, sessionId: 7, changed: false, patchChanged: [false] });
+        expect(await applying).toBe(false);
+      }
+      expect(applyLibraryTransfer).not.toHaveBeenCalled();
+      expect(useLibraryStore.getState().transferPreview).toBeNull();
+      expect(useLibraryStore.getState().transferSource).toBeNull();
+      expect(useLibraryStore.getState().transferBlueLiveGridVersion).toBeNull();
+    },
+  );
 });

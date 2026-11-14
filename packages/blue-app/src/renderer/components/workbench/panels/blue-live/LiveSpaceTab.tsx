@@ -8,7 +8,11 @@ import {
   createSoundObject,
   loadSoundObjectFromXML,
 } from '@blue/data';
-import { getProjectDocumentRevision, useProjectStore } from '../../../../stores/project-store';
+import {
+  getBlueLiveGridStructureVersion,
+  getProjectDocumentRevision,
+  useProjectStore,
+} from '../../../../stores/project-store';
 import { useBlueLiveStore } from '../../../../stores/blue-live-store';
 import { useLibraryStore } from '../../../../stores/library-store';
 import { useScoreSelectionStore } from '../../../../stores/score-selection-store';
@@ -24,6 +28,7 @@ import type { LegacyBlueLiveTriggerResult } from '../../../../../shared/project-
 import type { ScoreObjectClipboardEntry } from '../../../../stores/score-selection-store';
 import { getLibraryTransferSourceType } from '../../../../../shared/unified-library';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
+import { readScoreEntryXml } from '../score/layer-groups/score-clipboard-utils';
 import { isNodeLike } from '../../../../utils/cross-realm-dom';
 import { useHostDocument } from '../../../../hooks/use-host-document';
 import CommitNumberInput from '../../../CommitNumberInput';
@@ -34,7 +39,6 @@ export default function LiveSpaceTab(): React.ReactElement {
   const applyBlueLivePatch = useProjectStore((state) => state.applyBlueLivePatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
   const projectSessionId = useProjectStore((state) => state.sessionId);
-  const projectRevision = getProjectDocumentRevision();
 
   const blueLiveRunning = useBlueLiveStore((s) => s.running);
   const triggerFeedback = useBlueLiveStore((s) => s.trigger);
@@ -124,25 +128,75 @@ export default function LiveSpaceTab(): React.ReactElement {
 
   const copyCell = useCallback(
     async (cell: LiveObjectCellSnapshot | null): Promise<boolean> => {
-      const entry = createScoreClipboardEntry(cell);
-      if (!entry || !cell) return false;
+      if (!cell || !cell.hasSoundObject) return false;
+      const copySessionId = useProjectStore.getState().sessionId;
+      let serializedXml = cell.serializedXml;
+      if (serializedXml === undefined && window.blueAPI?.readScoreObjectXml) {
+        serializedXml =
+          (await window.blueAPI.readScoreObjectXml({
+            selectionId: cell.uniqueId,
+            selectedObjectType: cell.soundObjectType,
+            editorObjectType: cell.soundObjectType,
+            ownerKind: 'blueLive',
+            displayContext: 'blueLive',
+            blueLive: {
+              liveObjectId: cell.uniqueId,
+              column: -1,
+              row: -1,
+            },
+            supportsTimeBehavior: true,
+            supportsRepeatPoint: true,
+            supportsNoteProcessorChain: true,
+          })) ?? undefined;
+        if (useProjectStore.getState().sessionId !== copySessionId) return false;
+      }
+      const entry = createScoreClipboardEntry(
+        serializedXml !== undefined ? { ...cell, serializedXml } : cell,
+      );
+      if (!entry) return false;
       const captured = await captureBlueLiveSoundObject({
         projectSessionId,
-        projectRevision,
+        projectRevision: getProjectDocumentRevision(),
         liveObjectId: cell.uniqueId,
       });
-      if (!captured) return false;
+      if (!captured || useProjectStore.getState().sessionId !== copySessionId) return false;
       copyScoreObjects([entry]);
       return true;
     },
-    [captureBlueLiveSoundObject, copyScoreObjects, projectRevision, projectSessionId],
+    [captureBlueLiveSoundObject, copyScoreObjects, projectSessionId],
   );
 
   const cutCell = useCallback(
     async (column: number, row: number, cell: LiveObjectCellSnapshot | null) => {
+      const cutSessionId = useProjectStore.getState().sessionId;
+      const cutGridVersion = getBlueLiveGridStructureVersion();
+      const initialBins = useProjectStore.getState().blueLive?.bins;
+      const expectedColumns = initialBins?.columns;
+      const expectedRows = initialBins?.rows;
+      const expectedLiveObjectId = cell?.uniqueId ?? null;
       if (await copyCell(cell)) {
+        if (
+          useProjectStore.getState().sessionId !== cutSessionId ||
+          getBlueLiveGridStructureVersion() !== cutGridVersion
+        ) {
+          return;
+        }
+        const latestBins = useProjectStore.getState().blueLive?.bins;
+        if (latestBins?.columns !== expectedColumns || latestBins?.rows !== expectedRows) {
+          return;
+        }
+        const latestCell = latestBins?.cells[column]?.[row] ?? null;
+        if ((latestCell?.uniqueId ?? null) !== expectedLiveObjectId) return;
         clearLiveEditorSelection(cell);
-        applyBlueLivePatch({ type: 'setCell', column, row, cell: null });
+        applyBlueLivePatch({
+          type: 'setCell',
+          column,
+          row,
+          cell: null,
+          expectedLiveObjectId,
+          expectedColumns,
+          expectedRows,
+        });
       }
     },
     [applyBlueLivePatch, clearLiveEditorSelection, copyCell],
@@ -151,14 +205,48 @@ export default function LiveSpaceTab(): React.ReactElement {
   const pasteCell = useCallback(
     (column: number, row: number, currentCell: LiveObjectCellSnapshot | null) => {
       const entry = getPasteableBlueLiveEntry(scoreObjectClipboard);
-      if (entry?.serializedXml) {
-        const cell = createLiveObjectCellSnapshot({
-          objectType: entry.objectType,
-          serializedXml: entry.serializedXml,
-        });
-        if (cell) {
-          clearLiveEditorSelection(currentCell);
-          applyBlueLivePatch({ type: 'setCell', column, row, cell });
+      if (entry) {
+        const pasteSessionId = useProjectStore.getState().sessionId;
+        const pasteGridVersion = getBlueLiveGridStructureVersion();
+        const initialBins = useProjectStore.getState().blueLive?.bins;
+        const expectedColumns = initialBins?.columns;
+        const expectedRows = initialBins?.rows;
+        const expectedLiveObjectId = currentCell?.uniqueId ?? null;
+        const applySerializedXml = (serializedXml: string | undefined) => {
+          if (
+            !serializedXml ||
+            useProjectStore.getState().sessionId !== pasteSessionId ||
+            getBlueLiveGridStructureVersion() !== pasteGridVersion
+          ) {
+            return;
+          }
+          const latestBins = useProjectStore.getState().blueLive?.bins;
+          if (latestBins?.columns !== expectedColumns || latestBins?.rows !== expectedRows) {
+            return;
+          }
+          const latestCell = latestBins?.cells[column]?.[row] ?? null;
+          if ((latestCell?.uniqueId ?? null) !== expectedLiveObjectId) return;
+          const cell = createLiveObjectCellSnapshot({
+            objectType: entry.objectType,
+            serializedXml,
+          });
+          if (cell) {
+            clearLiveEditorSelection(currentCell);
+            applyBlueLivePatch({
+              type: 'setCell',
+              column,
+              row,
+              cell,
+              expectedLiveObjectId,
+              expectedColumns,
+              expectedRows,
+            });
+          }
+        };
+        if (entry.serializedXml) {
+          applySerializedXml(entry.serializedXml);
+        } else {
+          void readScoreEntryXml(entry).then(applySerializedXml);
         }
         return;
       }
@@ -172,7 +260,7 @@ export default function LiveSpaceTab(): React.ReactElement {
         {
           kind: 'blueLive',
           projectSessionId,
-          projectRevision,
+          projectRevision: getProjectDocumentRevision(),
           liveCell: {
             column,
             row,
@@ -185,7 +273,6 @@ export default function LiveSpaceTab(): React.ReactElement {
       applyBlueLivePatch,
       clearLiveEditorSelection,
       libraryClipboard,
-      projectRevision,
       projectSessionId,
       scoreObjectClipboard,
       transferLibraryItem,
@@ -1094,5 +1181,7 @@ function getPasteableBlueLiveEntry(
 ): ScoreObjectClipboardEntry | null {
   if (clipboard.length !== 1) return null;
   const entry = clipboard[0];
-  return entry?.serializedXml && isBlueLiveSoundObjectType(entry.objectType) ? entry : null;
+  if (!entry || !isBlueLiveSoundObjectType(entry.objectType)) return null;
+  if (entry.serializedXml) return entry;
+  return entry.editorTarget ? entry : null;
 }

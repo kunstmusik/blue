@@ -230,7 +230,9 @@ export default function EffectEditorPage(): React.ReactElement {
       } else {
         historyClient.setRevision(event.revision);
       }
-      setLiveProjectUdos(event.snapshot.projectUdos);
+      if (event.snapshot) {
+        setLiveProjectUdos(event.snapshot.projectUdos);
+      }
       // Refresh the actually edited effect after a canonical publication so
       // undo/redo from any window is visible here. A deleted effect marks the
       // window unavailable instead of forcing it to reopen.

@@ -167,11 +167,88 @@ export function isTrackInstrumentEditorWebContents(
   return Boolean(state && !state.window.isDestroyed() && state.window.webContents === webContents);
 }
 
+export function hasOpenTrackInstrumentWindows(): boolean {
+  for (const state of trackInstrumentEditorWindows.values()) {
+    if (!state.window.isDestroyed()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function getOpenTrackInstrumentTargets(): Array<{
+  rootGroupId: string;
+  trackId: string;
+}> {
+  const targets: Array<{ rootGroupId: string; trackId: string }> = [];
+  for (const state of trackInstrumentEditorWindows.values()) {
+    if (state.window.isDestroyed()) continue;
+    targets.push({ rootGroupId: state.rootGroupId, trackId: state.trackId });
+  }
+  return targets;
+}
+
 export function broadcastProjectDocumentUpdateToTrackInstrumentWindows(
   event: ProjectDocumentUpdatedEvent,
 ): void {
+  const openWindows: TrackInstrumentEditorWindowState[] = [];
   for (const state of trackInstrumentEditorWindows.values()) {
-    if (state.window.isDestroyed()) continue;
+    if (!state.window.isDestroyed()) {
+      openWindows.push(state);
+    }
+  }
+  if (openWindows.length === 0) {
+    return;
+  }
+
+  const snapshot = event.snapshot as {
+    projectUdos?: unknown;
+    score?: {
+      layerGroups?: Array<{
+        groupId?: string;
+        groupType?: string;
+        layers?: Array<{ layerId?: string; [key: string]: unknown }>;
+        [key: string]: unknown;
+      }>;
+    };
+    mixer?: unknown;
+    orchestra?: unknown;
+    blueLive?: unknown;
+  } | null;
+
+  const isFullOrScorable =
+    snapshot !== null &&
+    snapshot.score !== undefined &&
+    ('mixer' in snapshot ||
+      'orchestra' in snapshot ||
+      'blueLive' in snapshot ||
+      openWindows.length >= 1);
+
+  if (snapshot && isFullOrScorable && Array.isArray(snapshot.score?.layerGroups)) {
+    const groups = snapshot.score.layerGroups;
+    for (const state of openWindows) {
+      const matchingGroup = groups.find(
+        (candidate) => candidate.groupId === state.rootGroupId && candidate.groupType === 'track',
+      );
+      const matchingLayer = matchingGroup?.layers?.find(
+        (candidate) => candidate.layerId === state.trackId,
+      );
+      const scopedEvent = {
+        ...event,
+        snapshot: {
+          projectUdos: snapshot.projectUdos ?? [],
+          score: {
+            layerGroups:
+              matchingGroup && matchingLayer ? [{ ...matchingGroup, layers: [matchingLayer] }] : [],
+          },
+        },
+      } as unknown as ProjectDocumentUpdatedEvent;
+      state.window.webContents.send(PROJECT_DOCUMENT_UPDATED_CHANNEL, scopedEvent);
+    }
+    return;
+  }
+
+  for (const state of openWindows) {
     state.window.webContents.send(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
   }
 }

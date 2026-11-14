@@ -274,6 +274,7 @@ import type {
   LayerIndexRange,
   BlueLivePatch,
   ProjectEditorSnapshot,
+  ProjectEditorSnapshotOptions,
   ProjectSummarySnapshot,
   ProjectDocumentPatch,
   ScratchPadSnapshot,
@@ -430,11 +431,11 @@ export function createJMaskPayloadSummary(payload: JMaskEditorPayload): string {
     : `random; ${parameterCount} params`;
 }
 
-function createEffectSnapshotBase(effect: Effect): EffectSnapshot {
+function createEffectSnapshotBase(effect: Effect, includeSerializedXml = true): EffectSnapshot {
   const graphicInterface = effect.getGraphicInterface();
   const graphicSnapshot = collectGraphicInterfaceSnapshot(graphicInterface);
   return {
-    effectXml: effect.saveAsXML().toXml(),
+    ...(includeSerializedXml ? { effectXml: effect.saveAsXML().toXml() } : {}),
     name: effect.getName(),
     enabled: effect.isEnabled(),
     numIns: effect.getNumIns(),
@@ -466,8 +467,10 @@ export function createEffectEditorSnapshot(
     projectUdos?: UdoDefinitionSnapshot[];
   },
 ): EffectEditorSnapshot {
+  const base = createEffectSnapshotBase(effect, true);
   return {
-    ...createEffectSnapshotBase(effect),
+    ...base,
+    effectXml: base.effectXml ?? '',
     effectId,
     ownerType,
     projectRef: refs?.projectRef,
@@ -483,10 +486,11 @@ export function createMixerEffectEntrySnapshot(
   refs?: {
     projectRef?: ProjectEffectRef;
     libraryRef?: LibraryEffectRef;
+    includeSerializedXml?: boolean;
   },
 ): MixerEffectEntrySnapshot {
   return {
-    ...createEffectSnapshotBase(effect),
+    ...createEffectSnapshotBase(effect, refs?.includeSerializedXml ?? true),
     entryId,
     kind: 'effect',
     projectRef: refs?.projectRef,
@@ -499,8 +503,10 @@ export function createLibraryEffectSnapshot(
   libraryEffectId: string,
   categoryId?: string,
 ): LibraryEffectSnapshot {
+  const base = createEffectSnapshotBase(effect, true);
   return {
-    ...createEffectSnapshotBase(effect),
+    ...base,
+    effectXml: base.effectXml ?? '',
     libraryEffectId,
     categoryId,
   };
@@ -522,13 +528,15 @@ function createMixerChainSnapshot(
     channelId: string;
     chain: MixerChainKind;
     libraryRef?: LibraryEffectRef;
+    includeSerializedXml?: boolean;
   },
 ): MixerChainEntrySnapshot[] {
+  const includeSerializedXml = refs.includeSerializedXml ?? true;
   return chain.map((entry) => {
     if (entry instanceof Effect) {
       const entryId = getMixerEntrySnapshotId(entry);
       return {
-        ...createEffectSnapshotBase(entry),
+        ...createEffectSnapshotBase(entry, includeSerializedXml),
         entryId,
         kind: 'effect',
         projectRef: {
@@ -552,6 +560,7 @@ function createMixerChannelSnapshot(
     indicator?: MixerChannelRouteIndicator;
     score?: Score;
     manifest?: AudioLayoutManifest | null;
+    includeSerializedXml?: boolean;
   },
 ): MixerChannelSnapshot {
   const id = getMixerChannelSnapshotId(channel);
@@ -617,11 +626,13 @@ function createMixerChannelSnapshot(
       channelId: id,
       chain: 'pre',
       libraryRef: refs?.libraryRef,
+      includeSerializedXml: refs?.includeSerializedXml,
     }),
     postChain: createMixerChainSnapshot(channel.getPostEffects(), {
       channelId: id,
       chain: 'post',
       libraryRef: refs?.libraryRef,
+      includeSerializedXml: refs?.includeSerializedXml,
     }),
     outputExcludedBySolo: refs?.indicator?.outputExcludedBySolo,
     hasIncludedSend: refs?.indicator?.hasIncludedSend,
@@ -669,6 +680,7 @@ function createMixerChannelListSnapshot(
   indicatorFor?: (channel: Channel) => MixerChannelRouteIndicator | undefined,
   score?: Score,
   manifest?: AudioLayoutManifest | null,
+  includeSerializedXml = true,
 ): MixerChannelListSnapshot {
   return {
     association: channelList.getAssociation() ?? undefined,
@@ -679,6 +691,7 @@ function createMixerChannelListSnapshot(
         indicator: indicatorFor?.(channel),
         score,
         manifest,
+        includeSerializedXml,
       }),
     ),
   };
@@ -688,7 +701,9 @@ export function createMixerSnapshot(
   mixer: Mixer,
   score?: Score,
   manifest?: AudioLayoutManifest | null,
+  options?: ProjectEditorSnapshotOptions,
 ): MixerSnapshot {
+  const includeSerializedXml = options?.includeSerializedXml ?? true;
   const { byKey } = buildMixerRouteIndicatorIndex(mixer);
   const indicatorFor = (kind: 'source' | 'sub' | 'master', channel: Channel) =>
     byKey.get(`${kind}:${channel.getName()}`);
@@ -708,6 +723,7 @@ export function createMixerSnapshot(
           (channel) => indicatorFor('source', channel),
           score,
           manifest,
+          includeSerializedXml,
         ),
       ),
     channels: Array.from(mixer.getChannels(), (channel) =>
@@ -715,6 +731,7 @@ export function createMixerSnapshot(
         indicator: indicatorFor('source', channel),
         score,
         manifest,
+        includeSerializedXml,
       }),
     ),
     subChannels: Array.from(mixer.getSubChannels(), (channel) =>
@@ -722,12 +739,14 @@ export function createMixerSnapshot(
         indicator: indicatorFor('sub', channel),
         score,
         manifest,
+        includeSerializedXml,
       }),
     ),
     master: createMixerChannelSnapshot(mixer.getMaster(), 'master', {
       indicator: indicatorFor('master', mixer.getMaster()),
       score,
       manifest,
+      includeSerializedXml,
     }),
   };
 }
@@ -1478,7 +1497,9 @@ export function convertGenericToBsb(instrument: GenericInstrument): BlueSynthBui
 export function createBlueLiveProjectSnapshot(
   liveData: LiveData,
   context: TimeContext = new TimeContext(),
+  options?: ProjectEditorSnapshotOptions,
 ): BlueLiveProjectSnapshot {
+  const includeSerializedXml = options?.includeSerializedXml ?? true;
   const bins = liveData.getLiveObjectBins();
   const cells: Array<Array<LiveObjectCellSnapshot | null>> = [];
   for (let c = 0; c < bins.getColumnCount(); c++) {
@@ -1487,6 +1508,7 @@ export function createBlueLiveProjectSnapshot(
       const obj = bins.getLiveObject(c, r);
       if (obj) {
         const soundObject = obj.getSoundObject();
+        const serializedXml = includeSerializedXml ? soundObject?.saveAsXML().toXml() : undefined;
         col.push({
           uniqueId: obj.getUniqueId(),
           enabled: obj.isEnabled(),
@@ -1495,7 +1517,7 @@ export function createBlueLiveProjectSnapshot(
           displayName: obj.getDisplayName(),
           soundObjectType: obj.getSoundObjectType(),
           hasSoundObject: obj.hasSoundObject,
-          serializedXml: soundObject?.saveAsXML().toXml(),
+          ...(serializedXml !== undefined ? { serializedXml } : {}),
           startBeats: soundObject?.getStartTime().toBeats(context),
           durationBeats: soundObject?.getSubjectiveDuration().toBeats(context),
           startTimeBase: soundObject ? String(soundObject.getStartTime().getTimeBase()) : undefined,

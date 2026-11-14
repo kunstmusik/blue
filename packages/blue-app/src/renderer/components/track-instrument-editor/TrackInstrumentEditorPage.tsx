@@ -71,7 +71,7 @@ function projectSnapshotToTrackInstrument(
   request: TrackInstrumentEditorRequest,
   event: Parameters<Parameters<typeof window.blueAPI.onProjectDocumentUpdated>[0]>[0],
 ): TrackInstrumentEditorSnapshot | null {
-  if (event.sessionId !== request.track.projectSessionId) return null;
+  if (!event.snapshot || event.sessionId !== request.track.projectSessionId) return null;
   const group = event.snapshot.score?.layerGroups.find(
     (candidate) =>
       candidate.groupType === 'track' && candidate.groupId === request.track.rootGroupId,

@@ -201,5 +201,26 @@ describe('WorkbenchWindowManager.dispose / pruneDestroyed', () => {
 
     expect(manager.getEntry(floatId)).toBeUndefined();
     expect(manager.getByPopoutGroup('popout-1')).toBeUndefined();
+    expect(manager.hasFloatingWindows()).toBe(false);
+  });
+
+  it('tracks live floating workbench windows via hasFloatingWindows()', () => {
+    const manager = new WorkbenchWindowManager();
+    manager.register({ role: 'main' });
+    expect(manager.hasFloatingWindows()).toBe(false);
+
+    const handle = createHandle();
+    const floatingId = manager.register({
+      role: 'floating',
+      popoutGroupId: 'pop-1',
+      handle,
+    });
+    expect(manager.hasFloatingWindows()).toBe(true);
+
+    handle.__setDestroyed(true);
+    expect(manager.hasFloatingWindows()).toBe(false);
+
+    manager.dispose(floatingId);
+    expect(manager.hasFloatingWindows()).toBe(false);
   });
 });

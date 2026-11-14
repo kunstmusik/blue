@@ -19,6 +19,7 @@ import { useLayerSelectionStore } from '../../../../../stores/layer-selection-st
 import { buildSelectionKey, getLayerSelectionId } from '../layer-selection-utils';
 import { useLibraryStore } from '../../../../../stores/library-store';
 import {
+  getEffectiveProjectDocumentRevision,
   getProjectDocumentId,
   getProjectDocumentRevision,
   useProjectStore,
@@ -36,8 +37,12 @@ import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { createFrameSnapContext, snapBeatToGrid } from '../snap-grid-utils';
 import {
+  canHydrateClipboardEntries,
+  clipboardNeedsXmlHydration,
   collectClipboardEntriesForSelection,
+  hydrateClipboardEntriesXml,
   layerGroupAcceptsObjectType,
+  readScoreEntryXml,
 } from './score-clipboard-utils';
 import {
   buildTimelineGlobalLayerData,
@@ -529,12 +534,44 @@ export default function TrackLayerGroupCanvas({
   const handleCopy = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length === 0) return;
-    copySelected(entries);
-    if (entries.length !== 1 || entries[0]!.objectType === 'AudioClip') return;
+    const copySessionId = useProjectStore?.getState?.()?.sessionId;
+    const getEffectiveRevision = (): number =>
+      getEffectiveProjectDocumentRevision(projectSessionId, projectRevision);
     const target = entries[0]!.editorTarget;
-    const location = target?.location ?? target?.sourceInstanceLocation;
+    const canCaptureSingle = entries.length === 1 && entries[0]!.objectType !== 'AudioClip';
+    const location = canCaptureSingle
+      ? (target?.location ?? target?.sourceInstanceLocation)
+      : undefined;
+    const selectionId = canCaptureSingle ? target?.selectionId : undefined;
+    copySelected(entries);
+    if (canHydrateClipboardEntries(entries)) {
+      void hydrateClipboardEntriesXml(entries).then((hydrated) => {
+        if (useProjectStore?.getState?.()?.sessionId !== copySessionId) return;
+        const current = useScoreSelectionStore.getState().clipboard;
+        if (
+          current.length === entries.length &&
+          current.every((item, idx) => item.objectId === entries[idx]?.objectId)
+        ) {
+          copySelected(hydrated);
+          if (location && !clipboardNeedsXmlHydration(hydrated)) {
+            void captureScoreSoundObject({
+              projectSessionId,
+              projectRevision: getEffectiveRevision(),
+              ...(selectionId ? { selectionId } : {}),
+              location,
+            });
+          }
+        }
+      });
+      return;
+    }
     if (!location) return;
-    void captureScoreSoundObject({ projectSessionId, projectRevision, location });
+    void captureScoreSoundObject({
+      projectSessionId,
+      projectRevision: getEffectiveRevision(),
+      ...(selectionId ? { selectionId } : {}),
+      location,
+    });
   }, [
     captureScoreSoundObject,
     copySelected,
@@ -546,7 +583,9 @@ export default function TrackLayerGroupCanvas({
   const handleCut = useCallback(() => {
     const entries = getSelectedEntries();
     if (entries.length === 0) return;
-    copySelected(entries);
+    const cutSessionId = useProjectStore?.getState?.()?.sessionId;
+    const getEffectiveRevision = (): number =>
+      getEffectiveProjectDocumentRevision(projectSessionId, projectRevision);
     const targets = entries
       .map((entry) => entry.editorTarget)
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
@@ -556,21 +595,36 @@ export default function TrackLayerGroupCanvas({
       }
       clearSelection();
     };
-    if (entries.length !== 1 || entries[0]!.objectType === 'AudioClip') {
+    const needsXml = canHydrateClipboardEntries(entries);
+    const canCaptureSingle = entries.length === 1 && entries[0]!.objectType !== 'AudioClip';
+    const singleTarget = canCaptureSingle ? entries[0]!.editorTarget : undefined;
+    const singleLocation = singleTarget?.location ?? singleTarget?.sourceInstanceLocation;
+    const selectionId = singleTarget?.selectionId;
+    if (!needsXml && !singleLocation) {
+      copySelected(entries);
       removeTargets();
       return;
     }
-    const target = entries[0]!.editorTarget;
-    const location = target?.location ?? target?.sourceInstanceLocation;
-    if (!location) {
+    void (async () => {
+      const hydrated = needsXml ? await hydrateClipboardEntriesXml(entries) : entries;
+      if (useProjectStore?.getState?.()?.sessionId !== cutSessionId) return;
+      if (needsXml && clipboardNeedsXmlHydration(hydrated)) {
+        toast.error('Unable to read selected sound object XML for cut.');
+        return;
+      }
+      const captured = singleLocation
+        ? await captureScoreSoundObject({
+            projectSessionId,
+            projectRevision: getEffectiveRevision(),
+            ...(selectionId ? { selectionId } : {}),
+            location: singleLocation,
+          })
+        : true;
+      if (useProjectStore?.getState?.()?.sessionId !== cutSessionId) return;
+      if (!captured) return;
+      copySelected(hydrated);
       removeTargets();
-      return;
-    }
-    void captureScoreSoundObject({ projectSessionId, projectRevision, location }).then(
-      (captured) => {
-        if (captured) removeTargets();
-      },
-    );
+    })();
   }, [
     applyProjectDocumentPatch,
     captureScoreSoundObject,
@@ -788,10 +842,19 @@ export default function TrackLayerGroupCanvas({
       );
       return;
     }
+    const replaceSessionId = useProjectStore?.getState?.()?.sessionId;
+    const needsXml = canHydrateClipboardEntries([replacement]);
     const removeTargets = selected
       .map((entry) => entry.editorTarget)
       .filter((target): target is ScoreObjectEditorTargetSnapshot => target !== undefined);
     void (async () => {
+      const hydratedReplacement = needsXml
+        ? ((await hydrateClipboardEntriesXml([replacement]))[0] ?? replacement)
+        : replacement;
+      if (useProjectStore?.getState?.()?.sessionId !== replaceSessionId) return;
+      if (needsXml && clipboardNeedsXmlHydration([hydratedReplacement])) {
+        return;
+      }
       if (removeTargets.length > 0) {
         await applyProjectDocumentPatch({
           score: { type: 'removeScoreObjects', targets: removeTargets },
@@ -805,14 +868,14 @@ export default function TrackLayerGroupCanvas({
             objects: [
               {
                 layerIndex: entry.layerIndex,
-                objectType: replacement.objectType,
-                name: replacement.name,
+                objectType: hydratedReplacement.objectType,
+                name: hydratedReplacement.name,
                 startBeats: entry.startBeats,
                 durationBeats: entry.durationBeats,
                 startTimeBase: entry.startTimeBase,
                 durationTimeBase: entry.durationTimeBase,
-                backgroundColor: replacement.backgroundColor,
-                serializedXml: replacement.serializedXml,
+                backgroundColor: hydratedReplacement.backgroundColor,
+                serializedXml: hydratedReplacement.serializedXml,
               },
             ],
           },
@@ -827,15 +890,14 @@ export default function TrackLayerGroupCanvas({
     if (
       entries.length !== 1 ||
       entries[0]!.objectType === 'AudioClip' ||
-      entries[0]!.objectType === 'Instance' ||
-      !entries[0]!.serializedXml
-    )
+      entries[0]!.objectType === 'Instance'
+    ) {
       return;
+    }
+    const serializedXml = await readScoreEntryXml(entries[0]!);
+    if (!serializedXml) return;
     try {
-      const result = await window.blueAPI.exportScoreObject(
-        entries[0]!.serializedXml,
-        entries[0]!.name,
-      );
+      const result = await window.blueAPI.exportScoreObject(serializedXml, entries[0]!.name);
       if (result.status === 'error') toast.error(result.error);
     } catch (error) {
       toast.error('Error: Could not export Sound Object.');
@@ -939,18 +1001,31 @@ export default function TrackLayerGroupCanvas({
       if (clipboard.length === 0) return;
       const layer = group.layers[layerIndex];
       if (!layer) return;
-      const offset = xBeats - Math.min(...clipboard.map((entry) => entry.startBeats));
-      const patches = clipboard.map((entry) => ({
-        type: 'addTrackItem' as const,
-        track: trackRef(group, layer.layerId, projectSessionId, projectRevision),
-        item: itemTransfer(entry),
-        startBeats: clampBeat(snapBeat(entry.startBeats + offset, 'floor'), totalBeats),
-      }));
-      for (const patch of patches) {
-        if (layerGroupAcceptsObjectType('track', patch.item.objectType ?? '')) {
-          void applyProjectDocumentPatch({ score: patch });
+      const pasteSessionId = useProjectStore?.getState?.()?.sessionId;
+      const applyEntries = (entriesToPaste: typeof clipboard, didHydrate = false) => {
+        if (useProjectStore?.getState?.()?.sessionId !== pasteSessionId) return;
+        if (didHydrate && clipboardNeedsXmlHydration(entriesToPaste)) {
+          return;
         }
+        const revisionForPatch = didHydrate ? getProjectDocumentRevision() : projectRevision;
+        const offset = xBeats - Math.min(...entriesToPaste.map((entry) => entry.startBeats));
+        const patches = entriesToPaste.map((entry) => ({
+          type: 'addTrackItem' as const,
+          track: trackRef(group, layer.layerId, projectSessionId, revisionForPatch),
+          item: itemTransfer(entry),
+          startBeats: clampBeat(snapBeat(entry.startBeats + offset, 'floor'), totalBeats),
+        }));
+        for (const patch of patches) {
+          if (layerGroupAcceptsObjectType('track', patch.item.objectType ?? '')) {
+            void applyProjectDocumentPatch({ score: patch });
+          }
+        }
+      };
+      if (!canHydrateClipboardEntries(clipboard)) {
+        applyEntries(clipboard);
+        return;
       }
+      void hydrateClipboardEntriesXml(clipboard).then((hydrated) => applyEntries(hydrated, true));
     },
     [
       applyProjectDocumentPatch,
@@ -1845,7 +1920,7 @@ export default function TrackLayerGroupCanvas({
     selectedEntries.length === 1 &&
     selectedEntries[0]!.objectType !== 'AudioClip' &&
     selectedEntries[0]!.objectType !== 'Instance' &&
-    Boolean(selectedEntries[0]!.serializedXml);
+    Boolean(selectedEntries[0]!.serializedXml || selectedEntries[0]!.editorTarget);
   return (
     <ContextMenu.Root
       onOpenChange={(open) => {

@@ -29,6 +29,7 @@ export const PROJECT_DOCUMENT_IPC_CHANNELS = [
   'authorize-audio-file',
   'get-audio-file-stat',
   'get-score-object-editor-document',
+  'read-score-object-xml',
   'select-score-object-audio-file',
   'save-frozen-sound-object-copy',
   'get-named-chain-names',

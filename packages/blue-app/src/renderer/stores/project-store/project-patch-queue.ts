@@ -100,6 +100,7 @@ export interface ProjectPatchQueue {
   getRevision(): number;
   getSessionId(): number;
   awaitPending(): Promise<void>;
+  hasPendingWork(): boolean;
   clearPending(): void;
   /** Captures the pending prefix, pauses durable submissions, drains, and acknowledges. */
   handlePrepareBoundary(
@@ -252,7 +253,9 @@ function scorePatchRequiresCanonicalProjectRefresh(patch: ScorePatch): boolean {
         (patch as { target?: { patternSource?: unknown } }).target?.patternSource !== undefined
       );
     case 'addScoreObjects':
-      return patch.objects.some((object) => object.objectType === 'PolyObject');
+      return patch.objects.some(
+        (object) => object.objectType === 'PolyObject' || object.objectType === 'Instance',
+      );
     case 'addTrackItem':
     case 'moveTrackItems':
     case 'removeTrackItems':
@@ -275,6 +278,38 @@ function patchesRequireCanonicalProjectRefresh(patches: readonly ProjectDocument
       patch.mixer?.type === 'renameChannelListGroup' ||
       patch.clojureProject !== undefined,
   );
+}
+
+function receiptRequiresCanonicalProjectRefresh(
+  patches: readonly ProjectDocumentPatch[],
+  receipt: ProjectDocumentCommitReceipt,
+): boolean {
+  if (patchesRequireCanonicalProjectRefresh(patches)) {
+    return true;
+  }
+  if (!patches.some((patch) => patch.blueLive !== undefined)) {
+    return false;
+  }
+  if (receipt.changed === false) {
+    return true;
+  }
+  if (
+    receipt.patchChanged &&
+    patches.some(
+      (patch, index) => patch.blueLive !== undefined && receipt.patchChanged?.[index] === false,
+    )
+  ) {
+    return true;
+  }
+  if (
+    receipt.patchAccepted &&
+    patches.some(
+      (patch, index) => patch.blueLive !== undefined && receipt.patchAccepted?.[index] === false,
+    )
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function isMutationAcknowledgementPatch(patch: ProjectDocumentPatch): boolean {
@@ -741,7 +776,7 @@ export function createProjectPatchQueue(
         throw new Error(message);
       }
 
-      if (patchesRequireCanonicalProjectRefresh(patches)) {
+      if (receiptRequiresCanonicalProjectRefresh(patches, receipt)) {
         try {
           const snapshot = await dependencies.fetchCanonicalSnapshot();
           if (generation !== submissionGeneration) return;
@@ -1079,6 +1114,17 @@ export function createProjectPatchQueue(
       while (inFlight || boundaryDrain) {
         await (inFlight ?? boundaryDrain)!.catch(() => undefined);
       }
+    },
+
+    hasPendingWork() {
+      return (
+        pending.length > 0 ||
+        blockedTransactions.length > 0 ||
+        inFlight !== null ||
+        inFlightTransaction !== null ||
+        boundaryPendingTransactions.length > 0 ||
+        boundaryDrain !== null
+      );
     },
 
     clearPending() {

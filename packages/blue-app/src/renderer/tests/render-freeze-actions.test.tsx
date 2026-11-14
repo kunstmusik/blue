@@ -316,6 +316,7 @@ describe('render/freeze renderer actions', () => {
     expect(captureScoreSoundObjectClipboard).toHaveBeenCalledWith({
       projectSessionId: 1,
       projectRevision: 1,
+      selectionId: 'score-1',
       location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
     });
     expect(useLibraryStore.getState().clipboard?.source).toMatchObject({
@@ -349,6 +350,7 @@ describe('render/freeze renderer actions', () => {
     expect(addScoreSoundObjectToProjectLibrary).toHaveBeenCalledWith({
       projectSessionId: 1,
       projectRevision: 1,
+      selectionId: 'score-1',
       location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
     });
     expect(toast.success).toHaveBeenCalledWith('Freeze me was added to Project SoundObjects.');
@@ -440,5 +442,58 @@ describe('render/freeze renderer actions', () => {
     expect(state.phase).toBe('cancelled');
     expect(state.rows[0]!.status).toBe('cancelled');
     expect(toast.message).not.toHaveBeenCalled();
+  });
+
+  it('preserves existing score clipboard and keeps object when Cut fails capture', async () => {
+    const existingClipboardEntry = {
+      objectId: 'prior-clipboard-item',
+      objectType: 'GenericScore',
+      name: 'Existing Copy',
+      startBeats: 0,
+      durationBeats: 2,
+      backgroundColor: 0,
+      isContainer: false,
+      layerIndex: 0,
+      groupId: 'group-1',
+    };
+    useScoreSelectionStore.getState().copySelected([existingClipboardEntry]);
+    const applyPatch = vi.fn().mockResolvedValue(undefined);
+    useProjectStore.setState({
+      applyProjectDocumentPatch: applyPatch,
+    } as Partial<ReturnType<typeof useProjectStore.getState>>);
+    captureScoreSoundObjectClipboard.mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'stale-target', message: 'Stale target', retryable: false },
+    });
+
+    const surface = container.querySelector('[data-group-id="root"]') as HTMLDivElement;
+    act(() => {
+      surface.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 10,
+          clientY: 10,
+        }),
+      );
+    });
+    const action = Array.from(document.querySelectorAll('[role="menuitem"]')).find((item) =>
+      item.textContent?.startsWith('Cut'),
+    ) as HTMLElement;
+
+    await act(async () => {
+      action.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(captureScoreSoundObjectClipboard).toHaveBeenCalledTimes(1);
+    expect(useScoreSelectionStore.getState().clipboard).toEqual([existingClipboardEntry]);
+    expect(applyPatch).not.toHaveBeenCalled();
+
+    useScoreSelectionStore.getState().clearClipboard();
+    useProjectStore.setState({
+      applyProjectDocumentPatch: originalProjectState.applyProjectDocumentPatch,
+    } as Partial<ReturnType<typeof useProjectStore.getState>>);
   });
 });

@@ -772,5 +772,44 @@ describe('project library transfer', () => {
         'soundObject',
       ),
     ).toMatch(/changed/i);
+
+    const bins = project.data.getLiveData().getLiveObjectBins();
+    const expectedColumns = bins.getColumnCount();
+    const expectedRows = bins.getRowCount();
+    bins.insertColumn(0);
+    expect(
+      adapter.validateTransferTarget(
+        {
+          ...exactTarget,
+          projectRevision: project.revision,
+          liveCell: {
+            column: 0,
+            row: 0,
+            expectedLiveObjectId: null,
+            expectedColumns,
+            expectedRows,
+          },
+        },
+        'soundObject',
+      ),
+    ).toMatch(/changed/i);
+    expect(() =>
+      adapter.applyInsertion({
+        key: { scope: 'user', libraryType: 'soundObject', nodeId: 'phrase' },
+        payloadXml: source.saveAsXML().toXml(),
+        target: {
+          ...target('soundObject', project.revision),
+          destinationKind: 'blueLive',
+          liveCell: {
+            column: 0,
+            row: 0,
+            expectedLiveObjectId: null,
+            expectedColumns,
+            expectedRows,
+          },
+        },
+        mode: 'independent',
+      }),
+    ).toThrow(/changed/i);
   });
 });

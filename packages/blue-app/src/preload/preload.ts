@@ -26,6 +26,7 @@ import type {
   NoteProcessorChainSnapshot,
   ScoreObjectEditorRequest,
   ScoreObjectEditorDocumentSnapshot,
+  ScoreObjectEditorTargetSnapshot,
   ScoreObjectTestResult,
   ScoreObjectLocationRef,
   AudioFileSelectionResult,
@@ -1034,6 +1035,8 @@ contextBridge.exposeInMainWorld('blueAPI', {
     ) as Promise<ScoreObjectExportResult>,
   importScoreObject: () =>
     ipcRenderer.invoke('import-score-object') as Promise<ScoreObjectImportResult | null>,
+  readScoreObjectXml: (target: ScoreObjectEditorTargetSnapshot) =>
+    ipcRenderer.invoke('read-score-object-xml', target) as Promise<string | null>,
 
   // Csound RC
   readCsoundRC: () =>

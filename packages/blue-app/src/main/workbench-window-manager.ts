@@ -199,6 +199,17 @@ export class WorkbenchWindowManager {
     return [...this.entries.values()];
   }
 
+  hasFloatingWindows(): boolean {
+    this.pruneDestroyed();
+    for (const entry of this.entries.values()) {
+      if (entry.handle?.isDestroyed()) continue;
+      if (entry.role === 'floating' || entry.windowId !== this.mainWindowId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private findLiveOwner(panelId: string): WorkbenchWindowEntry | undefined {
     for (const entry of this.entries.values()) {
       if (entry.handle?.isDestroyed()) continue;

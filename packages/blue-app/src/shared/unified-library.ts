@@ -328,6 +328,8 @@ export interface InsertionTargetSnapshot {
     readonly column: number;
     readonly row: number;
     readonly expectedLiveObjectId: string | null;
+    readonly expectedColumns?: number;
+    readonly expectedRows?: number;
   };
   readonly location?: ScoreInsertionLocation;
   readonly destinationKind?:
@@ -407,6 +409,7 @@ export interface CutLibraryToClipboardResult {
 export interface ScoreTimelineSoundObjectRequest {
   readonly projectSessionId: number;
   readonly projectRevision: number;
+  readonly selectionId?: string;
   readonly location: {
     readonly rootGroupIndex: number;
     readonly containerPath: readonly {
@@ -451,6 +454,8 @@ export type LibraryExactTransferTarget =
         readonly column: number;
         readonly row: number;
         readonly expectedLiveObjectId: string | null;
+        readonly expectedColumns?: number;
+        readonly expectedRows?: number;
       };
     })
   | (ExactProjectTargetBase & {
@@ -851,6 +856,7 @@ export function isScoreTimelineSoundObjectRequest(
     !isRecord(value) ||
     !isNonNegativeInteger(value.projectSessionId) ||
     !isNonNegativeInteger(value.projectRevision) ||
+    (value.selectionId !== undefined && !isNonEmptyString(value.selectionId)) ||
     !isRecord(value.location) ||
     !isNonNegativeInteger(value.location.rootGroupIndex) ||
     !isNonNegativeInteger(value.location.layerIndex) ||
@@ -927,7 +933,11 @@ export function isLibraryExactTransferTarget(value: unknown): value is LibraryEx
       isNonNegativeInteger(value.liveCell.column) &&
       isNonNegativeInteger(value.liveCell.row) &&
       (value.liveCell.expectedLiveObjectId === null ||
-        isNonEmptyString(value.liveCell.expectedLiveObjectId))
+        isNonEmptyString(value.liveCell.expectedLiveObjectId)) &&
+      (value.liveCell.expectedColumns === undefined ||
+        isNonNegativeInteger(value.liveCell.expectedColumns)) &&
+      (value.liveCell.expectedRows === undefined ||
+        isNonNegativeInteger(value.liveCell.expectedRows))
     );
   }
   if (value.kind === 'projectUdo') {

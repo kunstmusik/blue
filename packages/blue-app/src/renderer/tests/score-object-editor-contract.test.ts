@@ -36,6 +36,7 @@ import {
   type ScoreObjectEditorRequest,
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
+import { assignExplicitScoreObjectId } from '../../shared/project-editor/identity';
 
 function createDataWithGenericScore(): {
   data: BlueData;
@@ -52,6 +53,7 @@ function createDataWithGenericScore(): {
   layer.push(gs);
   poly.push(layer);
   data.getScore().push(poly);
+  assignExplicitScoreObjectId(gs, 'sobj-0-0');
 
   const target: ScoreObjectEditorTargetSnapshot = {
     selectionId: 'sobj-0-0',
@@ -82,6 +84,7 @@ function createDataWithPianoRoll(): {
   layer.push(pianoRoll);
   poly.push(layer);
   data.getScore().push(poly);
+  assignExplicitScoreObjectId(pianoRoll, 'sobj-0-0');
 
   const target: ScoreObjectEditorTargetSnapshot = {
     selectionId: 'sobj-0-0',
@@ -113,6 +116,7 @@ function createDataWithAudioClip(): {
   layer.push(clip);
   alg.push(layer);
   data.getScore().push(alg);
+  assignExplicitScoreObjectId(clip, 'aclp-0-0');
 
   const target: ScoreObjectEditorTargetSnapshot = {
     selectionId: 'aclp-0-0',
@@ -277,23 +281,19 @@ describe('Score patches — moveScoreObjects', () => {
     const polyGroupIndex = snapshot.score.layerGroups.findIndex(
       (lg) => lg.groupType === 'polyObject' && lg.layerCount === 2,
     );
-    const groupId = snapshot.score.layerGroups[polyGroupIndex].groupId;
+    const polyGroup = snapshot.score.layerGroups[polyGroupIndex]!;
+    const groupId = polyGroup.groupId;
+    const itemTarget = polyGroup.layers[0]!.items[0]!.editorTarget!;
 
     const target: ScoreObjectEditorTargetSnapshot = {
-      selectionId: 'sobj-0-0',
-      selectedObjectType: 'GenericScore',
-      editorObjectType: 'GenericScore',
-      ownerKind: 'timeline',
-      displayContext: 'timeline',
+      ...itemTarget,
+      selectionId: itemTarget.selectionId,
       location: {
         rootGroupIndex: polyGroupIndex,
         containerPath: [],
         layerIndex: 0,
         objectIndex: 0,
       },
-      supportsTimeBehavior: true,
-      supportsRepeatPoint: true,
-      supportsNoteProcessorChain: true,
     };
 
     expect(

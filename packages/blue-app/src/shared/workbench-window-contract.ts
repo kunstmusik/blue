@@ -171,7 +171,7 @@ export interface ProjectDocumentUpdatedEvent {
    */
   publicationKind?: 'mutation' | 'checkpoint';
   sourceSequence?: number;
-  snapshot: ProjectEditorSnapshot;
+  snapshot: ProjectEditorSnapshot | null;
   sourceWindowId?: string;
   selectionHints?: ProjectHistorySelectionHint[];
   originViewId?: string;

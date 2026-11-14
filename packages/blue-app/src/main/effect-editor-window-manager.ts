@@ -260,6 +260,16 @@ export function closeStaleEffectEditorWindows(
   }
 }
 
+export function hasOpenProjectEffectWindows(): boolean {
+  for (const [key, state] of effectEditorWindows.entries()) {
+    if (!key.includes(':project:')) continue;
+    if (!state.window.isDestroyed()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Route the canonical project document update to every open project-owned
  * effect window. Library effect windows are excluded from project state.
@@ -267,9 +277,26 @@ export function closeStaleEffectEditorWindows(
 export function broadcastProjectDocumentUpdateToEffectWindows(
   event: ProjectDocumentUpdatedEvent,
 ): void {
+  if (!hasOpenProjectEffectWindows()) {
+    return;
+  }
+  const snapshot = event.snapshot as Record<string, unknown> | null;
+  const scopedEvent =
+    snapshot &&
+    ('score' in snapshot ||
+      'mixer' in snapshot ||
+      'orchestra' in snapshot ||
+      'blueLive' in snapshot)
+      ? ({
+          ...event,
+          snapshot: {
+            projectUdos: snapshot.projectUdos ?? [],
+          },
+        } as unknown as ProjectDocumentUpdatedEvent)
+      : event;
   for (const [key, state] of effectEditorWindows.entries()) {
     if (!key.includes(':project:')) continue;
     if (state.window.isDestroyed()) continue;
-    state.window.webContents.send(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
+    state.window.webContents.send(PROJECT_DOCUMENT_UPDATED_CHANNEL, scopedEvent);
   }
 }

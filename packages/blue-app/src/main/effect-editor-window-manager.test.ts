@@ -6,6 +6,7 @@ import {
   broadcastProjectDocumentUpdateToEffectWindows,
   closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
+  hasOpenProjectEffectWindows,
   isEffectEditorWebContents,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
@@ -355,5 +356,46 @@ describe('effect editor window declarative zoom factor (SPEC 061)', () => {
     const webPreferences = editorWindow.options.webPreferences as Record<string, unknown>;
     expect(webPreferences.zoomFactor).toBeUndefined();
     expect(webPreferences.devTools).toBe(true);
+  });
+
+  it('strips full-project snapshot sections down to projectUdos when broadcasting to effect windows', () => {
+    const mainWindow = { isDestroyed: vi.fn(() => false) } as never;
+    const projectRequest = {
+      ownerType: 'project' as const,
+      effectId: 'fx-strip',
+      projectRef: { channelId: 'ch-1', chain: 'pre' as const, entryId: 'fx-strip' },
+    };
+
+    expect(hasOpenProjectEffectWindows()).toBe(false);
+    openEffectEditorWindow(mainWindow, projectRequest);
+    expect(hasOpenProjectEffectWindows()).toBe(true);
+
+    const projectUdos = [
+      {
+        name: 'SharedUdo',
+        style: 'CLASSIC' as const,
+        outTypes: 'a',
+        inTypes: 'a',
+        inputArguments: '',
+        code: '',
+        comments: '',
+      },
+    ];
+    broadcastProjectDocumentUpdateToEffectWindows({
+      sessionId: 3,
+      revision: 11,
+      snapshot: {
+        projectUdos,
+        score: { layerGroups: [] },
+        mixer: { enabled: true },
+      },
+    } as never);
+
+    expect(electronMock.instances[0]!.webContents.send).toHaveBeenCalledWith(
+      PROJECT_DOCUMENT_UPDATED_CHANNEL,
+      expect.objectContaining({
+        snapshot: { projectUdos },
+      }),
+    );
   });
 });
