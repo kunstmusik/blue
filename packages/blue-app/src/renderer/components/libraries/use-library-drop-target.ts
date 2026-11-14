@@ -18,7 +18,11 @@ function targetLibraryType(target: LibraryExactTransferTarget): LibraryType {
   return 'soundObject';
 }
 
-export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled = true) {
+export function useLibraryDropTarget(
+  target: LibraryExactTransferTarget,
+  enabled = true,
+  resolveProjectRevision?: () => number,
+) {
   const [active, setActive] = useState(false);
   const [feedback, setFeedback] = useState('');
   // Drag-sourced feedback ("invalid drop", "insertion point") is transient:
@@ -70,9 +74,13 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
       setFeedback(`Paste unavailable: this destination accepts ${expectedType} Library items.`);
       return;
     }
+    const resolvedTarget =
+      resolveProjectRevision && 'projectRevision' in target
+        ? { ...target, projectRevision: resolveProjectRevision() }
+        : target;
     const transferred = await transferToProject(
       { kind: 'clipboard', source: clipboard.source },
-      target,
+      resolvedTarget,
     );
     setResultFeedback(
       transferred
@@ -84,6 +92,7 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
     clipboardCompatible,
     enabled,
     expectedType,
+    resolveProjectRevision,
     setResultFeedback,
     target,
     transferToProject,
@@ -129,14 +138,18 @@ export function useLibraryDropTarget(target: LibraryExactTransferTarget, enabled
       event.preventDefault();
       event.dataTransfer.dropEffect = 'copy';
       setActive(false);
-      const transferred = await transferToProject(source, target);
+      const resolvedTarget =
+        resolveProjectRevision && 'projectRevision' in target
+          ? { ...target, projectRevision: resolveProjectRevision() }
+          : target;
+      const transferred = await transferToProject(source, resolvedTarget);
       setResultFeedback(
         transferred
           ? 'Library transfer accepted.'
           : (useLibraryStore.getState().error ?? 'Library transfer was rejected.'),
       );
     },
-    [enabled, expectedType, setResultFeedback, target, transferToProject],
+    [enabled, expectedType, resolveProjectRevision, setResultFeedback, target, transferToProject],
   );
 
   const onKeyDown = useCallback(

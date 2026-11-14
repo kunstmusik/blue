@@ -77,13 +77,19 @@ export function LibraryBlockDropMarker({
   label,
   fillRemaining = false,
   pasteContextMenu = true,
+  resolveProjectRevision,
 }: {
   target: LibraryExactTransferTarget;
   label: string;
   fillRemaining?: boolean;
   pasteContextMenu?: boolean;
+  resolveProjectRevision?: () => number;
 }): React.ReactElement {
-  const { active, canPaste, feedback, dropProps, paste } = useLibraryDropTarget(target);
+  const { active, canPaste, feedback, dropProps, paste } = useLibraryDropTarget(
+    target,
+    true,
+    resolveProjectRevision,
+  );
   const feedbackId = useId();
   const marker = (
     <div
@@ -123,12 +129,14 @@ export function LibraryBlockDropMarker({
 export function LibraryDropZone({
   target,
   enabled = true,
+  resolveProjectRevision,
   children,
 }: {
   target: LibraryExactTransferTarget;
   enabled?: boolean;
+  resolveProjectRevision?: () => number;
   children: (state: LibraryDropZoneState) => React.ReactElement;
 }): React.ReactElement {
-  const state = useLibraryDropTarget(target, enabled);
+  const state = useLibraryDropTarget(target, enabled, resolveProjectRevision);
   return children(state);
 }

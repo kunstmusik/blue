@@ -37,6 +37,7 @@ import {
   getValidSendTargets,
   validateOutputTarget,
   validateSendTarget,
+  type MixerRoutingIssue,
 } from '../../../../../shared/mixer-routing-validation';
 import { cn } from '../../../../lib/cn';
 import EffectEditorPanel from '../../../effect-editor/EffectEditorPanel';
@@ -209,15 +210,30 @@ const MIXER_TRACK_W = 4;
 const MIXER_THUMB_R = 7;
 const MIXER_SLIDER_MIN_H = 60;
 
+const EMPTY_CHANNELS: MixerChannelSnapshot[] = [];
+
+function readProjectUdos(): readonly UdoDefinitionSnapshot[] {
+  return typeof useProjectStore.getState === 'function'
+    ? useProjectStore.getState().projectUdos
+    : [];
+}
+
 interface ChannelStripProps {
-  mixer: MixerSnapshot;
+  mixer?: MixerSnapshot;
   channel: MixerChannelSnapshot;
   unnamedDisplayName?: string;
   isMaster: boolean;
   isSubChannel: boolean;
   onPatch: (patch: Record<string, unknown>) => void;
   projectSessionId: number;
-  projectRevision: number;
+  projectRevision?: number;
+  getMixer?: () => MixerSnapshot;
+  getProjectRevision?: () => number;
+  mixerEnabled?: boolean;
+  enableMeters?: boolean;
+  meterProfileKey?: MixerSnapshot['meterProfileKey'];
+  validOutputTargets?: MixerChannelSnapshot[];
+  outputRoutingWarning?: MixerRoutingIssue | null;
   onOpenEffectInterface: (request: EffectEditorRequest) => void;
   onRemoveSubChannel?: (channelId: string) => void;
   selection?: MixerChainSelection | null;
@@ -309,6 +325,7 @@ function ChainList({
   onOpenEditEffectDialog,
   projectSessionId,
   projectRevision,
+  getProjectRevision,
   selection,
   onSelectionChange,
   projectEffectNodes,
@@ -324,7 +341,8 @@ function ChainList({
   onOpenSendEditor: (entry: MixerSendEntrySnapshot, chain: MixerChainKind) => void;
   onOpenEditEffectDialog: (entry: MixerEffectEntrySnapshot, chain: MixerChainKind) => void;
   projectSessionId: number;
-  projectRevision: number;
+  projectRevision?: number;
+  getProjectRevision?: () => number;
   selection: MixerChainSelection | null;
   onSelectionChange: (selection: MixerChainSelection | null) => void;
   projectEffectNodes: readonly LibraryBrowseNode[];
@@ -333,7 +351,9 @@ function ChainList({
     selection?.channelId === channel.id && selection.chain === chain
       ? entries.findIndex((entry) => entry.entryId === selection.entryId)
       : -1;
-  const libraryClipboard = useLibraryStore((state) => state.clipboard);
+  const libraryEffectAvailable = useLibraryStore((state) =>
+    state.clipboard ? getLibraryTransferSourceType(state.clipboard.source) === 'effect' : false,
+  );
   const transferLibraryItem = useLibraryStore((state) => state.transferToProject);
   const captureClipboard = useLibraryStore((state) => state.captureClipboard);
   const chainRevision = useMemo(
@@ -341,19 +361,20 @@ function ChainList({
     [entries],
   );
   const libraryTargetChannelId = channel.channelKind === 'subChannel' ? channel.name : channel.id;
-  const libraryEffectAvailable = libraryClipboard
-    ? getLibraryTransferSourceType(libraryClipboard.source) === 'effect'
-    : false;
+  const resolveRevision = useCallback(
+    () => (getProjectRevision ? getProjectRevision() : (projectRevision ?? 0)),
+    [getProjectRevision, projectRevision],
+  );
   const pasteLibraryEffect = useCallback(
     (insertIndex: number) => {
-      if (!libraryClipboard || getLibraryTransferSourceType(libraryClipboard.source) !== 'effect')
-        return;
+      const clipboard = useLibraryStore.getState().clipboard;
+      if (!clipboard || getLibraryTransferSourceType(clipboard.source) !== 'effect') return;
       void transferLibraryItem(
-        { kind: 'clipboard', source: libraryClipboard.source },
+        { kind: 'clipboard', source: clipboard.source },
         {
           kind: 'effectChain',
           projectSessionId,
-          projectRevision,
+          projectRevision: resolveRevision(),
           channelId: libraryTargetChannelId,
           chain,
           insertIndex,
@@ -365,9 +386,8 @@ function ChainList({
       chain,
       chainRevision,
       libraryTargetChannelId,
-      libraryClipboard,
-      projectRevision,
       projectSessionId,
+      resolveRevision,
       transferLibraryItem,
     ],
   );
@@ -549,12 +569,13 @@ function ChainList({
                     target={{
                       kind: 'effectChain',
                       projectSessionId,
-                      projectRevision,
+                      projectRevision: projectRevision ?? 0,
                       channelId: libraryTargetChannelId,
                       chain,
                       insertIndex: index,
                       chainRevision,
                     }}
+                    resolveProjectRevision={resolveRevision}
                     label={`Insert Effect before ${entry.kind === 'effect' ? entry.name : entry.sendChannel}`}
                     pasteContextMenu={false}
                   />
@@ -563,12 +584,13 @@ function ChainList({
                   target={{
                     kind: 'effectChain',
                     projectSessionId,
-                    projectRevision,
+                    projectRevision: projectRevision ?? 0,
                     channelId: libraryTargetChannelId,
                     chain,
                     insertIndex: index + 1,
                     chainRevision,
                   }}
+                  resolveProjectRevision={resolveRevision}
                 >
                   {({ active, dropProps }) => (
                     <ProjectLibraryDragSource node={projectNode}>
@@ -611,12 +633,13 @@ function ChainList({
               target={{
                 kind: 'effectChain',
                 projectSessionId,
-                projectRevision,
+                projectRevision: projectRevision ?? 0,
                 channelId: libraryTargetChannelId,
                 chain,
                 insertIndex: entries.length,
                 chainRevision,
               }}
+              resolveProjectRevision={resolveRevision}
               label={`Insert Effect at end of ${label} chain`}
               fillRemaining
               pasteContextMenu={false}
@@ -769,6 +792,13 @@ export default React.memo(function ChannelStrip({
   onPatch,
   projectSessionId,
   projectRevision,
+  getMixer,
+  getProjectRevision,
+  mixerEnabled: controlledMixerEnabled,
+  enableMeters: controlledEnableMeters,
+  meterProfileKey: controlledMeterProfileKey,
+  validOutputTargets: controlledValidOutputTargets,
+  outputRoutingWarning: controlledOutputRoutingWarning,
   onOpenEffectInterface,
   onRemoveSubChannel,
   selection: controlledSelection,
@@ -780,9 +810,12 @@ export default React.memo(function ChannelStrip({
   const [localSelection, setLocalSelection] = useState<MixerChainSelection | null>(null);
   const selection = controlledSelection === undefined ? localSelection : controlledSelection;
   const onSelectionChange = controlledOnSelectionChange ?? setLocalSelection;
-  const projectUdos = useProjectStore((state) => state.projectUdos);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
+  const mixerEnabled = controlledMixerEnabled ?? mixer?.enabled ?? true;
+  const enableMeters = controlledEnableMeters ?? (mixer ? mixer.enableMeters !== false : true);
+  const meterProfileKey = controlledMeterProfileKey ?? mixer?.meterProfileKey;
+  const resolveMixer = useCallback(() => getMixer?.() ?? mixer, [getMixer, mixer]);
   const hostDocument = useHostDocument({ fallbackToGlobal: true });
   const [editingLevel, setEditingLevel] = useState(false);
   const [levelInput, setLevelInput] = useState('');
@@ -1063,18 +1096,36 @@ export default React.memo(function ChannelStrip({
   );
 
   const validOutputTargets = useMemo(
-    () => getValidOutputTargets(mixer, channel.id),
-    [mixer, channel.id],
+    () =>
+      controlledValidOutputTargets ??
+      (mixer ? getValidOutputTargets(mixer, channel.id) : EMPTY_CHANNELS),
+    [controlledValidOutputTargets, mixer, channel.id],
   );
 
   const outputRoutingWarning = useMemo(
-    () => validateOutputTarget(mixer, channel.id, channel.outChannel),
-    [mixer, channel.id, channel.outChannel],
+    () =>
+      controlledOutputRoutingWarning !== undefined
+        ? controlledOutputRoutingWarning
+        : mixer
+          ? validateOutputTarget(mixer, channel.id, channel.outChannel)
+          : null,
+    [controlledOutputRoutingWarning, mixer, channel.id, channel.outChannel],
+  );
+
+  const storeSendDialogMixer = useProjectStore((state) =>
+    mixer === undefined && sendEditorEntryId ? state.mixer : undefined,
+  );
+  const sendDialogMixer = useMemo(
+    () => (sendEditorEntryId ? (mixer ?? storeSendDialogMixer ?? resolveMixer()) : undefined),
+    [mixer, resolveMixer, sendEditorEntryId, storeSendDialogMixer],
   );
 
   const validSendTargets = useMemo(
-    () => getValidSendTargets(mixer, channel.id),
-    [mixer, channel.id],
+    () =>
+      sendEditorEntryId && sendDialogMixer
+        ? getValidSendTargets(sendDialogMixer, channel.id)
+        : EMPTY_CHANNELS,
+    [sendEditorEntryId, sendDialogMixer, channel.id],
   );
 
   const handleSliderPreview = useCallback(
@@ -1261,11 +1312,14 @@ export default React.memo(function ChannelStrip({
 
   const handleOutChannelChange = useCallback(
     (target: string) => {
-      const issue = validateOutputTarget(mixer, channel.id, target);
-      if (issue && issue.severity === 'error') return;
+      const currentMixer = resolveMixer();
+      if (currentMixer) {
+        const issue = validateOutputTarget(currentMixer, channel.id, target);
+        if (issue && issue.severity === 'error') return;
+      }
       onPatch({ type: 'updateChannel', channelId: channel.id, patch: { outChannel: target } });
     },
-    [mixer, channel.id, onPatch],
+    [resolveMixer, channel.id, onPatch],
   );
 
   const handleOpenInterface = useCallback(
@@ -1299,7 +1353,7 @@ export default React.memo(function ChannelStrip({
             entry.effectXml,
             entry.entryId,
             projectRef,
-            projectUdos,
+            readProjectUdos(),
           ),
         });
         return;
@@ -1319,12 +1373,12 @@ export default React.memo(function ChannelStrip({
           entryId: entry.entryId,
           snapshot: {
             ...snapshot,
-            projectUdos: useProjectStore.getState().projectUdos,
+            projectUdos: [...readProjectUdos()],
           },
         });
       })();
     },
-    [channel.id, projectUdos],
+    [channel.id],
   );
 
   const handleAddNewEffectDialog = useCallback(
@@ -1337,28 +1391,31 @@ export default React.memo(function ChannelStrip({
           mode: 'create',
           chain,
           entryId,
-          snapshot: createProjectEffectSnapshotFromXml(effectXml, entryId, projectRef, projectUdos),
+          snapshot: createProjectEffectSnapshotFromXml(
+            effectXml,
+            entryId,
+            projectRef,
+            readProjectUdos(),
+          ),
         });
       })();
     },
-    [channel.id, projectUdos],
+    [channel.id],
   );
 
-  const handleEffectDialogPatch = useCallback(
-    (patch: EffectEditablePatch) => {
-      setEffectDialog((current) => {
-        if (!current) {
-          return current;
-        }
+  const handleEffectDialogPatch = useCallback((patch: EffectEditablePatch) => {
+    const projectUdos = readProjectUdos();
+    setEffectDialog((current) => {
+      if (!current) {
+        return current;
+      }
 
-        return {
-          ...current,
-          snapshot: applyEffectPatchToSnapshot(current.snapshot, patch, projectUdos),
-        };
-      });
-    },
-    [projectUdos],
-  );
+      return {
+        ...current,
+        snapshot: applyEffectPatchToSnapshot(current.snapshot, patch, projectUdos),
+      };
+    });
+  }, []);
 
   const handleConfirmEffectDialog = useCallback(() => {
     if (!effectDialog) {
@@ -1409,7 +1466,7 @@ export default React.memo(function ChannelStrip({
 
   const handleSelectMeterProfile = useCallback(
     (key: MeterProfileKey) => {
-      const current = mixer.meterProfileKey ?? 'peak-rms-mixing-plus-6';
+      const current = meterProfileKey ?? 'peak-rms-mixing-plus-6';
       if (key !== current) {
         onPatch({
           type: 'setMeterProfile',
@@ -1417,7 +1474,7 @@ export default React.memo(function ChannelStrip({
         });
       }
     },
-    [mixer.meterProfileKey, onPatch],
+    [meterProfileKey, onPatch],
   );
 
   const handleDisableMeters = useCallback(() => {
@@ -1465,7 +1522,7 @@ export default React.memo(function ChannelStrip({
           aria-pressed={channel.muted}
           aria-label={`${displayName} Mute`}
           title={
-            !mixer.enabled
+            !mixerEnabled
               ? 'Mixer is disabled; enable the mixer for mute to affect audio'
               : channel.outputExcludedBySolo
                 ? channel.hasIncludedSend
@@ -1473,7 +1530,7 @@ export default React.memo(function ChannelStrip({
                   : `${displayName} output is excluded by solo`
                 : `${displayName} Mute`
           }
-          disabled={!mixer.enabled}
+          disabled={!mixerEnabled}
           onClick={() =>
             onPatch({
               type: 'updateChannel',
@@ -1496,11 +1553,11 @@ export default React.memo(function ChannelStrip({
             aria-pressed={channel.solo}
             aria-label={`${displayName} Solo`}
             title={
-              !mixer.enabled
+              !mixerEnabled
                 ? 'Mixer is disabled; enable the mixer for solo to affect audio'
                 : `${displayName} Solo`
             }
-            disabled={!mixer.enabled}
+            disabled={!mixerEnabled}
             onClick={() =>
               onPatch({
                 type: 'updateChannel',
@@ -1527,6 +1584,7 @@ export default React.memo(function ChannelStrip({
         onOpenEditEffectDialog={handleOpenEditDialog}
         projectSessionId={projectSessionId}
         projectRevision={projectRevision}
+        getProjectRevision={getProjectRevision}
         selection={selection}
         onSelectionChange={onSelectionChange}
         projectEffectNodes={projectEffectNodes}
@@ -1549,7 +1607,7 @@ export default React.memo(function ChannelStrip({
 
       <div className="mixer-level-section">
         <div className="mixer-level-label">Level</div>
-        {renderMeter && mixer.enableMeters !== false && <PeakReadout stripId={channel.id} />}
+        {renderMeter && enableMeters && <PeakReadout stripId={channel.id} />}
         <div
           ref={levelControlsRef}
           className="mixer-level-controls flex flex-row items-center justify-center gap-1.5 flex-1 min-h-[60px] w-full overflow-hidden"
@@ -1564,12 +1622,12 @@ export default React.memo(function ChannelStrip({
             onCancel={handleSliderCancel}
             onDoubleClickReset={handleSliderDoubleClick}
           />
-          {renderMeter && mixer.enableMeters !== false && (
+          {renderMeter && enableMeters && (
             <StripMeterArea
               stripId={channel.id}
               isMaster={isMaster}
               height={sliderHeight}
-              profileKey={mixer.meterProfileKey}
+              profileKey={meterProfileKey}
               onSelectProfile={handleSelectMeterProfile}
               onDisableMeters={handleDisableMeters}
             />
@@ -1612,6 +1670,7 @@ export default React.memo(function ChannelStrip({
         onOpenEditEffectDialog={handleOpenEditDialog}
         projectSessionId={projectSessionId}
         projectRevision={projectRevision}
+        getProjectRevision={getProjectRevision}
         selection={selection}
         onSelectionChange={onSelectionChange}
         projectEffectNodes={projectEffectNodes}
@@ -1667,11 +1726,11 @@ export default React.memo(function ChannelStrip({
         <div className="mixer-channel-strip">{stripContent}</div>
       )}
 
-      {sendEditorEntry && (
+      {sendEditorEntry && sendDialogMixer && (
         <SendEditorDialog
           send={sendEditorEntry}
           sendTargets={validSendTargets}
-          mixer={mixer}
+          mixer={sendDialogMixer}
           channelId={channel.id}
           onPatch={onPatch}
           chain={sendEditorChain}
