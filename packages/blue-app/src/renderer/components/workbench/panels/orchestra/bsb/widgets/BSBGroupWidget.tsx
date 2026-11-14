@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import type { BsbWidgetNodeSnapshot } from '../../../../../../../shared/project-editor';
 import WidgetWrapper from './WidgetWrapper';
 import BsbTextLabel from './BsbTextLabel';
 import {
+  BsbDisplaySizeCacheContext,
   getFontString,
   getWidgetDisplaySize,
   measureTextContent,
@@ -54,7 +55,11 @@ export default function BSBGroupWidget({
       : { width: 0, height: 0 };
   const titleHeight = titleEnabled && groupName ? Math.max(20, Math.ceil(titleMetrics.height)) : 0;
 
-  const displaySize = getWidgetDisplaySize(node, { allowDomMeasure: false });
+  const displaySizeCache = useContext(BsbDisplaySizeCacheContext);
+  const displaySize = getWidgetDisplaySize(node, {
+    allowDomMeasure: false,
+    displaySizeCache,
+  });
 
   return (
     <WidgetWrapper

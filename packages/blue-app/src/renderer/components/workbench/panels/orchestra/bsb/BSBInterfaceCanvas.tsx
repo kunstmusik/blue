@@ -32,6 +32,8 @@ import {
   PreservedWidget,
 } from './widgets';
 import {
+  BsbDisplaySizeCacheContext,
+  type BsbDisplaySizeCache,
   getCanvasDisplaySize,
   getWidgetDisplaySize,
   useBsbHtmlMeasurementRefresh,
@@ -122,9 +124,7 @@ export function createCanvasClipboard(
   }
 
   return {
-    widgets: selectedWidgets.map(
-      (widget) => JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot,
-    ),
+    widgets: selectedWidgets.map((widget) => structuredClone(widget)),
     originX: Math.min(...selectedWidgets.map((widget) => widget.x)),
     originY: Math.min(...selectedWidgets.map((widget) => widget.y)),
   };
@@ -153,7 +153,7 @@ export function buildPastedWidgets(
   }
 
   return clipboard.widgets.map((widget) => {
-    const clone = JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot;
+    const clone = structuredClone(widget);
     clone.x = (clone.x ?? 0) + offsetX;
     clone.y = (clone.y ?? 0) + offsetY;
     const { id: _removedId, ...rest } = clone;
@@ -199,12 +199,13 @@ function BSBInterfaceCanvas({
     if (requestedGroupStack.length !== groupStack.length) setGroupStack(groupStack);
   }, [requestedGroupStack, groupStack]);
   useBsbHtmlMeasurementRefresh(currentChildren);
+  const displaySizeCache: BsbDisplaySizeCache = new Map();
   const canvasSize = getCanvasDisplaySize(
     currentChildren,
     editEnabled ? viewportSize.width : 0,
     editEnabled ? viewportSize.height : 0,
     editEnabled ? undefined : 10,
-    { allowDomMeasure: false },
+    { allowDomMeasure: false, displaySizeCache },
   );
 
   const parentGroupId = groupStack.length > 0 ? groupStack[groupStack.length - 1].id : undefined;
@@ -745,7 +746,7 @@ function BSBInterfaceCanvas({
       const maxY = Math.max(currentMarquee.startY, currentMarquee.currentY);
       const ids = new Set<string>();
       for (const child of currentChildren) {
-        const childSize = getWidgetDisplaySize(child);
+        const childSize = getWidgetDisplaySize(child, { displaySizeCache });
         const cw = childSize.width;
         const ch = childSize.height;
         const intersects =
@@ -842,71 +843,73 @@ function BSBInterfaceCanvas({
   );
 
   return (
-    <Tooltip.Provider delayDuration={100} skipDelayDuration={0}>
-      <div className="flex h-full flex-col">
-        {editEnabled && groupStack.length > 0 && (
-          <div className="flex items-center gap-1 border-b border-blue-border bg-app-bsb-control px-2 py-1">
-            <BreadcrumbItem
-              label="Root"
-              onClick={() => navigateTo(0)}
-              active={groupStack.length === 0}
-            />
-            {groupStack.map((entry, i) => (
-              <React.Fragment key={entry.id}>
-                <ChevronIcon />
-                <BreadcrumbItem
-                  label={entry.name}
-                  onClick={() => navigateTo(i + 1)}
-                  active={i === groupStack.length - 1}
-                />
-              </React.Fragment>
-            ))}
-          </div>
-        )}
-        {editEnabled ? (
-          <ContextMenu.Root>
-            <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
-            <PopoutContextMenuPortal>
-              <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
-                <ContextMenu.Item
-                  className="editor-context-menu__item"
-                  onSelect={handlePaste}
-                  disabled={!canPaste}
-                >
-                  Paste
-                </ContextMenu.Item>
-                <ContextMenu.Separator className="editor-context-menu__separator" />
-                {BSB_ADDABLE_WIDGETS.map((w) => (
+    <BsbDisplaySizeCacheContext.Provider value={displaySizeCache}>
+      <Tooltip.Provider delayDuration={100} skipDelayDuration={0}>
+        <div className="flex h-full flex-col">
+          {editEnabled && groupStack.length > 0 && (
+            <div className="flex items-center gap-1 border-b border-blue-border bg-app-bsb-control px-2 py-1">
+              <BreadcrumbItem
+                label="Root"
+                onClick={() => navigateTo(0)}
+                active={groupStack.length === 0}
+              />
+              {groupStack.map((entry, i) => (
+                <React.Fragment key={entry.id}>
+                  <ChevronIcon />
+                  <BreadcrumbItem
+                    label={entry.name}
+                    onClick={() => navigateTo(i + 1)}
+                    active={i === groupStack.length - 1}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+          {editEnabled ? (
+            <ContextMenu.Root>
+              <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
+              <PopoutContextMenuPortal>
+                <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
                   <ContextMenu.Item
-                    key={w.type}
                     className="editor-context-menu__item"
-                    onSelect={() => {
-                      handleAddWidget(w.type, contextMenuPos.current.x, contextMenuPos.current.y);
-                    }}
+                    onSelect={handlePaste}
+                    disabled={!canPaste}
                   >
-                    Add {w.label}
+                    Paste
                   </ContextMenu.Item>
-                ))}
-              </ContextMenu.Content>
-            </PopoutContextMenuPortal>
-          </ContextMenu.Root>
-        ) : (
-          <ContextMenu.Root>
-            <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
-            <PopoutContextMenuPortal>
-              <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
-                <ContextMenu.Item
-                  className="editor-context-menu__item"
-                  onSelect={() => onBsbInterfacePatch({ type: 'randomize' })}
-                >
-                  Randomize
-                </ContextMenu.Item>
-              </ContextMenu.Content>
-            </PopoutContextMenuPortal>
-          </ContextMenu.Root>
-        )}
-      </div>
-    </Tooltip.Provider>
+                  <ContextMenu.Separator className="editor-context-menu__separator" />
+                  {BSB_ADDABLE_WIDGETS.map((w) => (
+                    <ContextMenu.Item
+                      key={w.type}
+                      className="editor-context-menu__item"
+                      onSelect={() => {
+                        handleAddWidget(w.type, contextMenuPos.current.x, contextMenuPos.current.y);
+                      }}
+                    >
+                      Add {w.label}
+                    </ContextMenu.Item>
+                  ))}
+                </ContextMenu.Content>
+              </PopoutContextMenuPortal>
+            </ContextMenu.Root>
+          ) : (
+            <ContextMenu.Root>
+              <ContextMenu.Trigger asChild>{canvasContent}</ContextMenu.Trigger>
+              <PopoutContextMenuPortal>
+                <ContextMenu.Content className="editor-context-menu" {...portalEventIsolationProps}>
+                  <ContextMenu.Item
+                    className="editor-context-menu__item"
+                    onSelect={() => onBsbInterfacePatch({ type: 'randomize' })}
+                  >
+                    Randomize
+                  </ContextMenu.Item>
+                </ContextMenu.Content>
+              </PopoutContextMenuPortal>
+            </ContextMenu.Root>
+          )}
+        </div>
+      </Tooltip.Provider>
+    </BsbDisplaySizeCacheContext.Provider>
   );
 }
 
@@ -1034,13 +1037,14 @@ function GridOverlay({
             return;
           }
         }
+        ctx.beginPath();
         for (let x = 0; x < cw; x += w) {
           for (let y = 0; y < ch; y += h) {
-            ctx.beginPath();
+            ctx.moveTo(x + 1, y);
             ctx.arc(x, y, 1, 0, Math.PI * 2);
-            ctx.fill();
           }
         }
+        ctx.fill();
       } else if (style === 'LINE') {
         ctx.beginPath();
         for (let x = 0; x < cw; x += w) {

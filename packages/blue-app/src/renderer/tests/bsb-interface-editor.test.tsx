@@ -22,7 +22,11 @@ import BSBInterfaceCanvas, {
   isGridSnapEnabled,
 } from '../components/workbench/panels/orchestra/bsb/BSBInterfaceCanvas';
 import { getCommittedTextFieldValue } from '../components/workbench/panels/orchestra/bsb/widgets/BSBTextFieldWidget';
-import { getWidgetDisplaySize } from '../components/workbench/panels/orchestra/bsb/widgets/utils';
+import {
+  type BsbDisplaySizeCache,
+  getCanvasDisplaySize,
+  getWidgetDisplaySize,
+} from '../components/workbench/panels/orchestra/bsb/widgets/utils';
 import { createDefaultBsbWidgetSnapshot } from '../../shared/project-editor';
 import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 import { applyBsbInterfacePatchToSnapshot } from '../stores/project-store';
@@ -890,5 +894,51 @@ describe('BSB property sheet parity', () => {
     expect(lineHtml).toContain('aria-label="BSB line 1 color"');
     expect(lineHtml).not.toContain('type="color"');
     expect(lineHtml).not.toContain('Right Bound');
+  });
+
+  it('memoizes nested BSBGroup display sizes across shared displaySizeCache', () => {
+    const leafKnob = makeWidgetNode({ id: 'leaf-knob', x: 30, y: 40, width: 80, height: 80 });
+    let nestedGroup: BsbWidgetNodeSnapshot = makeWidgetNode({
+      id: 'group-3',
+      type: 'BSBGroup',
+      x: 10,
+      y: 12,
+      width: 100,
+      height: 100,
+      properties: { groupName: 'G3', titleEnabled: true },
+      children: [leafKnob],
+    });
+    for (let depth = 2; depth >= 0; depth -= 1) {
+      nestedGroup = makeWidgetNode({
+        id: `group-${depth}`,
+        type: 'BSBGroup',
+        x: 15,
+        y: 15,
+        width: 100,
+        height: 100,
+        properties: { groupName: `G${depth}`, titleEnabled: true },
+        children: [nestedGroup],
+      });
+    }
+
+    const uncachedCanvasSize = getCanvasDisplaySize([nestedGroup]);
+    const cache: BsbDisplaySizeCache = new Map();
+    const setSpy = vi.spyOn(cache, 'set');
+    const cachedCanvasSize = getCanvasDisplaySize([nestedGroup], 0, 0, undefined, {
+      displaySizeCache: cache,
+    });
+
+    expect(cachedCanvasSize).toEqual(uncachedCanvasSize);
+    expect(cache.size).toBe(5);
+    const setsAfterCanvas = setSpy.mock.calls.length;
+
+    const innerGroup = nestedGroup.children![0]!;
+    expect(getWidgetDisplaySize(nestedGroup, { displaySizeCache: cache })).toEqual(
+      getWidgetDisplaySize(nestedGroup),
+    );
+    expect(getWidgetDisplaySize(innerGroup, { displaySizeCache: cache })).toEqual(
+      getWidgetDisplaySize(innerGroup),
+    );
+    expect(setSpy).toHaveBeenCalledTimes(setsAfterCanvas);
   });
 });

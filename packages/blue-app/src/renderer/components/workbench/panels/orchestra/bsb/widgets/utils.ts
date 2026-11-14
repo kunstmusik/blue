@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import {
   type BsbWidgetNodeSnapshot,
   getWidgetResolution,
@@ -34,6 +34,10 @@ const plainTextWidthCache = new Map<string, number>();
 let htmlMeasurementRevision = 0;
 const htmlMeasurementListeners = new Set<() => void>();
 
+export type BsbDisplaySizeCache = Map<BsbWidgetNodeSnapshot, { width: number; height: number }>;
+
+export const BsbDisplaySizeCacheContext = createContext<BsbDisplaySizeCache | undefined>(undefined);
+
 export interface BsbTextMeasurementOptions {
   /**
    * When false (the React render path), never touch `document.body` / `innerHTML` /
@@ -41,6 +45,11 @@ export interface BsbTextMeasurementOptions {
    * fallback estimate and let post-commit `useBsbHtmlMeasurementRefresh` measure it.
    */
   allowDomMeasure?: boolean;
+  /**
+   * Per-render cache shared across `getCanvasDisplaySize` and nested `BSBGroupWidget`
+   * sizing calls so deep group hierarchies visit each node once.
+   */
+  displaySizeCache?: BsbDisplaySizeCache;
 }
 
 export const BSB_CANVAS_MIN_WIDTH = 600;
@@ -189,6 +198,28 @@ export function getFontString(name: string, size: number, style = 0): string {
 }
 
 export function getWidgetDisplaySize(
+  node: BsbWidgetNodeSnapshot,
+  options?: BsbTextMeasurementOptions,
+): {
+  width: number;
+  height: number;
+} {
+  const cached = options?.displaySizeCache?.get(node);
+  if (cached) {
+    return cached;
+  }
+
+  let resolvedOptions = options;
+  if (node.type === 'BSBGroup' && !options?.displaySizeCache) {
+    resolvedOptions = { ...options, displaySizeCache: new Map() };
+  }
+
+  const size = computeWidgetDisplaySize(node, resolvedOptions);
+  resolvedOptions?.displaySizeCache?.set(node, size);
+  return size;
+}
+
+function computeWidgetDisplaySize(
   node: BsbWidgetNodeSnapshot,
   options?: BsbTextMeasurementOptions,
 ): {
@@ -441,19 +472,30 @@ export function getWidgetDisplaySize(
 
 function getWidgetCanvasBoundsSize(
   node: BsbWidgetNodeSnapshot,
-  options?: BsbTextMeasurementOptions,
+  options: BsbTextMeasurementOptions | undefined,
+  boundsCache: BsbDisplaySizeCache,
 ): { width: number; height: number } {
+  const cached = boundsCache.get(node);
+  if (cached) {
+    return cached;
+  }
+
   const displaySize = getWidgetDisplaySize(node, options);
-  if (node.type !== 'BSBGroup') return displaySize;
+  if (node.type !== 'BSBGroup') {
+    boundsCache.set(node, displaySize);
+    return displaySize;
+  }
 
   let width = displaySize.width;
   let height = displaySize.height;
   for (const child of node.children ?? []) {
-    const childSize = getWidgetCanvasBoundsSize(child, options);
+    const childSize = getWidgetCanvasBoundsSize(child, options, boundsCache);
     width = Math.max(width, child.x + childSize.width + BSB_CANVAS_SCROLL_PADDING);
     height = Math.max(height, child.y + childSize.height + BSB_CANVAS_SCROLL_PADDING);
   }
-  return { width, height };
+  const result = { width, height };
+  boundsCache.set(node, result);
+  return result;
 }
 
 export function getCanvasDisplaySize(
@@ -465,9 +507,13 @@ export function getCanvasDisplaySize(
 ): { width: number; height: number } {
   let maxWidth = 1;
   let maxHeight = 1;
+  const resolvedOptions: BsbTextMeasurementOptions = options?.displaySizeCache
+    ? options
+    : { ...options, displaySizeCache: new Map() };
+  const boundsCache: BsbDisplaySizeCache = new Map();
 
   for (const child of children) {
-    const childSize = getWidgetCanvasBoundsSize(child, options);
+    const childSize = getWidgetCanvasBoundsSize(child, resolvedOptions, boundsCache);
     maxWidth = Math.max(maxWidth, child.x + childSize.width);
     maxHeight = Math.max(maxHeight, child.y + childSize.height);
   }

@@ -233,6 +233,8 @@ describe('BSB Swing HTML labels', () => {
         expect(gridCanvas!.height).toBe(400);
         expect(gridCanvas!.width).toBeLessThan(2000);
         expect(gridCanvas!.height).toBeLessThan(2000);
+        expect(ctxMock.createPattern).toHaveBeenCalledTimes(1);
+        expect(ctxMock.fillRect).toHaveBeenCalledWith(0, 0, 600, 400);
       } finally {
         HTMLCanvasElement.prototype.getContext = originalCanvasCtx;
         await act(async () => {
@@ -242,6 +244,85 @@ describe('BSB Swing HTML labels', () => {
       }
     } finally {
       appendSpy.mockRestore();
+    }
+  });
+
+  it('batches fallback DOT grid dots into a single beginPath and fill when createPattern returns null', async () => {
+    const label = createDefaultBsbWidgetSnapshot('BSBLabel')!;
+    label.id = 'dot-fallback-label';
+    label.x = 10;
+    label.y = 10;
+    const instrument: BlueSynthBuilderInstrumentSnapshot = {
+      ...makeInstrument([label]),
+      editEnabled: true,
+      gridSettings: { enabled: true, snapEnabled: true, width: 20, height: 25, gridStyle: 'DOT' },
+    };
+
+    const originalCanvasCtx = HTMLCanvasElement.prototype.getContext;
+    const ctxMock = {
+      clearRect: vi.fn(),
+      fillRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      measureText: vi.fn(() => ({ width: 20 })),
+      createPattern: vi.fn(() => null),
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+    };
+    const origCreateElement = document.createElement.bind(document);
+    const createElSpy = vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
+      const el = origCreateElement(tag);
+      if (tag === 'canvas') {
+        (el as HTMLCanvasElement).getContext = vi.fn(
+          () => ctxMock as unknown as CanvasRenderingContext2D,
+        ) as unknown as HTMLCanvasElement['getContext'];
+      }
+      return el;
+    }) as typeof document.createElement);
+    HTMLCanvasElement.prototype.getContext = vi.fn(
+      () => ctxMock as unknown as CanvasRenderingContext2D,
+    ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
+    const container = origCreateElement('div');
+    document.body.appendChild(container);
+    (
+      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        root.render(
+          createElement(BSBInterfaceCanvas, {
+            instrument,
+            selectedWidgetIds: new Set<string>(),
+            editEnabled: true,
+            onWidgetSelect: vi.fn(),
+          }),
+        );
+      });
+
+      const dotBeginPathsAfterTile = ctxMock.beginPath.mock.calls.length;
+      const dotFillsAfterTile = ctxMock.fill.mock.calls.length;
+      // 1 beginPath+fill on offscreen tile attempt + 1 batched beginPath+fill for all fallback dots.
+      expect(dotBeginPathsAfterTile).toBe(2);
+      expect(dotFillsAfterTile).toBe(2);
+      // 4 tile corner arcs + (600/20)*(400/25) = 4 + 30*16 = 484 arcs.
+      expect(ctxMock.arc).toHaveBeenCalledTimes(4 + (600 / 20) * (400 / 25));
+    } finally {
+      createElSpy.mockRestore();
+      HTMLCanvasElement.prototype.getContext = originalCanvasCtx;
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
     }
   });
 });

@@ -19,9 +19,7 @@ function cloneClipboard(clipboard: BsbCanvasClipboard | null): BsbCanvasClipboar
   return {
     originX: clipboard.originX,
     originY: clipboard.originY,
-    widgets: clipboard.widgets.map(
-      (widget) => JSON.parse(JSON.stringify(widget)) as BsbWidgetNodeSnapshot,
-    ),
+    widgets: clipboard.widgets.map((widget) => structuredClone(widget)),
   };
 }
 
