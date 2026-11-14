@@ -3,10 +3,14 @@ import type { AutomationParameterSnapshot } from '../../../../../../shared/proje
 import { beatToX, valueToY, formatAutomationDouble } from './automation-line-utils';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
 import { useHostSurface } from '../../../../host-surface/use-host-surface';
+import { useScoreViewportBounds } from '../score-viewport-scroll';
 
 interface Props {
   parameter: AutomationParameterSnapshot;
   pixelsPerBeat: number;
+  visibleStartBeats?: number;
+  visibleEndBeats?: number;
+  totalBeats?: number;
   active: boolean;
   mode: 'score' | 'singleLine' | 'multiLine';
   selectedPointIndex?: number | null;
@@ -19,6 +23,9 @@ interface Props {
 export default function AutomationLineView({
   parameter,
   pixelsPerBeat,
+  visibleStartBeats: propVisibleStartBeats,
+  visibleEndBeats: propVisibleEndBeats,
+  totalBeats,
   active,
   mode,
   selectedPointIndex = null,
@@ -86,9 +93,35 @@ export default function AutomationLineView({
     gap: 7, // Java's pointRadius(4) + offset(3) clearance beside the point
   });
 
+  const { visibleStartBeats, visibleEndBeats } = useScoreViewportBounds(
+    pixelsPerBeat,
+    propVisibleStartBeats,
+    propVisibleEndBeats,
+  );
+  const pointsSorted = useMemo(() => arePointsSortedByTime(points), [points]);
+
   const pathD = useMemo(() => {
-    return buildAutomationLinePath(parameter, pixelsPerBeat, height);
-  }, [points, pixelsPerBeat, height, minimum, maximum, parameter.resolution]);
+    return buildAutomationLinePath(
+      parameter,
+      pixelsPerBeat,
+      height,
+      pointsSorted,
+      visibleStartBeats,
+      visibleEndBeats,
+      totalBeats,
+    );
+  }, [
+    points,
+    pointsSorted,
+    pixelsPerBeat,
+    height,
+    minimum,
+    maximum,
+    parameter.resolution,
+    visibleStartBeats,
+    visibleEndBeats,
+    totalBeats,
+  ]);
 
   if (points.length === 0) return null;
 
@@ -96,14 +129,41 @@ export default function AutomationLineView({
     ? Math.min(selectionRange.startBeat, selectionRange.endBeat)
     : 0;
   const rangeEnd = selectionRange ? Math.max(selectionRange.startBeat, selectionRange.endBeat) : 0;
+  const visiblePointIndices: number[] = [];
+  if (showPoints) {
+    if (pointsSorted) {
+      const firstVisibleCircleIndex =
+        visibleStartBeats !== undefined
+          ? findFirstPointIndexAtOrAfter(points, visibleStartBeats)
+          : 0;
+      const lastVisibleCircleIndex =
+        visibleEndBeats !== undefined
+          ? findLastPointIndexAtOrBefore(points, visibleEndBeats)
+          : points.length - 1;
+      for (let i = firstVisibleCircleIndex; i <= lastVisibleCircleIndex; i++) {
+        visiblePointIndices.push(i);
+      }
+    } else {
+      for (let i = 0; i < points.length; i++) {
+        const time = points[i]!.time;
+        if (
+          (visibleStartBeats === undefined || time >= visibleStartBeats) &&
+          (visibleEndBeats === undefined || time <= visibleEndBeats)
+        ) {
+          visiblePointIndices.push(i);
+        }
+      }
+    }
+  }
 
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
       {height > 0 && (
         <svg ref={svgRef} style={{ width: '100%', height, overflow: 'visible' }}>
-          <path d={pathD} fill="none" stroke={lineColor} strokeWidth={2} />
+          {pathD && <path d={pathD} fill="none" stroke={lineColor} strokeWidth={2} />}
           {showPoints &&
-            points.map((pt, i) => {
+            visiblePointIndices.map((i) => {
+              const pt = points[i]!;
               const cx = beatToX(pt.time, pixelsPerBeat);
               const cy = valueToY(pt.value, minimum, maximum, height);
               const directlySelected = selectedPointIndex === i;
@@ -168,50 +228,241 @@ function darkenColor(color: string, factor: number): string {
     .padStart(2, '0')}${blue.toString(16).padStart(2, '0')}`;
 }
 
+function arePointsSortedByTime(points: ReadonlyArray<{ time: number }>): boolean {
+  for (let i = 1; i < points.length; i++) {
+    if (points[i]!.time < points[i - 1]!.time) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function findFirstPointIndexAtOrAfter(
+  points: ReadonlyArray<{ time: number }>,
+  targetBeat: number,
+): number {
+  let lo = 0;
+  let hi = points.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (points[mid]!.time < targetBeat) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
+function findLastPointIndexAtOrBefore(
+  points: ReadonlyArray<{ time: number }>,
+  targetBeat: number,
+): number {
+  let lo = 0;
+  let hi = points.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (points[mid]!.time <= targetBeat) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo - 1;
+}
+
+function resolveTrailingEndX(
+  points: ReadonlyArray<{ time: number }>,
+  pixelsPerBeat: number,
+  visibleEndBeats?: number,
+  totalBeats?: number,
+): number {
+  const lastPointX = beatToX(points[points.length - 1]!.time, pixelsPerBeat);
+  if (visibleEndBeats !== undefined) {
+    const endBeatLimit =
+      totalBeats !== undefined ? Math.min(visibleEndBeats, totalBeats) : visibleEndBeats;
+    return Math.max(0, beatToX(endBeatLimit, pixelsPerBeat));
+  }
+  if (totalBeats !== undefined) {
+    return Math.max(lastPointX, beatToX(totalBeats, pixelsPerBeat));
+  }
+  return Math.max(100000, lastPointX);
+}
+
 function buildAutomationLinePath(
   parameter: AutomationParameterSnapshot,
   pixelsPerBeat: number,
   height: number,
+  pointsSorted: boolean,
+  visibleStartBeats?: number,
+  visibleEndBeats?: number,
+  totalBeats?: number,
 ): string {
   const points = parameter.points;
   if (points.length === 0 || height === 0) return '';
 
   const toX = (beat: number) => beatToX(beat, pixelsPerBeat);
   const toY = (value: number) => valueToY(value, parameter.minimum, parameter.maximum, height);
+  const trailingEndX = resolveTrailingEndX(
+    points,
+    pixelsPerBeat,
+    pointsSorted && (visibleStartBeats !== undefined || visibleEndBeats !== undefined)
+      ? visibleEndBeats
+      : undefined,
+    totalBeats,
+  );
 
   if (points.length === 1) {
+    const startX =
+      visibleStartBeats !== undefined ? Math.max(0, beatToX(visibleStartBeats, pixelsPerBeat)) : 0;
+    if (visibleEndBeats !== undefined && trailingEndX < startX) {
+      return '';
+    }
     const y = toY(points[0]!.value);
-    return `M 0 ${y} L 100000 ${y}`;
+    return `M ${startX} ${y} L ${Math.max(startX, trailingEndX)} ${y}`;
+  }
+
+  if (pointsSorted && visibleEndBeats !== undefined && points[0]!.time > visibleEndBeats) {
+    return '';
+  }
+
+  let segStartIdx =
+    pointsSorted && visibleStartBeats !== undefined
+      ? Math.max(0, findFirstPointIndexAtOrAfter(points, visibleStartBeats) - 1)
+      : 0;
+  const startStepThresholdX =
+    visibleStartBeats !== undefined
+      ? beatToX(visibleStartBeats, pixelsPerBeat) - 4
+      : Number.NEGATIVE_INFINITY;
+  while (
+    segStartIdx > 0 &&
+    points[segStartIdx - 1]!.time === points[segStartIdx]!.time &&
+    (!pointsSorted ||
+      visibleStartBeats === undefined ||
+      toX(points[segStartIdx]!.time) >= startStepThresholdX)
+  ) {
+    segStartIdx -= 1;
+  }
+  let segEndIdx =
+    pointsSorted && visibleEndBeats !== undefined
+      ? Math.min(points.length - 1, findLastPointIndexAtOrBefore(points, visibleEndBeats) + 1)
+      : points.length - 1;
+  const endStepThresholdX =
+    visibleEndBeats !== undefined
+      ? beatToX(visibleEndBeats, pixelsPerBeat) + 4
+      : Number.POSITIVE_INFINITY;
+  while (
+    segEndIdx < points.length - 1 &&
+    points[segEndIdx + 1]!.time === points[segEndIdx]!.time &&
+    (!pointsSorted ||
+      visibleEndBeats === undefined ||
+      toX(points[segEndIdx]!.time) <= endStepThresholdX)
+  ) {
+    segEndIdx += 1;
   }
 
   if (parameter.resolution <= 0) {
-    const parts = [`M ${toX(points[0]!.time)} ${toY(points[0]!.value)}`];
-    for (let i = 1; i < points.length; i++) {
+    if (pointsSorted && segStartIdx >= segEndIdx) {
+      const lastPoint = points[points.length - 1]!;
+      const startX =
+        visibleStartBeats !== undefined
+          ? Math.max(toX(lastPoint.time), beatToX(Math.max(0, visibleStartBeats), pixelsPerBeat))
+          : toX(lastPoint.time);
+      const y = toY(lastPoint.value);
+      return `M ${startX} ${y} L ${Math.max(startX, trailingEndX)} ${y}`;
+    }
+
+    const parts = [`M ${toX(points[segStartIdx]!.time)} ${toY(points[segStartIdx]!.value)}`];
+    for (let i = segStartIdx + 1; i <= segEndIdx; i++) {
       const current = points[i]!;
       parts.push(`L ${toX(current.time)} ${toY(current.value)}`);
     }
-    parts.push(`L 100000 ${toY(points[points.length - 1]!.value)}`);
+    if (segEndIdx === points.length - 1 && trailingEndX > toX(points[segEndIdx]!.time)) {
+      parts.push(`L ${trailingEndX} ${toY(points[segEndIdx]!.value)}`);
+    }
     return parts.join(' ');
   }
 
-  return buildQuantizedInterpolationPath(parameter, pixelsPerBeat, height);
+  return buildQuantizedInterpolationPath(
+    parameter,
+    pixelsPerBeat,
+    height,
+    segStartIdx,
+    segEndIdx,
+    trailingEndX,
+    pointsSorted ? visibleStartBeats : undefined,
+    pointsSorted ? visibleEndBeats : undefined,
+  );
 }
 
 function buildQuantizedInterpolationPath(
   parameter: AutomationParameterSnapshot,
   pixelsPerBeat: number,
   height: number,
+  segStartIdx: number,
+  segEndIdx: number,
+  trailingEndX: number,
+  visibleStartBeats?: number,
+  visibleEndBeats?: number,
 ): string {
   const points = parameter.points;
   const toX = (beat: number) => beatToX(beat, pixelsPerBeat);
   const toY = (value: number) => valueToY(value, parameter.minimum, parameter.maximum, height);
-  const parts = [`M ${toX(points[0]!.time)} ${toY(points[0]!.value)}`];
+  const minVisiblePx =
+    visibleStartBeats !== undefined
+      ? Math.floor(Math.max(0, visibleStartBeats) * pixelsPerBeat) - 1
+      : Number.NEGATIVE_INFINITY;
+  const maxVisiblePx =
+    visibleEndBeats !== undefined
+      ? Math.ceil(visibleEndBeats * pixelsPerBeat) + 1
+      : Number.POSITIVE_INFINITY;
 
-  let lastX = Math.round(toX(points[0]!.time));
-  let lastY = toY(points[0]!.value);
-  let scanCursor = 1;
+  if (segStartIdx >= segEndIdx) {
+    const lastPoint = points[points.length - 1]!;
+    const startX =
+      visibleStartBeats !== undefined
+        ? Math.max(toX(lastPoint.time), beatToX(Math.max(0, visibleStartBeats), pixelsPerBeat))
+        : toX(lastPoint.time);
+    const y = toY(lastPoint.value);
+    return `M ${startX} ${y} L ${Math.max(startX, trailingEndX)} ${y}`;
+  }
 
-  for (let i = 1; i < points.length; i++) {
+  const firstSegPrev = points[segStartIdx]!;
+  const firstSegNext = points[segStartIdx + 1]!;
+  const firstStartX = Math.round(toX(firstSegPrev.time));
+  let scanCursor = segStartIdx + 1;
+  let lastX = firstStartX;
+  let lastY = toY(firstSegPrev.value);
+  let parts: string[];
+
+  if (minVisiblePx > firstStartX) {
+    const entryX = minVisiblePx;
+    if (firstSegPrev.value !== firstSegNext.value) {
+      const evaluated = evaluateJavaLineMonotonic(
+        points,
+        entryX / pixelsPerBeat,
+        parameter.resolution,
+        scanCursor,
+      );
+      scanCursor = evaluated.nextCursor;
+      let entryY = toY(evaluated.value);
+      const segStartY = toY(firstSegPrev.value);
+      const segEndY = toY(firstSegNext.value);
+      if (segEndY > segStartY && entryY < segStartY) {
+        entryY = segStartY;
+      } else if (segEndY < segStartY && entryY > segStartY) {
+        entryY = segStartY;
+      }
+      lastY = entryY;
+    }
+    lastX = entryX;
+    parts = [`M ${entryX} ${lastY}`];
+  } else {
+    parts = [`M ${toX(firstSegPrev.time)} ${lastY}`];
+  }
+  let lastPushedX = lastX;
+
+  for (let i = segStartIdx + 1; i <= segEndIdx; i++) {
     const previous = points[i - 1]!;
     const current = points[i]!;
     const startX = Math.round(toX(previous.time));
@@ -220,8 +471,13 @@ function buildQuantizedInterpolationPath(
     const endY = toY(current.value);
 
     if (endX <= startX) {
-      if (lastX !== endX || lastY !== endY) {
+      if (
+        endX >= minVisiblePx &&
+        endX <= maxVisiblePx &&
+        (lastPushedX !== endX || lastY !== endY)
+      ) {
         parts.push(`L ${endX} ${endY}`);
+        lastPushedX = endX;
         lastX = endX;
         lastY = endY;
       }
@@ -229,15 +485,18 @@ function buildQuantizedInterpolationPath(
     }
 
     if (previous.value === current.value) {
-      if (lastX !== endX || lastY !== endY) {
-        parts.push(`L ${endX} ${endY}`);
-        lastX = endX;
+      const clampedEndX = Math.min(endX, maxVisiblePx);
+      if (lastPushedX !== clampedEndX || lastY !== endY) {
+        parts.push(`L ${clampedEndX} ${endY}`);
+        lastPushedX = clampedEndX;
+        lastX = clampedEndX;
         lastY = endY;
       }
       continue;
     }
 
-    for (let x = Math.max(startX, lastX) + 1; x <= endX; x++) {
+    const loopEndX = Math.min(endX, maxVisiblePx);
+    for (let x = Math.max(startX, lastX, minVisiblePx) + 1; x <= loopEndX; x++) {
       const time = x / pixelsPerBeat;
       const evaluated = evaluateJavaLineMonotonic(points, time, parameter.resolution, scanCursor);
       scanCursor = evaluated.nextCursor;
@@ -253,19 +512,29 @@ function buildQuantizedInterpolationPath(
         parts.push(`L ${x} ${lastY}`);
         parts.push(`L ${x} ${y}`);
         lastY = y;
+        lastPushedX = x;
       }
       lastX = x;
     }
 
-    if (lastX !== endX || Math.abs(lastY - endY) > 0.0001) {
-      parts.push(`L ${endX} ${lastY}`);
-      parts.push(`L ${endX} ${endY}`);
-      lastX = endX;
-      lastY = endY;
+    if (endX <= maxVisiblePx) {
+      if (lastPushedX !== endX || Math.abs(lastY - endY) > 0.0001) {
+        parts.push(`L ${endX} ${lastY}`);
+        parts.push(`L ${endX} ${endY}`);
+        lastPushedX = endX;
+        lastX = endX;
+        lastY = endY;
+      }
+    } else if (lastPushedX < maxVisiblePx) {
+      parts.push(`L ${maxVisiblePx} ${lastY}`);
+      lastPushedX = maxVisiblePx;
+      lastX = maxVisiblePx;
     }
   }
 
-  parts.push(`L 100000 ${lastY}`);
+  if (segEndIdx === points.length - 1 && trailingEndX > lastPushedX) {
+    parts.push(`L ${trailingEndX} ${lastY}`);
+  }
   return parts.join(' ');
 }
 

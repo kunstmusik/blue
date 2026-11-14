@@ -2426,6 +2426,8 @@ export default function ScoreTimeCanvas({
                   <AutomationLayerOverlay
                     automation={layer.automation}
                     pixelsPerBeat={pixelsPerBeat}
+                    visibleStartBeats={visibleStartBeats}
+                    visibleEndBeats={visibleEndBeats}
                     totalBeats={totalBeats}
                     snapEnabled={snapEnabled}
                     snapValue={snapValue}

@@ -35,6 +35,8 @@ import { getProjectDocumentId, useProjectStore } from '../../../../../stores/pro
 interface Props {
   automation: ScoreLayerAutomationSnapshot;
   pixelsPerBeat: number;
+  visibleStartBeats?: number;
+  visibleEndBeats?: number;
   totalBeats: number;
   snapEnabled: boolean;
   snapValue: SnapValueName;
@@ -95,6 +97,9 @@ const HOVER_THRESHOLD_PX = 6;
 export default function AutomationLayerOverlay({
   automation,
   pixelsPerBeat,
+  visibleStartBeats,
+  visibleEndBeats,
+  totalBeats,
   snapEnabled,
   snapValue,
   tempo,
@@ -972,6 +977,9 @@ export default function AutomationLayerOverlay({
             key={param.parameterId}
             parameter={override ? { ...param, points: override } : param}
             pixelsPerBeat={pixelsPerBeat}
+            visibleStartBeats={visibleStartBeats}
+            visibleEndBeats={visibleEndBeats}
+            totalBeats={totalBeats}
             active={false}
             mode={mode}
             selectedPointIndex={selectedPointIndexFor(param.parameterId)}
@@ -991,6 +999,9 @@ export default function AutomationLayerOverlay({
               : selectedParam
           }
           pixelsPerBeat={pixelsPerBeat}
+          visibleStartBeats={visibleStartBeats}
+          visibleEndBeats={visibleEndBeats}
+          totalBeats={totalBeats}
           active={true}
           mode={mode}
           selectedPointIndex={selectedPointIndexFor(selectedParam.parameterId)}

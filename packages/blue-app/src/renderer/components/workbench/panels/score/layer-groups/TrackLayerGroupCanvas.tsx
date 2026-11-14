@@ -2203,6 +2203,8 @@ export default function TrackLayerGroupCanvas({
                   <AutomationLayerOverlay
                     automation={layer.automation}
                     pixelsPerBeat={pixelsPerBeat}
+                    visibleStartBeats={visibleStartBeats}
+                    visibleEndBeats={visibleEndBeats}
                     totalBeats={totalBeats}
                     snapEnabled={snapEnabled}
                     snapValue={snapValue}

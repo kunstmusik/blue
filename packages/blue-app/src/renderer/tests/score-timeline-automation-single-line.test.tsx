@@ -261,4 +261,200 @@ describe('AutomationLineView point rendering', () => {
     act(() => root.unmount());
     container.remove();
   });
+
+  it('culls automation points and path segments to visible viewport bounds while preserving point indices', () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const parent = document.createElement('div');
+    Object.defineProperty(parent, 'clientHeight', { value: 100, configurable: true });
+    parent.getBoundingClientRect = () =>
+      ({ width: 500, height: 100, top: 0, left: 0, right: 500, bottom: 100 }) as DOMRect;
+    container.appendChild(parent);
+
+    const root = createRoot(parent);
+    const onPointMouseDown = vi.fn();
+    const testParam: AutomationParameterSnapshot = {
+      parameterId: 'p-culled',
+      name: 'Cutoff',
+      minimum: 0,
+      maximum: 1,
+      resolution: -1,
+      lineColor: 0x00ff00,
+      points: [
+        { time: 0, value: 0 },
+        { time: 10, value: 0.2 },
+        { time: 25, value: 0.5 },
+        { time: 40, value: 0.8 },
+        { time: 100, value: 1 },
+      ],
+    };
+
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={testParam}
+          pixelsPerBeat={10}
+          visibleStartBeats={20}
+          visibleEndBeats={45}
+          totalBeats={120}
+          active={true}
+          mode="singleLine"
+          onPointMouseDown={onPointMouseDown}
+        />,
+      );
+    });
+
+    const circles = parent.querySelectorAll<SVGCircleElement>('circle');
+    expect(circles.length).toBe(2);
+    expect(circles[0]!.getAttribute('cx')).toBe('250');
+    expect(circles[1]!.getAttribute('cx')).toBe('400');
+
+    act(() => {
+      circles[0]!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    });
+    expect(onPointMouseDown).toHaveBeenCalledWith(2, expect.anything());
+
+    const pathD = parent.querySelector('path')?.getAttribute('d') ?? '';
+    expect(pathD).toContain('M 100 ');
+    expect(pathD).toContain('L 1000 ');
+    expect(pathD).not.toContain('M 0 ');
+    expect(pathD).not.toContain('100000');
+
+    // Quantized mid-ramp viewport only evaluates pixels overlapping the viewport
+    const quantizedParam: AutomationParameterSnapshot = {
+      ...testParam,
+      resolution: 0.1,
+      points: [
+        { time: 0, value: 0 },
+        { time: 5000, value: 1 },
+      ],
+    };
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={quantizedParam}
+          pixelsPerBeat={10}
+          visibleStartBeats={1000}
+          visibleEndBeats={1020}
+          totalBeats={5000}
+          active={true}
+          mode="singleLine"
+        />,
+      );
+    });
+    const quantizedPathD = parent.querySelector('path')?.getAttribute('d') ?? '';
+    expect(quantizedPathD.startsWith('M 9999 ')).toBe(true);
+    expect(quantizedPathD).toContain('L 10201 ');
+
+    // Unsorted range-drag preview points keep visible circles and path intact
+    const unsortedPreviewParam: AutomationParameterSnapshot = {
+      ...testParam,
+      resolution: -1,
+      points: [
+        { time: 4, value: 0 },
+        { time: 5, value: 0.2 },
+        { time: 6, value: 0.4 },
+        { time: 2, value: 0.8 },
+        { time: 12, value: 1 },
+      ],
+    };
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={unsortedPreviewParam}
+          pixelsPerBeat={10}
+          visibleStartBeats={0}
+          visibleEndBeats={3}
+          totalBeats={20}
+          active={true}
+          mode="singleLine"
+        />,
+      );
+    });
+    const unsortedCircles = parent.querySelectorAll<SVGCircleElement>('circle');
+    expect(unsortedCircles.length).toBe(1);
+    expect(unsortedCircles[0]!.getAttribute('cx')).toBe('20');
+    expect(parent.querySelector('path')?.getAttribute('d')).toContain('L 20 22.999999999999996');
+
+    // Duplicate-time vertical step just before visibleStartBeats retains full vertical step,
+    // and single-point lines with time > 0 remain visible before their point time.
+    const stepParam: AutomationParameterSnapshot = {
+      ...testParam,
+      resolution: -1,
+      points: [
+        { time: 0, value: 0 },
+        { time: 5, value: 0.2 },
+        { time: 5, value: 0.9 },
+        { time: 10, value: 0.8 },
+      ],
+    };
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={stepParam}
+          pixelsPerBeat={20}
+          visibleStartBeats={5.005}
+          visibleEndBeats={12}
+          totalBeats={20}
+          active={true}
+          mode="singleLine"
+        />,
+      );
+    });
+    const stepPathD = parent.querySelector('path')?.getAttribute('d') ?? '';
+    expect(stepPathD).toContain('M 100 77 L 100 13.999999999999998');
+
+    const singleDelayedPoint: AutomationParameterSnapshot = {
+      ...testParam,
+      resolution: -1,
+      points: [{ time: 5, value: 0.5 }],
+    };
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={singleDelayedPoint}
+          pixelsPerBeat={10}
+          visibleStartBeats={0}
+          visibleEndBeats={3}
+          totalBeats={20}
+          active={true}
+          mode="singleLine"
+        />,
+      );
+    });
+    expect(parent.querySelector('path')?.getAttribute('d')).toBe('M 0 50 L 30 50');
+
+    // Quantized mode ignores off-screen left/right duplicate-time vertical steps
+    const quantizedWithOffscreenSteps: AutomationParameterSnapshot = {
+      ...testParam,
+      resolution: 0.1,
+      points: [
+        { time: 0, value: 0 },
+        { time: 5, value: 0.1 },
+        { time: 5, value: 0.9 },
+        { time: 10, value: 0.1 },
+        { time: 10, value: 0.9 },
+      ],
+    };
+    act(() => {
+      root.render(
+        <AutomationLineView
+          parameter={quantizedWithOffscreenSteps}
+          pixelsPerBeat={100}
+          visibleStartBeats={7}
+          visibleEndBeats={9}
+          totalBeats={12}
+          active={true}
+          mode="singleLine"
+        />,
+      );
+    });
+    const quantizedMidPathD = parent.querySelector('path')?.getAttribute('d') ?? '';
+    expect(quantizedMidPathD.startsWith('M 699 ')).toBe(true);
+    expect(quantizedMidPathD).not.toContain('L 500 ');
+    expect(quantizedMidPathD).not.toContain('L 1000 ');
+
+    act(() => root.unmount());
+    container.remove();
+  });
 });
