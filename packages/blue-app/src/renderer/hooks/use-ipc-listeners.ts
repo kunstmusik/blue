@@ -58,6 +58,7 @@ export function useIPCListeners(): void {
   const resetPlayback = usePlaybackStore((s) => s.reset);
   const handleNativeMenuCommand = useWorkbenchStore((s) => s.handleNativeMenuCommand);
   const appendToTab = useOutputStore((s) => s.appendToTab);
+  const appendChunksToTab = useOutputStore((s) => s.appendChunksToTab);
   const selectTab = useOutputStore((s) => s.selectTab);
   const getOrCreateTab = useOutputStore((s) => s.getOrCreateTab);
   const resetTab = useOutputStore((s) => s.resetTab);
@@ -345,7 +346,11 @@ export function useIPCListeners(): void {
 
     const unsubOutput = window.blueAPI.onEngineOutput((payload: EngineOutputPayload) => {
       getOrCreateTab(payload.tabName);
-      appendToTab(payload.tabName, payload.text, payload.type);
+      if (payload.chunks && payload.chunks.length > 0) {
+        appendChunksToTab(payload.tabName, payload.chunks);
+      } else {
+        appendToTab(payload.tabName, payload.text, payload.type);
+      }
     });
 
     const unsubSelect = window.blueAPI.onEngineOutputSelect((payload) => {
@@ -568,6 +573,7 @@ export function useIPCListeners(): void {
   }, [
     addRecentFile,
     acceptPlaybackClock,
+    appendChunksToTab,
     appendToTab,
     getOrCreateTab,
     handleNativeMenuCommand,

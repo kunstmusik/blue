@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useOutputStore, MAX_LINES } from '../stores/output-store';
+import { buildBatchedEngineOutputPayload } from '../../shared/io-provider';
 
 describe('output-store', () => {
   beforeEach(() => {
@@ -203,6 +204,66 @@ describe('output-store', () => {
       expect(tab.lineCounter).toBe(totalLines);
       // The last line's ID should equal the total count
       expect(tab.lines[tab.lines.length - 1].id).toBe(totalLines);
+    });
+  });
+
+  describe('batched chunk IPC helpers', () => {
+    it('coalesces alternating stdout/stderr runs into a single EngineOutputPayload', () => {
+      expect(buildBatchedEngineOutputPayload('Csound', [])).toBeNull();
+      const payload = buildBatchedEngineOutputPayload('Csound', [
+        { text: 'a\n', type: 'stdout' },
+        { text: 'b\n', type: 'stdout' },
+        { text: 'err\n', type: 'stderr' },
+        { text: 'c\n', type: 'stdout' },
+      ]);
+      expect(payload).toEqual({
+        tabName: 'Csound',
+        text: 'a\nb\n',
+        type: 'stdout',
+        chunks: [
+          { text: 'a\nb\n', type: 'stdout' },
+          { text: 'err\n', type: 'stderr' },
+          { text: 'c\n', type: 'stdout' },
+        ],
+      });
+    });
+
+    it('appends mixed stdout/stderr chunks in order within a single store notification', () => {
+      const store = useOutputStore.getState();
+      store.getOrCreateTab('Csound');
+      const listener = vi.fn();
+      const unsub = useOutputStore.subscribe(listener);
+      try {
+        store.appendChunksToTab('Csound', [
+          { text: 'line1\n', type: 'stdout' },
+          { text: 'err1\n', type: 'stderr' },
+          { text: 'line2\n', type: 'stdout' },
+        ]);
+      } finally {
+        unsub();
+      }
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const tab = useOutputStore.getState().tabs['Csound']!;
+      expect(tab.lines.map((l) => [l.text, l.type])).toEqual([
+        ['line1', 'stdout'],
+        ['err1', 'stderr'],
+        ['line2', 'stdout'],
+      ]);
+    });
+
+    it('initializes tabOrder for newline-less initial batches and preserves partial stderr line type', () => {
+      const store = useOutputStore.getState();
+      store.appendChunksToTab('Csound', [{ text: 'err-', type: 'stderr' }]);
+      expect(useOutputStore.getState().tabOrder).toEqual(['Csound']);
+      expect(useOutputStore.getState().activeTabId).toBe('Csound');
+
+      store.appendChunksToTab('Csound', [{ text: 'end\nok\n', type: 'stdout' }]);
+      const tab = useOutputStore.getState().tabs['Csound']!;
+      expect(tab.lines.map((l) => [l.text, l.type])).toEqual([
+        ['err-end', 'stderr'],
+        ['ok', 'stdout'],
+      ]);
     });
   });
 });

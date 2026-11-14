@@ -1507,4 +1507,37 @@ describe('useIPCListeners', () => {
       setProjectHistoryProjection(null);
     }
   });
+
+  it('applies batched multi-stream engine-output chunks from a single IPC payload in order', async () => {
+    useOutputStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
+    await act(async () => {
+      root.render(<Harness />);
+    });
+
+    const engineOutputHandler = listeners.get('engine-output')!.values().next().value as (
+      payload: unknown,
+    ) => void;
+    expect(engineOutputHandler).toBeDefined();
+
+    act(() => {
+      engineOutputHandler({
+        tabName: 'Csound',
+        text: 'alpha\n',
+        type: 'stdout',
+        chunks: [
+          { text: 'alpha\n', type: 'stdout' },
+          { text: 'warn!\n', type: 'stderr' },
+          { text: 'beta\n', type: 'stdout' },
+        ],
+      });
+    });
+
+    const tab = useOutputStore.getState().tabs['Csound'];
+    expect(tab).toBeDefined();
+    expect(tab.lines.map((line) => [line.text, line.type])).toEqual([
+      ['alpha', 'stdout'],
+      ['warn!', 'stderr'],
+      ['beta', 'stdout'],
+    ]);
+  });
 });

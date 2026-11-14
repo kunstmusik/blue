@@ -38,6 +38,7 @@ import {
   type MeterBindingMap,
 } from '@blue/data';
 import type { MeterBindingMapPayload } from '../shared/meter-types';
+import { buildBatchedEngineOutputPayload, type EngineOutputChunk } from '../shared/io-provider';
 import { buildMeterBindingMapPayload } from './meter-binding';
 import {
   openSettingsWindow,
@@ -856,6 +857,8 @@ let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
 let blueLiveTriggerController: BlueLiveTriggerController | null = null;
+let clearOrFlushTimelineOutputBatch: ((discard: boolean) => void) | null = null;
+let clearOrFlushBlueLiveOutputBatch: ((discard: boolean) => void) | null = null;
 let trackEditorRuntimeStatusCoordinator: TrackEditorRuntimeStatusCoordinator | null = null;
 
 function publishTrackEditorRuntimeStatus(): void {
@@ -2606,51 +2609,44 @@ function createWindow(): void {
     invalidateTimelinePerformanceGeneration();
     if (activeAuditionPlayback) {
       activeAuditionPlayback = false;
+      clearOrFlushTimelineOutputBatch?.(false);
       return;
     }
-    if (stopReason !== 'completed') return;
-    if (!getCurrentData() || !getCurrentData().isLoopRendering()) return;
+    if (stopReason !== 'completed') {
+      clearOrFlushTimelineOutputBatch?.(false);
+      return;
+    }
+    if (!getCurrentData() || !getCurrentData().isLoopRendering()) {
+      clearOrFlushTimelineOutputBatch?.(false);
+      return;
+    }
     void startPlayback();
   });
 
-  let outputBatch: { text: string; type: 'stdout' | 'stderr' }[] = [];
+  let outputBatch: EngineOutputChunk[] = [];
   let outputBatchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function flushOutputBatch() {
-    outputBatchTimer = null;
+  function flushOutputBatch(discard = false) {
+    if (outputBatchTimer) {
+      clearTimeout(outputBatchTimer);
+      outputBatchTimer = null;
+    }
     if (outputBatch.length === 0) return;
     const batch = outputBatch;
     outputBatch = [];
-    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (discard || !mainWindow || mainWindow.isDestroyed()) return;
 
-    let currentType = batch[0]!.type;
-    const chunks: string[] = [batch[0]!.text];
-    for (let i = 1; i < batch.length; i += 1) {
-      const item = batch[i]!;
-      if (item.type === currentType) {
-        chunks.push(item.text);
-      } else {
-        mainWindow.webContents.send('engine-output', {
-          tabName: 'Csound',
-          text: chunks.join(''),
-          type: currentType,
-        });
-        currentType = item.type;
-        chunks.length = 0;
-        chunks.push(item.text);
-      }
+    const payload = buildBatchedEngineOutputPayload('Csound', batch);
+    if (payload) {
+      mainWindow.webContents.send('engine-output', payload);
     }
-    mainWindow.webContents.send('engine-output', {
-      tabName: 'Csound',
-      text: chunks.join(''),
-      type: currentType,
-    });
   }
+  clearOrFlushTimelineOutputBatch = flushOutputBatch;
 
   engineBridge.setOutputCallback((text, type) => {
     outputBatch.push({ text, type });
     if (!outputBatchTimer) {
-      outputBatchTimer = setTimeout(flushOutputBatch, 50);
+      outputBatchTimer = setTimeout(() => flushOutputBatch(false), 50);
     }
   });
 
@@ -2669,6 +2665,7 @@ function createWindow(): void {
     } else {
       getBlueLiveTriggerController().stopRepeatSchedule();
       invalidateBlueLivePerformanceGeneration();
+      clearOrFlushBlueLiveOutputBatch?.(false);
     }
     publishTrackEditorRuntimeStatus();
   });
@@ -2678,27 +2675,30 @@ function createWindow(): void {
     resourcesPath: process.resourcesPath,
     userDataPath: app.getPath('userData'),
   });
-  let blueLiveOutputBatch: { text: string; type: 'stdout' | 'stderr' }[] = [];
+  let blueLiveOutputBatch: EngineOutputChunk[] = [];
   let blueLiveOutputTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function flushBlueLiveOutputBatch() {
+  function flushBlueLiveOutputBatch(discard = false) {
+    if (blueLiveOutputTimer) {
+      clearTimeout(blueLiveOutputTimer);
+      blueLiveOutputTimer = null;
+    }
     if (blueLiveOutputBatch.length === 0) return;
     const batch = blueLiveOutputBatch;
     blueLiveOutputBatch = [];
-    for (const item of batch) {
-      mainWindow?.webContents.send('engine-output', {
-        tabName: 'Csound (Blue Live)',
-        text: item.text,
-        type: item.type,
-      });
+    if (discard || !mainWindow || mainWindow.isDestroyed()) return;
+
+    const payload = buildBatchedEngineOutputPayload('Csound (Blue Live)', batch);
+    if (payload) {
+      mainWindow.webContents.send('engine-output', payload);
     }
-    blueLiveOutputTimer = null;
   }
+  clearOrFlushBlueLiveOutputBatch = flushBlueLiveOutputBatch;
 
   blueLiveSession.setOutputCallback((text, type) => {
     blueLiveOutputBatch.push({ text, type });
     if (!blueLiveOutputTimer) {
-      blueLiveOutputTimer = setTimeout(flushBlueLiveOutputBatch, 50);
+      blueLiveOutputTimer = setTimeout(() => flushBlueLiveOutputBatch(false), 50);
     }
   });
 
@@ -4645,6 +4645,7 @@ async function startPlayback(
       auditioning: data !== getCurrentData(),
     });
 
+    clearOrFlushTimelineOutputBatch?.(true);
     mainWindow.webContents.send('engine-output-reset', { tabName: 'Csound' });
     mainWindow.webContents.send('engine-output-select', { tabName: 'Csound' });
 
@@ -5008,6 +5009,7 @@ async function stopPlayback(): Promise<void> {
   invalidateTimelinePerformanceGeneration();
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
+  clearOrFlushTimelineOutputBatch?.(false);
 }
 
 function registerBlueLivePerformance(): void {
@@ -5137,6 +5139,7 @@ async function blueLiveToggle(): Promise<
   // Start/recompile is a runtime lifecycle change, not a project edit: do not
   // advance the document revision. The Blue Live engine session generation
   // (sessionId) is the independent runtime fence key.
+  clearOrFlushBlueLiveOutputBatch?.(true);
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
 
@@ -5199,6 +5202,7 @@ async function blueLiveRecompile(): Promise<void> {
   // is being torn down, and a failed recompile should leave no stale action
   // enabled for the stopped generation.
   invalidateBlueLivePerformanceGeneration();
+  clearOrFlushBlueLiveOutputBatch?.(true);
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveSession.recompile(
@@ -5848,7 +5852,9 @@ ipcRegistration.handle('blue-live:stop', async () => {
   }
   projectRuntimeReconciliation.stopPerformance('blueLive');
   broadcastRuntimePerformanceCleared('blueLive');
-  return blueLiveSession.stop();
+  const result = await blueLiveSession.stop();
+  clearOrFlushBlueLiveOutputBatch?.(false);
+  return result;
 });
 
 ipcRegistration.handle('blue-live:recompile', async () => {
@@ -5856,6 +5862,7 @@ ipcRegistration.handle('blue-live:recompile', async () => {
     return { status: 'idle', running: false, sessionId: 0, message: 'No project loaded' };
   }
   // Recompile is a runtime lifecycle change, not a project edit.
+  clearOrFlushBlueLiveOutputBatch?.(true);
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveRecompile();
@@ -7529,6 +7536,11 @@ async function rollbackApplicationShellStage(): Promise<void> {
   await javaRuntimeSessionManager?.dispose();
   javaRuntimeSessionManager = null;
   disposeJavaScriptSession();
+
+  clearOrFlushTimelineOutputBatch?.(true);
+  clearOrFlushBlueLiveOutputBatch?.(true);
+  clearOrFlushTimelineOutputBatch = null;
+  clearOrFlushBlueLiveOutputBatch = null;
 
   for (const window of BrowserWindow.getAllWindows().slice().reverse()) {
     if (!window.isDestroyed()) window.destroy();
