@@ -256,6 +256,14 @@ export function wasScoreObjectIdAssignedInData(data: BlueData, id: string): bool
   return DATA_ASSIGNED_SCORE_OBJECT_IDS.get(data)?.has(trimmed) ?? false;
 }
 
+export function copyAssignedScoreObjectIds(source: BlueData, target: BlueData): void {
+  const sourceAssignedIds = DATA_ASSIGNED_SCORE_OBJECT_IDS.get(source);
+  if (!sourceAssignedIds) return;
+  for (const assignedId of sourceAssignedIds) {
+    recordScoreObjectIdForData(target, assignedId);
+  }
+}
+
 // ─── Non-XML Sidecar Maps: Parameters, BSB Widgets, Presets, Dropdown Links, Library References ───
 
 const PARAMETER_ID_MAP = new WeakMap<object, string>();
@@ -929,12 +937,7 @@ export function transferProjectEditorIdentities(
     pair(sSets[s], tSets[s]);
   }
 
-  const sourceAssignedIds = DATA_ASSIGNED_SCORE_OBJECT_IDS.get(source);
-  if (sourceAssignedIds) {
-    for (const assignedId of sourceAssignedIds) {
-      recordScoreObjectIdForData(target, assignedId);
-    }
-  }
+  copyAssignedScoreObjectIds(source, target);
   transferHistoryNodeIds(source, target, (a, b) =>
     restoreGraphEditorMetadata(b, readGraphEditorMetadata(a)),
   );

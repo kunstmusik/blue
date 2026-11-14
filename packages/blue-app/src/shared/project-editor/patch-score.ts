@@ -361,6 +361,7 @@ import {
   recordExistingScoreObjectIds,
   resolveEditorTarget,
   resolveTimelineTargetWithSelectionId,
+  type ScoreLookupCache,
   setCodeText,
 } from './snapshot-score';
 import {
@@ -801,8 +802,17 @@ function applyRemoveLayerRangesPatch(
 ): boolean {
   const score = data.getScore();
   const ranges = patch.ranges;
-  if (!areLayerRangesValid(ranges, (groupId) => findLayerGroupByGroupId(score, groupId)?.length))
+  const locations = collectManagedLayerGroupLocations(score);
+  const locationByGroupId = new Map<string, ManagedLayerGroupLocation>();
+  for (const location of locations) {
+    const groupId = getManagedLayerGroupId(location.group);
+    if (!locationByGroupId.has(groupId)) {
+      locationByGroupId.set(groupId, location);
+    }
+  }
+  if (!areLayerRangesValid(ranges, (groupId) => locationByGroupId.get(groupId)?.group.length)) {
     return false;
+  }
 
   const byGroup = new Map<string, Array<{ startIndex: number; endIndex: number }>>();
   for (const r of ranges) {
@@ -815,7 +825,7 @@ function applyRemoveLayerRangesPatch(
   }
 
   for (const [groupId, groupRanges] of byGroup.entries()) {
-    const group = findLayerGroupByGroupId(score, groupId);
+    const group = locationByGroupId.get(groupId)?.group;
     if (!group) continue;
     groupRanges.sort((a, b) => b.startIndex - a.startIndex);
     for (const r of groupRanges) {
@@ -825,7 +835,7 @@ function applyRemoveLayerRangesPatch(
 
   if (patch.deleteEmptyLayerGroups) {
     const affectedGroupIds = new Set(byGroup.keys());
-    const emptyGroups = collectManagedLayerGroupLocations(score)
+    const emptyGroups = locations
       .filter(
         (location) =>
           affectedGroupIds.has(getManagedLayerGroupId(location.group)) &&
@@ -1305,6 +1315,8 @@ function applyMoveScoreObjectsPatch(
   patch: ScorePatch & { type: 'moveScoreObjects' },
 ): boolean {
   const score = data.getScore();
+  const lookupCache: ScoreLookupCache = {};
+  const targetGroupCache = new Map<string, ManagedLayerGroup | null>();
   const resolvedMoves: Array<{
     move: (typeof patch.moves)[number];
     moveIndex: number;
@@ -1322,10 +1334,15 @@ function applyMoveScoreObjectsPatch(
       data,
       sourceLocation,
       move.target.selectionId,
+      lookupCache,
     );
     if (!sourceResolved) continue;
 
-    const targetGroup = findLayerGroupByGroupId(score, move.targetGroupId);
+    let targetGroup = targetGroupCache.get(move.targetGroupId);
+    if (targetGroup === undefined) {
+      targetGroup = findLayerGroupByGroupId(score, move.targetGroupId);
+      targetGroupCache.set(move.targetGroupId, targetGroup);
+    }
     if (!targetGroup || targetGroup instanceof PatternsLayerGroup) continue;
 
     if (targetGroup instanceof TrackLayerGroup) {
@@ -1422,6 +1439,7 @@ function removeScoreObjectsByTargets(
     objectIndex: number;
   }> = [];
   const seenObjects = new Set<SoundObject | AudioClip>();
+  const lookupCache: ScoreLookupCache = {};
 
   for (const target of targets) {
     const location = target.location ?? target.sourceInstanceLocation;
@@ -1430,6 +1448,7 @@ function removeScoreObjectsByTargets(
       data,
       location,
       target.selectionId,
+      lookupCache,
     );
     if (!timelineResolved || seenObjects.has(timelineResolved.sObj)) continue;
     seenObjects.add(timelineResolved.sObj);
@@ -2062,9 +2081,11 @@ function applyScoreAutomationPatch(data: BlueData, patch: ScorePatch): boolean |
       const layer = resolveAutomationLayerRef(data, patch.layer);
       if (!layer) return false;
       const paramIds = layer.getAutomationParameters().getIds();
-      for (const id of paramIds) {
-        const param = findParameterById(data, id);
-        if (param) param.setAutomationEnabled(false);
+      if (paramIds.length > 0) {
+        const parameterById = buildParameterMapById(data);
+        for (const id of paramIds) {
+          parameterById.get(id)?.setAutomationEnabled(false);
+        }
       }
       layer.getAutomationParameters().clear();
       return true;
@@ -2489,6 +2510,7 @@ function applyConvertToPolyObjectPatch(
     sObj: SoundObject;
   }> = [];
   const seenObjects = new Set<SoundObject>();
+  const lookupCache: ScoreLookupCache = {};
 
   for (const target of patch.targets) {
     const location =
@@ -2497,7 +2519,12 @@ function applyConvertToPolyObjectPatch(
         : target.location;
     if (!location) return false;
 
-    const resolved = resolveTimelineTargetWithSelectionId(data, location, target.selectionId);
+    const resolved = resolveTimelineTargetWithSelectionId(
+      data,
+      location,
+      target.selectionId,
+      lookupCache,
+    );
     if (!resolved || resolved.sObj instanceof AudioClip || seenObjects.has(resolved.sObj))
       return false;
 
@@ -2711,6 +2738,7 @@ function resolveScoreObjectColorUpdates(
   const seenKeys = new Set<string>();
   const seenObjects = new Set<SoundObject | AudioClip>();
   const resolvedList: Array<{ sObj: SoundObject | AudioClip; color: number }> = [];
+  const lookupCache: ScoreLookupCache = {};
 
   for (const update of updates) {
     if (!update || typeof update !== 'object') return null;
@@ -2728,7 +2756,7 @@ function resolveScoreObjectColorUpdates(
 
     let resolved: { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null;
     try {
-      resolved = resolveEditorTarget(data, target);
+      resolved = resolveEditorTarget(data, target, lookupCache);
     } catch {
       return null;
     }
@@ -2860,7 +2888,10 @@ export function applyScoreObjectPatch(
 
   if (patch.type === 'setSubjectiveDurationToObjective') {
     const context = data.getScore().getTimeContext();
-    const resolved = patch.targets.map((target) => resolveEditorTarget(data, target)?.sObj ?? null);
+    const lookupCache: ScoreLookupCache = {};
+    const resolved = patch.targets.map(
+      (target) => resolveEditorTarget(data, target, lookupCache)?.sObj ?? null,
+    );
     if (resolved.some((object) => !object || object instanceof AudioClip)) return false;
     const measuredDurations = patch.resolvedObjectiveDurationsBeats;
     if (
@@ -3063,18 +3094,58 @@ export function applyScoreObjectPatch(
   const automationResult = applyScoreAutomationPatch(data, patch);
   if (automationResult !== undefined) return automationResult;
 
-  const target = (patch as { target: ScoreObjectEditorTargetSnapshot }).target;
-  const resolved = resolveEditorTarget(data, target);
+  if (!isScoreObjectLeafPatch(patch)) return false;
+
+  const resolved = resolveEditorTarget(data, patch.target);
   if (!resolved) return false;
 
-  const { sObj } = resolved;
-  const score = data.getScore();
-  const context = score.getTimeContext();
+  const colorAccepted =
+    patch.type === 'updateSharedProperties' && patch.patch.backgroundColor !== undefined
+      ? isScoreColorPatchAccepted(data, patch)
+      : true;
+  return applyScoreObjectLeafPatch(resolved.sObj, patch, data.getScore().getTimeContext(), {
+    colorAccepted,
+  });
+}
 
+export type ScoreObjectLeafPatch = Extract<
+  ScorePatch,
+  {
+    type:
+      | 'updateSharedProperties'
+      | 'updateSoundObjectBehavior'
+      | 'replaceNoteProcessorChain'
+      | 'replaceAudioFileSource'
+      | 'updateAudioFilePostCode'
+      | 'updateTypeSpecificEditor';
+  }
+>;
+
+export function isScoreObjectLeafPatch(patch: ScorePatch): patch is ScoreObjectLeafPatch {
+  return (
+    patch.type === 'updateSharedProperties' ||
+    patch.type === 'updateSoundObjectBehavior' ||
+    patch.type === 'replaceNoteProcessorChain' ||
+    patch.type === 'replaceAudioFileSource' ||
+    patch.type === 'updateAudioFilePostCode' ||
+    patch.type === 'updateTypeSpecificEditor'
+  );
+}
+
+/**
+ * Applies a single-target ScoreObject/AudioClip leaf edit directly to `sObj`
+ * using the read-only project `TimeContext` without requiring a full `BlueData` clone.
+ */
+export function applyScoreObjectLeafPatch(
+  sObj: SoundObject | AudioClip,
+  patch: ScoreObjectLeafPatch,
+  context: TimeContext,
+  options?: { colorAccepted?: boolean },
+): boolean {
   switch (patch.type) {
     case 'updateSharedProperties': {
       const p = patch.patch;
-      if (p.backgroundColor !== undefined && !isScoreColorPatchAccepted(data, patch)) {
+      if (p.backgroundColor !== undefined && !(options?.colorAccepted ?? true)) {
         return false;
       }
 

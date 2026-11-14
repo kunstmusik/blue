@@ -1523,21 +1523,53 @@ export function recordExistingScoreObjectIds(data: BlueData): void {
   }
 }
 
-function findTimelineEntryBySelectionId(
-  score: Score,
-  targetId: string,
-): {
+export interface ScoreTimelineEntry {
   sObj: SoundObject | AudioClip;
   layer: Array<SoundObject | AudioClip>;
   objectIndex: number;
-} | null {
+}
+
+export interface ScoreLookupCache {
+  entryBySelectionId?: Map<string, ScoreTimelineEntry>;
+}
+
+function collectTimelineEntriesBySelectionId(score: Score): Map<string, ScoreTimelineEntry> {
+  const entries = new Map<string, ScoreTimelineEntry>();
+  const walkLayers = (layers: Iterable<Array<SoundObject | AudioClip>>): void => {
+    for (const layer of layers) {
+      for (let objectIndex = 0; objectIndex < layer.length; objectIndex += 1) {
+        const sObj = layer[objectIndex];
+        if (!sObj) continue;
+        const id = getScoreObjectId(sObj);
+        if (id && !entries.has(id)) {
+          entries.set(id, { sObj, layer, objectIndex });
+        }
+        if (sObj instanceof PolyObject) {
+          walkLayers(sObj as unknown as Iterable<Array<SoundObject | AudioClip>>);
+        }
+      }
+    }
+  };
+  for (const group of score) {
+    if (group instanceof PolyObject || group instanceof TrackLayerGroup) {
+      walkLayers(group as unknown as Iterable<Array<SoundObject | AudioClip>>);
+    }
+  }
+  return entries;
+}
+
+function findTimelineEntryBySelectionId(
+  score: Score,
+  targetId: string,
+  lookupCache?: ScoreLookupCache,
+): ScoreTimelineEntry | null {
+  if (lookupCache) {
+    lookupCache.entryBySelectionId ??= collectTimelineEntriesBySelectionId(score);
+    return lookupCache.entryBySelectionId.get(targetId) ?? null;
+  }
   const walkLayers = (
     layers: Iterable<Array<SoundObject | AudioClip>>,
-  ): {
-    sObj: SoundObject | AudioClip;
-    layer: Array<SoundObject | AudioClip>;
-    objectIndex: number;
-  } | null => {
+  ): ScoreTimelineEntry | null => {
     for (const layer of layers) {
       for (let objectIndex = 0; objectIndex < layer.length; objectIndex += 1) {
         const sObj = layer[objectIndex];
@@ -1570,11 +1602,8 @@ export function resolveTimelineTargetWithSelectionId(
   data: BlueData,
   location: ScoreObjectLocationRef,
   selectionId?: string,
-): {
-  sObj: SoundObject | AudioClip;
-  layer: Array<SoundObject | AudioClip>;
-  objectIndex: number;
-} | null {
+  lookupCache?: ScoreLookupCache,
+): ScoreTimelineEntry | null {
   const score = data.getScore();
   const positional = resolveTimelineTarget(score, location);
   const trimmedId = selectionId?.trim() ?? '';
@@ -1585,7 +1614,7 @@ export function resolveTimelineTargetWithSelectionId(
     recordScoreObjectIdForData(data, trimmedId);
     return positional;
   }
-  const byId = findTimelineEntryBySelectionId(score, trimmedId);
+  const byId = findTimelineEntryBySelectionId(score, trimmedId, lookupCache);
   if (byId) {
     recordScoreObjectIdForData(data, trimmedId);
     return byId;
@@ -1600,13 +1629,17 @@ function resolveTimelineObjectForTarget(
   data: BlueData,
   location: ScoreObjectLocationRef,
   selectionId: string,
+  lookupCache?: ScoreLookupCache,
 ): SoundObject | AudioClip | null {
-  return resolveTimelineTargetWithSelectionId(data, location, selectionId)?.sObj ?? null;
+  return (
+    resolveTimelineTargetWithSelectionId(data, location, selectionId, lookupCache)?.sObj ?? null
+  );
 }
 
 export function resolveEditorTarget(
   data: BlueData,
   target: ScoreObjectEditorTargetSnapshot,
+  lookupCache?: ScoreLookupCache,
 ): { sObj: SoundObject | AudioClip; isLibraryOwned: boolean } | null {
   const score = data.getScore();
 
@@ -1635,7 +1668,12 @@ export function resolveEditorTarget(
     } else {
       const instLoc = target.sourceInstanceLocation;
       if (instLoc) {
-        const timelineResolved = resolveTimelineObjectForTarget(data, instLoc, target.selectionId);
+        const timelineResolved = resolveTimelineObjectForTarget(
+          data,
+          instLoc,
+          target.selectionId,
+          lookupCache,
+        );
         if (timelineResolved instanceof Instance) {
           sObj = timelineResolved.getSoundObject();
         }
@@ -1644,13 +1682,17 @@ export function resolveEditorTarget(
   } else {
     const loc = target.location;
     if (!loc) {
-      sObj =
-        target.selectionId.trim().length > 0
-          ? ((resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
-              SoundObject | AudioClip | null)
-          : null;
+      const trimmedId = target.selectionId.trim();
+      if (trimmedId.length > 0) {
+        sObj = lookupCache
+          ? (findTimelineEntryBySelectionId(score, trimmedId, lookupCache)?.sObj ?? null)
+          : ((resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
+              SoundObject | AudioClip | null);
+      } else {
+        sObj = null;
+      }
     } else {
-      sObj = resolveTimelineObjectForTarget(data, loc, target.selectionId);
+      sObj = resolveTimelineObjectForTarget(data, loc, target.selectionId, lookupCache);
     }
   }
 

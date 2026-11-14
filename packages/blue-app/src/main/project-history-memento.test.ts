@@ -3,14 +3,19 @@ import {
   BlueData,
   Channel,
   Effect,
+  LiveObject,
   Parameter,
+  PianoRoll,
+  Track,
   TrackLayerGroup,
+  TrackerObject,
   AudioClip,
   BlueSynthBuilder,
   BSBHSlider,
   GenericInstrument,
   GenericScore,
   PolyObject,
+  SoundLayer,
   TimePosition,
 } from '@blue/data';
 import {
@@ -29,6 +34,7 @@ import {
   getScoreObjectId,
 } from '../shared/project-editor/identity';
 import {
+  createProjectEditorSnapshot,
   createScopedProjectEditorSnapshot,
   reconcileMixerWithArrangement,
   type ProjectEditorSnapshot,
@@ -151,14 +157,22 @@ describe('project-history-memento', () => {
   });
 
   describe('structural transaction preparation and detached candidate publication', () => {
-    it('prepares a structural edit with only one whole-project copy', () => {
+    it('isolates bounded structural edits without a whole-project copy and uses one copy when forced', () => {
       const data = new BlueData();
       const copies = vi.spyOn(BlueData.prototype, 'historyCopy');
       try {
-        const result = prepareTransaction(data, [
+        const isolated = prepareTransaction(data, [
           { orchestra: { type: 'addInstrument', instrumentType: 'generic' } },
         ]);
-        expect(result.status).toBe('prepared');
+        expect(isolated.status).toBe('prepared');
+        expect(copies).not.toHaveBeenCalled();
+
+        const forced = prepareTransaction(
+          data,
+          [{ orchestra: { type: 'addInstrument', instrumentType: 'generic' } }],
+          { forceStructural: true },
+        );
+        expect(forced.status).toBe('prepared');
         expect(copies).toHaveBeenCalledOnce();
       } finally {
         copies.mockRestore();
@@ -692,6 +706,525 @@ describe('project-history-memento', () => {
       expect(
         session.read().data!.getArrangement().getInstrumentById(arrangementId)?.getName(),
       ).toBe('Lead Bass');
+    });
+
+    it('isolates leaf ScoreObject/AudioClip edits and section edits without BlueData.historyCopy and roundtrips commit/undo/redo', async () => {
+      const data = new BlueData();
+      data.getScore().length = 0;
+      const poly = new PolyObject();
+      const layer0 = poly.newLayerAt(0);
+      const layer1 = poly.newLayerAt(1);
+
+      const gs = new GenericScore();
+      gs.setName('Score A');
+      gs.setScoreText('i1 0 1 440');
+
+      const pr = new PianoRoll();
+      pr.setName('Piano A');
+      pr.setInstrumentId('1');
+
+      const tr = new TrackerObject();
+      tr.setName('Tracker A');
+      tr.getTracks().setSteps(4);
+      tr.getTracks().addTrack(new Track());
+
+      const clip = new AudioClip();
+      clip.setName('Clip A');
+      clip.setFadeIn(0);
+
+      layer0.push(gs, pr, tr);
+      const trackGroup = new TrackLayerGroup();
+      const audioTrack = trackGroup.newLayerAt(0);
+      audioTrack.push(clip);
+      data.getScore().push(poly, trackGroup);
+
+      const snap = createProjectEditorSnapshot(data, '/tmp/isolated-leaf-section.blue');
+      const groupId = snap.score!.layerGroups[0]!.groupId;
+      const [gsId, prId, trId] = snap.score!.layerGroups[0]!.layers[0]!.items.map(
+        (item) => item.objectId,
+      ) as [string, string, string];
+      const clipId = snap.score!.layerGroups[1]!.layers[0]!.items[0]!.objectId;
+      const makeTimelineTarget = (
+        selectionId: string,
+        objectType: string,
+        rootGroupIndex: number,
+        objectIndex: number,
+      ) => ({
+        selectionId,
+        selectedObjectType: objectType,
+        editorObjectType: objectType,
+        ownerKind: 'timeline' as const,
+        displayContext: 'timeline' as const,
+        location: { rootGroupIndex, containerPath: [], layerIndex: 0, objectIndex },
+        supportsTimeBehavior: objectType !== 'AudioClip',
+        supportsRepeatPoint: objectType !== 'AudioClip',
+        supportsNoteProcessorChain: objectType !== 'AudioClip',
+      });
+      const gsTarget = makeTimelineTarget(gsId, 'GenericScore', 0, 0);
+      const prTarget = makeTimelineTarget(prId, 'PianoRoll', 0, 1);
+      const trTarget = makeTimelineTarget(trId, 'TrackerObject', 0, 2);
+      const clipTarget = makeTimelineTarget(clipId, 'AudioClip', 1, 0);
+
+      const session = new ProjectSession();
+      session.replace(data, '/tmp/isolated-leaf-section.blue');
+      const history = new ProjectHistory({ session });
+      const docId = session.read().documentId!;
+      const origin = { contextId: 'isolated-test' };
+      let revision = 0;
+      let contextSequence = 1;
+
+      const historyCopySpy = vi.spyOn(BlueData.prototype, 'historyCopy');
+      try {
+        // 1. Leaf GenericScore update
+        const r1 = await history.commit({
+          documentId: docId,
+          expectedRevision: revision,
+          origin,
+          contextSequence: contextSequence++,
+          operationId: 'op-leaf-gs',
+          label: 'Edit GenericScore',
+          patches: [
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target: gsTarget,
+                patch: { text: 'i1 0 2 880' },
+              },
+            },
+          ],
+        });
+        expect(r1.status).toBe('committed');
+        revision += 1;
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        // 2. Leaf PianoRoll update
+        const r2 = await history.commit({
+          documentId: docId,
+          expectedRevision: revision,
+          origin,
+          contextSequence: contextSequence++,
+          operationId: 'op-leaf-pr',
+          label: 'Edit PianoRoll',
+          patches: [
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target: prTarget,
+                patch: { instrumentId: '2', snapEnabled: true, snapValue: 'EIGHTH' },
+              },
+            },
+          ],
+        });
+        expect(r2.status).toBe('committed');
+        revision += 1;
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        // 3. Leaf TrackerObject update
+        const r3 = await history.commit({
+          documentId: docId,
+          expectedRevision: revision,
+          origin,
+          contextSequence: contextSequence++,
+          operationId: 'op-leaf-tr',
+          label: 'Edit Tracker Cell',
+          patches: [
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target: trTarget,
+                patch: {
+                  updateTrackCell: { trackIndex: 0, columnIndex: 0, stepIndex: 0, value: '8.02' },
+                },
+              },
+            },
+          ],
+        });
+        expect(r3.status).toBe('committed');
+        revision += 1;
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        // 4. Leaf AudioClip update
+        const r4 = await history.commit({
+          documentId: docId,
+          expectedRevision: revision,
+          origin,
+          contextSequence: contextSequence++,
+          operationId: 'op-leaf-clip',
+          label: 'Edit AudioClip FadeIn',
+          patches: [
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target: clipTarget,
+                patch: { fadeIn: 1.5 },
+              },
+            },
+          ],
+        });
+        expect(r4.status).toBe('committed');
+        revision += 1;
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        // 5. Section Mixer update (addSubChannel)
+        const r5 = await history.commit({
+          documentId: docId,
+          expectedRevision: revision,
+          origin,
+          contextSequence: contextSequence++,
+          operationId: 'op-section-mixer',
+          label: 'Add SubChannel',
+          patches: [
+            {
+              mixer: {
+                type: 'addSubChannel',
+                name: 'Sub Bus',
+              },
+            },
+          ],
+        });
+        expect(r5.status).toBe('committed');
+        revision += 1;
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        // 6. Section Score update (moveScoreObjects across layers)
+        const r6 = await history.commit({
+          documentId: docId,
+          expectedRevision: revision,
+          origin,
+          contextSequence: contextSequence++,
+          operationId: 'op-section-move',
+          label: 'Move Score Object',
+          patches: [
+            {
+              score: {
+                type: 'moveScoreObjects',
+                moves: [
+                  {
+                    target: gsTarget,
+                    targetGroupId: groupId,
+                    targetLayerIndex: 1,
+                    targetStartBeats: 2,
+                  },
+                ],
+              },
+            },
+          ],
+        });
+        expect(r6.status).toBe('committed');
+        revision += 1;
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        const liveData = session.read().data!;
+        const movedLayer1 = liveData.getScore()[0]![1] as SoundLayer;
+        expect(movedLayer1[0]).toBeInstanceOf(GenericScore);
+        expect(getScoreObjectId(movedLayer1[0]!)).toBe(gsId);
+        expect((movedLayer1[0] as GenericScore).getScoreText()).toBe('i1 0 2 880');
+        expect(pr.getInstrumentId()).toBe('2');
+        expect(tr.getTracks().getTrack(0)?.getTrackerNote(0).getValue(1)).toBe('8.02');
+        expect(clip.getFadeIn()).toBe(1.5);
+        expect(liveData.getMixer().getSubChannels()).toHaveLength(1);
+
+        // Undo all 6 edits back to baseline and verify zero historyCopy calls + state restoration.
+        for (let i = 0; i < 6; i += 1) {
+          const u = await history.undo({
+            documentId: docId,
+            expectedRevision: revision,
+            origin,
+            contextSequence: contextSequence++,
+            operationId: `op-undo-iso-${i}`,
+          });
+          expect(u.status).toBe('committed');
+          revision += 1;
+        }
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        const afterUndoData = session.read().data!;
+        const afterUndoLayer0 = afterUndoData.getScore()[0]![0] as SoundLayer;
+        expect(afterUndoLayer0).toHaveLength(3);
+        expect((afterUndoLayer0[0] as GenericScore).getScoreText()).toBe('i1 0 1 440');
+        expect((afterUndoLayer0[1] as PianoRoll).getInstrumentId()).toBe('1');
+        expect(
+          ((afterUndoData.getScore()[1] as TrackLayerGroup)[0]![0] as AudioClip).getFadeIn(),
+        ).toBe(0);
+        expect(afterUndoData.getMixer().getSubChannels()).toHaveLength(0);
+
+        // Redo all 6 edits and verify final state + stable score object ID + zero historyCopy calls.
+        for (let i = 0; i < 6; i += 1) {
+          const r = await history.redo({
+            documentId: docId,
+            expectedRevision: revision,
+            origin,
+            contextSequence: contextSequence++,
+            operationId: `op-redo-iso-${i}`,
+          });
+          expect(r.status).toBe('committed');
+          revision += 1;
+        }
+        expect(historyCopySpy).not.toHaveBeenCalled();
+
+        const afterRedoData = session.read().data!;
+        const afterRedoLayer1 = afterRedoData.getScore()[0]![1] as SoundLayer;
+        expect(afterRedoLayer1).toHaveLength(1);
+        expect(getScoreObjectId(afterRedoLayer1[0]!)).toBe(gsId);
+        expect((afterRedoLayer1[0] as GenericScore).getScoreText()).toBe('i1 0 2 880');
+        expect(
+          ((afterRedoData.getScore()[1] as TrackLayerGroup)[0]![0] as AudioClip).getFadeIn(),
+        ).toBe(1.5);
+        expect(afterRedoData.getMixer().getSubChannels()).toHaveLength(1);
+      } finally {
+        historyCopySpy.mockRestore();
+      }
+    });
+
+    it('isolates removeAutomationFromLayer across score and mixer/arrangement on commit, undo, and redo', async () => {
+      const data = new BlueData();
+      data.getMixer().setEnabled(true);
+      const eff = new Effect();
+      eff.setName('Delay');
+      const param = new Parameter();
+      param.setName('feedback');
+      param.setAutomationEnabled(true);
+      eff.addParameter(param);
+      data.getMixer().getMaster().getPreEffects().push(eff);
+
+      const snap = createProjectEditorSnapshot(data, '/tmp/remove-auto-iso.blue');
+      const groupSnap = snap.score!.layerGroups[0]!;
+      const layer0 = data.getScore()[0]![0] as SoundLayer;
+      layer0.getAutomationParameters().addParameterId(param.getUniqueId());
+
+      const session = new ProjectSession();
+      session.replace(data, '/tmp/remove-auto-iso.blue');
+      const history = new ProjectHistory({ session });
+      const docId = session.read().documentId!;
+      const origin = { contextId: 'automation-test' };
+      const layerRef = {
+        rootGroupIndex: 0,
+        groupId: groupSnap.groupId,
+        layerId: groupSnap.layers[0]!.layerId,
+        layerIndex: 0,
+        layerKind: 'soundObject' as const,
+      };
+
+      const historyCopySpy = vi.spyOn(BlueData.prototype, 'historyCopy');
+      try {
+        const c = await history.commit({
+          documentId: docId,
+          expectedRevision: 0,
+          origin,
+          contextSequence: 1,
+          operationId: 'op-remove-auto',
+          label: 'Remove Automation',
+          patches: [
+            {
+              score: {
+                type: 'removeAutomationFromLayer',
+                layer: layerRef,
+                parameterId: param.getUniqueId(),
+              },
+            },
+          ],
+        });
+        expect(c.status).toBe('committed');
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        expect(param.isAutomationEnabled()).toBe(false);
+        expect(layer0.getAutomationParameters().getIds()).toEqual([]);
+
+        const u = await history.undo({
+          documentId: docId,
+          expectedRevision: 1,
+          origin,
+          contextSequence: 2,
+          operationId: 'op-undo-remove-auto',
+        });
+        expect(u.status).toBe('committed');
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        expect(param.isAutomationEnabled()).toBe(true);
+        expect(layer0.getAutomationParameters().getIds()).toEqual([param.getUniqueId()]);
+
+        const r = await history.redo({
+          documentId: docId,
+          expectedRevision: 2,
+          origin,
+          contextSequence: 3,
+          operationId: 'op-redo-remove-auto',
+        });
+        expect(r.status).toBe('committed');
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        expect(param.isAutomationEnabled()).toBe(false);
+        expect(layer0.getAutomationParameters().getIds()).toEqual([]);
+      } finally {
+        historyCopySpy.mockRestore();
+      }
+    });
+
+    it('clones liveData for a multi-patch batch editing a Blue Live sound object and UDO without mutating live project data during preparation', async () => {
+      const data = new BlueData();
+      const liveScore = new GenericScore();
+      liveScore.setName('Live Pattern');
+      liveScore.setScoreText('i1 0 1 440');
+      const liveObject = new LiveObject();
+      liveObject.setUniqueId('live-cell-1');
+      liveObject.setEnabled(true);
+      liveObject.setSoundObject(liveScore);
+      data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, liveObject);
+
+      const session = new ProjectSession();
+      session.replace(data, '/tmp/bluelive-udo-iso.blue');
+      const history = new ProjectHistory({ session });
+      const docId = session.read().documentId!;
+      const origin = { contextId: 'bluelive-batch-test' };
+      const liveTarget = {
+        selectionId: 'bluelive-sel-1',
+        selectedObjectType: 'GenericScore',
+        editorObjectType: 'GenericScore',
+        ownerKind: 'blueLive' as const,
+        displayContext: 'blueLive' as const,
+        blueLive: {
+          liveObjectId: 'live-cell-1',
+          column: 0,
+          row: 0,
+        },
+        supportsTimeBehavior: true,
+        supportsRepeatPoint: true,
+        supportsNoteProcessorChain: true,
+      };
+
+      const historyCopySpy = vi.spyOn(BlueData.prototype, 'historyCopy');
+      try {
+        // Preparing the batch must clone liveData rather than mutating the live SoundObject before commit.
+        const prepared = prepareTransaction(data, [
+          {
+            score: {
+              type: 'updateTypeSpecificEditor',
+              target: liveTarget,
+              patch: { text: 'i1 0 2 880' },
+            },
+          },
+          {
+            projectUdo: {
+              type: 'add',
+              definition: {
+                name: 'PreparedOnlyUdo',
+                style: 'CLASSIC',
+                outTypes: 'a',
+                inTypes: 'a',
+                inputArguments: '',
+                code: 'xout ain',
+                comments: '',
+              },
+            },
+          },
+        ]);
+        expect(prepared.status).toBe('prepared');
+        if (prepared.status === 'prepared') {
+          expect(prepared.transaction.kind).toBe('structure');
+          if (prepared.transaction.kind === 'structure') {
+            expect(prepared.transaction.changed).toBe(true);
+            expect(prepared.transaction.delta).toBeDefined();
+          }
+        }
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        expect(
+          (
+            data
+              .getLiveData()
+              .getLiveObjectBins()
+              .getLiveObject(0, 0)
+              ?.getSoundObject() as GenericScore
+          ).getScoreText(),
+        ).toBe('i1 0 1 440');
+
+        const committed = await history.commit({
+          documentId: docId,
+          expectedRevision: 0,
+          origin,
+          contextSequence: 2,
+          operationId: 'op-bluelive-batch-commit',
+          label: 'Edit Blue Live Object and Add UDO',
+          patches: [
+            {
+              score: {
+                type: 'updateTypeSpecificEditor',
+                target: liveTarget,
+                patch: { text: 'i1 0 2 880' },
+              },
+            },
+            {
+              projectUdo: {
+                type: 'add',
+                definition: {
+                  name: 'BatchUdo',
+                  style: 'CLASSIC',
+                  outTypes: 'a',
+                  inTypes: 'a',
+                  inputArguments: '',
+                  code: 'xout ain',
+                  comments: '',
+                },
+              },
+            },
+          ],
+        });
+        expect(committed.status).toBe('committed');
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        const afterCommit = session.read().data!;
+        expect(
+          (
+            afterCommit
+              .getLiveData()
+              .getLiveObjectBins()
+              .getLiveObject(0, 0)
+              ?.getSoundObject() as GenericScore
+          ).getScoreText(),
+        ).toBe('i1 0 2 880');
+        expect(afterCommit.getOpcodeList().size()).toBe(1);
+        expect(afterCommit.getOpcodeList().getOpcode(0)?.getName()).toBe('BatchUdo');
+
+        const undone = await history.undo({
+          documentId: docId,
+          expectedRevision: 1,
+          origin,
+          contextSequence: 3,
+          operationId: 'op-bluelive-batch-undo',
+        });
+        expect(undone.status).toBe('committed');
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        const afterUndo = session.read().data!;
+        expect(
+          (
+            afterUndo
+              .getLiveData()
+              .getLiveObjectBins()
+              .getLiveObject(0, 0)
+              ?.getSoundObject() as GenericScore
+          ).getScoreText(),
+        ).toBe('i1 0 1 440');
+        expect(afterUndo.getOpcodeList().size()).toBe(0);
+
+        const redone = await history.redo({
+          documentId: docId,
+          expectedRevision: 2,
+          origin,
+          contextSequence: 4,
+          operationId: 'op-bluelive-batch-redo',
+        });
+        expect(redone.status).toBe('committed');
+        expect(historyCopySpy).not.toHaveBeenCalled();
+        const afterRedo = session.read().data!;
+        expect(
+          (
+            afterRedo
+              .getLiveData()
+              .getLiveObjectBins()
+              .getLiveObject(0, 0)
+              ?.getSoundObject() as GenericScore
+          ).getScoreText(),
+        ).toBe('i1 0 2 880');
+        expect(afterRedo.getOpcodeList().size()).toBe(1);
+        expect(afterRedo.getOpcodeList().getOpcode(0)?.getName()).toBe('BatchUdo');
+      } finally {
+        historyCopySpy.mockRestore();
+      }
     });
   });
 });
