@@ -1688,16 +1688,18 @@ export class EngineBridge {
     await this.stopEngine();
   }
 
-  async setChannel(name: string, value: number): Promise<void> {
+  async setChannel(name: string, value: number): Promise<{ ok: boolean; message: string }> {
     const client = this.activeSession?.getClient();
-    if (client) {
-      this.controlTraffic.writeCommands += 1;
-      this.controlTraffic.writeEntries += 1;
-      const resp = await client.setChannel(name, value);
-      if (!resp.ok) {
-        console.warn(`[EngineBridge] setChannel(${name}) failed: ${resp.message}`);
-      }
+    if (!client) {
+      return { ok: false, message: 'no-active-engine-session' };
     }
+    this.controlTraffic.writeCommands += 1;
+    this.controlTraffic.writeEntries += 1;
+    const resp = await client.setChannel(name, value);
+    if (!resp.ok) {
+      console.warn(`[EngineBridge] setChannel(${name}) failed: ${resp.message}`);
+    }
+    return resp;
   }
 
   async getChannel(name: string): Promise<number> {
@@ -1709,6 +1711,19 @@ export class EngineBridge {
       if (resp.ok) return resp.value;
     }
     return 0;
+  }
+
+  supportsBatchChannels(): boolean {
+    const client = this.activeSession?.getClient();
+    if (!client) {
+      return true;
+    }
+    if (typeof client.hasVerifiedCapabilities === 'function' && !client.hasVerifiedCapabilities()) {
+      return true;
+    }
+    return typeof client.supportsBatchChannels === 'function'
+      ? client.supportsBatchChannels()
+      : true;
   }
 
   /**

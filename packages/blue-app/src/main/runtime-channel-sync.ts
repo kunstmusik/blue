@@ -1,11 +1,11 @@
 export interface TimelineRuntimeChannelTarget {
   isCurrentlyPlaying(): boolean;
-  setChannel(name: string, value: number): Promise<void>;
+  setChannel(name: string, value: number): Promise<{ ok: boolean; message: string }>;
 }
 
 export interface BlueLiveRuntimeChannelTarget {
   isRunning(): boolean;
-  setChannel(name: string, value: number): Promise<void>;
+  setChannel(name: string, value: number): Promise<{ ok: boolean; message: string }>;
 }
 
 export type RuntimeChannelSyncTarget = 'timeline' | 'blueLive';
@@ -30,8 +30,8 @@ async function writeToTarget(
   value: number,
 ): Promise<RuntimeChannelWriteOutcome> {
   try {
-    await engine.setChannel(name, value);
-    return { target, ok: true, message: '' };
+    const { ok, message } = await engine.setChannel(name, value);
+    return { target, ok, message: ok ? '' : message };
   } catch (error) {
     // A rejected transport promise is a failed write, never a success.
     return {

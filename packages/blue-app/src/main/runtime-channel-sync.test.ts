@@ -3,8 +3,8 @@ import { syncRuntimeChannel } from './runtime-channel-sync';
 
 describe('syncRuntimeChannel', () => {
   it('fans a BSB channel update out to timeline playback and Blue Live', async () => {
-    const timelineSetChannel = vi.fn().mockResolvedValue(undefined);
-    const blueLiveSetChannel = vi.fn().mockResolvedValue(undefined);
+    const timelineSetChannel = vi.fn().mockResolvedValue({ ok: true, message: '' });
+    const blueLiveSetChannel = vi.fn().mockResolvedValue({ ok: true, message: '' });
 
     await syncRuntimeChannel(
       'gk_blue_auto2',
@@ -58,11 +58,14 @@ describe('syncRuntimeChannel', () => {
       0.4,
       {
         isCurrentlyPlaying: () => true,
-        setChannel: vi.fn().mockRejectedValue(new Error('Engine rejected channel assignment')),
+        setChannel: vi.fn().mockResolvedValue({
+          ok: false,
+          message: 'Engine rejected channel assignment',
+        }),
       },
       {
         isRunning: () => true,
-        setChannel: vi.fn().mockResolvedValue(undefined),
+        setChannel: vi.fn().mockResolvedValue({ ok: true, message: '' }),
       },
     );
 

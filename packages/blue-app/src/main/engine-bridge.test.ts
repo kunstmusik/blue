@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { Parameter } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
+import { applyRuntimeChannelValuesBatch } from './project-runtime-reconciliation';
 import type { EngineRuntimeService } from './engine-runtime';
 import { EngineSession, type EngineSessionCreationRequest } from './engine-session';
 import {
@@ -515,6 +516,37 @@ describe('EngineBridge runtime selection and lifecycle', () => {
       writeCommands: 2,
       writeEntries: 3,
     });
+  });
+
+  it('reports a native channel rejection while applying its valid batch sibling', async () => {
+    const bridge = new EngineBridge(windowStub(), 'blue-engine');
+    const client = {
+      setChannel: vi.fn(async (name: string) =>
+        name === 'missing'
+          ? { ok: false, message: 'Channel not found: missing' }
+          : { ok: true, message: '' },
+      ),
+    };
+    (bridge as unknown as { activeSession: { getClient(): typeof client } }).activeSession = {
+      getClient: () => client,
+    };
+
+    const result = await applyRuntimeChannelValuesBatch(
+      ['missing', 'valid'].map((channel) => ({
+        kind: 'channel-value',
+        ownerKey: channel,
+        parameterId: channel,
+        channel,
+        value: 0.5,
+      })),
+      {
+        setChannels: async () => ({ ok: false, message: 'Channel not found: missing' }),
+        setChannel: (name, value) => bridge.setChannel(name, value),
+      },
+    );
+
+    expect(client.setChannel.mock.calls.map(([name]) => name)).toEqual(['missing', 'valid']);
+    expect(result).toEqual({ status: 'rejected', message: 'Channel not found: missing' });
   });
 
   it('does not search PATH for a legacy relative engine name', () => {

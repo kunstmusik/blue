@@ -234,6 +234,7 @@ import {
 } from './runtime-parameter-sync';
 import {
   ProjectRuntimeReconciliation,
+  applyRuntimeChannelValuesBatch,
   type AcknowledgedRuntimeClient,
   type RuntimeMixerGatesOperation,
   type RuntimeOperationAck,
@@ -483,6 +484,24 @@ const projectSession = new ProjectSession();
 const projectCompatibilityWarnings = new WeakMap<BlueData, readonly XmlDiagnostic[]>();
 let timelinePerformanceGeneration = 0;
 let blueLivePerformanceGeneration = 0;
+
+function invalidateTimelinePerformanceGeneration(): void {
+  const stoppedGeneration = timelinePerformanceGeneration;
+  timelinePerformanceGeneration += 1;
+  projectRuntimeReconciliation.stopPerformance('timeline');
+  timelineGatePublisher.reset('timeline');
+  broadcastRuntimePerformanceCleared('timeline');
+  clearActiveBlueX7Bindings(stoppedGeneration);
+}
+
+function invalidateBlueLivePerformanceGeneration(): void {
+  const stoppedGeneration = blueLivePerformanceGeneration;
+  blueLivePerformanceGeneration += 1;
+  projectRuntimeReconciliation.stopPerformance('blueLive');
+  blueLiveGatePublisher.reset('blueLive');
+  broadcastRuntimePerformanceCleared('blueLive');
+  clearActiveBlueX7Bindings(stoppedGeneration);
+}
 
 const timelineGatePublisher = new MixerGatePublisher({
   setChannels: (entries) =>
@@ -2426,10 +2445,7 @@ function createWindow(): void {
   });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
-    projectRuntimeReconciliation.stopPerformance('timeline');
-    timelineGatePublisher.reset('timeline');
-    broadcastRuntimePerformanceCleared('timeline');
-    clearActiveBlueX7Bindings(timelinePerformanceGeneration);
+    invalidateTimelinePerformanceGeneration();
     if (activeAuditionPlayback) {
       activeAuditionPlayback = false;
       return;
@@ -2494,10 +2510,7 @@ function createWindow(): void {
       if (!repeatSync.ok) console.warn(`[Blue Live] ${repeatSync.message}`);
     } else {
       getBlueLiveTriggerController().stopRepeatSchedule();
-      projectRuntimeReconciliation.stopPerformance('blueLive');
-      blueLiveGatePublisher.reset('blueLive');
-      broadcastRuntimePerformanceCleared('blueLive');
-      clearActiveBlueX7Bindings(blueLivePerformanceGeneration);
+      invalidateBlueLivePerformanceGeneration();
     }
     publishTrackEditorRuntimeStatus();
   });
@@ -4379,7 +4392,7 @@ async function applyMixerGatesOperation(
 
 async function applyRuntimeWorkOperation(
   operation: RuntimeWorkOperation,
-  setChannel: (channel: string, value: number) => Promise<unknown>,
+  setChannel: (channel: string, value: number) => Promise<{ ok: boolean; message: string }>,
   blueX7Deps: BlueX7EngineSyncDeps,
 ): Promise<RuntimeOperationAck> {
   if (operation.kind === 'blue-live-repeat') {
@@ -4391,8 +4404,10 @@ async function applyRuntimeWorkOperation(
 
   if (operation.kind === 'channel-value') {
     try {
-      await setChannel(operation.channel, operation.value);
-      return { status: 'applied' };
+      const response = await setChannel(operation.channel, operation.value);
+      return response.ok
+        ? { status: 'applied' }
+        : { status: 'rejected', message: response.message || 'Engine rejected the channel write' };
     } catch (err) {
       return {
         status: 'rejected',
@@ -4599,7 +4614,15 @@ async function startPlayback(
 
     timelinePerformanceGeneration += 1;
     const timelineGeneration = timelinePerformanceGeneration;
-    const timelineEngineClient = engineBridge.getClient();
+    const bridgedEngine = engineBridge;
+    const timelineSession = bridgedEngine?.getActiveSession() ?? null;
+    const expectedTimelineGeneration = timelineGeneration;
+    const isTimelineGenerationCurrent = (): boolean =>
+      timelinePerformanceGeneration === expectedTimelineGeneration &&
+      Boolean(bridgedEngine?.isCurrentlyPlaying()) &&
+      timelineSession !== null &&
+      bridgedEngine?.getActiveSession() === timelineSession;
+    const timelineEngineClient = bridgedEngine.getClient();
     const timelineGateIO: MixerGateEngineIO = timelineEngineClient
       ? {
           setChannels: (entries) => timelineEngineClient.setChannels(entries),
@@ -4614,21 +4637,58 @@ async function startPlayback(
       render.blueX7Bindings.map((binding) => [binding.ownerIdentity, binding]),
     );
     const timelineBlueX7Deps = getBlueX7EngineSyncDeps('timeline', {
-      isPlaying: () => engineBridge?.isCurrentlyPlaying() ?? false,
-      getBinding: (ownerIdentity) => timelineBlueX7Bindings.get(ownerIdentity),
-      writeChannels: (entries) => engineBridge!.setChannels(entries),
-      readChannels: (names) => engineBridge!.getChannels(names),
+      isPlaying: () => isTimelineGenerationCurrent(),
+      getBinding: (ownerIdentity) =>
+        isTimelineGenerationCurrent() ? timelineBlueX7Bindings.get(ownerIdentity) : undefined,
+      writeChannels: (entries) =>
+        isTimelineGenerationCurrent()
+          ? bridgedEngine.setChannels(entries)
+          : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
+      readChannels: (names) =>
+        isTimelineGenerationCurrent()
+          ? bridgedEngine.getChannels(names)
+          : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
     });
     const timelineClient: AcknowledgedRuntimeClient = {
       applyOperation(operation) {
+        if (!isTimelineGenerationCurrent()) {
+          return Promise.resolve({
+            status: 'rejected',
+            message: 'Timeline performance is no longer active',
+          });
+        }
         if (operation.kind === 'mixer-gates') {
           return applyMixerGatesOperation(timelineGatePublisher, 'timeline', operation);
         }
         return applyRuntimeWorkOperation(
           operation,
-          (channel, value) => engineBridge!.setChannel(channel, value),
+          (channel, value) =>
+            isTimelineGenerationCurrent()
+              ? bridgedEngine.setChannel(channel, value)
+              : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
           timelineBlueX7Deps,
         );
+      },
+      applyChannelValues(operations, isExecutionCurrent) {
+        if (!isTimelineGenerationCurrent()) {
+          return Promise.resolve({
+            status: 'rejected',
+            message: 'Timeline performance is no longer active',
+          });
+        }
+        return applyRuntimeChannelValuesBatch(operations, {
+          isCurrent: () =>
+            isTimelineGenerationCurrent() && (isExecutionCurrent ? isExecutionCurrent() : true),
+          supportsBatchChannels: () => bridgedEngine.supportsBatchChannels(),
+          setChannels: (entries) =>
+            isTimelineGenerationCurrent()
+              ? bridgedEngine.setChannels(entries)
+              : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
+          setChannel: (channel, value) =>
+            isTimelineGenerationCurrent()
+              ? bridgedEngine.setChannel(channel, value)
+              : Promise.resolve({ ok: false, message: 'no-active-engine-session' }),
+        });
       },
     };
     const timelineBindings = buildRuntimeBindingRegistry(
@@ -4781,10 +4841,7 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
 
 async function stopPlayback(): Promise<void> {
   activeAuditionPlayback = false;
-  projectRuntimeReconciliation.stopPerformance('timeline');
-  timelineGatePublisher.reset('timeline');
-  broadcastRuntimePerformanceCleared('timeline');
-  clearActiveBlueX7Bindings(timelinePerformanceGeneration);
+  invalidateTimelinePerformanceGeneration();
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
 }
@@ -4793,17 +4850,39 @@ function registerBlueLivePerformance(): void {
   if (!blueLiveSession || !blueLiveSession.isRunning() || !getCurrentData()) return;
   blueLivePerformanceGeneration += 1;
   const generation = blueLivePerformanceGeneration;
-  const blueLiveBindings = blueLiveSession.getBlueX7Bindings();
+  const liveSession = blueLiveSession;
+  const expectedBlueLiveSessionId = liveSession.getStatus().sessionId ?? null;
+  const expectedBlueLiveGeneration = generation;
+  const isBlueLiveGenerationCurrent = (): boolean =>
+    blueLivePerformanceGeneration === expectedBlueLiveGeneration &&
+    Boolean(liveSession?.isRunning()) &&
+    expectedBlueLiveSessionId !== null &&
+    liveSession.getStatus().sessionId === expectedBlueLiveSessionId;
+  const blueLiveBindings = liveSession.getBlueX7Bindings();
   setActiveBlueX7Bindings(blueLiveBindings, generation);
   const blueLiveBlueX7Deps = getBlueX7EngineSyncDeps('blueLive', {
-    isPlaying: () => blueLiveSession?.isRunning() ?? false,
+    isPlaying: () => isBlueLiveGenerationCurrent(),
     getBinding: (ownerIdentity) =>
-      blueLiveBindings.find((binding) => binding.ownerIdentity === ownerIdentity),
-    writeChannels: (entries) => blueLiveSession!.setChannels(entries),
-    readChannels: (names) => blueLiveSession!.getChannels(names),
+      isBlueLiveGenerationCurrent()
+        ? blueLiveBindings.find((binding) => binding.ownerIdentity === ownerIdentity)
+        : undefined,
+    writeChannels: (entries) =>
+      isBlueLiveGenerationCurrent()
+        ? liveSession.setChannels(entries)
+        : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
+    readChannels: (names) =>
+      isBlueLiveGenerationCurrent()
+        ? liveSession.getChannels(names)
+        : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
   });
   const client: AcknowledgedRuntimeClient = {
     applyOperation(operation) {
+      if (!isBlueLiveGenerationCurrent()) {
+        return Promise.resolve({
+          status: 'rejected',
+          message: 'Blue Live performance is no longer active',
+        });
+      }
       if (operation.kind === 'blue-live-repeat') {
         const result = getBlueLiveTriggerController().syncRepeatSchedule();
         return Promise.resolve(
@@ -4815,9 +4894,33 @@ function registerBlueLivePerformance(): void {
       }
       return applyRuntimeWorkOperation(
         operation,
-        (channel, value) => blueLiveSession!.setChannel(channel, value),
+        (channel, value) =>
+          isBlueLiveGenerationCurrent()
+            ? liveSession.setChannel(channel, value)
+            : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
         blueLiveBlueX7Deps,
       );
+    },
+    applyChannelValues(operations, isExecutionCurrent) {
+      if (!isBlueLiveGenerationCurrent()) {
+        return Promise.resolve({
+          status: 'rejected',
+          message: 'Blue Live performance is no longer active',
+        });
+      }
+      return applyRuntimeChannelValuesBatch(operations, {
+        isCurrent: () =>
+          isBlueLiveGenerationCurrent() && (isExecutionCurrent ? isExecutionCurrent() : true),
+        supportsBatchChannels: () => liveSession.supportsBatchChannels(),
+        setChannels: (entries) =>
+          isBlueLiveGenerationCurrent()
+            ? liveSession.setChannels(entries)
+            : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
+        setChannel: (channel, value) =>
+          isBlueLiveGenerationCurrent()
+            ? liveSession.setChannel(channel, value)
+            : Promise.resolve({ ok: false, message: 'no-active-blue-live-session' }),
+      });
     },
   };
   const bindings = buildRuntimeBindingRegistry(
@@ -4862,11 +4965,8 @@ async function blueLiveToggle(): Promise<
   }
 
   if (blueLiveSession.isRunning()) {
-    projectRuntimeReconciliation.stopPerformance('blueLive');
-    blueLiveGatePublisher.reset('blueLive');
-    broadcastRuntimePerformanceCleared('blueLive');
+    invalidateBlueLivePerformanceGeneration();
     const stopped = await blueLiveSession.stop();
-    clearActiveBlueX7Bindings(blueLivePerformanceGeneration);
     return stopped;
   }
 
@@ -4934,9 +5034,7 @@ async function blueLiveRecompile(): Promise<void> {
   // project history outcome must not target the performance while its client
   // is being torn down, and a failed recompile should leave no stale action
   // enabled for the stopped generation.
-  projectRuntimeReconciliation.stopPerformance('blueLive');
-  blueLiveGatePublisher.reset('blueLive');
-  broadcastRuntimePerformanceCleared('blueLive');
+  invalidateBlueLivePerformanceGeneration();
   mainWindow?.webContents.send('engine-output-reset', { tabName: 'Csound (Blue Live)' });
   mainWindow?.webContents.send('engine-output-select', { tabName: 'Csound (Blue Live)' });
   await blueLiveSession.recompile(
@@ -4964,9 +5062,7 @@ async function blueLiveAllNotesOff(): Promise<void> {
  */
 async function stopActiveBlueLiveBeforeProjectReplacement(): Promise<void> {
   await stopPlayback();
-  projectRuntimeReconciliation.stopPerformance('blueLive');
-  blueLiveGatePublisher.reset('blueLive');
-  broadcastRuntimePerformanceCleared('blueLive');
+  invalidateBlueLivePerformanceGeneration();
   await stopBlueLiveForProjectReplacement(getBlueLiveTriggerController(), blueLiveSession);
 }
 
@@ -6135,6 +6231,17 @@ async function syncActiveRuntimeChannel(
   });
 }
 
+async function syncActiveRuntimeChannels(
+  entries: readonly { name: string; value: number }[],
+  gestureId?: string,
+): Promise<void> {
+  if (entries.length === 0) return;
+  await projectRuntimeReconciliation.previewChannelValues({
+    entries: entries.map((entry) => ({ channel: entry.name, value: entry.value })),
+    gestureId,
+  });
+}
+
 function getBlueX7EngineSyncDeps(
   performanceKind: BlueX7PerformanceKind,
   overrides: Partial<
@@ -6205,25 +6312,29 @@ async function syncEngineWithProjectPatch(
     if (mixerPatch.type === 'updateChannel') {
       const channel = getProjectMixerChannelBySnapshotId(mixerPatch.channelId);
       if (channel) {
+        const channelEntries: { name: string; value: number }[] = [];
         const varName = channel.getLevelParameter().getCompilationVarName();
         if (varName && mixerPatch.patch.level !== undefined) {
-          await syncActiveRuntimeChannel(varName, mixerPatch.patch.level);
+          channelEntries.push({ name: varName, value: mixerPatch.patch.level });
         }
         const panVarName = channel.getPanParameter().getCompilationVarName();
         if (panVarName && mixerPatch.patch.pan !== undefined) {
-          await syncActiveRuntimeChannel(panVarName, mixerPatch.patch.pan);
+          channelEntries.push({ name: panVarName, value: mixerPatch.patch.pan });
         }
         const panWidthVarName = channel.getPanWidthParameter().getCompilationVarName();
         if (panWidthVarName && mixerPatch.patch.panWidth !== undefined) {
-          await syncActiveRuntimeChannel(panWidthVarName, mixerPatch.patch.panWidth);
+          channelEntries.push({ name: panWidthVarName, value: mixerPatch.patch.panWidth });
         }
         const dualLeftVarName = channel.getDualPanLeftParameter().getCompilationVarName();
         if (dualLeftVarName && mixerPatch.patch.dualPanLeft !== undefined) {
-          await syncActiveRuntimeChannel(dualLeftVarName, mixerPatch.patch.dualPanLeft);
+          channelEntries.push({ name: dualLeftVarName, value: mixerPatch.patch.dualPanLeft });
         }
         const dualRightVarName = channel.getDualPanRightParameter().getCompilationVarName();
         if (dualRightVarName && mixerPatch.patch.dualPanRight !== undefined) {
-          await syncActiveRuntimeChannel(dualRightVarName, mixerPatch.patch.dualPanRight);
+          channelEntries.push({ name: dualRightVarName, value: mixerPatch.patch.dualPanRight });
+        }
+        if (channelEntries.length > 0) {
+          await syncActiveRuntimeChannels(channelEntries);
         }
       }
     }
@@ -7105,16 +7216,19 @@ ipcRegistration.handle(
 
     const gestureId = (update as unknown as { gestureId?: string }).gestureId;
     const params = effectEntry.entry.getParameters();
+    const entries: { channel: string; value: number }[] = [];
     for (const [objectName, value] of Object.entries(update.bsbWidgetValues)) {
       const param = params.find((p) => p.getName() === objectName);
       const varName = param?.getCompilationVarName();
       if (varName) {
-        void projectRuntimeReconciliation.previewChannelValue({
-          channel: varName,
-          value,
-          gestureId,
-        });
+        entries.push({ channel: varName, value });
       }
+    }
+    if (entries.length > 0) {
+      void projectRuntimeReconciliation.previewChannelValues({
+        entries,
+        gestureId,
+      });
     }
   },
 );

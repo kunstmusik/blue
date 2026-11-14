@@ -532,6 +532,14 @@ export class EngineClient {
     return this.featureGuard(BATCH_AUTOMATIONS_FEATURE, 'Batch automations');
   }
 
+  hasVerifiedCapabilities(): boolean {
+    return this.verifiedCapabilities !== null;
+  }
+
+  supportsBatchChannels(): boolean {
+    return this.batchChannelsGuard().ok;
+  }
+
   /**
    * Set multiple channels in one all-or-error round trip.
    * The engine validates the entire payload before applying any write.

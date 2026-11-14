@@ -674,12 +674,21 @@ export class BlueLiveEngineSession {
     return this.lastDiagnosticReport ?? this.bridge?.getLastDiagnosticReport?.() ?? null;
   }
 
-  async setChannel(name: string, value: number): Promise<void> {
+  async setChannel(name: string, value: number): Promise<{ ok: boolean; message: string }> {
     if (this.status !== 'running' || !this.bridge) {
-      return;
+      return { ok: false, message: 'no-active-blue-live-session' };
     }
 
-    await this.bridge.setChannel(name, value);
+    return this.bridge.setChannel(name, value);
+  }
+
+  supportsBatchChannels(): boolean {
+    if (this.status !== 'running' || !this.bridge) {
+      return true;
+    }
+    return typeof this.bridge.supportsBatchChannels === 'function'
+      ? this.bridge.supportsBatchChannels()
+      : true;
   }
 
   async setChannels(

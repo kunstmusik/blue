@@ -2,6 +2,7 @@ import type { BsbInterfacePatch, ProjectDocumentPatch } from '../shared/project-
 import type { ProjectRuntimeOutcome, ProjectRuntimeOutcomeStatus } from '../shared/project-history';
 import { blueX7PatchToRuntimeIntent } from '../shared/blue-x7-patch-intents';
 import { stereoPanModeToNumber } from '@blue/data';
+import { MAX_BATCH_CHANNELS } from '@blue/engine-client';
 
 export type PerformanceKind = 'timeline' | 'blueLive';
 
@@ -107,6 +108,94 @@ export interface RuntimeOperationAck {
  */
 export interface AcknowledgedRuntimeClient {
   applyOperation(operation: RuntimeWorkOperation): Promise<RuntimeOperationAck>;
+  applyChannelValues?(
+    operations: readonly RuntimeChannelValueOperation[],
+    isExecutionCurrent?: () => boolean,
+  ): Promise<RuntimeOperationAck>;
+}
+
+export function isAtomicBatchChannelValidationFailure(message: string | undefined): boolean {
+  if (!message) {
+    return false;
+  }
+  return (
+    message.startsWith('Blue Engine is missing required capability:') ||
+    message.startsWith('Cannot set automated channel during playback:') ||
+    message.startsWith('Channel not found:') ||
+    message === 'Channel name cannot be empty' ||
+    message === 'Channel value must be finite' ||
+    message === 'Batch payload contains duplicate channel name'
+  );
+}
+
+export async function applyRuntimeChannelValuesBatch(
+  operations: readonly RuntimeChannelValueOperation[],
+  options: {
+    isCurrent?: () => boolean;
+    supportsBatchChannels?: () => boolean;
+    setChannels: (entries: readonly { name: string; value: number }[]) => Promise<{
+      ok: boolean;
+      message?: string;
+    }>;
+    setChannel: (channel: string, value: number) => Promise<{ ok: boolean; message?: string }>;
+  },
+): Promise<RuntimeOperationAck> {
+  if (operations.length === 0) {
+    return { status: 'applied' };
+  }
+  const isCurrent = options.isCurrent ?? (() => true);
+  const applyIndividually = async (
+    slice: readonly RuntimeChannelValueOperation[],
+  ): Promise<RuntimeOperationAck> => {
+    let failure: RuntimeOperationAck | undefined;
+    for (const entry of slice) {
+      if (!isCurrent()) {
+        return { status: 'rejected', message: 'Performance is no longer active' };
+      }
+      const response = await options.setChannel(entry.channel, entry.value);
+      if (!response.ok) {
+        failure ??= {
+          status: 'rejected',
+          message: response.message || 'Engine rejected the channel write',
+        };
+      }
+    }
+    return failure ?? { status: 'applied' };
+  };
+
+  try {
+    if (options.supportsBatchChannels && !options.supportsBatchChannels()) {
+      return await applyIndividually(operations);
+    }
+    for (let offset = 0; offset < operations.length; offset += MAX_BATCH_CHANNELS) {
+      if (!isCurrent()) {
+        return { status: 'rejected', message: 'Performance is no longer active' };
+      }
+      const slice = operations.slice(offset, offset + MAX_BATCH_CHANNELS);
+      const response = await options.setChannels(
+        slice.map((entry) => ({ name: entry.channel, value: entry.value })),
+      );
+      if (!response.ok) {
+        if (isAtomicBatchChannelValidationFailure(response.message)) {
+          const fallbackAck = await applyIndividually(slice);
+          if (fallbackAck.status === 'rejected') {
+            return fallbackAck;
+          }
+          continue;
+        }
+        return {
+          status: 'rejected',
+          message: response.message ?? 'Engine rejected batch channel write',
+        };
+      }
+    }
+    return { status: 'applied' };
+  } catch (err) {
+    return {
+      status: 'rejected',
+      message: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 export interface ProjectRuntimeReconciliationOptions {
@@ -787,8 +876,31 @@ export class ProjectRuntimeReconciliation {
     value: number;
     gestureId?: string;
   }): Promise<RuntimeOperationAck> {
+    return this.previewChannelValues({
+      entries: [request],
+      gestureId: request.gestureId,
+    });
+  }
+
+  /**
+   * Routes one or more real-time preview channel values through active
+   * performances, coalescing multi-channel writes via applyChannelValues when
+   * supported by the runtime client.
+   */
+  async previewChannelValues(request: {
+    entries: readonly {
+      ownerKey?: string;
+      parameterId?: string;
+      channel?: string;
+      value: number;
+    }[];
+    gestureId?: string;
+  }): Promise<RuntimeOperationAck> {
     if (request.gestureId && this.closedGestures.has(request.gestureId)) {
       return { status: 'rejected', message: 'Gesture is closed' };
+    }
+    if (request.entries.length === 0) {
+      return { status: 'applied' };
     }
 
     let anyApplied = false;
@@ -799,29 +911,35 @@ export class ProjectRuntimeReconciliation {
     for (const submitted of submittedPerformances) {
       const { performance, generation } = submitted;
       if (performance.fenced) continue;
-      let channel = request.channel;
-      const ownerKey = request.ownerKey ?? '';
-      const parameterId = request.parameterId ?? '';
 
-      if (!channel) {
-        if (!request.ownerKey || !request.parameterId) continue;
-        const binding = performance.bindings.get(bindingKey(request.ownerKey, request.parameterId));
-        if (binding?.kind !== 'channel') {
-          if (isPannerFutureIntentParameter(request.ownerKey, request.parameterId)) {
-            anyApplied = true;
+      const resolvedOperations: RuntimeChannelValueOperation[] = [];
+      for (const entry of request.entries) {
+        let channel = entry.channel;
+        const ownerKey = entry.ownerKey ?? '';
+        const parameterId = entry.parameterId ?? '';
+
+        if (!channel) {
+          if (!entry.ownerKey || !entry.parameterId) continue;
+          const binding = performance.bindings.get(bindingKey(entry.ownerKey, entry.parameterId));
+          if (binding?.kind !== 'channel') {
+            if (isPannerFutureIntentParameter(entry.ownerKey, entry.parameterId)) {
+              anyApplied = true;
+            }
+            continue;
           }
-          continue;
+          channel = binding.channel;
         }
-        channel = binding.channel;
+
+        resolvedOperations.push({
+          kind: 'channel-value',
+          ownerKey,
+          parameterId,
+          channel,
+          value: entry.value,
+        });
       }
 
-      const operation: RuntimeChannelValueOperation = {
-        kind: 'channel-value',
-        ownerKey,
-        parameterId,
-        channel,
-        value: request.value,
-      };
+      if (resolvedOperations.length === 0) continue;
 
       const execution = performance.chain.then(async () => {
         if (request.gestureId && this.closedGestures.has(request.gestureId)) {
@@ -834,7 +952,14 @@ export class ProjectRuntimeReconciliation {
         ) {
           return { status: 'rejected' as const, message: 'Performance is no longer active' };
         }
-        return this.applyWithTimeout(performance, operation);
+        return resolvedOperations.length === 1
+          ? this.applyWithTimeout(performance, resolvedOperations[0]!)
+          : this.applyChannelValuesWithTimeout(
+              performance,
+              resolvedOperations,
+              generation,
+              request.gestureId,
+            );
       });
 
       performance.chain = execution.then(
@@ -842,7 +967,12 @@ export class ProjectRuntimeReconciliation {
         () => undefined,
       );
 
-      const ack = await execution;
+      let ack: RuntimeOperationAck;
+      try {
+        ack = await execution;
+      } catch (error) {
+        ack = { status: 'rejected', message: errorMessage(error) };
+      }
       if (
         ack.status === 'applied' &&
         this.performances.get(performance.kind) === performance &&
@@ -1095,12 +1225,44 @@ export class ProjectRuntimeReconciliation {
   ): Promise<ProjectRuntimeOutcome | null> {
     const touchedOwnerIds = [...new Set(plan.operations.map((operation) => operation.ownerKey))];
 
-    for (const operation of plan.operations) {
+    for (let index = 0; index < plan.operations.length; index += 1) {
       if (this.isObsolete(performance, plan)) {
         // Obsolete generation: discard silently so stale work never reports
         // applied against a newer performance.
         return null;
       }
+      const operation = plan.operations[index]!;
+      if (operation.kind === 'channel-value' && performance.client.applyChannelValues) {
+        const batch: RuntimeChannelValueOperation[] = [operation];
+        while (index + 1 < plan.operations.length) {
+          const next = plan.operations[index + 1]!;
+          if (next.kind !== 'channel-value') break;
+          batch.push(next);
+          index += 1;
+        }
+        if (batch.length > 1) {
+          const batchOwnerIds = [...new Set(batch.map((entry) => entry.ownerKey))];
+          let ack: RuntimeOperationAck;
+          try {
+            ack = await this.applyChannelValuesWithTimeout(performance, batch, plan.generation);
+          } catch (error) {
+            if (this.isObsolete(performance, plan)) return null;
+            return this.settle(performance, plan, 'failed', batchOwnerIds, errorMessage(error));
+          }
+          if (ack.status === 'rejected') {
+            if (this.isObsolete(performance, plan)) return null;
+            return this.settle(
+              performance,
+              plan,
+              'failed',
+              batchOwnerIds,
+              ack.message ?? 'Engine rejected the runtime operation',
+            );
+          }
+          continue;
+        }
+      }
+
       let ack: RuntimeOperationAck;
       try {
         ack = await this.applyWithTimeout(performance, operation);
@@ -1140,12 +1302,10 @@ export class ProjectRuntimeReconciliation {
     );
   }
 
-  private applyWithTimeout(
+  private raceWithTimeout(
     performance: ActivePerformance,
-    operation: RuntimeWorkOperation,
+    apply: Promise<RuntimeOperationAck>,
   ): Promise<RuntimeOperationAck> {
-    const client = performance.client;
-    const apply = client.applyOperation(operation);
     if (this.operationTimeoutMs <= 0) return apply;
     return new Promise<RuntimeOperationAck>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -1163,6 +1323,89 @@ export class ProjectRuntimeReconciliation {
         },
       );
     });
+  }
+
+  private applyWithTimeout(
+    performance: ActivePerformance,
+    operation: RuntimeWorkOperation,
+  ): Promise<RuntimeOperationAck> {
+    return this.raceWithTimeout(performance, performance.client.applyOperation(operation));
+  }
+
+  private checkActiveExecution(
+    performance: ActivePerformance,
+    expectedGeneration: number,
+    gestureId?: string,
+  ): RuntimeOperationAck | null {
+    if (gestureId && this.closedGestures.has(gestureId)) {
+      return { status: 'rejected', message: 'Gesture is closed' };
+    }
+    if (
+      this.performances.get(performance.kind) !== performance ||
+      performance.generation !== expectedGeneration ||
+      performance.fenced
+    ) {
+      return { status: 'rejected', message: 'Performance is no longer active' };
+    }
+    return null;
+  }
+
+  private async applyChannelValuesWithTimeout(
+    performance: ActivePerformance,
+    operations: readonly RuntimeChannelValueOperation[],
+    expectedGeneration: number = performance.generation,
+    gestureId?: string,
+  ): Promise<RuntimeOperationAck> {
+    const dedupedByChannel = new Map<string, RuntimeChannelValueOperation>();
+    for (const op of operations) {
+      if (dedupedByChannel.has(op.channel)) {
+        dedupedByChannel.delete(op.channel);
+      }
+      dedupedByChannel.set(op.channel, op);
+    }
+    const entries = [...dedupedByChannel.values()];
+    if (entries.length === 1) {
+      const guardAck = this.checkActiveExecution(performance, expectedGeneration, gestureId);
+      if (guardAck) return guardAck;
+      return this.applyWithTimeout(performance, entries[0]!);
+    }
+    if (performance.client.applyChannelValues) {
+      const isExecutionCurrent = () =>
+        this.checkActiveExecution(performance, expectedGeneration, gestureId) === null;
+      if (entries.length <= MAX_BATCH_CHANNELS) {
+        const guardAck = this.checkActiveExecution(performance, expectedGeneration, gestureId);
+        if (guardAck) return guardAck;
+        const ack = await this.raceWithTimeout(
+          performance,
+          performance.client.applyChannelValues(entries, isExecutionCurrent),
+        );
+        const postGuardAck = this.checkActiveExecution(performance, expectedGeneration, gestureId);
+        return postGuardAck ?? ack;
+      }
+      for (let offset = 0; offset < entries.length; offset += MAX_BATCH_CHANNELS) {
+        const guardAck = this.checkActiveExecution(performance, expectedGeneration, gestureId);
+        if (guardAck) return guardAck;
+        const chunk = entries.slice(offset, offset + MAX_BATCH_CHANNELS);
+        const ack =
+          chunk.length === 1
+            ? await this.applyWithTimeout(performance, chunk[0]!)
+            : await this.raceWithTimeout(
+                performance,
+                performance.client.applyChannelValues(chunk, isExecutionCurrent),
+              );
+        const postGuardAck = this.checkActiveExecution(performance, expectedGeneration, gestureId);
+        if (postGuardAck) return postGuardAck;
+        if (ack.status === 'rejected') return ack;
+      }
+      return { status: 'applied' };
+    }
+    for (const op of entries) {
+      const guardAck = this.checkActiveExecution(performance, expectedGeneration, gestureId);
+      if (guardAck) return guardAck;
+      const ack = await this.applyWithTimeout(performance, op);
+      if (ack.status === 'rejected') return ack;
+    }
+    return { status: 'applied' };
   }
 
   private settle(

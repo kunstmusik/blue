@@ -3,6 +3,7 @@ import type { ProjectDocumentPatch } from '../shared/project-editor/contract';
 import type { ProjectRuntimeOutcome } from '../shared/project-history';
 import {
   ProjectRuntimeReconciliation,
+  applyRuntimeChannelValuesBatch,
   classifyPatchesRuntimeCapability,
   classifyPatchRuntimeCapability,
   type AcknowledgedRuntimeClient,
@@ -1883,5 +1884,405 @@ describe('Generation-scoped fencing (T017)', () => {
     expect(newBlueLive.applied).toHaveLength(1);
     expect((newTimeline.applied[0] as { value?: number }).value).toBe(0.8);
     expect((newBlueLive.applied[0] as { value?: number }).value).toBe(0.8);
+  });
+
+  it('batches contiguous channel-value operations via applyChannelValues when supported', async () => {
+    const batchCalls: Array<Array<{ channel: string; value: number }>> = [];
+    const singleCalls: Array<{ channel: string; value: number }> = [];
+    const client = makeClient({
+      applyOperation: async (operation) => {
+        if (operation.kind === 'channel-value') {
+          singleCalls.push({ channel: operation.channel, value: operation.value });
+        }
+        return { status: 'applied' };
+      },
+      applyChannelValues: async (operations) => {
+        batchCalls.push(operations.map((op) => ({ channel: op.channel, value: op.value })));
+        return { status: 'applied' };
+      },
+    });
+
+    const reconciliation = new ProjectRuntimeReconciliation();
+    reconciliation.registerPerformance(
+      'timeline',
+      1,
+      client,
+      new Map([
+        ['c1::level', { kind: 'channel', channel: 'gk_c1_level' }],
+        ['c1::stereoPanMode', { kind: 'channel', channel: 'gk_c1_pan_mode' }],
+        ['c1::panWidth', { kind: 'channel', channel: 'gk_c1_pan_width' }],
+        ['c1::dualPanLeft', { kind: 'channel', channel: 'gk_c1_dual_left' }],
+        ['c1::dualPanRight', { kind: 'channel', channel: 'gk_c1_dual_right' }],
+      ]),
+    );
+
+    const outcomes = await reconciliation.reconcileCommit({
+      documentId: 'doc-batch',
+      revision: 1,
+      patches: [
+        {
+          mixer: {
+            type: 'updateChannel',
+            channelId: 'c1',
+            patch: {
+              level: -3,
+              stereoPanMode: 'stereoPan',
+              panWidth: 0.75,
+              dualPanLeft: 0.2,
+              dualPanRight: 0.8,
+            },
+          },
+        },
+      ],
+    });
+
+    expect(outcomes).toHaveLength(1);
+    expect(outcomes[0]?.status).toBe('applied');
+    expect(singleCalls).toHaveLength(0);
+    expect(batchCalls).toEqual([
+      [
+        { channel: 'gk_c1_level', value: -3 },
+        { channel: 'gk_c1_pan_mode', value: 1 },
+        { channel: 'gk_c1_pan_width', value: 0.75 },
+        { channel: 'gk_c1_dual_left', value: 0.2 },
+        { channel: 'gk_c1_dual_right', value: 0.8 },
+      ],
+    ]);
+
+    batchCalls.length = 0;
+    const previewAck = await reconciliation.previewChannelValues({
+      entries: [
+        { channel: 'gk_c1_pan_width', value: 0.5 },
+        { channel: 'gk_c1_dual_left', value: 0.25 },
+        { channel: 'gk_c1_pan_width', value: 0.6 },
+      ],
+    });
+    expect(previewAck).toEqual({ status: 'applied' });
+    expect(singleCalls).toHaveLength(0);
+    expect(batchCalls).toEqual([
+      [
+        { channel: 'gk_c1_dual_left', value: 0.25 },
+        { channel: 'gk_c1_pan_width', value: 0.6 },
+      ],
+    ]);
+  });
+
+  it('chunks channel-value batches exceeding 256 entries and catches preview timeouts cleanly', async () => {
+    const batchSizes: number[] = [];
+    const singleChannels: string[] = [];
+    let hangNextCall = false;
+    const reconciliation = new ProjectRuntimeReconciliation({ operationTimeoutMs: 25 });
+    const client = makeClient({
+      applyOperation: async (operation) => {
+        if (operation.kind === 'channel-value') singleChannels.push(operation.channel);
+        return { status: 'applied' as const };
+      },
+      applyChannelValues: async (operations) => {
+        if (hangNextCall) {
+          return new Promise<RuntimeOperationAck>(() => {});
+        }
+        batchSizes.push(operations.length);
+        return { status: 'applied' as const };
+      },
+    });
+    const bindings = new Map<string, RuntimeBinding>();
+    const entries: Array<{ ownerKey: string; parameterId: string; value: number }> = [];
+    for (let i = 0; i < 257; i += 1) {
+      const channel = `gk_bulk_${i}`;
+      bindings.set(`inst:1::p_${i}`, { kind: 'channel', channel });
+      entries.push({ ownerKey: 'inst:1', parameterId: `p_${i}`, value: i / 300 });
+    }
+    reconciliation.registerPerformance('timeline', 1, client, bindings);
+
+    const bulkAck = await reconciliation.previewChannelValues({ entries });
+    expect(bulkAck).toEqual({ status: 'applied' });
+    expect(batchSizes).toEqual([256]);
+    expect(singleChannels).toEqual(['gk_bulk_256']);
+
+    hangNextCall = true;
+    const timeoutAck = await reconciliation.previewChannelValues({
+      entries: [
+        { ownerKey: 'inst:1', parameterId: 'p_0', value: 0.1 },
+        { ownerKey: 'inst:1', parameterId: 'p_1', value: 0.2 },
+      ],
+    });
+    expect(timeoutAck).toEqual({
+      status: 'rejected',
+      message: 'No active performance accepted the preview',
+    });
+  });
+
+  it('halts multi-chunk channel batch dispatch when playback is stopped or replaced mid-batch', async () => {
+    let releaseFirstChunk!: (ack: RuntimeOperationAck) => void;
+    let markFirstChunkStarted!: () => void;
+    const firstChunkStarted = new Promise<void>((resolve) => {
+      markFirstChunkStarted = resolve;
+    });
+    const singleChannels: string[] = [];
+    const replacementSingleChannels: string[] = [];
+    const replacementBatchSizes: number[] = [];
+
+    const reconciliation = new ProjectRuntimeReconciliation();
+    const initialClient = makeClient({
+      applyOperation: async (operation) => {
+        if (operation.kind === 'channel-value') singleChannels.push(operation.channel);
+        return { status: 'applied' as const };
+      },
+      applyChannelValues: () => {
+        markFirstChunkStarted();
+        return new Promise<RuntimeOperationAck>((resolve) => {
+          releaseFirstChunk = resolve;
+        });
+      },
+    });
+    const replacementClient = makeClient({
+      applyOperation: async (operation) => {
+        if (operation.kind === 'channel-value') replacementSingleChannels.push(operation.channel);
+        return { status: 'applied' as const };
+      },
+      applyChannelValues: async (operations) => {
+        replacementBatchSizes.push(operations.length);
+        return { status: 'applied' as const };
+      },
+    });
+
+    const bindings = new Map<string, RuntimeBinding>();
+    const entries: Array<{ ownerKey: string; parameterId: string; value: number }> = [];
+    for (let i = 0; i < 257; i += 1) {
+      const channel = `gk_bulk_${i}`;
+      bindings.set(`inst:1::p_${i}`, { kind: 'channel', channel });
+      entries.push({ ownerKey: 'inst:1', parameterId: `p_${i}`, value: i / 300 });
+    }
+    reconciliation.registerPerformance('timeline', 1, initialClient, bindings);
+
+    const previewPromise = reconciliation.previewChannelValues({ entries });
+    await firstChunkStarted;
+
+    reconciliation.stopPerformance('timeline');
+    reconciliation.registerPerformance('timeline', 2, replacementClient, bindings);
+    releaseFirstChunk({ status: 'applied' });
+
+    const ack = await previewPromise;
+    expect(ack).toEqual({
+      status: 'rejected',
+      message: 'No active performance accepted the preview',
+    });
+    expect(singleChannels).toEqual([]);
+    expect(replacementSingleChannels).toEqual([]);
+    expect(replacementBatchSizes).toEqual([]);
+  });
+
+  it('preserves single-write fallback when batching is unsupported or fails atomic pre-validation', async () => {
+    const ops = [
+      {
+        kind: 'channel-value' as const,
+        ownerKey: 'c1',
+        parameterId: 'level',
+        channel: 'ch1',
+        value: 0.25,
+      },
+      {
+        kind: 'channel-value' as const,
+        ownerKey: 'c2',
+        parameterId: 'level',
+        channel: 'ch2',
+        value: 0.75,
+      },
+    ];
+
+    const unsupportedSingleWrites: Array<[string, number]> = [];
+    const unsupportedBatch = vi.fn();
+    expect(
+      await applyRuntimeChannelValuesBatch(ops, {
+        supportsBatchChannels: () => false,
+        setChannels: unsupportedBatch,
+        setChannel: async (channel, value) => {
+          unsupportedSingleWrites.push([channel, value]);
+          return { ok: true };
+        },
+      }),
+    ).toEqual({ status: 'applied' });
+    expect(unsupportedBatch).not.toHaveBeenCalled();
+    expect(unsupportedSingleWrites).toEqual([
+      ['ch1', 0.25],
+      ['ch2', 0.75],
+    ]);
+
+    const automatedFallbackWrites: Array<[string, number]> = [];
+    expect(
+      await applyRuntimeChannelValuesBatch(ops, {
+        supportsBatchChannels: () => true,
+        setChannels: async () => ({
+          ok: false,
+          message: 'Cannot set automated channel during playback: ch1',
+        }),
+        setChannel: async (channel, value) => {
+          automatedFallbackWrites.push([channel, value]);
+          return channel === 'ch1'
+            ? { ok: false, message: 'Cannot set automated channel during playback: ch1' }
+            : { ok: true };
+        },
+      }),
+    ).toEqual({ status: 'rejected', message: 'Cannot set automated channel during playback: ch1' });
+    expect(automatedFallbackWrites).toEqual([
+      ['ch1', 0.25],
+      ['ch2', 0.75],
+    ]);
+
+    const missingChannelWrites: Array<[string, number]> = [];
+    expect(
+      await applyRuntimeChannelValuesBatch(ops, {
+        supportsBatchChannels: () => true,
+        setChannels: async () => ({
+          ok: false,
+          message: 'Channel not found: ch1',
+        }),
+        setChannel: async (channel, value) => {
+          missingChannelWrites.push([channel, value]);
+          return channel === 'ch1'
+            ? { ok: false, message: 'Channel not found: ch1' }
+            : { ok: true };
+        },
+      }),
+    ).toEqual({ status: 'rejected', message: 'Channel not found: ch1' });
+    expect(missingChannelWrites).toEqual([
+      ['ch1', 0.25],
+      ['ch2', 0.75],
+    ]);
+
+    const transportFallback = vi.fn();
+    expect(
+      await applyRuntimeChannelValuesBatch(ops, {
+        supportsBatchChannels: () => true,
+        setChannels: async () => ({
+          ok: false,
+          message: 'Channel batch queue is full; retry at the next control boundary',
+        }),
+        setChannel: transportFallback,
+      }),
+    ).toEqual({
+      status: 'rejected',
+      message: 'Channel batch queue is full; retry at the next control boundary',
+    });
+    expect(transportFallback).not.toHaveBeenCalled();
+
+    const incompleteHandshakeFallback = vi.fn();
+    expect(
+      await applyRuntimeChannelValuesBatch(ops, {
+        supportsBatchChannels: () => true,
+        setChannels: async () => ({
+          ok: false,
+          message: 'Batch channels require a completed capability handshake',
+        }),
+        setChannel: incompleteHandshakeFallback,
+      }),
+    ).toEqual({
+      status: 'rejected',
+      message: 'Batch channels require a completed capability handshake',
+    });
+    expect(incompleteHandshakeFallback).not.toHaveBeenCalled();
+
+    let current = true;
+    const partialWrites: Array<[string, number]> = [];
+    expect(
+      await applyRuntimeChannelValuesBatch(ops, {
+        isCurrent: () => current,
+        supportsBatchChannels: () => false,
+        setChannels: vi.fn(),
+        setChannel: async (channel, value) => {
+          partialWrites.push([channel, value]);
+          current = false;
+          return { ok: true };
+        },
+      }),
+    ).toEqual({
+      status: 'rejected',
+      message: 'Performance is no longer active',
+    });
+    expect(partialWrites).toEqual([['ch1', 0.25]]);
+  });
+
+  it('skips individual fallback when a batch times out before rejecting with Channel not found', async () => {
+    let releaseBatch!: (result: { ok: boolean; message?: string }) => void;
+    const singleChannels: string[] = [];
+    const reconciliation = new ProjectRuntimeReconciliation({ operationTimeoutMs: 25 });
+    const client = makeClient({
+      applyChannelValues: (operations, isExecutionCurrent) =>
+        applyRuntimeChannelValuesBatch(operations, {
+          isCurrent: isExecutionCurrent,
+          supportsBatchChannels: () => true,
+          setChannels: () =>
+            new Promise<{ ok: boolean; message?: string }>((resolve) => {
+              releaseBatch = resolve;
+            }),
+          setChannel: async (channel) => {
+            singleChannels.push(channel);
+            return { ok: true };
+          },
+        }),
+    });
+    reconciliation.registerPerformance('timeline', 1, client, new Map());
+
+    const timeoutAck = await reconciliation.previewChannelValues({
+      entries: [
+        { channel: 'ch1', value: 0.1 },
+        { channel: 'ch2', value: 0.2 },
+      ],
+    });
+    expect(timeoutAck).toEqual({
+      status: 'rejected',
+      message: 'No active performance accepted the preview',
+    });
+
+    releaseBatch({ ok: false, message: 'Channel not found: ch1' });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(singleChannels).toEqual([]);
+  });
+
+  it('halts individual fallback immediately when the preview gesture is closed mid-fallback', async () => {
+    let releaseFirstSingle!: () => void;
+    const singleChannels: string[] = [];
+    const reconciliation = new ProjectRuntimeReconciliation();
+    const client = makeClient({
+      applyChannelValues: (operations, isExecutionCurrent) =>
+        applyRuntimeChannelValuesBatch(operations, {
+          isCurrent: isExecutionCurrent,
+          supportsBatchChannels: () => true,
+          setChannels: async () => ({
+            ok: false,
+            message: 'Channel not found: ch1',
+          }),
+          setChannel: async (channel) => {
+            singleChannels.push(channel);
+            await new Promise<void>((resolve) => {
+              releaseFirstSingle = resolve;
+            });
+            return { ok: true };
+          },
+        }),
+    });
+    reconciliation.registerPerformance('timeline', 1, client, new Map());
+
+    const previewPromise = reconciliation.previewChannelValues({
+      entries: [
+        { channel: 'ch1', value: 0.1 },
+        { channel: 'ch2', value: 0.2 },
+      ],
+      gestureId: 'gesture-fallback-close',
+    });
+
+    await vi.waitFor(() => expect(singleChannels).toEqual(['ch1']));
+    const drainPromise = reconciliation.drainPreviews('gesture-fallback-close');
+    expect(reconciliation.isGestureClosed('gesture-fallback-close')).toBe(true);
+
+    releaseFirstSingle();
+    const ack = await previewPromise;
+    await drainPromise;
+    expect(ack).toEqual({
+      status: 'rejected',
+      message: 'No active performance accepted the preview',
+    });
+    expect(singleChannels).toEqual(['ch1']);
   });
 });
