@@ -3,10 +3,12 @@ import { BlueData, BlueSynthBuilder, BSBHSlider, GenericInstrument } from '@blue
 import {
   transferProjectEditorIdentities,
   getBsbGestureTargetId,
+  readGraphEditorMetadata,
 } from '../shared/project-editor/identity';
 import { transferHistoryNodeIds } from '../shared/project-editor/history-node-identity';
 import {
   captureProjectGraphDelta,
+  captureProjectGraphDeltaWithSnapshots,
   applyProjectGraphDelta,
   mergeProjectGraphDeltas,
   isNetZeroProjectGraphDelta,
@@ -333,4 +335,30 @@ it('rejects a frozen collection before writing any earlier field', () => {
   expect(() => applyProjectGraphDelta(before, delta, 'after')).toThrow('no longer writable');
   expect(before.title).toBe('before');
   expect(before.items).toEqual([1, 2]);
+});
+
+it('reuses shared empty graph metadata and compares metadata without JSON.stringify', () => {
+  const plainA = {};
+  const plainB = {};
+  const metaA = readGraphEditorMetadata(plainA);
+  const metaB = readGraphEditorMetadata(plainB);
+  expect(metaA).toBe(metaB);
+  expect(metaA.ids).toBe(metaB.ids);
+
+  const before = { item: { value: 1 } };
+  const after = copy(before);
+  after.item.value = 2;
+
+  const stringifySpy = vi.spyOn(JSON, 'stringify');
+  try {
+    const { delta, beforeSnapshot } = captureProjectGraphDeltaWithSnapshots(before, after);
+    expect(stringifySpy).not.toHaveBeenCalled();
+    applyProjectGraphDelta(before, delta, 'after', beforeSnapshot);
+    expect(before.item.value).toBe(2);
+    applyProjectGraphDelta(before, delta, 'before');
+    expect(before.item.value).toBe(1);
+    expect(stringifySpy).not.toHaveBeenCalled();
+  } finally {
+    stringifySpy.mockRestore();
+  }
 });

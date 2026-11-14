@@ -512,4 +512,201 @@ describe('Track instrument editor window page', () => {
     act(() => root.unmount());
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['stale snapshot', 'null snapshot', 'removed Track', 'missed publication'] as const)(
+    'settles a pending initial load after a newer publication with a %s',
+    async (scenario) => {
+      window.history.replaceState(
+        {},
+        '',
+        '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
+      );
+      const pending = deferred<TrackInstrumentEditorSnapshot | null>();
+      const initial = makeSnapshot();
+      const current = {
+        ...initial,
+        track: { ...initial.track, projectRevision: 4 },
+        instrument: { ...initial.instrument, name: 'Current Instrument' },
+      };
+      const getTrackInstrumentEditorDocument = vi
+        .fn()
+        .mockReturnValueOnce(pending.promise)
+        .mockResolvedValue(current);
+      let publish!: (event: unknown) => void;
+      window.blueAPI = {
+        getTrackInstrumentEditorDocument,
+        onProjectDocumentUpdated: vi.fn((callback) => {
+          publish = callback;
+          return () => undefined;
+        }),
+      } as never;
+
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const root = createRoot(container);
+      try {
+        await act(async () => root.render(<TrackInstrumentEditorPage />));
+        expect(getTrackInstrumentEditorDocument).toHaveBeenCalledTimes(1);
+        await act(async () => {
+          if (scenario === 'missed publication') {
+            pending.resolve(current);
+          } else {
+            publish({
+              sessionId: 2,
+              documentId: 'doc-1',
+              revision: 4,
+              dirty: true,
+              snapshot: scenario === 'removed Track' ? { score: { layerGroups: [] } } : undefined,
+            });
+            pending.resolve(scenario === 'null snapshot' ? null : initial);
+          }
+        });
+        const editor = container.querySelector('[data-testid="instrument-editor"]');
+        if (scenario === 'removed Track') {
+          expect(getTrackInstrumentEditorDocument).toHaveBeenCalledTimes(1);
+          expect(editor).toBeNull();
+          expect(container.textContent).toContain('The Track instrument is no longer available.');
+        } else if (scenario === 'missed publication') {
+          expect(getTrackInstrumentEditorDocument).toHaveBeenCalledTimes(1);
+          expect(editor?.textContent).toBe('Current Instrument');
+        } else {
+          expect(getTrackInstrumentEditorDocument).toHaveBeenCalledTimes(2);
+          expect(getTrackInstrumentEditorDocument).toHaveBeenLastCalledWith({
+            track: { ...initial.track, projectRevision: 4 },
+          });
+          expect(editor?.textContent).toBe('Current Instrument');
+        }
+      } finally {
+        act(() => root.unmount());
+      }
+    },
+  );
+
+  it('retains loaded instrument and advances revision when checkpoints or unrelated updates omit score', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/track-instrument-editor.html?rootGroupId=editor-group&trackId=editor-track&projectSessionId=2&projectRevision=3',
+    );
+    let updatedCallback:
+      | ((event: {
+          sessionId: number;
+          documentId: string;
+          revision: number;
+          dirty: boolean;
+          publicationKind?: 'full' | 'patch' | 'checkpoint';
+          snapshot?: Record<string, unknown>;
+        }) => void)
+      | undefined;
+    const updateTrackInstrumentEditorDocument = vi.fn().mockResolvedValue({
+      status: 'applied',
+      snapshot: {
+        ...makeSnapshot(),
+        track: {
+          ...makeSnapshot().track,
+          projectRevision: 6,
+        },
+      },
+    } satisfies TrackInstrumentEditorPatchResult);
+
+    window.blueAPI = {
+      getTrackInstrumentEditorDocument: vi.fn().mockResolvedValue(makeSnapshot()),
+      updateTrackInstrumentEditorDocument,
+      onProjectDocumentUpdated: vi.fn((callback) => {
+        updatedCallback = callback as typeof updatedCallback;
+        return () => undefined;
+      }),
+      sendBsbRealtimeControlUpdate: vi.fn(),
+    } as never;
+
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<TrackInstrumentEditorPage />);
+      await Promise.resolve();
+    });
+
+    expect(container.querySelector('[data-testid="instrument-editor"]')?.textContent).toBe(
+      'Initial Instrument',
+    );
+
+    await act(async () => {
+      updatedCallback?.({
+        sessionId: 2,
+        documentId: 'doc-1',
+        revision: 4,
+        dirty: false,
+        publicationKind: 'checkpoint',
+        snapshot: {
+          sessionId: 2,
+          documentId: 'doc-1',
+          filePath: '/test.blue',
+          loaded: true,
+          dirty: false,
+        },
+      });
+    });
+
+    expect(container.querySelector('[data-testid="instrument-editor"]')?.textContent).toBe(
+      'Initial Instrument',
+    );
+    expect(container.textContent).not.toContain('no longer available');
+
+    await act(async () => {
+      updatedCallback?.({
+        sessionId: 2,
+        documentId: 'doc-1',
+        revision: 5,
+        dirty: true,
+        publicationKind: 'patch',
+        snapshot: {
+          sessionId: 2,
+          documentId: 'doc-1',
+          filePath: '/test.blue',
+          loaded: true,
+          dirty: true,
+          globalOrc: 'gaout init 0',
+        },
+      });
+    });
+
+    expect(container.querySelector('[data-testid="instrument-editor"]')?.textContent).toBe(
+      'Initial Instrument',
+    );
+    expect(container.textContent).not.toContain('no longer available');
+
+    await act(async () => {
+      (container.querySelector('[data-testid="instrument-editor"]') as HTMLButtonElement).click();
+      await Promise.resolve();
+    });
+
+    expect(updateTrackInstrumentEditorDocument).toHaveBeenCalledWith(
+      expect.objectContaining({
+        track: expect.objectContaining({ projectRevision: 5 }),
+      }),
+    );
+
+    await act(async () => {
+      updatedCallback?.({
+        sessionId: 2,
+        documentId: 'doc-1',
+        revision: 7,
+        dirty: true,
+        publicationKind: 'patch',
+        snapshot: {
+          sessionId: 2,
+          documentId: 'doc-1',
+          filePath: '/test.blue',
+          loaded: true,
+          dirty: true,
+          score: { layerGroups: [] },
+        },
+      });
+    });
+
+    expect(container.textContent).toContain('The Track instrument is no longer available.');
+
+    act(() => root.unmount());
+  });
 });

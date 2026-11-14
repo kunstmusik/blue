@@ -236,7 +236,7 @@ export function broadcastProjectDocumentUpdateToTrackInstrumentWindows(
       const scopedEvent = {
         ...event,
         snapshot: {
-          projectUdos: snapshot.projectUdos ?? [],
+          ...(snapshot.projectUdos !== undefined ? { projectUdos: snapshot.projectUdos } : {}),
           score: {
             layerGroups:
               matchingGroup && matchingLayer ? [{ ...matchingGroup, layers: [matchingLayer] }] : [],

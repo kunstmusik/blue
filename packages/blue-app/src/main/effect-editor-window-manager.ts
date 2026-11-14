@@ -289,9 +289,10 @@ export function broadcastProjectDocumentUpdateToEffectWindows(
       'blueLive' in snapshot)
       ? ({
           ...event,
-          snapshot: {
-            projectUdos: snapshot.projectUdos ?? [],
-          },
+          snapshot:
+            snapshot.projectUdos !== undefined
+              ? { projectUdos: snapshot.projectUdos }
+              : { loaded: true },
         } as unknown as ProjectDocumentUpdatedEvent)
       : event;
   for (const [key, state] of effectEditorWindows.entries()) {

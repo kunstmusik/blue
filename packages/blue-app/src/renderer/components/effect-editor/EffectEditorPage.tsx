@@ -230,8 +230,10 @@ export default function EffectEditorPage(): React.ReactElement {
       } else {
         historyClient.setRevision(event.revision);
       }
-      if (event.snapshot) {
+      if (event.snapshot?.projectUdos !== undefined) {
         setLiveProjectUdos(event.snapshot.projectUdos);
+      } else if (event.documentId && event.documentId !== currentDocumentId) {
+        setLiveProjectUdos(null);
       }
       // Refresh the actually edited effect after a canonical publication so
       // undo/redo from any window is visible here. A deleted effect marks the
@@ -264,7 +266,7 @@ export default function EffectEditorPage(): React.ReactElement {
 
   const snapshotWithLiveUdos = useMemo<EffectEditorSnapshot | null>(() => {
     if (!snapshot) return null;
-    if (!isProjectEffect || liveProjectUdos === null) return snapshot;
+    if (!isProjectEffect || liveProjectUdos == null) return snapshot;
     return { ...snapshot, projectUdos: liveProjectUdos };
   }, [snapshot, isProjectEffect, liveProjectUdos]);
 

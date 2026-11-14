@@ -1,12 +1,18 @@
 import {
+  applyProjectGraphDelta,
   applyTextChange,
-  captureProjectGraphDelta,
+  captureProjectGraphDeltaWithSnapshots,
   isNetZeroProjectGraphDelta,
+  type GraphSnapshot,
   type ProjectGraphDelta,
   type TextChange,
 } from './project-history-graph';
 import { isRejectedMixerChannelUpdate } from '../shared/project-editor/patch-mixer-bluelive';
-import { prepareBsbTransaction, type PreparedBsbTransaction } from './project-history-bsb';
+import {
+  prepareBsbTransaction,
+  prepareIsolatedOwnerStructureTransaction,
+  type PreparedBsbTransaction,
+} from './project-history-bsb';
 import {
   BlueData,
   Channel,
@@ -76,6 +82,10 @@ export interface PreparedStructuralTransaction {
   readonly kind: 'structure';
   readonly candidate: BlueData;
   readonly delta: ProjectGraphDelta;
+  readonly beforeSnapshot?: GraphSnapshot;
+  readonly afterSnapshot?: GraphSnapshot;
+  readonly apply?: () => void;
+  readonly getGroupingEndpointSnapshot?: () => GraphSnapshot;
   readonly changed: boolean;
   readonly patchChanged?: readonly boolean[];
   readonly patchAccepted?: readonly boolean[];
@@ -825,6 +835,29 @@ export function prepareTransaction(
     try {
       const compact = prepareBsbTransaction(data, patches, options?.context);
       if (compact) return { status: 'prepared', transaction: compact };
+      const isolated = prepareIsolatedOwnerStructureTransaction(data, patches, options?.context);
+      if (isolated) {
+        let materializedCandidate: BlueData | undefined;
+        const tx: PreparedStructuralTransaction = {
+          kind: 'structure',
+          get candidate(): BlueData {
+            if (!materializedCandidate) {
+              const copy = data.historyCopy();
+              transferProjectEditorIdentities(data, copy);
+              applyProjectGraphDelta(copy, isolated.delta, 'after');
+              materializedCandidate = copy;
+            }
+            return materializedCandidate;
+          },
+          delta: isolated.delta,
+          apply: isolated.apply,
+          getGroupingEndpointSnapshot: isolated.getGroupingEndpointSnapshot,
+          changed: isolated.patchChanged.some(Boolean) && isolated.changed,
+          patchChanged: isolated.patchChanged,
+          patchAccepted: isolated.patchAccepted,
+        };
+        return { status: 'prepared', transaction: tx };
+      }
     } catch (err) {
       return { status: 'invalid', reason: err instanceof Error ? err.message : String(err) };
     }
@@ -853,13 +886,18 @@ export function prepareTransaction(
     };
   }
 
-  const delta = captureProjectGraphDelta(data, candidate);
+  const { delta, beforeSnapshot, afterSnapshot } = captureProjectGraphDeltaWithSnapshots(
+    data,
+    candidate,
+  );
   return {
     status: 'prepared',
     transaction: {
       kind: 'structure',
       delta,
       candidate,
+      beforeSnapshot,
+      afterSnapshot,
       changed: changed && !isNetZeroProjectGraphDelta(delta),
       patchChanged,
       patchAccepted,

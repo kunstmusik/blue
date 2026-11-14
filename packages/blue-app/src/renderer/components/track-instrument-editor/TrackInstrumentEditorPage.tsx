@@ -117,6 +117,14 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
   }, []);
 
   const acceptSnapshot = useCallback((next: TrackInstrumentEditorSnapshot) => {
+    const current = requestRef.current;
+    if (
+      current &&
+      current.track.projectSessionId === next.track.projectSessionId &&
+      current.track.projectRevision > next.track.projectRevision
+    ) {
+      return;
+    }
     const nextEditorIdentity = [
       next.track.projectSessionId,
       next.track.rootGroupId,
@@ -128,18 +136,17 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
       editorIdentityRef.current = nextEditorIdentity;
       setEditorUsable(false);
     }
-    const current = requestRef.current;
-    if (
-      current &&
-      current.track.projectSessionId === next.track.projectSessionId &&
-      current.track.projectRevision > next.track.projectRevision
-    ) {
-      return;
-    }
     requestRef.current = { track: next.track };
     historyRef.current?.setRevision(next.track.projectRevision);
     if (!mountedRef.current) return;
-    setSnapshot(next);
+    setSnapshot((prev) =>
+      next.projectUdos === undefined &&
+      prev &&
+      prev.track.projectSessionId === next.track.projectSessionId &&
+      prev.projectUdos !== undefined
+        ? { ...next, projectUdos: prev.projectUdos }
+        : next,
+    );
     setError(null);
     document.title = `${next.instrument.name || 'Track Instrument'} - Track Instrument Editor`;
   }, []);
@@ -206,34 +213,91 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
 
   useEffect(() => {
     if (!parsedRequest) return;
-    let cancelled = false;
-    void window.blueAPI.getTrackInstrumentEditorDocument(parsedRequest).then((loaded) => {
-      if (cancelled) return;
-      if (!loaded) {
-        setError('The Track instrument is no longer available.');
-        return;
-      }
-      acceptSnapshot(loaded);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [acceptSnapshot, parsedRequest]);
-
-  useEffect(() => {
-    if (!parsedRequest) return;
     const historyClient = historyRef.current;
-    return window.blueAPI.onProjectDocumentUpdated((event) => {
+    let cancelled = false;
+    let loading = false;
+    // A score publication owns the instrument outcome, including removal.
+    let instrumentResolved = false;
+    const loadInstrument = async () => {
+      if (loading || instrumentResolved) return;
+      loading = true;
+      try {
+        while (!cancelled && !instrumentResolved) {
+          const request = requestRef.current ?? parsedRequest;
+          const loaded = await window.blueAPI.getTrackInstrumentEditorDocument(request);
+          if (cancelled || instrumentResolved) return;
+
+          const revision =
+            requestRef.current?.track.projectRevision ?? request.track.projectRevision;
+          if ((loaded?.track.projectRevision ?? request.track.projectRevision) < revision) {
+            if (request.track.projectRevision < revision) continue;
+            setError('Unable to load the Track instrument.');
+            return;
+          }
+          if (loaded) {
+            instrumentResolved = true;
+            acceptSnapshot(loaded);
+          } else {
+            setError('The Track instrument is no longer available.');
+          }
+          return;
+        }
+      } catch {
+        if (!cancelled && !instrumentResolved) {
+          setError('Unable to load the Track instrument.');
+        }
+      } finally {
+        loading = false;
+      }
+    };
+
+    const unsubscribe = window.blueAPI.onProjectDocumentUpdated((event) => {
+      const currentRequest = requestRef.current ?? parsedRequest;
+      const currentDocumentId = historyClient?.getDocumentIdentity();
+      if (currentDocumentId && event.documentId && event.documentId !== currentDocumentId) return;
+      const isNewDocument = Boolean(event.documentId && event.documentId !== currentDocumentId);
+      if (!isNewDocument && event.revision < currentRequest.track.projectRevision) return;
       if (historyClient) {
-        const currentDocumentId = historyClient.getDocumentIdentity();
-        if (currentDocumentId && event.documentId && event.documentId !== currentDocumentId) return;
         if (event.documentId) {
           historyClient.setDocumentIdentity(event.documentId, event.revision);
         } else {
           historyClient.setRevision(event.revision);
         }
       }
-      const currentRequest = requestRef.current ?? parsedRequest;
+      if (event.sessionId !== currentRequest.track.projectSessionId) {
+        instrumentResolved = true;
+        setError('The Track instrument is no longer available.');
+        return;
+      }
+      if (!event.snapshot || event.snapshot.score === undefined) {
+        // Scoped publications and save checkpoints that omit score do not indicate
+        // Track removal; retain the loaded instrument and advance revision/UDOs.
+        if (event.revision >= currentRequest.track.projectRevision) {
+          const nextTrack = {
+            ...currentRequest.track,
+            projectSessionId: event.sessionId,
+            projectRevision: event.revision,
+          };
+          requestRef.current = { track: nextTrack };
+          historyClient?.setRevision(event.revision);
+          if (mountedRef.current) {
+            setSnapshot((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    track: nextTrack,
+                    ...(event.snapshot?.projectUdos !== undefined
+                      ? { projectUdos: event.snapshot.projectUdos }
+                      : {}),
+                  }
+                : prev,
+            );
+          }
+          if (event.revision > currentRequest.track.projectRevision) void loadInstrument();
+        }
+        return;
+      }
+      instrumentResolved = true;
       const next = projectSnapshotToTrackInstrument(currentRequest, event);
       if (!next) {
         setError('The Track instrument is no longer available.');
@@ -241,6 +305,11 @@ export default function TrackInstrumentEditorPage(): React.ReactElement {
       }
       acceptSnapshot(next);
     });
+    void loadInstrument();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [acceptSnapshot, parsedRequest]);
 
   const persistPatch = useCallback(

@@ -2,8 +2,13 @@ import type {
   ProjectDocumentCommitReceipt,
   ProjectDocumentPatch,
   ProjectEditorSnapshot,
+  ProjectLoadedPayload,
   ScorePatch,
 } from '../../../shared/project-editor';
+import {
+  changesBsbAutomationProperties,
+  changesScoreTimeContext,
+} from '../../../shared/project-editor/patch-score-dependencies';
 import type {
   PrepareHistoryBoundaryAck,
   PrepareHistoryBoundaryEvent,
@@ -59,7 +64,7 @@ export interface ProjectPatchQueueDependencies {
   ): Promise<ProjectDocumentCommitReceipt>;
   fetchCanonicalSnapshot(): Promise<ProjectEditorSnapshot | null>;
   applyCanonicalSnapshot(
-    snapshot: ProjectEditorSnapshot,
+    snapshot: ProjectLoadedPayload,
     preserveDirty: boolean,
     pendingPatches?: readonly ProjectPatchQueuePendingPatch[],
   ): void;
@@ -397,6 +402,7 @@ export function createProjectPatchQueue(
   let boundaryPreparation: PendingTransaction | null = null;
   let submissionGeneration = 0;
   let inFlightTransaction: PendingTransaction | null = null;
+  let deferredScoreRefresh: 'score' | 'timeContext' | null = null;
   // Operation ids this queue submitted (in flight or recently acknowledged),
   // used to suppress echoes of our own operations in canonical publications.
   const trackedOperationIds = new Set<string>();
@@ -465,6 +471,48 @@ export function createProjectPatchQueue(
       dependencies.applyCanonicalSnapshot(snapshot, true, pendingPatches);
     } else {
       dependencies.applyCanonicalSnapshot(snapshot, true);
+    }
+  };
+
+  const noteDerivedScoreChanges = (patches: readonly ProjectDocumentPatch[]): void => {
+    if (patches.some((patch) => changesScoreTimeContext(patch.transport))) {
+      deferredScoreRefresh = 'timeContext';
+    } else if (
+      deferredScoreRefresh === null &&
+      patches.some(
+        ({ orchestra }) =>
+          orchestra?.type === 'updateInstrument' &&
+          changesBsbAutomationProperties(orchestra.patch.bsbInterface),
+      )
+    ) {
+      deferredScoreRefresh = 'score';
+    }
+  };
+
+  // Wait for optimistic drafts to settle before replacing derived sections.
+  // A new draft arriving during the read leaves the refresh for the next drain.
+  const refreshDerivedScore = async (isActive: () => boolean): Promise<void> => {
+    while (deferredScoreRefresh && pending.length === 0 && isActive()) {
+      const section = deferredScoreRefresh;
+      const revision = currentRevision;
+      try {
+        const snapshot = await dependencies.fetchCanonicalSnapshot();
+        if (!isActive() || pending.length > 0) return;
+        if (revision !== currentRevision) continue;
+        deferredScoreRefresh = null;
+        if (snapshot?.sessionId === currentSessionId) {
+          dependencies.applyCanonicalSnapshot(
+            {
+              score: snapshot.score,
+              ...(section === 'timeContext' ? { blueLive: snapshot.blueLive } : {}),
+            },
+            true,
+          );
+        }
+      } catch (error) {
+        if (isActive()) dependencies.logRefreshError(error);
+        return;
+      }
     }
   };
 
@@ -776,6 +824,7 @@ export function createProjectPatchQueue(
         throw new Error(message);
       }
 
+      noteDerivedScoreChanges(patches);
       if (receiptRequiresCanonicalProjectRefresh(patches, receipt)) {
         try {
           const snapshot = await dependencies.fetchCanonicalSnapshot();
@@ -808,9 +857,12 @@ export function createProjectPatchQueue(
 
   const start = (): Promise<void> => {
     if (inFlight) return inFlight;
-    inFlight = drain().finally(() => {
-      inFlight = null;
-    });
+    const generation = submissionGeneration;
+    inFlight = drain()
+      .then(() => refreshDerivedScore(() => generation === submissionGeneration))
+      .finally(() => {
+        inFlight = null;
+      });
     return inFlight;
   };
 
@@ -829,7 +881,8 @@ export function createProjectPatchQueue(
       );
     }
     clearTimer();
-    while (inFlight || pending.length > 0) {
+    if (deferredScoreRefresh && !inFlight && pending.length === 0) await start();
+    while (!boundary && (inFlight || pending.length > 0)) {
       await (inFlight ?? start());
     }
   };
@@ -938,6 +991,7 @@ export function createProjectPatchQueue(
               : 'Track instrument change was not applied; the project may have changed. Please try again.';
             throw new Error(message);
           }
+          noteDerivedScoreChanges(patches);
           if (patchesRequireCanonicalProjectRefresh(patches)) {
             try {
               const snapshot = await dependencies.fetchCanonicalSnapshot();
@@ -977,6 +1031,8 @@ export function createProjectPatchQueue(
       }
       if (!isActive()) return;
       boundaryPendingTransactions = [];
+      await refreshDerivedScore(isActive);
+      if (!isActive()) return;
 
       const unresolvedPrefixCount = countPendingPatches([...blockedTransactions, ...pending]);
       const boundaryDrained = drained && unresolvedPrefixCount === 0;
@@ -1013,7 +1069,7 @@ export function createProjectPatchQueue(
     boundaryPendingTransactions = [];
     boundary = null;
     boundaryDrain = null;
-    if (pending.length > 0) {
+    if (pending.length > 0 || deferredScoreRefresh) {
       // Drafts accumulated during the pause resume through the normal flush
       // timer so main revalidates them against the released revision base.
       schedule();
@@ -1064,6 +1120,7 @@ export function createProjectPatchQueue(
       clearBoundary();
       boundaryPendingTransactions = [];
       inFlightTransaction = null;
+      deferredScoreRefresh = null;
       pending = [];
       blockedTransactions = [];
       publishConflicts();
@@ -1090,6 +1147,7 @@ export function createProjectPatchQueue(
         clearBoundary();
         boundaryPendingTransactions = [];
         inFlightTransaction = null;
+        deferredScoreRefresh = null;
         pending = [];
         blockedTransactions = [];
         publishConflicts();
@@ -1136,6 +1194,7 @@ export function createProjectPatchQueue(
       publishConflicts();
       boundaryPendingTransactions = [];
       inFlightTransaction = null;
+      deferredScoreRefresh = null;
       dirtyBaseline = null;
       sequenceChanged = false;
     },

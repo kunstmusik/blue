@@ -1,6 +1,7 @@
 import { compactHistoryRuntimePatches } from './project-history-runtime-patches';
 import {
   captureProjectGraphDelta,
+  captureProjectGraphDeltaWithSnapshots,
   applyProjectGraphDelta,
   applyTextChange,
   createTextChange,
@@ -68,6 +69,10 @@ import type {
   ProjectDocumentPatch,
 } from '../shared/project-editor/contract';
 import {
+  changesBsbAutomationCatalog,
+  changesScoreTimeContext,
+} from '../shared/project-editor/patch-score-dependencies';
+import {
   getKnownMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   getMarkerSnapshotIds,
@@ -126,7 +131,13 @@ function collectChangedTargets(patches: readonly ProjectDocumentPatch[]): string
     if (patch.scratchPad !== undefined) targets.add('text:scratchPad');
     if (patch.clojureProject !== undefined) targets.add('clojureProject');
     if (patch.projectProperties !== undefined) targets.add('property:projectProperties');
-    if (patch.transport !== undefined) targets.add('transport');
+    if (patch.transport !== undefined) {
+      if (changesScoreTimeContext(patch.transport)) {
+        targets.add('transport:timeContext');
+      } else {
+        targets.add('transport');
+      }
+    }
     if (patch.projectUdo !== undefined) targets.add('udo');
     if (patch.midiInput !== undefined) targets.add('midiInput');
     if (patch.blueLive !== undefined) targets.add('blueLive');
@@ -134,16 +145,27 @@ function collectChangedTargets(patches: readonly ProjectDocumentPatch[]): string
       const m = patch.mixer;
       if (m.type === 'updateChannel') {
         targets.add(`mixerChannel:${m.channelId}`);
+        if (m.patch.name !== undefined) {
+          targets.add(`mixerChannelRename:${m.channelId}`);
+          targets.add('score');
+        }
+      } else if (m.type === 'renameChannelListGroup') {
+        targets.add('mixer');
+        targets.add('score');
+      } else if (m.type === 'updateSend') {
+        targets.add(`mixerChannel:${m.channelId}`);
       } else if (
         m.type === 'setMixerEnabled' ||
         m.type === 'setMeterEnabled' ||
         m.type === 'setMeterProfile' ||
+        m.type === 'updateMixerPanning' ||
+        m.type === 'updateMixerPanLaw' ||
+        m.type === 'updateMixerPanBoost' ||
         m.type === 'updateExtraRenderTime'
       ) {
         targets.add('mixerChannel:mixer');
       } else if (
         m.type === 'updateEffect' ||
-        m.type === 'updateSend' ||
         m.type === 'removeChainEntry' ||
         m.type === 'reorderChainEntry' ||
         m.type === 'duplicateChainEntry' ||
@@ -160,14 +182,18 @@ function collectChangedTargets(patches: readonly ProjectDocumentPatch[]): string
     }
     if (patch.orchestra !== undefined) {
       const o = patch.orchestra;
-      if (
-        (o.type === 'updateInstrument' ||
-          o.type === 'updateInstrumentComment' ||
-          o.type === 'replaceInstrument' ||
-          o.type === 'convertGenericToBsb') &&
-        'assignmentId' in o
-      ) {
+      if (o.type === 'updateInstrumentComment' && 'assignmentId' in o) {
         targets.add(`instrument:${o.assignmentId}`);
+      } else if (o.type === 'updateInstrument') {
+        if (
+          o.patch.name !== undefined ||
+          o.patch.enabled !== undefined ||
+          changesBsbAutomationCatalog(o.patch.bsbInterface)
+        ) {
+          targets.add('orchestra');
+        } else {
+          targets.add(`instrument:${o.assignmentId}`);
+        }
       } else {
         targets.add('orchestra');
       }
@@ -367,6 +393,7 @@ export interface ProjectHistorySnapshotCaptureContext {
   readonly reason: 'commit' | 'direct-structure' | 'undo' | 'redo' | 'rollback';
   readonly operationId?: string;
   readonly originContextId?: string;
+  readonly changedTargets?: readonly string[];
 }
 
 export interface ProjectHistoryDependencies {
@@ -1344,10 +1371,13 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
+    const rollbackTargets = entry?.changedTargets;
+
     const publishedSnapshot = this.capturePublishedSnapshot({
       reason: 'rollback',
       operationId: request.operationId,
       originContextId: request.origin?.contextId,
+      changedTargets: rollbackTargets,
     });
 
     const inversePatches =
@@ -2069,10 +2099,12 @@ export class ProjectHistory {
         const updatedSnap = this.session.read();
         const projection = this.read();
         const publishedIsDirty = this.isDirty();
+        const rollbackTargets = entry?.changedTargets;
         const publishedSnapshot = this.capturePublishedSnapshot({
           reason: 'rollback',
           operationId: request.operationId,
           originContextId: request.origin?.contextId,
+          changedTargets: rollbackTargets,
         });
 
         const inversePatches =
@@ -2342,7 +2374,8 @@ export class ProjectHistory {
     let candidateForwardPatches = initialForwardPatches;
     let candidateInversePatches = computedInverses;
     let adoptGraphIdentitiesFrom: BlueData | undefined;
-    let groupingAfterData = transaction.kind === 'structure' ? transaction.candidate : current.data;
+    let groupingAfterData =
+      transaction.kind === 'structure' && !transaction.apply ? transaction.candidate : current.data;
 
     if (canGroup) {
       const top = this.entries[this.cursor - 1]!;
@@ -2360,11 +2393,16 @@ export class ProjectHistory {
           delta: mergeProjectGraphDeltas(
             top.record.delta,
             historyRecord.delta,
-            transaction.kind === 'structure'
+            transaction.kind === 'structure' && !transaction.apply
               ? transaction.candidate
-              : transaction.kind === 'bsb'
+              : transaction.kind === 'bsb' || transaction.kind === 'structure'
                 ? () => bsbGroupingEndpoint(current.data!, transaction.delta)
                 : current.data,
+            transaction.kind === 'bsb'
+              ? transaction.getGroupingEndpointSnapshot
+              : transaction.kind === 'structure'
+                ? (transaction.getGroupingEndpointSnapshot ?? transaction.afterSnapshot)
+                : undefined,
           ),
         };
       } else {
@@ -2377,14 +2415,13 @@ export class ProjectHistory {
           rollbackScalarRecords(beforeMem, top.record.records);
         }
         const afterMem =
-          transaction.kind === 'structure'
-            ? transaction.candidate.historyCopy()
+          transaction.kind === 'structure' && !transaction.apply
+            ? transaction.candidate
             : current.data.historyCopy();
-        transferProjectEditorIdentities(
-          transaction.kind === 'structure' ? transaction.candidate : current.data,
-          afterMem,
-        );
-        if (transaction.kind === 'bsb')
+        if (transaction.kind !== 'structure' || transaction.apply) {
+          transferProjectEditorIdentities(current.data, afterMem);
+        }
+        if (transaction.kind === 'bsb' || (transaction.kind === 'structure' && transaction.apply))
           applyProjectGraphDelta(afterMem, transaction.delta, 'after');
         groupingAfterData = afterMem;
         adoptGraphIdentitiesFrom = afterMem;
@@ -2625,7 +2662,14 @@ export class ProjectHistory {
 
     // Apply change to ProjectSession
     if (transaction.kind === 'structure') {
-      applyProjectGraphDelta(current.data, transaction.delta, 'after');
+      if (transaction.apply) transaction.apply();
+      else
+        applyProjectGraphDelta(
+          current.data,
+          transaction.delta,
+          'after',
+          transaction.beforeSnapshot,
+        );
       this.session.recordMutation({ changed: true, stateId: nextStateId });
     } else {
       if (transaction.kind === 'bsb') transaction.apply();
@@ -2658,10 +2702,12 @@ export class ProjectHistory {
     const updatedSnap = this.session.read();
     const projection = this.read();
     const publishedIsDirty = this.isDirty();
+    const committedChangedTargets = this.entries[this.cursor - 1]?.changedTargets;
     const publishedSnapshot = this.capturePublishedSnapshot({
       reason: 'commit',
       operationId: request.operationId,
       originContextId: request.origin?.contextId,
+      changedTargets: committedChangedTargets,
     });
 
     const reconciliationPromise = this.reconciliation
@@ -2807,9 +2853,11 @@ export class ProjectHistory {
       };
     }
 
+    const { delta: directDelta, beforeSnapshot: directBeforeSnapshot } =
+      captureProjectGraphDeltaWithSnapshots(current.data, candidate);
     const historyRecord: HistoryRecord = {
       kind: 'structure',
-      delta: captureProjectGraphDelta(current.data, candidate),
+      delta: directDelta,
     };
     const estimatedBytes =
       estimateEntryBytes(historyRecord) +
@@ -2883,7 +2931,7 @@ export class ProjectHistory {
     this.cursor = this.entries.length;
     this.activeGroup = null;
 
-    applyProjectGraphDelta(current.data, historyRecord.delta, 'after');
+    applyProjectGraphDelta(current.data, historyRecord.delta, 'after', directBeforeSnapshot);
     this.session.recordMutation({ changed: true, stateId: nextStateId });
     this.enforceLimits();
 
@@ -3061,6 +3109,7 @@ export class ProjectHistory {
       reason: 'undo',
       operationId: request.operationId,
       originContextId: request.origin?.contextId,
+      changedTargets: entry.changedTargets,
     });
 
     const inversePatches =
@@ -3246,6 +3295,7 @@ export class ProjectHistory {
       reason: 'redo',
       operationId: request.operationId,
       originContextId: request.origin?.contextId,
+      changedTargets: entry.changedTargets,
     });
 
     let forwardPatches = entry.forwardPatches;

@@ -459,4 +459,79 @@ describe('EffectEditorPage', () => {
     act(() => root.unmount());
     container.remove();
   });
+
+  it('retains loaded projectUdos without crashing when checkpoints or scoped updates omit projectUdos', async () => {
+    const projectEffect = new Effect();
+    projectEffect.setName('Chorus');
+    const snapshot: EffectEditorSnapshot = {
+      ...createEffectEditorSnapshot(projectEffect, 'fx-2', 'project', {
+        projectRef: { channelId: 'ch-1', chain: 'pre', entryId: 'fx-2' },
+      }),
+      projectUdos: [
+        {
+          name: 'ProjectUDO',
+          style: 'CLASSIC',
+          outTypes: 'a',
+          inTypes: 'a',
+          inputArguments: '',
+          code: '',
+          comments: '',
+        },
+      ],
+    };
+    window.history.replaceState(
+      {},
+      '',
+      '/effect-editor.html?ownerType=project&effectId=fx-2&channelId=ch-1&chain=pre&entryId=fx-2',
+    );
+    window.blueAPI.getEffectEditorDocument = vi.fn().mockResolvedValue(snapshot);
+
+    const { container, root } = renderPage();
+    await act(async () => {
+      await flushFullEditorImport();
+    });
+
+    const codeTab = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Code',
+    ) as HTMLButtonElement | undefined;
+    await act(async () => {
+      codeTab?.click();
+      await Promise.resolve();
+    });
+
+    const initialEditor = container.querySelector(
+      '[data-selected-code-editor][data-aria-label="Effect code editor"]',
+    );
+    expect(initialEditor?.getAttribute('data-project-udo-names')).toBe('ProjectUDO');
+
+    // Checkpoint and scoped mixer update both omit projectUdos.
+    await act(async () => {
+      projectDocumentUpdatedListener?.({
+        sessionId: 1,
+        revision: 2,
+        publicationKind: 'checkpoint',
+        snapshot: {
+          loaded: true,
+        },
+      } as ProjectDocumentUpdatedEvent);
+      projectDocumentUpdatedListener?.({
+        sessionId: 1,
+        revision: 3,
+        publicationKind: 'patch',
+        snapshot: {
+          loaded: true,
+          mixer: { channels: [] },
+        },
+      } as ProjectDocumentUpdatedEvent);
+      await Promise.resolve();
+    });
+
+    const retainedEditor = container.querySelector(
+      '[data-selected-code-editor][data-aria-label="Effect code editor"]',
+    );
+    expect(retainedEditor?.getAttribute('data-project-udo-names')).toBe('ProjectUDO');
+
+    act(() => root.unmount());
+    container.remove();
+  });
 });

@@ -438,11 +438,21 @@ const GRAPH_EDITOR_ID_MAPS = [
   LIBRARY_REFERENCE_ID_MAP,
   CLOJURE_LIBRARY_ENTRY_ID_MAP,
 ] as const;
+const EMPTY_GRAPH_EDITOR_IDS = Object.freeze(GRAPH_EDITOR_ID_MAPS.map(() => undefined)) as Array<
+  string | undefined
+>;
+
 export interface GraphEditorMetadata {
   ids: Array<string | undefined>;
   markers?: string[];
   clojureEntries?: string[];
 }
+
+const EMPTY_GRAPH_EDITOR_METADATA: GraphEditorMetadata = Object.freeze({
+  ids: EMPTY_GRAPH_EDITOR_IDS,
+  markers: undefined,
+  clojureEntries: undefined,
+});
 
 export function readGraphEditorMetadata(value: object): GraphEditorMetadata {
   if (value instanceof BSBWidget) {
@@ -468,10 +478,25 @@ export function readGraphEditorMetadata(value: object): GraphEditorMetadata {
   if (value instanceof TempoPoint) getTempoPointSnapshotId(value);
   if (value instanceof MarkersList) getMarkerSnapshotIds(value);
   if (value instanceof ClojureLibraryEntry) assignClojureLibraryEntrySnapshotId(value);
+  let ids: Array<string | undefined> | undefined;
+  for (let i = 0; i < GRAPH_EDITOR_ID_MAPS.length; i += 1) {
+    const id = GRAPH_EDITOR_ID_MAPS[i]!.get(value);
+    if (id !== undefined) {
+      if (!ids) {
+        ids = new Array<string | undefined>(GRAPH_EDITOR_ID_MAPS.length).fill(undefined);
+      }
+      ids[i] = id;
+    }
+  }
+  const markers = MARKER_IDS.get(value)?.slice();
+  const clojureEntries = CLOJURE_PROJECT_ENTRY_IDS_MAP.get(value)?.slice();
+  if (!ids && !markers && !clojureEntries) {
+    return EMPTY_GRAPH_EDITOR_METADATA;
+  }
   return {
-    ids: GRAPH_EDITOR_ID_MAPS.map((map) => map.get(value)),
-    markers: MARKER_IDS.get(value)?.slice(),
-    clojureEntries: CLOJURE_PROJECT_ENTRY_IDS_MAP.get(value)?.slice(),
+    ids: ids ?? EMPTY_GRAPH_EDITOR_IDS,
+    markers,
+    clojureEntries,
   };
 }
 

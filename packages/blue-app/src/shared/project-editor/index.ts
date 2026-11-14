@@ -47,6 +47,9 @@ export {
   createScoreObjectEditorDocument,
   createFallbackEditorDocument,
   createProjectEditorSnapshot,
+  createScopedProjectEditorSnapshot,
+  resolveSnapshotSectionsForChangedTargets,
+  type ProjectEditorSnapshotSection,
 } from './snapshot-score';
 
 export {

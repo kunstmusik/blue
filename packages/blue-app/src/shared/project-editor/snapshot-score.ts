@@ -2255,6 +2255,183 @@ export function createFallbackEditorDocument(
   };
 }
 
+export type ProjectEditorSnapshotSection =
+  | 'globalOrc'
+  | 'globalSco'
+  | 'orchestra'
+  | 'mixer'
+  | 'projectProperties'
+  | 'clojureProject'
+  | 'transport'
+  | 'tablesText'
+  | 'scratchPad'
+  | 'projectUdos'
+  | 'blueLive'
+  | 'midiInput'
+  | 'score'
+  | 'namedChains';
+
+/**
+ * Maps canonical changedTargets hints to the snapshot sections they can affect.
+ * Returns null when targets are empty or contain an unrecognized hint so
+ * callers fall back safely to a full project snapshot.
+ */
+export function resolveSnapshotSectionsForChangedTargets(
+  changedTargets: readonly string[] | undefined,
+): ReadonlySet<ProjectEditorSnapshotSection> | null {
+  if (!changedTargets || changedTargets.length === 0) {
+    return null;
+  }
+  const sections = new Set<ProjectEditorSnapshotSection>();
+  for (const target of changedTargets) {
+    if (target === 'text:globalOrc') {
+      sections.add('globalOrc');
+    } else if (target === 'text:globalSco') {
+      sections.add('globalSco');
+    } else if (target === 'text:tablesText') {
+      sections.add('tablesText');
+    } else if (target === 'text:scratchPad') {
+      sections.add('scratchPad');
+    } else if (target === 'clojureProject') {
+      sections.add('clojureProject');
+    } else if (target === 'property:projectProperties') {
+      sections.add('projectProperties');
+    } else if (target === 'transport') {
+      sections.add('transport');
+    } else if (target === 'transport:timeContext') {
+      sections.add('transport');
+      sections.add('score');
+      sections.add('blueLive');
+    } else if (target === 'udo') {
+      sections.add('projectUdos');
+    } else if (target === 'midiInput') {
+      sections.add('midiInput');
+    } else if (target === 'blueLive') {
+      sections.add('blueLive');
+    } else if (target.startsWith('mixerChannel:')) {
+      sections.add('mixer');
+    } else if (
+      target === 'mixer' ||
+      target.startsWith('mixerChannelRename:') ||
+      target.startsWith('mixerEntry:')
+    ) {
+      sections.add('mixer');
+      sections.add('score');
+      sections.add('namedChains');
+      sections.add('projectUdos');
+    } else if (target === 'orchestra') {
+      sections.add('orchestra');
+      sections.add('mixer');
+      sections.add('projectUdos');
+      sections.add('score');
+    } else if (target.startsWith('instrument:')) {
+      sections.add('orchestra');
+      sections.add('mixer');
+      sections.add('projectUdos');
+    } else if (
+      target === 'score' ||
+      target.startsWith('scoreObject:') ||
+      target.startsWith('layer:') ||
+      target.startsWith('track:')
+    ) {
+      sections.add('score');
+      sections.add('mixer');
+      sections.add('namedChains');
+      sections.add('projectUdos');
+    } else {
+      return null;
+    }
+  }
+  return sections;
+}
+
+/**
+ * Builds only the snapshot sections affected by changedTargets, omitting
+ * unchanged sections so IPC publication and renderer store merge reuse existing
+ * section references intact. Falls back to createProjectEditorSnapshot when
+ * section scope cannot be determined safely.
+ */
+export function createScopedProjectEditorSnapshot(
+  data: BlueData,
+  filePath: string | null,
+  sessionId = 0,
+  documentId?: string,
+  changedTargets?: readonly string[],
+  options?: ProjectEditorSnapshotOptions,
+): Partial<ProjectEditorSnapshot> &
+  Pick<ProjectEditorSnapshot, 'filePath' | 'version' | 'sessionId' | 'documentId' | 'loaded'> {
+  const sections = resolveSnapshotSectionsForChangedTargets(changedTargets);
+  if (!sections) {
+    return createProjectEditorSnapshot(data, filePath, sessionId, documentId, options);
+  }
+  const includeSerializedXml = options?.includeSerializedXml ?? true;
+  const result: Partial<ProjectEditorSnapshot> &
+    Pick<ProjectEditorSnapshot, 'filePath' | 'version' | 'sessionId' | 'documentId' | 'loaded'> = {
+    filePath,
+    version: data.getVersion(),
+    sessionId,
+    documentId,
+    loaded: true,
+  };
+  if (sections.has('orchestra')) {
+    const orchestra = createOrchestraSnapshot(data);
+    reconcileMixerWithArrangement(data, orchestra);
+    result.orchestra = orchestra;
+  } else if (sections.has('score')) {
+    // Score track changes can add/remove channel list groups on the mixer.
+    reconcileMixerWithArrangement(data);
+  }
+  if (sections.has('globalOrc')) {
+    result.globalOrc = data.getGlobalOrcSco().getGlobalOrc();
+  }
+  if (sections.has('globalSco')) {
+    result.globalSco = data.getGlobalOrcSco().getGlobalSco();
+  }
+  if (sections.has('mixer')) {
+    result.mixer = {
+      ...createMixerSnapshot(data.getMixer(), data.getScore(), undefined, {
+        includeSerializedXml,
+      }),
+      legacyActiveChannelStateNotice: computeLegacyMixerStateNotice(data),
+    };
+  }
+  if (sections.has('projectProperties')) {
+    result.projectProperties = createProjectPropertiesSnapshot(data.getProjectProperties());
+  }
+  if (sections.has('clojureProject')) {
+    result.clojureProject = createClojureProjectSnapshot(data.getClojureProjectData(), data);
+  }
+  if (sections.has('transport')) {
+    result.transport = createToolbarProjectTransportSnapshot(data);
+  }
+  if (sections.has('tablesText')) {
+    result.tablesText = data.getTableSet().getTables();
+  }
+  if (sections.has('scratchPad')) {
+    result.scratchPad = createScratchPadSnapshot(data.getScratchPadData());
+  }
+  if (sections.has('projectUdos')) {
+    result.projectUdos = createProjectUdoListSnapshot(data);
+  }
+  if (sections.has('blueLive')) {
+    result.blueLive = createBlueLiveProjectSnapshot(
+      data.getLiveData(),
+      data.getScore().getTimeContext(),
+      { includeSerializedXml },
+    );
+  }
+  if (sections.has('midiInput')) {
+    result.midiInput = createMidiInputProcessorSnapshot(data.getMidiInputProcessor());
+  }
+  if (sections.has('score')) {
+    result.score = createScoreDocumentSnapshot(data, { includeSerializedXml });
+  }
+  if (sections.has('namedChains')) {
+    result.namedChains = { names: data.getNoteProcessorChainMap().getChainNames() };
+  }
+  return result;
+}
+
 export function createProjectEditorSnapshot(
   data: BlueData,
   filePath: string | null,

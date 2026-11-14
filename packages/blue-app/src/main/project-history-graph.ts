@@ -120,8 +120,25 @@ function sameField(a: Field | undefined, b: Field | undefined): boolean {
       a.set === b.set)
   );
 }
+function sameOptionalStringArrays(
+  a: readonly (string | undefined)[] | undefined,
+  b: readonly (string | undefined)[] | undefined,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 function sameMetadata(a: GraphEditorMetadata, b: GraphEditorMetadata): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  if (a === b) return true;
+  return (
+    sameOptionalStringArrays(a.ids, b.ids) &&
+    sameOptionalStringArrays(a.markers, b.markers) &&
+    sameOptionalStringArrays(a.clojureEntries, b.clojureEntries)
+  );
 }
 
 function textHash(value: string): string {
@@ -460,8 +477,22 @@ function alignReplacementNodes(
   after.objects = new Map([...after.objects].map(([id, value]) => [remapped.get(id) ?? id, value]));
 }
 
-/** Isolated deltas contain no live model instances or complete root snapshots. */
-export function captureProjectGraphDelta(before: object, after: object): ProjectGraphDelta {
+export type GraphSnapshot = ReturnType<typeof snapshot>;
+
+export interface CapturedProjectGraphDelta {
+  delta: ProjectGraphDelta;
+  beforeSnapshot: GraphSnapshot;
+  afterSnapshot: GraphSnapshot;
+}
+
+/**
+ * Captures a graph delta along with its transient before/after snapshots so a commit
+ * can reuse them immediately instead of re-walking the live project graph.
+ */
+export function captureProjectGraphDeltaWithSnapshots(
+  before: object,
+  after: object,
+): CapturedProjectGraphDelta {
   const oldSnapshot = snapshot(before),
     afterSnapshot = snapshot(after);
   alignReplacementNodes(oldSnapshot, afterSnapshot);
@@ -507,7 +538,16 @@ export function captureProjectGraphDelta(before: object, after: object): Project
       delta.metadata.push({ id, before: node.metadata, after: other.metadata });
   }
   for (const [id, node] of next) if (!old.has(id)) delta.afterNodes.push(node);
-  return pruneProjectGraphDelta(delta);
+  return {
+    delta: pruneProjectGraphDelta(delta),
+    beforeSnapshot: oldSnapshot,
+    afterSnapshot,
+  };
+}
+
+/** Isolated deltas contain no live model instances or complete root snapshots. */
+export function captureProjectGraphDelta(before: object, after: object): ProjectGraphDelta {
+  return captureProjectGraphDeltaWithSnapshots(before, after).delta;
 }
 
 function fieldRefs(field: Field | undefined): number[] {
@@ -564,14 +604,23 @@ export function mergeProjectGraphDeltas(
   before: ProjectGraphDelta,
   after: ProjectGraphDelta,
   finalRoot?: object | (() => object),
+  preCapturedAfterSnapshot?: GraphSnapshot | (() => GraphSnapshot),
 ): ProjectGraphDelta {
   if (before.rootId !== after.rootId) throw new Error('Cannot group different history graphs');
   const fieldMap = new Map<number, Map<PropertyKey, FieldChange>>();
   let finalObjects: Map<number, object> | undefined;
-  let finalSnapshot: ReturnType<typeof snapshot> | undefined;
-  const endpoint = (): ReturnType<typeof snapshot> => {
+  let finalSnapshot: GraphSnapshot | undefined;
+  const endpoint = (): GraphSnapshot => {
+    if (finalSnapshot) return finalSnapshot;
+    if (preCapturedAfterSnapshot) {
+      finalSnapshot =
+        typeof preCapturedAfterSnapshot === 'function'
+          ? preCapturedAfterSnapshot()
+          : preCapturedAfterSnapshot;
+      return finalSnapshot;
+    }
     if (!finalRoot) throw new Error('Grouped container edits require their detached endpoint');
-    return (finalSnapshot ??= snapshot(typeof finalRoot === 'function' ? finalRoot() : finalRoot));
+    return (finalSnapshot = snapshot(typeof finalRoot === 'function' ? finalRoot() : finalRoot));
   };
   for (const change of [...before.fields, ...after.fields]) {
     let fields = fieldMap.get(change.id);
@@ -581,27 +630,30 @@ export function mergeProjectGraphDeltas(
     }
     const prior = fields.get(change.key);
     if (prior && (prior.text || change.text)) {
-      if (!finalRoot) throw new Error('Grouped text edits require the final detached endpoint');
+      if (!finalRoot && !preCapturedAfterSnapshot)
+        throw new Error('Grouped text edits require the final detached endpoint');
       finalObjects ??= endpoint().objects;
-      const value = Object.getOwnPropertyDescriptor(
-        finalObjects.get(change.id)!,
-        change.key,
-      )?.value;
-      const intermediate = change.text
-        ? applyTextChange(value, change.text, 'before')
-        : change.before?.value;
-      const original = prior.text
-        ? applyTextChange(intermediate, prior.text, 'before')
-        : prior.before?.value;
-      fields.set(
-        change.key,
-        fieldChange(
-          change.id,
+      const finalTarget = finalObjects.get(change.id);
+      if (finalTarget && change.after !== undefined) {
+        const value = Object.getOwnPropertyDescriptor(finalTarget, change.key)?.value;
+        const intermediate = change.text
+          ? applyTextChange(value, change.text, 'before')
+          : change.before?.value;
+        const original = prior.text
+          ? applyTextChange(intermediate, prior.text, 'before')
+          : prior.before?.value;
+        fields.set(
           change.key,
-          { ...prior.before, value: original as Value },
-          { ...change.after, value: value as Value },
-        ),
-      );
+          fieldChange(
+            change.id,
+            change.key,
+            prior.before ? { ...prior.before, value: original as Value } : undefined,
+            { ...change.after, value: value as Value },
+          ),
+        );
+      } else {
+        fields.set(change.key, { ...change, before: prior.before });
+      }
     } else fields.set(change.key, prior ? { ...change, before: prior.before } : change);
   }
   const merge = <T extends { id: number; before?: unknown; after?: unknown }>(
@@ -619,7 +671,8 @@ export function mergeProjectGraphDeltas(
   for (const change of after.contents) {
     const prior = contentMap.get(change.id);
     if (prior && (prior.span || change.span)) {
-      if (!finalRoot) throw new Error('Grouped array edits require the final detached endpoint');
+      if (!finalRoot && !preCapturedAfterSnapshot)
+        throw new Error('Grouped array edits require the final detached endpoint');
       const final = endpoint().nodes.get(change.id)?.content;
       const intermediate = change.span
         ? applyArraySpan(final, change.span, 'before')
@@ -731,9 +784,10 @@ export function applyProjectGraphDelta(
   root: object,
   delta: ProjectGraphDelta,
   direction: 'before' | 'after',
+  preCapturedSnapshot?: GraphSnapshot,
 ): void {
   if (getHistoryNodeId(root) !== delta.rootId) throw new Error('History graph owner changed');
-  const { objects, nodes: liveNodes } = snapshot(root);
+  const { objects, nodes: liveNodes } = preCapturedSnapshot ?? snapshot(root);
   const nodes = direction === 'before' ? delta.beforeNodes : delta.afterNodes;
   const fresh = new Set<number>();
   for (const kind of ['ordinary', 'view'])

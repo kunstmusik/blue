@@ -318,6 +318,7 @@ import {
   applyProjectDocumentPatch,
   createBsbRealtimeControlUpdate,
   createProjectEditorSnapshot,
+  createScopedProjectEditorSnapshot,
   createEffectEditorSnapshot,
   createTrackInstrumentEditorSnapshot,
   createProjectUdoListSnapshot,
@@ -671,7 +672,28 @@ function captureSecondaryWindowPublishedSnapshot(
   };
 }
 
+let lastCapturedChangedTargets: readonly string[] | undefined;
+
+function isNonLibraryScalarTarget(target: string): boolean {
+  return (
+    target === 'transport' ||
+    target === 'transport:timeContext' ||
+    target === 'blueLive' ||
+    target === 'midiInput' ||
+    target === 'clojureProject' ||
+    target.startsWith('text:') ||
+    target.startsWith('property:') ||
+    target.startsWith('mixerChannel:')
+  );
+}
+
+function hasLibraryRelevantChangedTargets(targets: readonly string[] | undefined): boolean {
+  if (!targets || targets.length === 0) return true;
+  return targets.some((target) => !isNonLibraryScalarTarget(target));
+}
+
 function captureHistoryPublishedSnapshot(context: ProjectHistorySnapshotCaptureContext): unknown {
+  lastCapturedChangedTargets = context.changedTargets;
   if (!getCurrentData()) return null;
   if (context.reason === 'rollback' && context.operationId !== undefined) {
     // Rollback restores earlier values, so the originating renderer needs the canonical snapshot.
@@ -691,6 +713,18 @@ function captureHistoryPublishedSnapshot(context: ProjectHistorySnapshotCaptureC
     return captureSecondaryWindowPublishedSnapshot(hasEffectWindows, trackTargets);
   }
 
+  const data = getCurrentData();
+  if (!data) return null;
+  if (context.changedTargets && context.changedTargets.length > 0) {
+    return createScopedProjectEditorSnapshot(
+      data,
+      getCurrentFilePath(),
+      getCurrentProjectSessionId(),
+      getCurrentProjectSessionDocumentId(),
+      context.changedTargets,
+      { includeSerializedXml: false },
+    );
+  }
   return getCurrentProjectDocument();
 }
 
@@ -700,6 +734,8 @@ const projectHistory = createProjectHistory({
   reconciliation: projectRuntimeReconciliation,
   isParticipantActive: isHistorySenderActive,
   publishUpdated: async (event) => {
+    const changedTargets = lastCapturedChangedTargets;
+    lastCapturedChangedTargets = undefined;
     if (!getCurrentData()) {
       console.error('[project-history] Refusing to publish an event without an active project');
       return;
@@ -726,6 +762,9 @@ const projectHistory = createProjectHistory({
       broadcastProjectDocumentUpdateToEffectWindows(fullEvent as never);
       broadcastProjectDocumentUpdateToTrackInstrumentWindows(fullEvent as never);
     }
+    if (hasLibraryRelevantChangedTargets(changedTargets)) {
+      unifiedLibraryService?.publishProjectChanged();
+    }
     rebuildApplicationMenuIfChanged();
     updateWindowTitleIfChanged();
   },
@@ -745,9 +784,16 @@ const projectHistory = createProjectHistory({
  */
 function publishHistoryCheckpoint(): void {
   const current = projectSession.read();
-  if (!current.documentId) return;
-  const snapshot = getCurrentProjectDocument();
-  if (!snapshot) return;
+  if (!current.documentId || !current.data) return;
+  // Save checkpoints never alter document content or revision, so omit heavy
+  // unchanged sections and let renderers keep existing section references intact.
+  const snapshot = {
+    filePath: getCurrentFilePath(),
+    version: current.data.getVersion(),
+    sessionId: current.sessionId,
+    documentId: current.documentId,
+    loaded: true,
+  };
   const event: ProjectHistoryDocumentUpdatedEvent = {
     documentId: current.documentId,
     sessionId: current.sessionId,
@@ -6295,7 +6341,7 @@ ipcRegistration.handle(
   'get-track-instrument-editor-document',
   (_event, request: TrackInstrumentEditorRequest) => {
     if (!isTrackInstrumentEditorRequest(request)) return null;
-    return getTrackInstrumentEditorSnapshot(request);
+    return getCurrentTrackInstrumentEditorSnapshot(request);
   },
 );
 
@@ -6668,9 +6714,6 @@ async function commitProjectDocumentPatchBatch(
   if (javaRuntimeDependenciesChanged) {
     midiImportService.clearAll();
     await disposeJavaRuntimeSession();
-  }
-  if (isCommitted) {
-    unifiedLibraryService?.publishProjectChanged();
   }
 
   return (

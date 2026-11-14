@@ -277,6 +277,124 @@ describe('ProjectPatchQueue', () => {
     expect(dependencies.logRefreshError).toHaveBeenCalledWith(expect.any(Error));
   });
 
+  it.each(['ordinary', 'boundary'] as const)(
+    'refreshes derived score and Blue Live data for a tempo toggle after a %s drain',
+    async (mode) => {
+      const snapshot = createProjectEditorSnapshot(new BlueData(), '/tmp/time-context.blue', 1);
+      const dependencies = makeDependencies({
+        fetchCanonicalSnapshot: vi.fn().mockResolvedValue(snapshot),
+      });
+      const queue = createProjectPatchQueue(dependencies);
+      queue.reset(1);
+      queue.enqueue({ transport: { tempoMap: { enabled: true } } }, false);
+      queue.enqueue({ transport: { tempoMap: { visible: true } } }, false);
+      if (mode === 'boundary') {
+        await queue.handlePrepareBoundary({ barrierId: 'tempo', reason: 'save' });
+      } else {
+        await queue.flush();
+      }
+      expect(dependencies.fetchCanonicalSnapshot).toHaveBeenCalledTimes(1);
+      expect(dependencies.applyCanonicalSnapshot).toHaveBeenCalledExactlyOnceWith(
+        { score: snapshot.score, blueLive: snapshot.blueLive },
+        true,
+      );
+    },
+  );
+
+  it('defers a BSB resolution refresh when a newer optimistic draft arrives during the read', async () => {
+    const stale = createProjectEditorSnapshot(new BlueData(), '/tmp/automation.blue', 1);
+    const current = createProjectEditorSnapshot(new BlueData(), '/tmp/automation.blue', 1);
+    const read = Promise.withResolvers<ProjectEditorSnapshot>();
+    const reading = Promise.withResolvers<void>();
+    const dependencies = makeDependencies({
+      fetchCanonicalSnapshot: vi
+        .fn()
+        .mockImplementationOnce(() => {
+          reading.resolve();
+          return read.promise;
+        })
+        .mockResolvedValueOnce(current),
+    });
+    const queue = createProjectPatchQueue(dependencies);
+    queue.reset(1);
+    queue.enqueue(
+      {
+        orchestra: {
+          type: 'updateInstrument',
+          assignmentId: '1',
+          patch: {
+            bsbInterface: {
+              type: 'updateWidgetProperties',
+              widgetId: 'slider',
+              properties: { resolutionDecimal: '0.25' },
+            },
+          },
+        },
+      },
+      false,
+    );
+    const flush = queue.flush();
+    await reading.promise;
+    queue.enqueue({ globalOrc: '; newer draft' }, true);
+    read.resolve(stale);
+    await flush;
+    expect(dependencies.commit).toHaveBeenCalledTimes(2);
+    expect(dependencies.fetchCanonicalSnapshot).toHaveBeenCalledTimes(2);
+    expect(dependencies.applyCanonicalSnapshot).toHaveBeenCalledExactlyOnceWith(
+      { score: current.score },
+      true,
+    );
+    expect(dependencies.applyCanonicalSnapshot.mock.calls[0]?.[0].score).toBe(current.score);
+  });
+
+  it('leaves edits enqueued during a derived refresh to the active settlement boundary', async () => {
+    const snapshot = createProjectEditorSnapshot(new BlueData(), '/tmp/time-context.blue', 1);
+    const read = Promise.withResolvers<ProjectEditorSnapshot>();
+    const reading = Promise.withResolvers<void>();
+    const dependencies = makeDependencies({
+      fetchCanonicalSnapshot: vi
+        .fn()
+        .mockImplementationOnce(() => {
+          reading.resolve();
+          return read.promise;
+        })
+        .mockResolvedValueOnce(snapshot),
+    });
+    const queue = createProjectPatchQueue(dependencies);
+    queue.reset(1);
+    queue.enqueue({ transport: { tempoMap: { enabled: true } } }, false);
+    const flush = queue.flush();
+    await reading.promise;
+    const settlement = queue.handlePrepareBoundary({ barrierId: 'save', reason: 'save' }, () => {
+      queue.enqueue({ globalOrc: '; final draft' }, true);
+    });
+    read.resolve(snapshot);
+    await Promise.all([flush, settlement]);
+    expect(dependencies.commit).toHaveBeenCalledTimes(2);
+    expect(dependencies.commit).toHaveBeenLastCalledWith(
+      [{ globalOrc: '; final draft' }],
+      expect.objectContaining({ barrierId: 'save' }),
+    );
+    expect(dependencies.applyCanonicalSnapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refresh the score after a BSB edit-mode change', async () => {
+    const dependencies = makeDependencies();
+    const queue = createProjectPatchQueue(dependencies);
+    queue.enqueue(
+      {
+        orchestra: {
+          type: 'updateInstrument',
+          assignmentId: '1',
+          patch: { bsbInterface: { type: 'setEditEnabled', value: true } },
+        },
+      },
+      false,
+    );
+    await queue.flush();
+    expect(dependencies.fetchCanonicalSnapshot).not.toHaveBeenCalled();
+  });
+
   it('rejects explicit flushes, reports background failures, and never retries', async () => {
     const error = new Error('commit failed');
     const dependencies = makeDependencies({
