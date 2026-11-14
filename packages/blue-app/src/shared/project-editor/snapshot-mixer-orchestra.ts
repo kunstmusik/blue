@@ -1817,7 +1817,9 @@ export function reconcileMixerWithArrangement(
 ): boolean {
   const mixer = data.getMixer();
   const orchestra = prebuiltOrchestra ?? createOrchestraSnapshot(data);
-  const currentSnapshot = createMixerSnapshot(mixer);
+  const currentSnapshot = createMixerSnapshot(mixer, undefined, undefined, {
+    includeSerializedXml: false,
+  });
   const reconciled = reconcileMixerSnapshotWithArrangement(currentSnapshot, orchestra);
   const reconciledWithGroups: MixerSnapshot = {
     ...reconciled,

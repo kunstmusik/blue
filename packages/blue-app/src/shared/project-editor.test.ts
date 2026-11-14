@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   BlueData,
   AudioClip,
+  Channel,
   Effect,
+  GenericInstrument,
   GenericScore,
   Instance,
   LiveObject,
+  Parameter,
+  PolyObject,
   TimeDuration,
   TimePosition,
   TrackLayerGroup,
@@ -14,6 +18,7 @@ import {
   applyProjectDocumentPatch,
   createBlueLiveEditorTargetSnapshot,
   createProjectEditorSnapshot,
+  createScopedProjectEditorSnapshot,
   createScoreObjectPropertiesTarget,
   isEmptyProjectDocumentPatch,
   resolveEditorTarget,
@@ -657,5 +662,109 @@ describe('score object identity and index safety', () => {
 
     expect(Array.from(sourceLayer)).toEqual([]);
     expect(Array.from(destLayer)).toEqual([a, b]);
+  });
+
+  it('omits serializedXml and avoids unnecessary mixer reconciliation on scoreObject scoped snapshots', () => {
+    const data = new BlueData();
+    const inst = new GenericInstrument();
+    inst.setName('Inst 1');
+    const assignmentId = data.getArrangement().addInstrument(inst);
+    data.getScore().length = 0;
+    const poly = new PolyObject();
+    const layer = poly.newLayerAt(0);
+    const gs = new GenericScore();
+    gs.setName('Phrase A');
+    gs.setScoreText('i1 0 1 440');
+    layer.push(gs);
+    data.getScore().push(poly);
+    // Intentionally leave mixer empty to verify scoreObject scoped snapshot does not trigger reconciliation.
+    data.getMixer().getChannels().length = 0;
+
+    const fullSnap = createProjectEditorSnapshot(data, '/test.blue', 1, 'doc-1', {
+      includeSerializedXml: false,
+    });
+    const objectId = fullSnap.score!.layerGroups[0]!.layers[0]!.items[0]!.objectId;
+    expect(fullSnap.score!.layerGroups[0]!.layers[0]!.items[0]!.serializedXml).toBeUndefined();
+
+    // Clear mixer after fullSnap to prove scoreObject:* scoped snapshot does not re-reconcile.
+    data.getMixer().getChannels().length = 0;
+
+    const scopedSnap = createScopedProjectEditorSnapshot(
+      data,
+      '/test.blue',
+      1,
+      'doc-1',
+      [`scoreObject:${objectId}`],
+      { includeSerializedXml: false },
+    );
+    expect(scopedSnap.score).toBeDefined();
+    expect(scopedSnap.score!.layerGroups[0]!.layers[0]!.items[0]!.serializedXml).toBeUndefined();
+    expect(scopedSnap.orchestra).toBeUndefined();
+    expect(scopedSnap.blueLive).toBeUndefined();
+    expect(
+      data
+        .getMixer()
+        .getChannels()
+        .map((c) => c.getName()),
+    ).not.toContain(assignmentId);
+  });
+
+  it('applies multi-group removeLayerRanges and clearLayerAutomations in single passes', () => {
+    const data = new BlueData();
+    data.getScore().length = 0;
+    const ch = new Channel();
+    ch.setName('Chan 1');
+    const eff = new Effect();
+    eff.setName('Delay');
+    const param = new Parameter();
+    param.setName('feedback');
+    eff.addParameter(param);
+    ch.getPreEffects().push(eff);
+    data.getMixer().getChannels().push(ch);
+
+    const g1 = new PolyObject();
+    const g1l0 = g1.newLayerAt(0);
+    const g1l1 = g1.newLayerAt(1);
+    g1l0.getAutomationParameters().addParameterId(param.getUniqueId());
+    const g2 = new TrackLayerGroup();
+    const g2l0 = g2.newLayerAt(0);
+    g2l0.getAutomationParameters().addParameterId(param.getUniqueId());
+    data.getScore().push(g1, g2);
+
+    const snap = createProjectEditorSnapshot(data, null);
+    const group1Snap = snap.score!.layerGroups[0]!;
+    const group1Id = group1Snap.groupId;
+    const group2Id = snap.score!.layerGroups[1]!.groupId;
+
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'clearLayerAutomations',
+          layer: {
+            rootGroupIndex: 0,
+            groupId: group1Id,
+            layerId: group1Snap.layers[0]!.layerId,
+            layerIndex: 0,
+            layerKind: 'soundObject',
+          },
+        },
+      }),
+    ).toBe(true);
+    expect(g1l0.getAutomationParameters().getIds()).toEqual([]);
+
+    expect(
+      applyProjectDocumentPatch(data, {
+        score: {
+          type: 'removeLayerRanges',
+          ranges: [
+            { groupId: group1Id, startIndex: 0, endIndex: 0 },
+            { groupId: group2Id, startIndex: 0, endIndex: 0 },
+          ],
+        },
+      }),
+    ).toBe(true);
+    expect(g1.length).toBe(1);
+    expect(g1[0]).toBe(g1l1);
+    expect(g2.length).toBe(0);
   });
 });

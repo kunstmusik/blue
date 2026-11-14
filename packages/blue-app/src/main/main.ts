@@ -3029,6 +3029,7 @@ function buildAndSendProjectLoaded(data: BlueData, filePath: string | null): voi
       filePath,
       getCurrentProjectSessionId(),
       getCurrentProjectSessionDocumentId(),
+      { includeSerializedXml: false },
     ),
     title: filePath ? projectProperties.title || path.basename(filePath) : 'Untitled',
     author: projectProperties.author,
@@ -5468,6 +5469,7 @@ async function resolveMissingAudioAssets(
     getCurrentFilePath(),
     getCurrentProjectSessionId(),
     getCurrentProjectSessionDocumentId(),
+    { includeSerializedXml: false },
   );
   return { ok: true, changed: true, project };
 }

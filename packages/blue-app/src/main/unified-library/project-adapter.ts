@@ -1,13 +1,20 @@
 import { resolveTuningDependencies } from '../tuning-scale-dependencies';
 import { randomUUID } from 'node:crypto';
-import type { BlueData, Instrument, OpcodeList, SoundObject, XmlDiagnostic } from '@blue/data';
+import type {
+  BlueData,
+  Channel,
+  Instrument,
+  Mixer,
+  OpcodeList,
+  SoundObject,
+  XmlDiagnostic,
+} from '@blue/data';
 import {
   AudioClip,
   readResourceXml,
   XmlLoadError,
   BlueSynthBuilder,
   Effect,
-  Element,
   GenericInstrument,
   Instance,
   JavaScriptInstrument,
@@ -31,7 +38,8 @@ import {
 } from '@blue/data';
 import {
   applyProjectDocumentPatch,
-  createMixerSnapshot,
+  getMixerChannelSnapshotId,
+  getMixerEntrySnapshotId,
   resolveScoreInsertionLocation,
   resolveTimelineTargetWithSelectionId,
 } from '../../shared/project-editor';
@@ -52,6 +60,15 @@ import type {
   TrackInstrumentClipboardRequest,
   BlueLiveSoundObjectClipboardRequest,
 } from '../../shared/unified-library';
+
+function collectAllMixerChannels(mixer: Mixer): Channel[] {
+  return [
+    mixer.getMaster(),
+    ...mixer.getChannels(),
+    ...mixer.getSubChannels(),
+    ...mixer.getChannelListGroups().flatMap((group) => Array.from(group)),
+  ];
+}
 
 export interface ActiveLibraryProject {
   readonly data: BlueData;
@@ -379,22 +396,16 @@ export class UnifiedLibraryProjectAdapter {
     }
     if (target.kind === 'projectSoundObjectLibrary') return null;
     if (target.kind === 'effectChain') {
-      const mixer = createMixerSnapshot(project.data.getMixer());
-      const channels = [
-        mixer.master,
-        ...mixer.channels,
-        ...mixer.subChannels,
-        ...mixer.channelListGroups.flatMap((group) => group.channels),
-      ];
+      const channels = collectAllMixerChannels(project.data.getMixer());
       const channel = channels.find(
         (candidate) =>
-          candidate.id === target.channelId ||
-          candidate.association === target.channelId ||
-          candidate.name === target.channelId,
+          getMixerChannelSnapshotId(candidate) === target.channelId ||
+          (candidate.getAssociation() || undefined) === target.channelId ||
+          candidate.getName() === target.channelId,
       );
       if (!channel) return 'The mixer channel changed.';
-      const chain = target.chain === 'pre' ? channel.preChain : channel.postChain;
-      if (chain.map((entry) => entry.entryId).join(':') !== target.chainRevision)
+      const chain = target.chain === 'pre' ? channel.getPreEffects() : channel.getPostEffects();
+      if (chain.map((entry) => getMixerEntrySnapshotId(entry)).join(':') !== target.chainRevision)
         return 'The Effect chain changed.';
       return Number.isInteger(target.insertIndex) &&
         target.insertIndex >= 0 &&
@@ -536,17 +547,13 @@ export class UnifiedLibraryProjectAdapter {
     }
 
     if (libraryType === 'effect') {
-      const mixer = createMixerSnapshot(project.data.getMixer());
-      const channels = [
-        mixer.master,
-        ...mixer.channels,
-        ...mixer.subChannels,
-        ...mixer.channelListGroups.flatMap((group) => group.channels),
-      ];
-      return channels.flatMap((channel) =>
-        (['pre', 'post'] as const).flatMap((chain) =>
-          (chain === 'pre' ? channel.preChain : channel.postChain)
-            .filter((entry) => entry.kind === 'effect')
+      const channels = collectAllMixerChannels(project.data.getMixer());
+      return channels.flatMap((channel) => {
+        const channelId = getMixerChannelSnapshotId(channel);
+        const channelName = channel.getName();
+        return (['pre', 'post'] as const).flatMap((chain) =>
+          (chain === 'pre' ? channel.getPreEffects() : channel.getPostEffects())
+            .filter((entry): entry is Effect => entry instanceof Effect)
             .map((entry) => ({
               key: {
                 scope: 'projectOwned' as const,
@@ -554,22 +561,22 @@ export class UnifiedLibraryProjectAdapter {
                 projectSessionId: project.sessionId,
                 locator: {
                   kind: 'effect' as const,
-                  channelId: channel.id,
+                  channelId,
                   chain,
-                  entryId: entry.entryId,
+                  entryId: getMixerEntrySnapshotId(entry),
                 },
               },
               parentId: null,
               libraryType: 'effect' as const,
               scope: 'projectOwned' as const,
-              displayName: entry.name || 'Unnamed Effect',
-              breadcrumb: [channel.name, chain === 'pre' ? 'Pre Effects' : 'Post Effects'],
+              displayName: entry.getName() || 'Unnamed Effect',
+              breadcrumb: [channelName, chain === 'pre' ? 'Pre Effects' : 'Post Effects'],
               supportStatus: 'supported' as const,
               objectType: 'Effect',
-              revision: hashText(entry.effectXml ?? ''),
+              revision: hashText(entry.saveAsXML().toXml()),
             })),
-        ),
-      );
+        );
+      });
     }
 
     const library = project.data.getSoundObjectLibrary();
@@ -1117,24 +1124,21 @@ export class UnifiedLibraryProjectAdapter {
       return { displayName: value.getName(), value };
     }
     if (locator.kind === 'effect') {
-      const mixer = createMixerSnapshot(project.data.getMixer());
-      const channels = [
-        mixer.master,
-        ...mixer.channels,
-        ...mixer.subChannels,
-        ...mixer.channelListGroups.flatMap((group) => group.channels),
-      ];
-      const channel = channels.find((candidate) => candidate.id === locator.channelId);
-      const chain = locator.chain === 'pre' ? channel?.preChain : channel?.postChain;
-      const entry = chain?.find(
-        (candidate) => candidate.kind === 'effect' && candidate.entryId === locator.entryId,
+      const channels = collectAllMixerChannels(project.data.getMixer());
+      const channel = channels.find(
+        (candidate) => getMixerChannelSnapshotId(candidate) === locator.channelId,
       );
-      if (!entry || entry.kind !== 'effect' || entry.effectXml === undefined) {
+      const chain = locator.chain === 'pre' ? channel?.getPreEffects() : channel?.getPostEffects();
+      const entry = chain?.find(
+        (candidate): candidate is Effect =>
+          candidate instanceof Effect && getMixerEntrySnapshotId(candidate) === locator.entryId,
+      );
+      if (!entry) {
         throw new Error('Project Effect not found');
       }
       return {
-        displayName: entry.name || 'Unnamed Effect',
-        value: Effect.loadFromXML(Element.parse(entry.effectXml)),
+        displayName: entry.getName() || 'Unnamed Effect',
+        value: Effect.loadFromXML(entry.saveAsXML()),
       };
     }
     const library = project.data.getSoundObjectLibrary();

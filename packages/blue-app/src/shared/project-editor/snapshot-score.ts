@@ -2387,6 +2387,20 @@ export function resolveSnapshotSectionsForChangedTargets(
   return sections;
 }
 
+function changedTargetsAffectMixerChannels(changedTargets: readonly string[] | undefined): boolean {
+  if (!changedTargets || changedTargets.length === 0) return true;
+  return changedTargets.some(
+    (target) =>
+      target === 'score' ||
+      target === 'orchestra' ||
+      target === 'mixer' ||
+      target.startsWith('track:') ||
+      target.startsWith('layer:') ||
+      target.startsWith('instrument:') ||
+      target.startsWith('mixerChannel'),
+  );
+}
+
 /**
  * Builds only the snapshot sections affected by changedTargets, omitting
  * unchanged sections so IPC publication and renderer store merge reuse existing
@@ -2419,7 +2433,7 @@ export function createScopedProjectEditorSnapshot(
     const orchestra = createOrchestraSnapshot(data);
     reconcileMixerWithArrangement(data, orchestra);
     result.orchestra = orchestra;
-  } else if (sections.has('score')) {
+  } else if (sections.has('score') && changedTargetsAffectMixerChannels(changedTargets)) {
     // Score track changes can add/remove channel list groups on the mixer.
     reconcileMixerWithArrangement(data);
   }

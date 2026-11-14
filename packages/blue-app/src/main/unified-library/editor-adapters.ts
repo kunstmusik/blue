@@ -56,8 +56,8 @@ function createSoundObjectWorkspace(value: SoundObject): BlueData {
 
 function createSoundObjectDocument(value: SoundObject): LibraryEditorDocument {
   const data = createSoundObjectWorkspace(value);
-  const target =
-    createScoreDocumentSnapshot(data).layerGroups[0]?.layers[0]?.items[0]?.editorTarget;
+  const target = createScoreDocumentSnapshot(data, { includeSerializedXml: false }).layerGroups[0]
+    ?.layers[0]?.items[0]?.editorTarget;
   if (!target) throw new Error('Unable to create SoundObject editor target');
   const snapshot = createScoreObjectEditorDocument(data, { target });
   if (!snapshot) throw new Error('Unable to create SoundObject editor document');
