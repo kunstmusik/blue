@@ -314,7 +314,7 @@ export function prepareDockviewForExplicitPopoutRestore(
   dockview: SerializedDockview,
   floatingOrigins: Record<string, DockingOrigin>,
 ): { layout: SerializedDockview; intents: PreparedPopoutRestoreIntent[] } {
-  const layout = JSON.parse(JSON.stringify(dockview)) as SerializedDockview;
+  const layout = structuredClone(dockview);
   const serializedPopouts = layout.popoutGroups ?? [];
   delete layout.popoutGroups;
 

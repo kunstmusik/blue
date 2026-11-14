@@ -57,20 +57,35 @@ function BlueTreeImpl<T>(
     }
 
     // Dockview adopts live panel DOM into popout documents without remounting
-    // React. Watching the bound document re-resolves ownership when the host
-    // element is reparented into another document.
+    // React. Watching direct ancestors of the host element re-resolves ownership
+    // when it or an ancestor container is reparented into another document,
+    // without observing unrelated subtrees across the document.
     const ObserverCtor = doc.defaultView?.MutationObserver ?? globalThis.MutationObserver;
     if (typeof ObserverCtor !== 'function') {
       return;
     }
 
+    const observeAncestors = (observer: MutationObserver) => {
+      observer.disconnect();
+      let current: Node | null = hostRef.current?.parentNode ?? null;
+      while (current) {
+        observer.observe(current, { childList: true });
+        current = current.parentNode;
+      }
+    };
+
     const observer = new ObserverCtor(() => {
-      if (hostRef.current?.ownerDocument === doc) {
+      const currentDoc = hostRef.current?.ownerDocument ?? null;
+      if (!currentDoc) {
         return;
       }
-      bind();
+      if (currentDoc !== doc) {
+        bind();
+        return;
+      }
+      observeAncestors(observer);
     });
-    observer.observe(doc.documentElement, { childList: true, subtree: true });
+    observeAncestors(observer);
     observerRef.current = observer;
   }, []);
 
