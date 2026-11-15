@@ -726,10 +726,14 @@ export class EngineRuntimeService {
         'Blue Engine artifact metadata does not match this application',
       );
     }
-    if (
-      !/^[a-f0-9]{64}$/.test(manifest.sha256) ||
-      (await fileSha256(enginePath)) !== manifest.sha256
-    ) {
+    if (!/^[a-f0-9]{64}$/.test(manifest.sha256)) {
+      throw new EngineRuntimeError(
+        'ENGINE_PROBE_FAILED',
+        'Blue Engine artifact hash does not match its manifest',
+      );
+    }
+    const sha256 = await fileSha256(enginePath);
+    if (sha256 !== manifest.sha256) {
       throw new EngineRuntimeError(
         'ENGINE_PROBE_FAILED',
         'Blue Engine artifact hash does not match its manifest',
@@ -744,7 +748,7 @@ export class EngineRuntimeService {
     };
   }
 
-  private async validateExecutable(enginePath: string): Promise<{ size: number; mtimeMs: number }> {
+  private async validateExecutable(enginePath: string): Promise<void> {
     let engineStat;
     try {
       engineStat = await stat(enginePath);
@@ -765,6 +769,5 @@ export class EngineRuntimeService {
         `Blue Engine is not executable: ${enginePath}`,
       );
     }
-    return { size: engineStat.size, mtimeMs: engineStat.mtimeMs };
   }
 }
