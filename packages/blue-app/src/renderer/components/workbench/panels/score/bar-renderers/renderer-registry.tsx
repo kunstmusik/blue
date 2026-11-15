@@ -15,6 +15,11 @@ export interface BarRendererProps {
   rowHeight: number;
   durationBeats: number;
   startBeats?: number;
+  audioClipPreview?: {
+    fadeInBeats?: number;
+    fadeOutBeats?: number;
+    fileStartTimeBeats?: number;
+  };
 }
 
 export function getScoreObjectBarRenderer(

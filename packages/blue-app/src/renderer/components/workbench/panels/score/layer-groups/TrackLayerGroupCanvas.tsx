@@ -2101,9 +2101,9 @@ export default function TrackLayerGroupCanvas({
                 style={{ height, backgroundColor: 'var(--color-app-canvas)' }}
               >
                 {layer.items.map((item) => {
-                  const displayItem = getDisplayItem(item);
-                  const width = Math.max(4, displayItem.durationBeats * pixelsPerBeat);
-                  const left = displayItem.startBeats * pixelsPerBeat;
+                  const timing = previewByObjectId[item.objectId] ?? item;
+                  const width = Math.max(4, timing.durationBeats * pixelsPerBeat);
+                  const left = timing.startBeats * pixelsPerBeat;
                   const pinned =
                     (gestureRef.current &&
                       (gestureRef.current.activeObjectId === item.objectId ||
@@ -2118,8 +2118,8 @@ export default function TrackLayerGroupCanvas({
                       left > visibleEndBeats * pixelsPerBeat)
                   )
                     return null;
-                  const audioBar =
-                    displayItem.barRenderer.kind === 'audioClip' ? displayItem.barRenderer : null;
+                  const audioBar = item.barRenderer.kind === 'audioClip' ? item.barRenderer : null;
+                  const audioPreview = audioPreviewByObjectId[item.objectId];
                   const showFadeHandles = Boolean(
                     audioBar &&
                     (hoveredAudioObjectId === item.objectId ||
@@ -2130,7 +2130,10 @@ export default function TrackLayerGroupCanvas({
                         left,
                         Math.min(
                           left + width - FADE_HANDLE_SIZE,
-                          left + Math.round(audioBar.fadeInBeats * pixelsPerBeat),
+                          left +
+                            Math.round(
+                              (audioPreview?.fadeInBeats ?? audioBar.fadeInBeats) * pixelsPerBeat,
+                            ),
                         ),
                       )
                     : 0;
@@ -2141,7 +2144,9 @@ export default function TrackLayerGroupCanvas({
                           left + width - FADE_HANDLE_SIZE,
                           left +
                             width -
-                            Math.round(audioBar.fadeOutBeats * pixelsPerBeat) -
+                            Math.round(
+                              (audioPreview?.fadeOutBeats ?? audioBar.fadeOutBeats) * pixelsPerBeat,
+                            ) -
                             FADE_HANDLE_SIZE,
                         ),
                       )
@@ -2149,12 +2154,14 @@ export default function TrackLayerGroupCanvas({
                   return (
                     <Fragment key={item.objectId}>
                       <RenderBar
-                        item={displayItem}
+                        item={item}
+                        startBeats={timing.startBeats}
+                        audioClipPreview={audioPreview}
                         selected={selectedObjectIds.has(item.objectId)}
                         pixelsPerBeat={pixelsPerBeat}
                         pixelsPerSecond={tempo > 0 ? (pixelsPerBeat * tempo) / 60 : pixelsPerBeat}
                         rowHeight={height}
-                        durationBeats={displayItem.durationBeats}
+                        durationBeats={timing.durationBeats}
                       />
                       {showFadeHandles && audioBar && (
                         <>

@@ -29,6 +29,7 @@ function alphaGradientStyle(rgb: number, alpha: number): string {
 
 export default function AudioClipBar({
   item,
+  audioClipPreview,
   startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
@@ -76,16 +77,18 @@ export default function AudioClipBar({
   const fadeOverlayLeft = 1;
   const fadeOverlayHeight = Math.max(h, 1);
 
+  const fadeInBeats = audioClipPreview?.fadeInBeats ?? br.fadeInBeats;
+  const fadeOutBeats = audioClipPreview?.fadeOutBeats ?? br.fadeOutBeats;
   const fadeInPoly =
-    br.fadeInBeats > 0
-      ? buildFadePolygon(br.fadeInBeats, pixelsPerBeat, barHeight, br.fadeInType, true, 0)
+    fadeInBeats > 0
+      ? buildFadePolygon(fadeInBeats, pixelsPerBeat, barHeight, br.fadeInType, true, 0)
       : null;
 
-  const fadeOutOffset = width - Math.round(br.fadeOutBeats * pixelsPerBeat);
+  const fadeOutOffset = width - Math.round(fadeOutBeats * pixelsPerBeat);
   const fadeOutPoly =
-    br.fadeOutBeats > 0
+    fadeOutBeats > 0
       ? buildFadePolygon(
-          br.fadeOutBeats,
+          fadeOutBeats,
           pixelsPerBeat,
           barHeight,
           br.fadeOutType,
@@ -121,7 +124,7 @@ export default function AudioClipBar({
           width={Math.max(width - 2, 0)}
           height={Math.max(h, 1)}
           color={waveColor}
-          startOffsetBeats={br.fileStartTimeBeats}
+          startOffsetBeats={audioClipPreview?.fileStartTimeBeats ?? br.fileStartTimeBeats}
           looping={br.looping}
         />
       )}
