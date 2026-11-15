@@ -147,6 +147,12 @@ function hashBytes(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
+async function hashFile(sourcePath: string): Promise<string> {
+  const hash = createHash('sha256');
+  for await (const chunk of fs.createReadStream(sourcePath)) hash.update(chunk);
+  return hash.digest('hex');
+}
+
 function safeMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).slice(0, 1000);
 }
@@ -252,10 +258,7 @@ export class UnifiedLibraryImportExportService {
     const startedAt = new Date().toISOString();
     try {
       for (const source of pending.sources) {
-        if (
-          hashBytes(await fs.promises.readFile(source.preview.sourcePath)) !==
-          source.preview.sourceHash
-        ) {
+        if ((await hashFile(source.preview.sourcePath)) !== source.preview.sourceHash) {
           throw new Error(`Import source changed after preview: ${source.preview.sourcePath}`);
         }
         for (const conflict of source.preview.folderConflicts) {
