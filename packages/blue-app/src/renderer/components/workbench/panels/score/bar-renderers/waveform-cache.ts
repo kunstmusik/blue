@@ -427,6 +427,8 @@ export function buildWaveformPathData(
     pixelsPerBeat: number;
     startOffsetBeats?: number;
     looping?: boolean;
+    clipStartPx?: number;
+    clipEndPx?: number;
   },
 ): string[] {
   const width = Math.max(0, Math.floor(options.width));
@@ -435,7 +437,9 @@ export function buildWaveformPathData(
   const startOffsetBeats = Math.max(0, options.startOffsetBeats ?? 0);
   const looping = options.looping === true;
 
-  if (width <= 0 || entry.channels.length === 0) {
+  const startX = Math.max(0, Math.floor(options.clipStartPx ?? 0));
+  const endX = Math.min(width, Math.ceil(options.clipEndPx ?? width));
+  if (endX <= startX || entry.channels.length === 0) {
     return [];
   }
 
@@ -455,20 +459,20 @@ export function buildWaveformPathData(
 
       const center = channelMiddle + channelIndex * channelHeight;
       const segments: string[] = [];
-      for (let x = 0; x < width; x += 1) {
+      for (let x = startX; x < endX; x += 1) {
         let sampleIndex = Math.floor(startOffsetPixels + x);
 
         if (looping) {
           sampleIndex = ((sampleIndex % sampleCount) + sampleCount) % sampleCount;
-        } else if (sampleIndex < 0 || sampleIndex >= sampleCount) {
-          continue;
+        } else if (sampleIndex >= sampleCount) {
+          break;
         }
 
         const min = channel.min[sampleIndex] ?? 0;
         const max = channel.max[sampleIndex] ?? 0;
         const yTop = center - max * channelMiddle;
         const yBottom = center - min * channelMiddle;
-        segments.push(`M${x + 0.5} ${yTop} L${x + 0.5} ${yBottom}`);
+        segments.push(`M${x + 0.5} ${yTop}V${yBottom}`);
       }
 
       return segments.join(' ');

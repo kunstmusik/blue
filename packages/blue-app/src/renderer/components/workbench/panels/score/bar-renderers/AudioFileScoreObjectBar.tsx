@@ -83,6 +83,7 @@ export default function AudioFileScoreObjectBar({
           filePath={br.audioFilePath}
           pixelSecond={pixelsPerSecond ?? pixelsPerBeat}
           pixelsPerBeat={pixelsPerBeat}
+          timelineLeftPx={left}
           width={Math.max(width - 2, 0)}
           height={Math.max(barHeight - 4, 1)}
           color={waveColor}

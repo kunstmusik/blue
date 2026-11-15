@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useScoreViewportBounds } from '../score-viewport-scroll';
 import {
   buildWaveformCacheKey,
   buildWaveformPathData,
@@ -15,6 +16,7 @@ interface Props {
   filePath: string;
   pixelSecond: number;
   pixelsPerBeat: number;
+  timelineLeftPx?: number;
   width: number;
   height: number;
   color: string;
@@ -27,6 +29,7 @@ export default function WaveformBody({
   filePath,
   pixelSecond,
   pixelsPerBeat,
+  timelineLeftPx,
   width,
   height,
   color,
@@ -50,6 +53,17 @@ export default function WaveformBody({
     return subscribeWaveformCacheEntry(cacheKey, setEntry);
   }, [cacheKey, cacheGeneration, filePath, pixelSecond, waveformKey]);
 
+  const { visibleStartBeats, visibleEndBeats } = useScoreViewportBounds(pixelsPerBeat);
+  const waveformLeft = timelineLeftPx === undefined ? undefined : timelineLeftPx + 1;
+  const clipStartPx =
+    waveformLeft === undefined || visibleStartBeats === undefined
+      ? 0
+      : Math.max(0, visibleStartBeats * pixelsPerBeat - waveformLeft);
+  const clipEndPx =
+    waveformLeft === undefined || visibleEndBeats === undefined
+      ? width
+      : Math.min(width, visibleEndBeats * pixelsPerBeat - waveformLeft);
+
   const paths = useMemo(() => {
     if (!entry || entry.loading || entry.channels.length === 0) return [];
     return buildWaveformPathData(entry, {
@@ -58,8 +72,10 @@ export default function WaveformBody({
       pixelsPerBeat,
       startOffsetBeats,
       looping,
+      clipStartPx,
+      clipEndPx,
     });
-  }, [entry, width, height, pixelsPerBeat, startOffsetBeats, looping]);
+  }, [entry, width, height, pixelsPerBeat, startOffsetBeats, looping, clipStartPx, clipEndPx]);
 
   if (paths.length === 0) {
     return null;

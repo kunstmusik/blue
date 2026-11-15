@@ -116,6 +116,7 @@ export default function AudioClipBar({
           filePath={br.audioFilePath}
           pixelSecond={pixelsPerSecond ?? pixelsPerBeat}
           pixelsPerBeat={pixelsPerBeat}
+          timelineLeftPx={left}
           width={Math.max(width - 2, 0)}
           height={Math.max(h, 1)}
           color={waveColor}

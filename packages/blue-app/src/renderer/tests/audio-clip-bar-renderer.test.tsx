@@ -199,7 +199,7 @@ describe('AudioClip bar renderer', () => {
 
       expect(paths).toHaveLength(1);
       expect(paths[0]).toContain('M0.5');
-      expect(paths[0]).toContain('L0.5');
+      expect(paths[0]).toContain('V12.5');
       expect(paths[0]).toContain('M1.5');
     });
 
@@ -222,7 +222,7 @@ describe('AudioClip bar renderer', () => {
         },
       );
 
-      expect(paths).toEqual(['M0.5 0 L0.5 20', 'M0.5 20 L0.5 40']);
+      expect(paths).toEqual(['M0.5 0V20', 'M0.5 20V40']);
     });
   });
 

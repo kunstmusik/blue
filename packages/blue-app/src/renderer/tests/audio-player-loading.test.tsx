@@ -7,6 +7,11 @@ import { emitPendingAudioFile } from '../components/workbench/panels/audio-playe
 import WaveformBody from '../components/workbench/panels/score/bar-renderers/WaveformBody';
 import * as waveformCache from '../components/workbench/panels/score/bar-renderers/waveform-cache';
 
+import {
+  createScoreViewportScrollStore,
+  ScoreViewportScrollProvider,
+} from '../components/workbench/panels/score/score-viewport-scroll';
+
 const { clearWaveformCache } = waveformCache;
 
 let root: Root;
@@ -85,6 +90,37 @@ describe('mounted score waveform reset', () => {
 
     await act(async () => root.render(<WaveformBody {...props} height={60} />));
     expect(buildPaths).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds looping waveform segments to the score viewport while retaining their clip coordinates', async () => {
+    const store = createScoreViewportScrollStore(0, 0);
+    store.setContainerWidth(100);
+    store.setScrollLeft(1001);
+    const path = () => container.querySelector('path')?.getAttribute('d') ?? '';
+    await act(async () =>
+      root.render(
+        <ScoreViewportScrollProvider store={store}>
+          <WaveformBody
+            waveformKey="loop"
+            filePath="clip.wav"
+            pixelSecond={4}
+            pixelsPerBeat={4}
+            timelineLeftPx={100}
+            width={4000}
+            height={40}
+            color="#fff"
+            looping
+          />
+        </ScoreViewportScrollProvider>,
+      ),
+    );
+    expect(path()).toMatch(/^M900\.5 /);
+    expect(path().match(/M/g)).toHaveLength(100);
+
+    await act(async () => store.setScrollLeft(2001));
+    expect(path()).toMatch(/^M1900\.5 /);
+    expect(path().match(/M/g)).toHaveLength(100);
+    expect(decode).toHaveBeenCalledOnce();
   });
 
   it('reloads after a project reset even when the next file and zoom are identical', async () => {
