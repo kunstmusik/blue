@@ -984,6 +984,35 @@ function ChevronIcon() {
   );
 }
 
+/** An integer-sized bitmap can repeat an exact fractional step over several cells. */
+function gridTileRepeatCount(step: number): number {
+  for (let repeat = 1; repeat <= 16; repeat *= 2) {
+    const size = step * repeat;
+    if (size > 1024) return 0;
+    if (Number.isInteger(size)) return repeat;
+  }
+  return 0;
+}
+
+function strokeGridLines(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  stepX: number,
+  stepY: number,
+): void {
+  ctx.beginPath();
+  for (let x = 0; x < width; x += stepX) {
+    ctx.moveTo(x + 0.5, 0);
+    ctx.lineTo(x + 0.5, height);
+  }
+  for (let y = 0; y < height; y += stepY) {
+    ctx.moveTo(0, y + 0.5);
+    ctx.lineTo(width, y + 0.5);
+  }
+  ctx.stroke();
+}
+
 function GridOverlay({
   gridSettings,
   canvasWidth,
@@ -1009,27 +1038,32 @@ function GridOverlay({
       ctx.fillStyle = 'rgba(80,110,160,0.3)';
       ctx.strokeStyle = 'rgba(80,110,160,0.3)';
       ctx.lineWidth = 1;
-      if (style === 'DOT') {
-        const tile =
-          Number.isInteger(w) && Number.isInteger(h) && w <= 1024 && h <= 1024
-            ? document.createElement('canvas')
-            : null;
+      if (style === 'DOT' || style === 'LINE') {
+        const columns = gridTileRepeatCount(w);
+        const rows = gridTileRepeatCount(h);
+        const tile = columns && rows ? canvas.ownerDocument.createElement('canvas') : null;
+        if (tile) {
+          tile.width = w * columns;
+          tile.height = h * rows;
+        }
         const tileCtx = tile?.getContext('2d');
         if (tile && tileCtx) {
-          tile.width = w;
-          tile.height = h;
-          tileCtx.fillStyle = 'rgba(80,110,160,0.3)';
-          tileCtx.beginPath();
-          for (const [cx, cy] of [
-            [0, 0],
-            [w, 0],
-            [0, h],
-            [w, h],
-          ]) {
-            tileCtx.moveTo(cx + 1, cy);
-            tileCtx.arc(cx, cy, 1, 0, Math.PI * 2);
+          if (style === 'LINE') {
+            tileCtx.strokeStyle = ctx.strokeStyle;
+            strokeGridLines(tileCtx, tile.width, tile.height, w, h);
+          } else {
+            tileCtx.fillStyle = 'rgba(80,110,160,0.3)';
+            tileCtx.beginPath();
+            for (let column = 0; column <= columns; column += 1) {
+              for (let row = 0; row <= rows; row += 1) {
+                const x = column * w;
+                const y = row * h;
+                tileCtx.moveTo(x + 1, y);
+                tileCtx.arc(x, y, 1, 0, Math.PI * 2);
+              }
+            }
+            tileCtx.fill();
           }
-          tileCtx.fill();
           const pattern = ctx.createPattern(tile, 'repeat');
           if (pattern) {
             ctx.fillStyle = pattern;
@@ -1037,6 +1071,8 @@ function GridOverlay({
             return;
           }
         }
+      }
+      if (style === 'DOT') {
         ctx.beginPath();
         for (let x = 0; x < cw; x += w) {
           for (let y = 0; y < ch; y += h) {
@@ -1046,16 +1082,7 @@ function GridOverlay({
         }
         ctx.fill();
       } else if (style === 'LINE') {
-        ctx.beginPath();
-        for (let x = 0; x < cw; x += w) {
-          ctx.moveTo(x + 0.5, 0);
-          ctx.lineTo(x + 0.5, ch);
-        }
-        for (let y = 0; y < ch; y += h) {
-          ctx.moveTo(0, y + 0.5);
-          ctx.lineTo(cw, y + 0.5);
-        }
-        ctx.stroke();
+        strokeGridLines(ctx, cw, ch, w, h);
       }
     },
     [w, h, style, canvasWidth, canvasHeight],

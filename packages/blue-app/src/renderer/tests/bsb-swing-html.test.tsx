@@ -161,91 +161,109 @@ describe('BSB Swing HTML labels', () => {
     expect(markup).toContain('font-size:18px');
   });
 
-  it('defers Swing HTML DOM measurement out of React render and sizes GridOverlay bitmap to canvas bounds', async () => {
-    const appendSpy = vi.spyOn(document.body, 'appendChild');
-    const htmlLabel = createDefaultBsbWidgetSnapshot('BSBLabel')!;
-    htmlLabel.id = 'uncached-defer-label';
-    htmlLabel.x = 10;
-    htmlLabel.y = 10;
-    htmlLabel.properties.label = '<html><font size="+2">Unique Deferred Label 48291</font></html>';
-    const instrument: BlueSynthBuilderInstrumentSnapshot = {
-      ...makeInstrument([htmlLabel]),
-      editEnabled: true,
-      gridSettings: { enabled: true, snapEnabled: true, width: 10, height: 10, gridStyle: 'DOT' },
-    };
-
-    try {
-      // Pure render (renderToStaticMarkup) must not touch document.body for DOM measurement.
-      renderToStaticMarkup(
-        createElement(BSBInterfaceCanvas, {
-          instrument,
-          selectedWidgetIds: new Set<string>(),
-          onWidgetSelect: vi.fn(),
-        }),
-      );
-      expect(appendSpy).not.toHaveBeenCalled();
-
-      // Mounted canvas with grid enabled must keep the GridOverlay backing bitmap
-      // proportional to the canvas bounds instead of allocating a 2000x2000 minimum.
-      const originalCanvasCtx = HTMLCanvasElement.prototype.getContext;
-      const ctxMock = {
-        clearRect: vi.fn(),
-        fillRect: vi.fn(),
-        beginPath: vi.fn(),
-        moveTo: vi.fn(),
-        lineTo: vi.fn(),
-        arc: vi.fn(),
-        fill: vi.fn(),
-        stroke: vi.fn(),
-        save: vi.fn(),
-        restore: vi.fn(),
-        translate: vi.fn(),
-        createPattern: vi.fn(() => ({})),
-        fillStyle: '',
-        strokeStyle: '',
-        lineWidth: 1,
+  it.each(['DOT', 'LINE'] as const)(
+    'defers Swing HTML measurement and tiles a fractional %s grid',
+    async (gridStyle) => {
+      const appendSpy = vi.spyOn(document.body, 'appendChild');
+      const htmlLabel = createDefaultBsbWidgetSnapshot('BSBLabel')!;
+      htmlLabel.id = 'uncached-defer-label';
+      htmlLabel.x = 10;
+      htmlLabel.y = 10;
+      htmlLabel.properties.label =
+        '<html><font size="+2">Unique Deferred Label 48291</font></html>';
+      const instrument: BlueSynthBuilderInstrumentSnapshot = {
+        ...makeInstrument([htmlLabel]),
+        editEnabled: true,
+        gridSettings: {
+          enabled: true,
+          snapEnabled: true,
+          width: 10.5,
+          height: 10.25,
+          gridStyle,
+        },
       };
-      HTMLCanvasElement.prototype.getContext = vi.fn(
-        () => ctxMock as unknown as CanvasRenderingContext2D,
-      ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
-      const container = document.createElement('div');
-      document.body.appendChild(container);
-      appendSpy.mockClear();
-      (
-        globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-      ).IS_REACT_ACT_ENVIRONMENT = true;
-      const root = createRoot(container);
       try {
-        await act(async () => {
-          root.render(
-            createElement(BSBInterfaceCanvas, {
-              instrument,
-              selectedWidgetIds: new Set<string>(),
-              editEnabled: true,
-              onWidgetSelect: vi.fn(),
-            }),
-          );
-        });
-        const gridCanvas = container.querySelector('canvas');
-        expect(gridCanvas).not.toBeNull();
-        expect(gridCanvas!.width).toBe(600);
-        expect(gridCanvas!.height).toBe(400);
-        expect(gridCanvas!.width).toBeLessThan(2000);
-        expect(gridCanvas!.height).toBeLessThan(2000);
-        expect(ctxMock.createPattern).toHaveBeenCalledTimes(1);
-        expect(ctxMock.fillRect).toHaveBeenCalledWith(0, 0, 600, 400);
+        // Pure render (renderToStaticMarkup) must not touch document.body for DOM measurement.
+        renderToStaticMarkup(
+          createElement(BSBInterfaceCanvas, {
+            instrument,
+            selectedWidgetIds: new Set<string>(),
+            onWidgetSelect: vi.fn(),
+          }),
+        );
+        expect(appendSpy).not.toHaveBeenCalled();
+
+        // Mounted canvas with grid enabled must keep the GridOverlay backing bitmap
+        // proportional to the canvas bounds instead of allocating a 2000x2000 minimum.
+        const originalCanvasCtx = HTMLCanvasElement.prototype.getContext;
+        const ctxMock = {
+          clearRect: vi.fn(),
+          fillRect: vi.fn(),
+          beginPath: vi.fn(),
+          moveTo: vi.fn(),
+          lineTo: vi.fn(),
+          arc: vi.fn(),
+          fill: vi.fn(),
+          stroke: vi.fn(),
+          save: vi.fn(),
+          restore: vi.fn(),
+          translate: vi.fn(),
+          createPattern: vi.fn((_tile: HTMLCanvasElement) => ({})),
+          fillStyle: '',
+          strokeStyle: '',
+          lineWidth: 1,
+        };
+        HTMLCanvasElement.prototype.getContext = vi.fn(
+          () => ctxMock as unknown as CanvasRenderingContext2D,
+        ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        appendSpy.mockClear();
+        (
+          globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+        ).IS_REACT_ACT_ENVIRONMENT = true;
+        const root = createRoot(container);
+        try {
+          await act(async () => {
+            root.render(
+              createElement(BSBInterfaceCanvas, {
+                instrument,
+                selectedWidgetIds: new Set<string>(),
+                editEnabled: true,
+                onWidgetSelect: vi.fn(),
+              }),
+            );
+          });
+          const gridCanvas = container.querySelector('canvas');
+          expect(gridCanvas).not.toBeNull();
+          expect(gridCanvas!.width).toBe(600);
+          expect(gridCanvas!.height).toBe(400);
+          expect(gridCanvas!.width).toBeLessThan(2000);
+          expect(gridCanvas!.height).toBeLessThan(2000);
+          expect(ctxMock.createPattern).toHaveBeenCalledTimes(1);
+          const [tile] = ctxMock.createPattern.mock.calls[0]!;
+          expect([tile.width, tile.height]).toEqual([21, 41]);
+          if (gridStyle === 'DOT') {
+            expect(ctxMock.arc).toHaveBeenCalledTimes(3 * 5);
+          } else {
+            expect(ctxMock.lineTo).toHaveBeenCalledTimes(2 + 4);
+            expect(ctxMock.stroke).toHaveBeenCalledOnce();
+          }
+          expect(ctxMock.fillRect).toHaveBeenCalledWith(0, 0, 600, 400);
+        } finally {
+          HTMLCanvasElement.prototype.getContext = originalCanvasCtx;
+          await act(async () => {
+            root.unmount();
+          });
+          container.remove();
+        }
       } finally {
-        HTMLCanvasElement.prototype.getContext = originalCanvasCtx;
-        await act(async () => {
-          root.unmount();
-        });
-        container.remove();
+        appendSpy.mockRestore();
       }
-    } finally {
-      appendSpy.mockRestore();
-    }
-  });
+    },
+  );
 
   it('batches fallback DOT grid dots into a single beginPath and fill when createPattern returns null', async () => {
     const label = createDefaultBsbWidgetSnapshot('BSBLabel')!;
