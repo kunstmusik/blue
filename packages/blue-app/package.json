@@ -80,6 +80,7 @@
     "react-arborist": "^3.5.0",
     "react-dnd-html5-backend": "14.1.0",
     "react-dom": "^19.2.4",
+    "saxes": "6.0.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zeromq": "^6.1.0",

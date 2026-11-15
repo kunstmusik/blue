@@ -109,9 +109,12 @@ function createEnvelopeElement(raw: RawXmlElement, leafName: string): Element {
 }
 
 function readLegacyLibraryEnvelope(source: string, sourceInfo: XmlSource) {
-  const document = parseRawXmlDocument(source);
-  const descriptor = descriptorForRoot(document.root.name);
-  const candidate = createEnvelopeElement(document.root, descriptor.leafElement);
+  return validateEnvelope(parseRawXmlDocument(source).root, sourceInfo);
+}
+
+function validateEnvelope(root: RawXmlElement, sourceInfo: XmlSource) {
+  const descriptor = descriptorForRoot(root.name);
+  const candidate = createEnvelopeElement(root, descriptor.leafElement);
   const context = new XmlLoadContext(candidate, sourceInfo);
   let matchedCategory: RawXmlElement;
   try {
@@ -147,9 +150,7 @@ function readLegacyLibraryEnvelope(source: string, sourceInfo: XmlSource) {
     };
     const rootCategory = candidate.getElement(descriptor.categoryElement);
     if (rootCategory) validateCategory(rootCategory, true);
-    const category = document.root.children.find(
-      (child) => child.name === descriptor.categoryElement,
-    );
+    const category = root.children.find((child) => child.name === descriptor.categoryElement);
     if (!category) {
       throw context.at(candidate).error({
         code: 'cardinality',
@@ -178,7 +179,20 @@ export function parseLegacyLibraryDocument(
   source: string,
   sourceInfo: XmlSource = { kind: 'library', label: 'in-memory library' },
 ): LegacyLibraryDocumentPlan {
-  const { descriptor, category } = readLegacyLibraryEnvelope(source, sourceInfo);
+  return planLegacyLibraryDocument(
+    parseRawXmlDocument(source).root,
+    stableTextHash(source),
+    sourceInfo,
+  );
+}
+
+/** Build the same import plan from a validated streamed XML tree and its source hash. */
+export function planLegacyLibraryDocument(
+  documentRoot: RawXmlElement,
+  sourceRawHash: string,
+  sourceInfo: XmlSource,
+): LegacyLibraryDocumentPlan {
+  const { descriptor, category } = validateEnvelope(documentRoot, sourceInfo);
   const diagnostics: XmlDiagnostic[] = [];
   const root = parseFolder(
     descriptor,
@@ -197,7 +211,7 @@ export function parseLegacyLibraryDocument(
     itemCount: counts.items,
     unsupportedCount: counts.unsupported,
     diagnostics,
-    sourceRawHash: stableTextHash(source),
+    sourceRawHash,
   };
 }
 

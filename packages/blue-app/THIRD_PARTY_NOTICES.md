@@ -13,3 +13,5 @@ License texts in the installed licenses directory come from the repository's roo
 `MIT.txt` in the installed licenses directory carries the Blue-authored MIT notice used by reusable Blue packages. Third-party MIT components retain their own copyright notices and license files alongside their packaged dependencies or in the installed licenses directory.
 
 - The renderer bundles `@tanstack/react-query` 5.104.4 and `@tanstack/query-core` 5.104.4, MIT, Copyright (c) 2021-present Tanner Linsley. Their copyright and permission text is preserved in installed `Resources/licenses/TanStack-Query-MIT.txt`. Published sources: https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.104.4.tgz and https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.104.4.tgz.
+
+- Legacy library import uses the ISC-licensed [saxes 6.0.0](https://github.com/lddubeau/saxes/tree/v6.0.0) parser and its MIT-licensed [xmlchars 2.2.0](https://github.com/lddubeau/xmlchars/tree/v2.2.0) dependency in the Electron main process. Their full notices are installed as `Resources/licenses/Saxes-ISC.txt` and `Resources/licenses/Xmlchars-MIT.txt`.

@@ -2,17 +2,20 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { StringDecoder } from 'node:string_decoder';
+import { SaxesParser } from 'saxes';
 import {
   LEGACY_LIBRARY_FORMATS,
   XmlLoadError,
   exportLegacyLibraryDocument,
-  parseLegacyLibraryDocument,
+  planLegacyLibraryDocument,
   validateLegacyLibraryEnvelope,
   type LegacyLibraryDocumentPlan,
   type LegacyLibraryFolderPlan,
   type LegacyLibraryTreeNode,
   type LibraryType,
   type XmlDiagnostic,
+  type XmlSource,
+  type RawXmlElement,
 } from '@blue/data';
 import type {
   ManualImportSourcePreview,
@@ -145,16 +148,148 @@ export function commitAtomicExport(
   }
 }
 
+type StreamedLibraryElement = {
+  -readonly [Key in keyof RawXmlElement]: Key extends 'children'
+    ? StreamedLibraryElement[]
+    : RawXmlElement[Key];
+};
+
+export function createLegacyLibraryStream(source: XmlSource) {
+  const parser = new SaxesParser({ xmlns: false });
+  const stack: Array<StreamedLibraryElement | null> = [];
+  let root: StreamedLibraryElement | undefined;
+  let leaf: StreamedLibraryElement | undefined;
+  let leafName: string | undefined;
+  let embeddedNameField: string | undefined;
+  let leafDepth = -1;
+  let rawStart: number | undefined;
+  let buffer = '';
+  let offset = 0;
+  let sourceTextHash = 0x811c9dc5;
+  let declarationTail = '';
+
+  // Preserve the existing prohibition on DOCTYPE markers, including a marker
+  // split across writes, before the parser can process any declaration.
+  const rejectDoctype = () => {
+    throw new Error('XML document type declarations are not allowed');
+  };
+  parser.on('doctype', rejectDoctype);
+  parser.on('opentagstart', (tag) => {
+    if (leaf || tag.name !== leafName || stack.length < 2) return;
+    const start = buffer.lastIndexOf('<', parser.position - offset - 1);
+    if (start < 0) throw new Error('Unable to locate library resource XML');
+    rawStart = offset + start;
+  });
+  parser.on('opentag', ({ name, attributes }) => {
+    const parent = stack.at(-1);
+    // Payload classification reads the root and its direct name fields. Retain
+    // a child tag under a name field as evidence that the field is not scalar.
+    const record =
+      !leaf ||
+      (stack.length === leafDepth + 1 && name === embeddedNameField) ||
+      (stack.length === leafDepth + 2 && parent && parent.children.length === 0);
+    const node: StreamedLibraryElement | null = record
+      ? { name, attributes, rawXml: '', startCodeUnit: 0, endCodeUnit: 0, text: '', children: [] }
+      : null;
+    if (node) {
+      if (parent) parent.children.push(node);
+      if (!root) {
+        root = node;
+        const descriptor = Object.values(LEGACY_LIBRARY_FORMATS).find(
+          (candidate) => candidate.rootElement === name,
+        );
+        if (!descriptor) throw new Error(`Unsupported legacy library root: ${name}`);
+        leafName = descriptor.leafElement;
+        embeddedNameField = descriptor.libraryType === 'udo' ? 'opcodeName' : 'name';
+      }
+      if (!leaf && rawStart !== undefined) {
+        leaf = node;
+        leafDepth = stack.length;
+      }
+    }
+    stack.push(node);
+  });
+  const appendText = (value: string) => {
+    const node = stack.at(-1);
+    if (node && (!leaf || stack.length === leafDepth + 2)) node.text += value;
+  };
+  parser.on('text', appendText);
+  parser.on('cdata', appendText);
+  parser.on('closetag', () => {
+    const node = stack.pop();
+    if (!node || node !== leaf) return;
+    if (rawStart === undefined) throw new Error('Missing source span for library resource');
+    // Flatten the retained fragment into its own buffer before releasing input.
+    const end = parser.position;
+    node.rawXml = Buffer.from(buffer.slice(rawStart - offset, end - offset)).toString('utf8');
+    node.startCodeUnit = rawStart;
+    node.endCodeUnit = end;
+    leaf = undefined;
+    leafDepth = -1;
+    rawStart = undefined;
+  });
+
+  return {
+    write(text: string) {
+      if (!text) return;
+      const declaration = declarationTail + text;
+      if (/<!DOCTYPE(?=[^a-z0-9_])/i.test(declaration)) rejectDoctype();
+      declarationTail = declaration.slice(-9);
+      for (const byte of Buffer.from(text, 'utf8')) {
+        sourceTextHash = Math.imul(sourceTextHash ^ byte, 0x01000193) >>> 0;
+      }
+      buffer += text;
+      parser.write(text);
+      // Keep an open resource verbatim. Otherwise only the latest '<' may
+      // belong to a resource opening tag arriving in the next chunk.
+      let keepFrom = rawStart;
+      if (keepFrom === undefined) {
+        const opening = buffer.lastIndexOf('<');
+        const partialLeaf =
+          leafName &&
+          opening >= 0 &&
+          buffer.length - opening <= leafName.length + 1 &&
+          `<${leafName}`.startsWith(buffer.slice(opening));
+        keepFrom = offset + (partialLeaf ? opening : buffer.length);
+      }
+      buffer = buffer.slice(keepFrom - offset);
+      offset = keepFrom;
+    },
+    finish(): LegacyLibraryDocumentPlan {
+      if (/<!DOCTYPE$/i.test(declarationTail)) rejectDoctype();
+      parser.close();
+      if (!root) throw new Error('No root element found in XML document');
+      return planLegacyLibraryDocument(root, sourceTextHash.toString(16).padStart(8, '0'), source);
+    },
+  };
+}
+
 async function readLegacyLibrarySource(sourcePath: string) {
   const hash = createHash('sha256');
   const decoder = new StringDecoder('utf8');
-  const text: string[] = [];
+  const parser = createLegacyLibraryStream({
+    kind: 'library',
+    label: sourcePath,
+    nativePath: sourcePath,
+  });
+  let parseError: unknown;
   for await (const chunk of fs.createReadStream(sourcePath)) {
     hash.update(chunk);
-    text.push(decoder.write(chunk));
+    if (parseError !== undefined) continue;
+    try {
+      parser.write(decoder.write(chunk));
+    } catch (error) {
+      parseError = error;
+    }
   }
-  text.push(decoder.end());
-  return { contents: text.join(''), sourceHash: hash.digest('hex') };
+  const sourceHash = hash.digest('hex');
+  try {
+    if (parseError !== undefined) throw parseError;
+    parser.write(decoder.end());
+    return { sourceHash, plan: parser.finish() };
+  } catch (error) {
+    return { sourceHash, error };
+  }
 }
 
 async function hashFile(sourcePath: string): Promise<string> {
@@ -199,13 +334,11 @@ export class UnifiedLibraryImportExportService {
       folderResolutionPaths?: Readonly<Record<string, string>>;
     }[] = [];
     for (const sourcePath of sourcePaths) {
-      const { contents, sourceHash } = await readLegacyLibrarySource(sourcePath);
+      const source = await readLegacyLibrarySource(sourcePath);
+      const { sourceHash } = source;
       try {
-        const plan = parseLegacyLibraryDocument(contents, {
-          kind: 'library',
-          label: sourcePath,
-          nativePath: sourcePath,
-        });
+        if ('error' in source) throw source.error;
+        const { plan } = source;
         const conflicts = await this.analyzeManualPlan(plan, sourceHash);
         sources.push({
           plan,
@@ -528,11 +661,8 @@ export class UnifiedLibraryImportExportService {
         try {
           const source = await readLegacyLibrarySource(sourcePath);
           sourceHash = source.sourceHash;
-          const plan = parseLegacyLibraryDocument(source.contents, {
-            kind: 'library',
-            label: sourcePath,
-            nativePath: sourcePath,
-          });
+          if ('error' in source) throw source.error;
+          const { plan } = source;
           if (plan.libraryType !== descriptor.libraryType)
             throw new Error('Library type does not match the source filename');
           const result = await this.repository.importLegacyDocument({

@@ -16,11 +16,15 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 ## ISC
 
+- `saxes` 6.0.0
+
 - `@nextjournal/lang-clojure` 1.0.0
 - `@nextjournal/lezer-clojure` 1.0.0
 - `lucide-react` 0.563.0
 
 ## MIT
+
+- `xmlchars` 2.2.0 (through `saxes`)
 
 - `@tanstack/react-query` 5.104.4 (added 2026-10-18; Tanner Linsley notice in `TanStack-Query-MIT.txt`)
 - `@tanstack/query-core` 5.104.4 (same notice)

@@ -3,10 +3,51 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
-import { UnifiedLibraryImportExportService } from './import-export-service';
+import { parseLegacyLibraryDocument } from '@blue/data';
+import {
+  createLegacyLibraryStream,
+  UnifiedLibraryImportExportService,
+} from './import-export-service';
 
 const XML =
   '<udoLibrary><udoCategory categoryName="UDO Library" isRoot="true"><udo><opcodeName>tone</opcodeName><outTypes>a</outTypes><inTypes>ak</inTypes><codeBody>aout tone ain,k</codeBody><comments/></udo></udoCategory></udoLibrary>';
+
+describe('streaming legacy import', () => {
+  const source = { kind: 'library' as const, label: 'stream fixture' };
+
+  it('matches the full parser across chunk boundaries and retains verbatim resource XML', () => {
+    const raw =
+      '<soundObject type="future.Sound"><name><![CDATA[Café 🎵]]></name><!-- keep <this> --><future attr=">"/></soundObject>';
+    const xml =
+      '\uFEFF<?xml version="1.0"?>\r\n<soundObjectLibrary><category categoryName="A &amp; B">\r\n<category categoryName="Inner">' +
+      raw +
+      '</category><soundObject type="future.Empty"/></category></soundObjectLibrary>\r\n';
+    const expected = parseLegacyLibraryDocument(xml, source);
+    for (const size of [1, 2, 7, 32, 64, 4096]) {
+      const parser = createLegacyLibraryStream(source);
+      const chars = Array.from(xml);
+      for (let start = 0; start < chars.length; start += size) {
+        parser.write(chars.slice(start, start + size).join(''));
+      }
+      expect(parser.finish()).toEqual(expected);
+    }
+  });
+
+  it.each([
+    '<!DOCTYPE udoLibrary>' + XML,
+    XML.replace('<comments/>', '<!-- <!DOCTYPE forbidden> -->'),
+    XML.replace('<comments/>', '<comments>&unknown;</comments>'),
+    XML.replace('</udo>', '</different>'),
+    XML.replace(' categoryName="UDO Library"', ''),
+    XML + '<udoLibrary/>',
+  ])('rejects malformed XML and invalid envelopes before import', (xml) => {
+    const parser = createLegacyLibraryStream(source);
+    expect(() => {
+      for (const char of xml) parser.write(char);
+      parser.finish();
+    }).toThrow();
+  });
+});
 
 describe('manual import execution', () => {
   it('rejects a source changed after preview before writing any library items', async () => {
