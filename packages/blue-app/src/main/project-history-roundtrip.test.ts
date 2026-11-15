@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   AddProcessor,
   getProjectParameterCatalog,
@@ -38,6 +38,7 @@ import {
 import { ProjectSession } from './project-session';
 import type { ProjectSession as ProjectSessionType } from './project-session';
 import { ProjectHistory } from './project-history';
+import { prepareTransaction } from './project-history-memento';
 import { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
 import { FakePublicationRecorder, MockHistoryContext } from './project-history-test-support';
 import { testScoreObject } from './score-object-test';
@@ -3524,6 +3525,92 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       canRedo: baselineHistory.canRedo,
     });
   });
+});
+
+describe('grouping ScoreObjects through project history', () => {
+  it.each([false, true])(
+    'uses a full candidate only when the selection contains an Instance (%s)',
+    async (linked) => {
+      const data = new BlueData();
+      const root = data.getScore()[0] as PolyObject;
+      const layer = root[0]!;
+      const source = new GenericScore();
+      let libraryId: string | undefined;
+      let object: GenericScore | Instance = source;
+      if (linked) {
+        libraryId = data.getSoundObjectLibrary().addObject(source);
+        object = new Instance();
+        object.setSoundObject(source);
+        object.setLibraryId(libraryId);
+      }
+      assignExplicitScoreObjectId(object, 'group-source');
+      layer.push(object);
+      const session = new ProjectSession();
+      session.replace(data, '/tmp/group-history.blue');
+      const history = new ProjectHistory({ session });
+      const context = new MockHistoryContext('ctx-group-history');
+      history.markClean();
+      const { documentId } = session.read();
+      const patch: ProjectDocumentPatch = {
+        score: {
+          type: 'convertToPolyObject',
+          targets: [
+            {
+              ...scoreObjectTarget(data),
+              selectionId: 'group-source',
+            },
+          ],
+          targetGroupId: assignLayerGroupId(root),
+          targetLayerIndex: 0,
+          selectionId: 'result-group',
+        },
+      };
+      const historyCopy = vi.spyOn(data, 'historyCopy');
+      try {
+        expect(prepareTransaction(data, [patch]).status).toBe('prepared');
+        expect(historyCopy).toHaveBeenCalledTimes(linked ? 1 : 0);
+        expect(layer[0]).toBe(object);
+        expect(history.isDirty()).toBe(false);
+
+        const liveObject = () => (session.read().data!.getScore()[0] as PolyObject)[0]![0]!;
+        const checkSource = (value: GenericScore | Instance) => {
+          expect(getScoreObjectId(value)).toBe('group-source');
+          if (libraryId) {
+            expect((value as Instance).getSoundObject()).toBe(
+              session.read().data!.getSoundObjectLibrary().getObjectById(libraryId),
+            );
+          }
+        };
+        expect(
+          (
+            await history.commit(
+              context.nextCommitRequest(documentId!, 0, 'Group ScoreObjects', [patch]),
+            )
+          ).status,
+        ).toBe('committed');
+        expect(getScoreObjectId(liveObject())).toBe('result-group');
+        checkSource((liveObject() as PolyObject)[0]![0] as GenericScore | Instance);
+        expect(history.isDirty()).toBe(true);
+
+        expect(
+          (await history.undo(context.nextUndoRequest(documentId!, session.read().revision)))
+            .status,
+        ).toBe('committed');
+        checkSource(liveObject() as GenericScore | Instance);
+        expect(history.isDirty()).toBe(false);
+
+        expect(
+          (await history.redo(context.nextRedoRequest(documentId!, session.read().revision)))
+            .status,
+        ).toBe('committed');
+        expect(getScoreObjectId(liveObject())).toBe('result-group');
+        checkSource((liveObject() as PolyObject)[0]![0] as GenericScore | Instance);
+        expect(history.isDirty()).toBe(true);
+      } finally {
+        historyCopy.mockRestore();
+      }
+    },
+  );
 });
 
 describe('linked Instance timing through project history', () => {

@@ -460,6 +460,7 @@ function getScorePatchTargets(
 function addIsolatedSectionsForPatch(
   patch: ProjectDocumentPatch,
   sections: Set<IsolatedSectionKey>,
+  allowScoreOnlyGrouping: boolean,
 ): boolean {
   if (patch.clojureProject !== undefined) {
     return false;
@@ -510,7 +511,7 @@ function addIsolatedSectionsForPatch(
   }
   if (patch.score !== undefined) {
     const sp = patch.score;
-    if (sp.type === 'convertToPolyObject') return false;
+    if (sp.type === 'convertToPolyObject' && !allowScoreOnlyGrouping) return false;
     if (
       sp.type === 'addScoreObjects' &&
       sp.objects.some(
@@ -642,8 +643,12 @@ function tryPrepareSectionOwnerTransaction(
   context?: ProjectDocumentPatchContext,
 ): PreparedIsolatedStructureResult | null {
   const requiredSections = new Set<IsolatedSectionKey>();
+  const scoreOnlyGrouping =
+    patches.length === 1 &&
+    patches[0]?.score?.type === 'convertToPolyObject' &&
+    Object.keys(patches[0]).length === 1;
   for (const patch of patches) {
-    if (!addIsolatedSectionsForPatch(patch, requiredSections)) {
+    if (!addIsolatedSectionsForPatch(patch, requiredSections, scoreOnlyGrouping)) {
       return null;
     }
   }
@@ -661,8 +666,12 @@ function tryPrepareSectionOwnerTransaction(
     owners.set(source, copy);
   }
 
+  // Grouping only accesses the library when the new group contains an Instance.
+  // Discard the score candidate and use the full-document path in that case.
+  const needsLibraryCandidate = Symbol('needsLibraryCandidate');
   const scopedDataView = new Proxy(data, {
     get(target, prop) {
+      if (scoreOnlyGrouping && prop === 'getSoundObjectLibrary') throw needsLibraryCandidate;
       const sectionKey = SECTION_GETTER_TO_KEY.get(prop);
       if (sectionKey) {
         const cloned = clonedByKey.get(sectionKey);
@@ -678,12 +687,17 @@ function tryPrepareSectionOwnerTransaction(
   }
 
   const patchChanged: boolean[] = [];
-  for (const patch of patches) {
-    patchChanged.push(
-      isBsbSelectionPatch(patch)
-        ? false
-        : applyProjectDocumentPatch(scopedDataView, patch, context),
-    );
+  try {
+    for (const patch of patches) {
+      patchChanged.push(
+        isBsbSelectionPatch(patch)
+          ? false
+          : applyProjectDocumentPatch(scopedDataView, patch, context),
+      );
+    }
+  } catch (error) {
+    if (error === needsLibraryCandidate) return null;
+    throw error;
   }
 
   const finalized = finalizeOwnerDeltas(data, owners, () => {
