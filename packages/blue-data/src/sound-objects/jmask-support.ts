@@ -2233,13 +2233,20 @@ export class Parameter {
   accumulator: Accumulator | null = null;
   name = '';
 
-  constructor(other?: Parameter) {
+  constructor(other?: Parameter, forGeneration = false) {
     if (other) {
       this.visible = other.visible;
-      this.generator = other.generator ? other.generator.deepCopy() : null;
-      this.mask = other.mask ? new Mask(other.mask) : null;
-      this.quantizer = other.quantizer ? new Quantizer(other.quantizer) : null;
-      this.accumulator = other.accumulator ? new Accumulator(other.accumulator) : null;
+      this.generator = other.generator?.deepCopy() ?? null;
+      this.mask =
+        other.mask && (!forGeneration || other.mask.enabled) ? new Mask(other.mask) : null;
+      this.quantizer =
+        other.quantizer && (!forGeneration || other.quantizer.enabled)
+          ? new Quantizer(other.quantizer)
+          : null;
+      this.accumulator =
+        other.accumulator && (!forGeneration || other.accumulator.enabled)
+          ? new Accumulator(other.accumulator)
+          : null;
       this.name = other.name;
     }
   }
@@ -2517,7 +2524,8 @@ export class Field {
 
   /** Generate on an isolated copy because generators retain per-run state. */
   generateNotesFromCopy(duration: number, rnd: JavaRandom): NoteList {
-    const field = new Field(this);
+    const field = new Field(false);
+    field.parameters = this.parameters.map((parameter) => new Parameter(parameter, true));
     for (const { generator, mask, quantizer, accumulator } of field.parameters) {
       // Only built-in owners guarantee that their private table copies stay stable for a run.
       const selected =
