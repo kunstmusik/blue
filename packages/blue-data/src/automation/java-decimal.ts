@@ -101,12 +101,7 @@ function makeJavaDecimal(coefficient: bigint, scale: number): JavaDecimal {
     coefficient: coefficient.toString(),
     scale,
     canonicalText,
-    doubleValue: javaDecimalToBinary64({
-      coefficient: coefficient.toString(),
-      scale,
-      canonicalText,
-      doubleValue: 0,
-    }),
+    doubleValue: coefficientToBinary64(coefficient, scale),
   });
 }
 
@@ -240,6 +235,11 @@ export function javaDecimalFromBinary64(value: number): JavaDecimalResult {
       message: 'cannot construct an exact decimal from a non-finite value',
     };
   }
+  const { coefficient, scale } = decomposeBinary64(value);
+  return { ok: true, value: makeJavaDecimal(coefficient, scale) };
+}
+
+function decomposeBinary64(value: number): { coefficient: bigint; scale: number } {
   dataView.setFloat64(0, value);
   const bits = dataView.getBigUint64(0);
   const signBit = (bits >> 63n) & 1n;
@@ -247,7 +247,7 @@ export function javaDecimalFromBinary64(value: number): JavaDecimalResult {
   const mantissa = bits & 0xfffffffffffffn;
 
   if (exponentBits === 0 && mantissa === 0n) {
-    return { ok: true, value: makeJavaDecimal(0n, 0) };
+    return { coefficient: 0n, scale: 0 };
   }
 
   const significand = exponentBits === 0 ? mantissa : mantissa | (1n << 52n);
@@ -273,7 +273,7 @@ export function javaDecimalFromBinary64(value: number): JavaDecimalResult {
   if (signBit === 1n) {
     coefficient = -coefficient;
   }
-  return { ok: true, value: makeJavaDecimal(coefficient, scale) };
+  return { coefficient, scale };
 }
 
 // ---------------------------------------------------------------------------
@@ -293,10 +293,12 @@ function pow10(power: number): bigint {
  * overflow to infinity, and positive/negative underflow to signed zero.
  */
 export function javaDecimalToBinary64(decimal: JavaDecimal): number {
-  const negative = decimal.coefficient.startsWith('-');
-  let magnitude = BigInt(decimal.coefficient);
-  if (magnitude < 0n) magnitude = -magnitude;
-  const scale = decimal.scale;
+  return coefficientToBinary64(coefficientOf(decimal), decimal.scale);
+}
+
+function coefficientToBinary64(coefficient: bigint, scale: number): number {
+  const negative = coefficient < 0n;
+  const magnitude = negative ? -coefficient : coefficient;
 
   if (magnitude === 0n) return 0.0;
 
@@ -427,45 +429,39 @@ function setScale(
       message: 'target scale out of 32-bit range',
     };
   }
-  const coefficient = coefficientOf(decimal);
-  if (newScale === decimal.scale) {
-    return { ok: true, value: makeJavaDecimal(coefficient, newScale) };
-  }
-  if (newScale > decimal.scale) {
-    const pad = newScale - decimal.scale;
-    if (pad > POW10_LIMIT) {
-      return {
-        ok: false,
-        code: 'DECIMAL_WORKSPACE_UNAVAILABLE',
-        message: 'decimal workspace is unavailable for the requested scale',
-      };
-    }
-    return { ok: true, value: makeJavaDecimal(coefficient * pow10(pad), newScale) };
-  }
-  const k = decimal.scale - newScale;
-  if (k > POW10_LIMIT) {
+  if (Math.abs(newScale - decimal.scale) > POW10_LIMIT) {
     return {
       ok: false,
       code: 'DECIMAL_WORKSPACE_UNAVAILABLE',
       message: 'decimal workspace is unavailable for the requested scale',
     };
   }
-  const divisor = pow10(k);
+  return {
+    ok: true,
+    value: makeJavaDecimal(
+      rescaleCoefficient(coefficientOf(decimal), newScale - decimal.scale, mode),
+      newScale,
+    ),
+  };
+}
+
+function rescaleCoefficient(
+  coefficient: bigint,
+  scaleDifference: number,
+  mode: 'FLOOR' | 'HALF_UP',
+): bigint {
+  if (scaleDifference === 0) return coefficient;
+  if (scaleDifference > 0) return coefficient * pow10(scaleDifference);
+  const divisor = pow10(-scaleDifference);
   let quotient = coefficient / divisor;
   const remainder = coefficient - quotient * divisor;
   if (mode === 'FLOOR') {
-    // trunc division rounded toward zero; floor must move one step toward
-    // negative infinity for negative dividends with a nonzero remainder
-    if (remainder !== 0n && coefficient < 0n) {
-      quotient -= 1n;
-    }
+    if (remainder !== 0n && coefficient < 0n) quotient -= 1n;
   } else {
     const twiceRemainder = remainder < 0n ? -remainder << 1n : remainder << 1n;
-    if (twiceRemainder >= divisor) {
-      quotient += coefficient < 0n ? -1n : 1n;
-    }
+    if (twiceRemainder >= divisor) quotient += coefficient < 0n ? -1n : 1n;
   }
-  return { ok: true, value: makeJavaDecimal(quotient, newScale) };
+  return quotient;
 }
 
 /** Java signed `remainder(divisor)`: result keeps the dividend's scale. */
@@ -539,15 +535,29 @@ export function javaDecimalIsQuantizationActive(resolution: JavaDecimal): boolea
  * Returns null when y is non-finite (Java would throw).
  */
 export function quantizeToResolutionJava(y: number, resolution: JavaDecimal): number | null {
-  const exact = javaDecimalFromBinary64(y);
-  if (!exact.ok) return null;
-  const scaled = javaDecimalSetScaleFloor(exact.value, resolution.scale);
-  if (!scaled.ok) return null;
-  const remainder = javaDecimalRemainder(scaled.value, resolution);
-  if (!remainder.ok) return null;
-  const quantized = javaDecimalSubtract(scaled.value, remainder.value);
-  if (!quantized.ok) return null;
-  return javaDecimalToBinary64(quantized.value);
+  return quantizeBinary64(y, resolution, 'FLOOR');
+}
+
+function quantizeBinary64(
+  value: number,
+  resolution: JavaDecimal,
+  mode: 'FLOOR' | 'HALF_UP',
+): number | null {
+  if (!Number.isFinite(value)) return null;
+  const targetScale = resolution.scale;
+  const { coefficient, scale } = decomposeBinary64(value);
+  const scaleDifference = targetScale - scale;
+  if (
+    Math.abs(scaleDifference) > POW10_LIMIT ||
+    targetScale < INT32_MIN ||
+    targetScale > INT32_MAX
+  ) {
+    return null;
+  }
+  const scaled = rescaleCoefficient(coefficient, scaleDifference, mode);
+  const unit = coefficientOf(resolution);
+  if (unit === 0n) return null;
+  return coefficientToBinary64(scaled - (scaled % unit), targetScale);
 }
 
 /**
@@ -565,21 +575,8 @@ export function snapToResolutionJava(
   if (value <= min) return min;
   if (!(resolution.doubleValue > 0.0)) return value;
 
-  let retVal = value - min;
-  const exact = javaDecimalFromBinary64(retVal);
-  if (exact.ok) {
-    let grid = javaDecimalSetScaleHalfUp(exact.value, resolution.scale);
-    if (grid.ok) {
-      const remainder = javaDecimalRemainder(grid.value, resolution);
-      if (remainder.ok) {
-        const snapped = javaDecimalSubtract(grid.value, remainder.value);
-        if (snapped.ok) {
-          retVal = javaDecimalToBinary64(snapped.value);
-        }
-      }
-    }
-  }
-  return retVal + min;
+  const offset = value - min;
+  return (quantizeBinary64(offset, resolution, 'HALF_UP') ?? offset) + min;
 }
 
 /**
