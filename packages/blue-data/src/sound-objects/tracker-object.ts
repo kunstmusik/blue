@@ -103,16 +103,7 @@ export class TrackerObject extends AbstractSoundObject {
     return this._npc;
   }
 
-  override generateForCSD(
-    context: TimeContext,
-    _compileData: CompileData,
-    _startTime: number,
-    _endTime: number,
-  ): NoteList {
-    let nl = this._tracks.generateNotes(this._stepsPerBeat);
-
-    nl = applyNoteProcessorChain(nl, this._npc);
-
+  private finalizeGeneratedNotes(nl: NoteList, context: TimeContext): NoteList {
     const duration = this.getSubjectiveDuration().toBeats(context);
     const startTime = this.getStartTime().toBeats(context);
     const rpBeats = this.getRepeatPoint() ? this.getRepeatPoint()!.toBeats(context) : -1.0;
@@ -123,24 +114,28 @@ export class TrackerObject extends AbstractSoundObject {
     return nl;
   }
 
+  override generateForCSD(
+    context: TimeContext,
+    _compileData: CompileData,
+    _startTime: number,
+    _endTime: number,
+  ): NoteList {
+    const nl = applyNoteProcessorChain(this._tracks.generateNotes(this._stepsPerBeat), this._npc);
+    return this.finalizeGeneratedNotes(nl, context);
+  }
+
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
     _startTime: number,
     _endTime: number,
   ): Promise<NoteList> {
-    let nl = this._tracks.generateNotes(this._stepsPerBeat);
-
-    nl = await applyNoteProcessorChainAsync(nl, this._npc, compileData);
-
-    const duration = this.getSubjectiveDuration().toBeats(context);
-    const startTime = this.getStartTime().toBeats(context);
-    const rpBeats = this.getRepeatPoint() ? this.getRepeatPoint()!.toBeats(context) : -1.0;
-
-    applyTimeBehavior(nl, this._timeBehavior, duration, rpBeats, this._tracks.getSteps());
-    setScoreStart(nl, startTime);
-
-    return nl;
+    const nl = await applyNoteProcessorChainAsync(
+      this._tracks.generateNotes(this._stepsPerBeat),
+      this._npc,
+      compileData,
+    );
+    return this.finalizeGeneratedNotes(nl, context);
   }
 
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {

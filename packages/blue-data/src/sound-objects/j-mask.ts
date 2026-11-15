@@ -79,11 +79,22 @@ export class JMask extends AbstractSoundObject {
     setScoreStart(notes, this.getStartTime().toBeats(context));
   }
 
+  private finalizeGeneratedNotes(
+    notes: NoteList,
+    duration: number,
+    context: TimeContext,
+  ): NoteList {
+    this.applyTimeAndOffset(notes, duration, context);
+    return notes;
+  }
+
   generateNotes(context: TimeContext, _renderStart = 0, _renderEnd = -1): NoteList {
     const { notes, duration } = this.generateRawNotes(context);
-    const processed = applyNoteProcessorChain(notes, this.getNoteProcessorChain());
-    this.applyTimeAndOffset(processed, duration, context);
-    return processed;
+    return this.finalizeGeneratedNotes(
+      applyNoteProcessorChain(notes, this.getNoteProcessorChain()),
+      duration,
+      context,
+    );
   }
 
   override generateForCSD(
@@ -102,13 +113,11 @@ export class JMask extends AbstractSoundObject {
     _endTime: number,
   ): Promise<NoteList> {
     const { notes, duration } = this.generateRawNotes(context);
-    const processed = await applyNoteProcessorChainAsync(
-      notes,
-      this.getNoteProcessorChain(),
-      compileData,
+    return this.finalizeGeneratedNotes(
+      await applyNoteProcessorChainAsync(notes, this.getNoteProcessorChain(), compileData),
+      duration,
+      context,
     );
-    this.applyTimeAndOffset(processed, duration, context);
-    return processed;
   }
 
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
