@@ -54,6 +54,7 @@ import type {
   LibraryItemPreview,
   LibrarySearchResult,
   LibraryType,
+  ProjectItemLocator,
   ProjectUdoLocator,
   ProjectMutationReceipt,
   ScoreTimelineSoundObjectRequest,
@@ -68,6 +69,20 @@ function collectAllMixerChannels(mixer: Mixer): Channel[] {
     ...mixer.getSubChannels(),
     ...mixer.getChannelListGroups().flatMap((group) => Array.from(group)),
   ];
+}
+
+function getProjectEffect(
+  data: BlueData,
+  locator: Extract<ProjectItemLocator, { kind: 'effect' }>,
+) {
+  const channel = collectAllMixerChannels(data.getMixer()).find(
+    (candidate) => getMixerChannelSnapshotId(candidate) === locator.channelId,
+  );
+  const chain = locator.chain === 'pre' ? channel?.getPreEffects() : channel?.getPostEffects();
+  return chain?.find(
+    (candidate): candidate is Effect =>
+      candidate instanceof Effect && getMixerEntrySnapshotId(candidate) === locator.entryId,
+  );
 }
 
 export interface ActiveLibraryProject {
@@ -173,6 +188,11 @@ function getOpcodeListForOwner(
 
 function getOpcodeListForLocator(data: BlueData, locator: ProjectUdoLocator): OpcodeList | null {
   return getOpcodeListForOwner(data, locator);
+}
+
+function getListedOpcodeIndex(locator: ProjectUdoLocator): number {
+  const match = /(?:^|:)udo:(\d+)$/.exec(locator.sessionObjectId);
+  return match ? Number(match[1]) : -1;
 }
 
 function findOpcodeIndex(opcodeList: OpcodeList, locator: ProjectUdoLocator): number {
@@ -432,11 +452,17 @@ export class UnifiedLibraryProjectAdapter {
   private listWithProject(
     project: ActiveLibraryProject,
     libraryType: LibraryType,
+    only?: ProjectItemLocator,
   ): LibrarySearchResult[] {
+    if (only && only.kind !== libraryType) return [];
     if (libraryType === 'instrument') {
       return project.data
         .getArrangement()
         .getArrangement()
+        .filter(
+          (assignment) =>
+            only?.kind !== 'instrument' || only.assignmentId === assignment.arrangementId,
+        )
         .map((assignment) => {
           const objectType = assignment.instr?.constructor.name ?? '';
           return {
@@ -513,6 +539,36 @@ export class UnifiedLibraryProjectAdapter {
           revision: canonicalHash,
         };
       };
+      if (only?.kind === 'udo') {
+        const index = getListedOpcodeIndex(only);
+        const opcode = getOpcodeListForLocator(project.data, only)?.getOpcode(index);
+        if (!opcode) return [];
+        const assignment = only.instrumentAssignmentId
+          ? project.data.getArrangement().getInstrumentById(only.instrumentAssignmentId)
+          : null;
+        const track = only.track;
+        const group =
+          track &&
+          project.data
+            .getScore()
+            .find(
+              (candidate): candidate is TrackLayerGroup =>
+                candidate instanceof TrackLayerGroup &&
+                candidate.getUniqueId() === track.rootGroupId,
+            );
+        const trackName = group
+          ?.find((candidate) => candidate.getUniqueId() === track?.trackId)
+          ?.getName();
+        return [
+          createResult(
+            opcode,
+            index,
+            only.instrumentAssignmentId,
+            assignment?.getName(),
+            track ? { ...track, trackName: trackName ?? '' } : undefined,
+          ),
+        ];
+      }
       const projectUdos = project.data
         .getOpcodeList()
         .getOpcodes()
@@ -550,37 +606,49 @@ export class UnifiedLibraryProjectAdapter {
       const channels = collectAllMixerChannels(project.data.getMixer());
       return channels.flatMap((channel) => {
         const channelId = getMixerChannelSnapshotId(channel);
+        if (only?.kind === 'effect' && channelId !== only.channelId) return [];
         const channelName = channel.getName();
         return (['pre', 'post'] as const).flatMap((chain) =>
-          (chain === 'pre' ? channel.getPreEffects() : channel.getPostEffects())
-            .filter((entry): entry is Effect => entry instanceof Effect)
-            .map((entry) => ({
-              key: {
-                scope: 'projectOwned' as const,
-                libraryType: 'effect' as const,
-                projectSessionId: project.sessionId,
-                locator: {
-                  kind: 'effect' as const,
-                  channelId,
-                  chain,
-                  entryId: getMixerEntrySnapshotId(entry),
-                },
-              },
-              parentId: null,
-              libraryType: 'effect' as const,
-              scope: 'projectOwned' as const,
-              displayName: entry.getName() || 'Unnamed Effect',
-              breadcrumb: [channelName, chain === 'pre' ? 'Pre Effects' : 'Post Effects'],
-              supportStatus: 'supported' as const,
-              objectType: 'Effect',
-              revision: hashText(entry.saveAsXML().toXml()),
-            })),
+          only?.kind === 'effect' && chain !== only.chain
+            ? []
+            : (chain === 'pre' ? channel.getPreEffects() : channel.getPostEffects())
+                .filter((entry): entry is Effect => entry instanceof Effect)
+                .filter(
+                  (entry) =>
+                    only?.kind !== 'effect' || getMixerEntrySnapshotId(entry) === only.entryId,
+                )
+                .map((entry) => ({
+                  key: {
+                    scope: 'projectOwned' as const,
+                    libraryType: 'effect' as const,
+                    projectSessionId: project.sessionId,
+                    locator: {
+                      kind: 'effect' as const,
+                      channelId,
+                      chain,
+                      entryId: getMixerEntrySnapshotId(entry),
+                    },
+                  },
+                  parentId: null,
+                  libraryType: 'effect' as const,
+                  scope: 'projectOwned' as const,
+                  displayName: entry.getName() || 'Unnamed Effect',
+                  breadcrumb: [channelName, chain === 'pre' ? 'Pre Effects' : 'Post Effects'],
+                  supportStatus: 'supported' as const,
+                  objectType: 'Effect',
+                  revision: hashText(entry.saveAsXML().toXml()),
+                })),
         );
       });
     }
 
     const library = project.data.getSoundObjectLibrary();
-    return library.getEntries().map(({ libraryId, object }) => {
+    const entries =
+      only?.kind === 'soundObject'
+        ? [{ libraryId: only.libraryId, object: library.getObjectById(only.libraryId) }]
+        : library.getEntries();
+    return entries.flatMap(({ libraryId, object }) => {
+      if (!object) return [];
       const fingerprint = library.createFingerprint(object);
       return {
         key: {
@@ -623,7 +691,7 @@ export class UnifiedLibraryProjectAdapter {
     if (key.scope === 'user') return null;
     const project = this.getActiveProject();
     if (!project || project.sessionId !== key.projectSessionId) return null;
-    const entry = this.listWithProject(project, key.libraryType).find(
+    const entry = this.listWithProject(project, key.libraryType, key.locator).find(
       (candidate) => JSON.stringify(candidate.key) === JSON.stringify(key),
     );
     if (!entry) return null;
@@ -643,8 +711,7 @@ export class UnifiedLibraryProjectAdapter {
     }
     if (key.locator.kind === 'udo') {
       const opcodeList = getOpcodeListForLocator(project.data, key.locator);
-      const index = opcodeList ? findOpcodeIndex(opcodeList, key.locator) : -1;
-      const opcode = index >= 0 ? opcodeList?.getOpcode(index) : undefined;
+      const opcode = opcodeList?.getOpcode(getListedOpcodeIndex(key.locator));
       if (!opcode) return null;
       return this.createPreview(entry, {
         style: { state: 'available', value: udoStyle(opcode) },
@@ -656,18 +723,8 @@ export class UnifiedLibraryProjectAdapter {
       });
     }
     if (key.locator.kind === 'effect') {
-      const source = this.resolveInsertionSource(project, {
-        key,
-        target: {
-          libraryType: 'effect',
-          projectSessionId: project.sessionId,
-          label: 'Preview',
-          valid: true,
-          targetRevision: String(project.revision ?? 0),
-        },
-        mode: 'independent',
-      });
-      const effect = source.value as Effect;
+      const effect = getProjectEffect(project.data, key.locator);
+      if (!effect) return null;
       return this.createPreview(entry, {
         inputs: { state: 'available', value: effect.getNumIns() },
         outputs: { state: 'available', value: effect.getNumOuts() },
@@ -688,11 +745,11 @@ export class UnifiedLibraryProjectAdapter {
     });
   }
 
-  getEditorSource(key: LibraryItemKey): ProjectLibraryEditorSource | null {
+  private getEditorEntry(key: LibraryItemKey) {
     if (key.scope === 'user') return null;
     const project = this.getActiveProject();
     if (!project || project.sessionId !== key.projectSessionId) return null;
-    const entry = this.listWithProject(project, key.libraryType).find((candidate) => {
+    const entry = this.listWithProject(project, key.libraryType, key.locator).find((candidate) => {
       if (
         key.locator.kind === 'soundObject' &&
         candidate.key.scope !== 'user' &&
@@ -702,25 +759,40 @@ export class UnifiedLibraryProjectAdapter {
       }
       return JSON.stringify(candidate.key) === JSON.stringify(key);
     });
-    if (!entry) return null;
-    const source = this.resolveInsertionSource(project, {
-      key: entry.key,
-      target: {
-        libraryType: key.libraryType,
-        projectSessionId: project.sessionId,
-        label: 'Editor',
-        valid: true,
-        targetRevision: String(project.revision ?? 0),
-      },
-      mode: 'independent',
-    });
+    return entry ? { project, entry } : null;
+  }
+
+  getEditorSource(key: LibraryItemKey): ProjectLibraryEditorSource | null {
+    const selected = this.getEditorEntry(key);
+    if (!selected || key.scope === 'user') return null;
+    const {
+      project: { data },
+      entry,
+    } = selected;
+    const locator = key.locator;
+    let value: Instrument | OpcodeDefinition | Effect | SoundObject | null | undefined;
+    switch (locator.kind) {
+      case 'instrument':
+        value = data.getArrangement().getInstrumentById(locator.assignmentId);
+        break;
+      case 'udo':
+        value = getOpcodeListForLocator(data, locator)?.getOpcode(getListedOpcodeIndex(locator));
+        break;
+      case 'effect':
+        value = getProjectEffect(data, locator);
+        break;
+      case 'soundObject':
+        value = data.getSoundObjectLibrary().getObjectById(locator.libraryId);
+        break;
+    }
+    if (!value) return null;
     return {
       key,
-      displayName: source.displayName,
-      objectType: source.value.constructor.name,
+      displayName: value instanceof Effect ? value.getName() || 'Unnamed Effect' : value.getName(),
+      objectType: value.constructor.name,
       breadcrumb: entry.breadcrumb,
       revision: String(entry.revision),
-      payloadXml: source.value.saveAsXML().toXml(),
+      payloadXml: value.saveAsXML().toXml(),
     };
   }
 
@@ -730,9 +802,10 @@ export class UnifiedLibraryProjectAdapter {
     payloadXml: string,
   ): ProjectLibraryEditorSource | null {
     if (key.scope === 'user') throw new Error('Project editor requires a project key');
-    const current = this.getEditorSource(key);
-    if (!current) return null;
-    if (current.revision !== expectedRevision) throw new Error('Project editor conflict');
+    const selection = this.getEditorEntry(key);
+    if (!selection) return null;
+    const { entry: current } = selection;
+    if (String(current.revision) !== expectedRevision) throw new Error('Project editor conflict');
     const report = readResourceXml(key.libraryType, payloadXml, {
       kind: 'library',
       label: current.displayName,
@@ -749,7 +822,7 @@ export class UnifiedLibraryProjectAdapter {
     } else if (key.locator.kind === 'udo') {
       const locator = key.locator;
       const opcodeList = getOpcodeListForLocator(project.data, locator);
-      const index = opcodeList ? findOpcodeIndex(opcodeList, locator) : -1;
+      const index = getListedOpcodeIndex(locator);
       changed = opcodeList?.replaceOpcodeAt(index, accepted as OpcodeDefinition) ?? false;
     } else if (key.locator.kind === 'effect') {
       const value = accepted as Effect;
@@ -1124,15 +1197,7 @@ export class UnifiedLibraryProjectAdapter {
       return { displayName: value.getName(), value };
     }
     if (locator.kind === 'effect') {
-      const channels = collectAllMixerChannels(project.data.getMixer());
-      const channel = channels.find(
-        (candidate) => getMixerChannelSnapshotId(candidate) === locator.channelId,
-      );
-      const chain = locator.chain === 'pre' ? channel?.getPreEffects() : channel?.getPostEffects();
-      const entry = chain?.find(
-        (candidate): candidate is Effect =>
-          candidate instanceof Effect && getMixerEntrySnapshotId(candidate) === locator.entryId,
-      );
+      const entry = getProjectEffect(project.data, locator);
       if (!entry) {
         throw new Error('Project Effect not found');
       }

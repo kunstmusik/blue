@@ -1,6 +1,8 @@
 import {
   BlueData,
+  Channel,
   CompileData,
+  Effect,
   GenericInstrument,
   GenericScore,
   Instance,
@@ -9,7 +11,7 @@ import {
   TimeContext,
   UDOStyle,
 } from '@blue/data';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 
 function projectData(): BlueData {
@@ -103,6 +105,53 @@ describe('UnifiedLibraryProjectAdapter', () => {
       displayName: 'embeddedTone',
       fields: { style: { state: 'available', value: 'MODERN' } },
     });
+  });
+
+  it('previews and opens one item without serializing siblings or acquiring a mutable project', () => {
+    const data = projectData();
+    const otherInstrument = new GenericInstrument();
+    otherInstrument.setName('Other instrument');
+    data.getArrangement().addInstrument(otherInstrument, '8');
+    const otherOpcode = new OpcodeDefinition();
+    otherOpcode.setName('projectFx');
+    otherOpcode.setCode('aout = 0');
+    data.getOpcodeList().addOpcode(otherOpcode);
+    const otherScore = new GenericScore();
+    data.getSoundObjectLibrary().addObject(otherScore);
+    const channel = new Channel();
+    channel.setName('Lead');
+    const selectedEffect = new Effect();
+    selectedEffect.setName('Selected effect');
+    const otherEffect = new Effect();
+    otherEffect.setName('Other effect');
+    channel.getPreEffects().push(selectedEffect, otherEffect);
+    data.getMixer().getChannels().push(channel);
+
+    const provider = vi.fn(() => ({ data, sessionId: 42 }));
+    const adapter = new UnifiedLibraryProjectAdapter(provider);
+    const selected = (['instrument', 'udo', 'soundObject', 'effect'] as const).map(
+      (type) => adapter.list(type)[0]!,
+    );
+    const siblingSerializers = [
+      vi.spyOn(data.getArrangement().getInstrumentById('8')!, 'saveAsXML'),
+      vi.spyOn(otherOpcode, 'saveAsXML'),
+      vi.spyOn(otherScore, 'saveAsXML'),
+      vi.spyOn(otherEffect, 'saveAsXML'),
+    ];
+    provider.mockClear();
+
+    for (const item of selected) {
+      expect(adapter.preview(item.key)?.displayName).toBe(item.displayName);
+      expect(adapter.getEditorSource(item.key)).toMatchObject({
+        displayName: item.displayName,
+        revision: String(item.revision),
+      });
+      expect(() => adapter.saveEditorSource(item.key, 'stale', '')).toThrow(
+        'Project editor conflict',
+      );
+    }
+    for (const serialize of siblingSerializers) expect(serialize).not.toHaveBeenCalled();
+    expect(provider).not.toHaveBeenCalledWith({ mutable: true });
   });
 
   it('adds a timeline SoundObject to the project library and replaces it with a linked Instance', () => {
