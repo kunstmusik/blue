@@ -3528,9 +3528,14 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
 });
 
 describe('grouping ScoreObjects through project history', () => {
-  it.each([false, true])(
-    'uses a full candidate only when the selection contains an Instance (%s)',
-    async (linked) => {
+  it.each([
+    [false, false],
+    [false, true],
+    [true, false],
+    [true, true],
+  ])(
+    'handles linked=%s and a second section=%s through commit, undo and redo',
+    async (linked, mixed) => {
       const data = new BlueData();
       const root = data.getScore()[0] as PolyObject;
       const layer = root[0]!;
@@ -3565,11 +3570,15 @@ describe('grouping ScoreObjects through project history', () => {
           selectionId: 'result-group',
         },
       };
+      const patches = mixed ? [patch, { globalOrc: 'sr = 48000' }] : [patch];
+      const liveOrc = () => session.read().data!.getGlobalOrcSco().getGlobalOrc();
+      const originalOrc = liveOrc();
       const historyCopy = vi.spyOn(data, 'historyCopy');
       try {
-        expect(prepareTransaction(data, [patch]).status).toBe('prepared');
+        expect(prepareTransaction(data, patches).status).toBe('prepared');
         expect(historyCopy).toHaveBeenCalledTimes(linked ? 1 : 0);
         expect(layer[0]).toBe(object);
+        expect(liveOrc()).toBe(originalOrc);
         expect(history.isDirty()).toBe(false);
 
         const liveObject = () => (session.read().data!.getScore()[0] as PolyObject)[0]![0]!;
@@ -3584,19 +3593,21 @@ describe('grouping ScoreObjects through project history', () => {
         expect(
           (
             await history.commit(
-              context.nextCommitRequest(documentId!, 0, 'Group ScoreObjects', [patch]),
+              context.nextCommitRequest(documentId!, 0, 'Group ScoreObjects', patches),
             )
           ).status,
         ).toBe('committed');
         expect(getScoreObjectId(liveObject())).toBe('result-group');
         checkSource((liveObject() as PolyObject)[0]![0] as GenericScore | Instance);
         expect(history.isDirty()).toBe(true);
+        expect(liveOrc()).toBe(mixed ? 'sr = 48000' : originalOrc);
 
         expect(
           (await history.undo(context.nextUndoRequest(documentId!, session.read().revision)))
             .status,
         ).toBe('committed');
         checkSource(liveObject() as GenericScore | Instance);
+        expect(liveOrc()).toBe(originalOrc);
         expect(history.isDirty()).toBe(false);
 
         expect(
@@ -3606,6 +3617,7 @@ describe('grouping ScoreObjects through project history', () => {
         expect(getScoreObjectId(liveObject())).toBe('result-group');
         checkSource((liveObject() as PolyObject)[0]![0] as GenericScore | Instance);
         expect(history.isDirty()).toBe(true);
+        expect(liveOrc()).toBe(mixed ? 'sr = 48000' : originalOrc);
       } finally {
         historyCopy.mockRestore();
       }

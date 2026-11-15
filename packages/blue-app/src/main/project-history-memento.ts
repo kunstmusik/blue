@@ -33,7 +33,6 @@ import {
   applyProjectDocumentPatch,
   classifyProjectDocumentPatch,
   findMixerChannelById,
-  isEmptyProjectDocumentPatch,
   validateProjectDocumentPatch,
 } from '../shared/project-editor';
 import {
@@ -728,7 +727,8 @@ export function prepareTransaction(
   patches: readonly ProjectDocumentPatch[],
   options?: PrepareTransactionOptions,
 ): PrepareTransactionResult {
-  // 0. Patch validation
+  let allEmpty = true;
+  let allScalar = !options?.forceStructural;
   for (const patch of patches) {
     const classification = classifyProjectDocumentPatch(patch);
     if (classification === 'invalid') {
@@ -739,6 +739,8 @@ export function prepareTransaction(
           validation.reason ?? `Unexpected patch key(s): ${validation.unexpectedKeys?.join(', ')}`,
       };
     }
+    allEmpty &&= classification === 'empty' || isBsbSelectionOnly(patch);
+    allScalar &&= classification === 'scalar';
   }
 
   // 1. Target and precondition validation
@@ -751,9 +753,6 @@ export function prepareTransaction(
   }
 
   // 2. Empty check
-  const allEmpty =
-    patches.length === 0 ||
-    patches.every((patch) => isEmptyProjectDocumentPatch(patch) || isBsbSelectionOnly(patch));
   if (allEmpty) {
     return {
       status: 'prepared',
@@ -767,9 +766,6 @@ export function prepareTransaction(
   }
 
   // 3. Classify transaction
-  const allScalar =
-    !options?.forceStructural && patches.every((p) => classifyProjectDocumentPatch(p) === 'scalar');
-
   if (allScalar) {
     // Collect records
     const allRecords: ScalarFieldRecord[] = [];
