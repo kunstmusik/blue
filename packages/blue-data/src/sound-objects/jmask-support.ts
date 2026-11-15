@@ -173,6 +173,7 @@ interface TableCache {
 }
 
 const tableCaches = new WeakMap<Table, TableCache>();
+const generationTables = new WeakSet<Table>();
 
 export class Table {
   static readonly OFF = 0;
@@ -216,6 +217,7 @@ export class Table {
       cached.interpolationType === interpolationType &&
       Object.is(cached.interpolation, interpolation)
     ) {
+      if (generationTables.has(this)) return cached;
       let valid = true;
       for (let i = 0; i < size; i += 1) {
         const pt = points[i]!;
@@ -2413,6 +2415,19 @@ export class Parameter {
   }
 }
 
+const TABLE_OWNER_TYPES = new Set<Function>([
+  Oscillator,
+  Segment,
+  Exponential,
+  Gaussian,
+  Cauchy,
+  Beta,
+  Weibull,
+  Mask,
+  Quantizer,
+  Accumulator,
+]);
+
 export class Field {
   parameters: Parameter[] = [];
 
@@ -2498,6 +2513,25 @@ export class Field {
     parameter.name = oldParameter.name;
     parameter.visible = oldParameter.visible;
     this.parameters[index] = parameter;
+  }
+
+  /** Generate on an isolated copy because generators retain per-run state. */
+  generateNotesFromCopy(duration: number, rnd: JavaRandom): NoteList {
+    const field = new Field(this);
+    for (const { generator, mask, quantizer, accumulator } of field.parameters) {
+      // Only built-in owners guarantee that their private table copies stay stable for a run.
+      const selected =
+        generator?.constructor === Probability
+          ? (generator as Probability).getSelectedProbabilityGenerator()
+          : generator;
+      for (const owner of [selected, mask, quantizer, accumulator]) {
+        if (!owner || !TABLE_OWNER_TYPES.has(owner.constructor)) continue;
+        for (const value of Object.values(owner)) {
+          if (value?.constructor === Table) generationTables.add(value);
+        }
+      }
+    }
+    return field.generateNotes(duration, rnd);
   }
 
   generateNotes(duration: number, rnd: JavaRandom): NoteList {

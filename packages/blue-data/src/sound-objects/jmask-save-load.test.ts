@@ -830,6 +830,21 @@ describe('JMask XML save/load round-trips', () => {
       expect(notes.size).toBeGreaterThan(0);
     });
 
+    it('rebuilds prepared render tables after a point edit between generations', () => {
+      const field = new Field();
+      (field.getParameter(0).generator as Constant).value = 1;
+      (field.getParameter(1).generator as Constant).value = 0.25;
+      const segment = new Segment();
+      field.getParameter(2).setGenerator(segment);
+
+      const generate = () => field.generateNotesFromCopy(1, new JavaRandom(42n)).toString();
+      expect(generate()).toBe(new Field(field).generateNotes(1, new JavaRandom(42n)).toString());
+      const before = generate();
+      segment.table.getPoint(0).setValue(0.75);
+      expect(generate()).not.toBe(before);
+      expect(generate()).toBe(new Field(field).generateNotes(1, new JavaRandom(42n)).toString());
+    });
+
     it('handles snapshot with table points that have kind: TablePoint', () => {
       const field = new Field(false);
       const seg = new Segment();

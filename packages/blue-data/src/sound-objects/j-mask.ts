@@ -65,10 +65,9 @@ export class JMask extends AbstractSoundObject {
   }
 
   private generateRawNotes(context: TimeContext): { notes: NoteList; duration: number } {
-    const field = new Field(this._field);
     const rnd = this._seedUsed ? new JavaRandom(BigInt(this._seed)) : new JavaRandom();
     const duration = this.getSubjectiveDuration().toBeats(context);
-    const notes = field.generateNotes(duration, rnd);
+    const notes = this._field.generateNotesFromCopy(duration, rnd);
     return { notes, duration };
   }
 
