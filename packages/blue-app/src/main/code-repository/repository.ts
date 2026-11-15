@@ -137,20 +137,7 @@ export class CodeRepositoryRepository {
    * rolls back on any invariant violation.
    */
   commitDraft(expectedRevision: number, root: CodeRepositoryNode): CodeRepositorySnapshotData {
-    return this.withTransaction(() => {
-      this.assertExpectedRevision(expectedRevision);
-      const error = validateCodeRepositoryTree(root);
-      if (error) {
-        throw new Error(`invalid-tree:${error.code}`);
-      }
-      // Delete every non-root row, then re-insert the incoming tree. The root
-      // row is protected and retained.
-      this.database.prepare("DELETE FROM code_repository_nodes WHERE kind <> 'root'").run();
-      this.insertSubtree(root);
-      this.markInitialized();
-      this.incrementContentRevision();
-      return this.getSnapshot();
-    });
+    return this.replaceTreeAndBuildSnapshot(expectedRevision, root);
   }
 
   /**
@@ -163,16 +150,40 @@ export class CodeRepositoryRepository {
     root: CodeRepositoryNode,
     importRecord: CodeRepositoryImportRecordInput,
   ): CodeRepositorySnapshotData {
+    return this.replaceTreeAndBuildSnapshot(expectedRevision, root, () => {
+      this.recordImportInTransaction(importRecord);
+    });
+  }
+
+  private replaceTreeAndBuildSnapshot(
+    expectedRevision: number,
+    root: CodeRepositoryNode,
+    afterInsert?: () => void,
+  ): CodeRepositorySnapshotData {
     return this.withTransaction(() => {
       this.assertExpectedRevision(expectedRevision);
       const error = validateCodeRepositoryTree(root);
-      if (error) throw new Error(`invalid-tree:${error.code}`);
-      this.database.prepare("DELETE FROM code_repository_nodes WHERE kind <> 'root'").run();
-      this.insertSubtree(root);
-      this.recordImportInTransaction(importRecord);
+      if (error) {
+        throw new Error(`invalid-tree:${error.code}`);
+      }
+      // Delete every non-root row, then re-insert the incoming tree. The root
+      // row is protected and retained.
+      this.prepareStatement("DELETE FROM code_repository_nodes WHERE kind <> 'root'").run();
+      const children = (root.children ?? []).map((child) => this.insertSubtree(child));
+      afterInsert?.();
       this.markInitialized();
       this.incrementContentRevision();
-      return this.getSnapshot();
+      const rootRow = this.prepareStatement('SELECT * FROM code_repository_nodes WHERE id = ?').get(
+        CODE_REPOSITORY_ROOT_ID,
+      ) as Record<string, unknown> | undefined;
+      if (!rootRow) {
+        throw new Error('Code Repository root row is missing');
+      }
+      return {
+        root: { ...toSnapshotNode(rootRow), children },
+        contentRevision: expectedRevision + 1,
+        initialized: true,
+      };
     });
   }
 
@@ -190,13 +201,11 @@ export class CodeRepositoryRepository {
       const id = randomUUID();
       const order = this.nextSortOrder(parentId);
       const now = Date.now();
-      this.database
-        .prepare(
-          `INSERT INTO code_repository_nodes (
-            id, parent_id, kind, display_name, code_text, sort_order, created_at, updated_at
-          ) VALUES (?, ?, 'group', ?, NULL, ?, ?, ?)`,
-        )
-        .run(id, parent.id, displayName, order, now, now);
+      this.prepareStatement(
+        `INSERT INTO code_repository_nodes (
+          id, parent_id, kind, display_name, code_text, sort_order, created_at, updated_at
+        ) VALUES (?, ?, 'group', ?, NULL, ?, ?, ?)`,
+      ).run(id, parent.id, displayName, order, now, now);
       this.markInitialized();
       this.incrementContentRevision();
       return this.getSnapshot();
@@ -216,13 +225,11 @@ export class CodeRepositoryRepository {
       const id = randomUUID();
       const order = this.nextSortOrder(parentId);
       const now = Date.now();
-      this.database
-        .prepare(
-          `INSERT INTO code_repository_nodes (
-            id, parent_id, kind, display_name, code_text, sort_order, created_at, updated_at
-          ) VALUES (?, ?, 'snippet', ?, ?, ?, ?, ?)`,
-        )
-        .run(id, parent.id, displayName, code, order, now, now);
+      this.prepareStatement(
+        `INSERT INTO code_repository_nodes (
+          id, parent_id, kind, display_name, code_text, sort_order, created_at, updated_at
+        ) VALUES (?, ?, 'snippet', ?, ?, ?, ?, ?)`,
+      ).run(id, parent.id, displayName, code, order, now, now);
       this.markInitialized();
       this.incrementContentRevision();
       return this.getSnapshot();
@@ -251,9 +258,9 @@ export class CodeRepositoryRepository {
       void target;
       void node;
       const now = Date.now();
-      this.database
-        .prepare('UPDATE code_repository_nodes SET parent_id = ?, updated_at = ? WHERE id = ?')
-        .run(parentId, now, nodeId);
+      this.prepareStatement(
+        'UPDATE code_repository_nodes SET parent_id = ?, updated_at = ? WHERE id = ?',
+      ).run(parentId, now, nodeId);
       this.normalizeSiblingOrder(parentId, nodeId, order);
       const oldParent = node.parentId;
       if (oldParent && oldParent !== parentId) {
@@ -278,17 +285,17 @@ export class CodeRepositoryRepository {
       const now = Date.now();
       if (patch.name !== undefined) {
         const displayName = requireNonBlankName(patch.name);
-        this.database
-          .prepare('UPDATE code_repository_nodes SET display_name = ?, updated_at = ? WHERE id = ?')
-          .run(displayName, now, nodeId);
+        this.prepareStatement(
+          'UPDATE code_repository_nodes SET display_name = ?, updated_at = ? WHERE id = ?',
+        ).run(displayName, now, nodeId);
       }
       if (patch.code !== undefined) {
         if (node.kind !== 'snippet') {
           throw new Error('invalid-tree:group-has-code');
         }
-        this.database
-          .prepare('UPDATE code_repository_nodes SET code_text = ?, updated_at = ? WHERE id = ?')
-          .run(patch.code, now, nodeId);
+        this.prepareStatement(
+          'UPDATE code_repository_nodes SET code_text = ?, updated_at = ? WHERE id = ?',
+        ).run(patch.code, now, nodeId);
       }
       this.incrementContentRevision();
       return this.getSnapshot();
@@ -303,7 +310,7 @@ export class CodeRepositoryRepository {
       }
       const node = this.requireNode(nodeId);
       // Cascading delete removes descendants (FK ON DELETE CASCADE).
-      this.database.prepare('DELETE FROM code_repository_nodes WHERE id = ?').run(nodeId);
+      this.prepareStatement('DELETE FROM code_repository_nodes WHERE id = ?').run(nodeId);
       if (node.parentId) this.normalizeSiblingOrder(node.parentId);
       this.incrementContentRevision();
       return this.getSnapshot();
@@ -319,32 +326,28 @@ export class CodeRepositoryRepository {
 
   private recordImportInTransaction(input: CodeRepositoryImportRecordInput): void {
     const now = Date.now();
-    this.database
-      .prepare(
-        `INSERT INTO code_repository_imports (
-          id, source_path, source_hash, source_kind, status, node_count, diagnostics, imported_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
-        input.id,
-        input.sourcePath,
-        input.sourceHash,
-        input.sourceKind,
-        input.status,
-        input.nodeCount,
-        input.diagnostics,
-        now,
-      );
+    this.prepareStatement(
+      `INSERT INTO code_repository_imports (
+        id, source_path, source_hash, source_kind, status, node_count, diagnostics, imported_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      input.id,
+      input.sourcePath,
+      input.sourceHash,
+      input.sourceKind,
+      input.status,
+      input.nodeCount,
+      input.diagnostics,
+      now,
+    );
   }
 
   hasImportedHash(hash: string): boolean {
     this.assertOpen();
     return Boolean(
-      this.database
-        .prepare(
-          "SELECT 1 AS found FROM code_repository_imports WHERE source_hash = ? AND status = 'succeeded' LIMIT 1",
-        )
-        .get(hash),
+      this.prepareStatement(
+        "SELECT 1 AS found FROM code_repository_imports WHERE source_hash = ? AND status = 'succeeded' LIMIT 1",
+      ).get(hash),
     );
   }
 
@@ -383,17 +386,14 @@ export class CodeRepositoryRepository {
     return node;
   }
 
-  private insertSubtree(node: CodeRepositoryNode): void {
-    if (node.kind === 'root') {
-      for (const child of node.children ?? []) this.insertSubtree(child);
-      return;
-    }
+  private insertSubtree(node: CodeRepositoryNode): CodeRepositoryNode {
     const now = Date.now();
-    this.prepareStatement(
+    const row = this.prepareStatement(
       `INSERT INTO code_repository_nodes (
           id, parent_id, kind, display_name, code_text, sort_order, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING id, parent_id, kind, display_name, code_text, sort_order`,
+    ).get(
       node.id,
       node.parentId,
       node.kind,
@@ -402,10 +402,12 @@ export class CodeRepositoryRepository {
       node.order,
       now,
       now,
-    );
-    if (node.kind === 'group') {
-      for (const child of node.children ?? []) this.insertSubtree(child);
-    }
+    ) as Record<string, unknown> | undefined;
+    if (!row) throw new Error('Code Repository insert returned no row');
+    return {
+      ...toSnapshotNode(row),
+      children: (node.children ?? []).map((child) => this.insertSubtree(child)),
+    };
   }
 
   private nextSortOrder(parentId: string): number {

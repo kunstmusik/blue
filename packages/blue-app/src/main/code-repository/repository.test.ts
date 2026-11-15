@@ -130,6 +130,32 @@ describe('CodeRepositoryRepository', () => {
     }
   });
 
+  it('rejects a nested root without changing the persisted tree or revision', () => {
+    const repo = CodeRepositoryRepository.open(':memory:');
+    try {
+      const original = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'Existing group', 0);
+      const draft = {
+        ...original.root,
+        children: [
+          {
+            id: 'nested-root',
+            kind: 'root' as const,
+            name: 'Nested Root',
+            parentId: CODE_REPOSITORY_ROOT_ID,
+            order: 0,
+            children: [],
+          },
+        ],
+      };
+      expect(() => repo.commitDraft(original.contentRevision, draft)).toThrow(
+        'invalid-tree:multiple-roots',
+      );
+      expect(repo.getSnapshot()).toEqual(original);
+    } finally {
+      repo.close();
+    }
+  });
+
   it('persists across reopen (restart) and rejects stale revisions', () => {
     const dir = createCodeRepositoryTestDirectory();
     try {
@@ -246,6 +272,31 @@ describe('CodeRepositoryRepository', () => {
         }),
       ).toThrow();
       expect(repo.getSnapshot().root.children?.map((node) => node.name)).toEqual(before);
+
+      const validDraft = {
+        ...snapshot.root,
+        children: [
+          {
+            id: 'snip-b',
+            kind: 'snippet' as const,
+            name: 'b',
+            parentId: CODE_REPOSITORY_ROOT_ID,
+            order: 0,
+            code: '',
+          },
+          {
+            id: 'snip-a',
+            kind: 'snippet' as const,
+            name: 'a',
+            parentId: CODE_REPOSITORY_ROOT_ID,
+            order: 1,
+            code: 'oscil 1, 440\n; a\uD800b',
+          },
+        ],
+      };
+      const committed = repo.commitDraft(snapshot.contentRevision, validDraft);
+      expect(committed.root.children?.[1]?.code).toBe('oscil 1, 440\n; a\uFFFDb');
+      expect(committed).toEqual(repo.getSnapshot());
     } finally {
       repo.close();
     }

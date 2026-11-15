@@ -146,6 +146,9 @@ export function validateCodeRepositoryTree(
     if (depth > CODE_REPOSITORY_MAX_DEPTH) {
       return { code: 'depth-exceeded', nodeId: node.id };
     }
+    if (depth > 0 && node.kind === 'root') {
+      return { code: 'multiple-roots' };
+    }
     if (node.name.trim().length === 0) {
       return { code: 'empty-name', nodeId: node.id };
     }
