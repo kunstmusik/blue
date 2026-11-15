@@ -26,7 +26,8 @@ function cloneClipboard(clipboard: BsbCanvasClipboard | null): BsbCanvasClipboar
 function publishClipboard(clipboard: BsbCanvasClipboard | null): void {
   const publish = typeof window === 'undefined' ? undefined : window.blueAPI?.setBsbClipboard;
   if (typeof publish === 'function') {
-    void publish(cloneClipboard(clipboard)).catch(() => undefined);
+    // The preload bridge serializes the renderer-owned clipboard on invocation.
+    void publish(clipboard).catch(() => undefined);
   }
 }
 

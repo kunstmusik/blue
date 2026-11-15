@@ -124,7 +124,7 @@ export function createCanvasClipboard(
   }
 
   return {
-    widgets: selectedWidgets.map((widget) => structuredClone(widget)),
+    widgets: selectedWidgets.slice(),
     originX: Math.min(...selectedWidgets.map((widget) => widget.x)),
     originY: Math.min(...selectedWidgets.map((widget) => widget.y)),
   };
@@ -834,6 +834,9 @@ function BSBInterfaceCanvas({
             gridSettings={gridSettings}
             canvasWidth={canvasSize.width}
             canvasHeight={canvasSize.height}
+            viewportRef={canvasRef}
+            viewportWidth={viewportSize.width}
+            viewportHeight={viewportSize.height}
           />
         )}
         {currentChildren.map((child) => renderWidget(child))}
@@ -1000,15 +1003,19 @@ function strokeGridLines(
   height: number,
   stepX: number,
   stepY: number,
+  left = 0,
+  top = 0,
 ): void {
   ctx.beginPath();
-  for (let x = 0; x < width; x += stepX) {
-    ctx.moveTo(x + 0.5, 0);
-    ctx.lineTo(x + 0.5, height);
+  for (let column = Math.max(0, Math.floor(left / stepX)); column * stepX < width; column += 1) {
+    const x = column * stepX + 0.5;
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, height);
   }
-  for (let y = 0; y < height; y += stepY) {
-    ctx.moveTo(0, y + 0.5);
-    ctx.lineTo(width, y + 0.5);
+  for (let row = Math.max(0, Math.floor(top / stepY)); row * stepY < height; row += 1) {
+    const y = row * stepY + 0.5;
+    ctx.moveTo(left, y);
+    ctx.lineTo(width, y);
   }
   ctx.stroke();
 }
@@ -1017,24 +1024,30 @@ function GridOverlay({
   gridSettings,
   canvasWidth,
   canvasHeight,
+  viewportRef,
+  viewportWidth,
+  viewportHeight,
 }: {
   gridSettings: { width: number; height: number; gridStyle: string };
   canvasWidth: number;
   canvasHeight: number;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  viewportWidth: number;
+  viewportHeight: number;
 }) {
   const w = Math.max(1, gridSettings.width);
   const h = Math.max(1, gridSettings.height);
   const style = gridSettings.gridStyle;
 
   const drawGrid = useCallback(
-    (canvas: HTMLCanvasElement) => {
-      const cw = Math.max(1, Math.ceil(canvasWidth));
-      const ch = Math.max(1, Math.ceil(canvasHeight));
-      canvas.width = cw;
-      canvas.height = ch;
+    (canvas: HTMLCanvasElement, left: number, top: number, right: number, bottom: number) => {
+      canvas.style.left = `${left}px`;
+      canvas.style.top = `${top}px`;
+      canvas.width = Math.max(1, right - left);
+      canvas.height = Math.max(1, bottom - top);
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      ctx.clearRect(0, 0, cw, ch);
+      if (left !== 0 || top !== 0) ctx.translate(-left, -top);
       ctx.fillStyle = 'rgba(80,110,160,0.3)';
       ctx.strokeStyle = 'rgba(80,110,160,0.3)';
       ctx.lineWidth = 1;
@@ -1067,22 +1080,26 @@ function GridOverlay({
           const pattern = ctx.createPattern(tile, 'repeat');
           if (pattern) {
             ctx.fillStyle = pattern;
-            ctx.fillRect(0, 0, cw, ch);
+            ctx.fillRect(left, top, right - left, bottom - top);
             return;
           }
         }
       }
       if (style === 'DOT') {
         ctx.beginPath();
-        for (let x = 0; x < cw; x += w) {
-          for (let y = 0; y < ch; y += h) {
+        const maxX = Math.min(canvasWidth, right + 1);
+        const maxY = Math.min(canvasHeight, bottom + 1);
+        for (let column = Math.max(0, Math.ceil((left - 1) / w)); column * w < maxX; column += 1) {
+          for (let row = Math.max(0, Math.ceil((top - 1) / h)); row * h < maxY; row += 1) {
+            const x = column * w;
+            const y = row * h;
             ctx.moveTo(x + 1, y);
             ctx.arc(x, y, 1, 0, Math.PI * 2);
           }
         }
         ctx.fill();
       } else if (style === 'LINE') {
-        strokeGridLines(ctx, cw, ch, w, h);
+        strokeGridLines(ctx, right, bottom, w, h, left, top);
       }
     },
     [w, h, style, canvasWidth, canvasHeight],
@@ -1091,8 +1108,55 @@ function GridOverlay({
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    if (canvasElRef.current) drawGrid(canvasElRef.current);
-  }, [drawGrid]);
+    const canvas = canvasElRef.current;
+    const viewport = viewportRef.current;
+    const view = viewport?.ownerDocument.defaultView;
+    if (!canvas || !viewport || !view) return;
+    const width = Math.max(1, Math.ceil(canvasWidth));
+    const height = Math.max(1, Math.ceil(canvasHeight));
+    const overscan = 96;
+    let rendered: { left: number; top: number; right: number; bottom: number } | undefined;
+    let frame: number | undefined;
+
+    const paint = () => {
+      frame = undefined;
+      const scrollLeft = Math.min(
+        Math.max(0, Math.floor(viewport.scrollLeft)),
+        Math.max(0, width - viewportWidth),
+      );
+      const scrollTop = Math.min(
+        Math.max(0, Math.floor(viewport.scrollTop)),
+        Math.max(0, height - viewportHeight),
+      );
+      const visibleRight = Math.min(width, scrollLeft + viewportWidth);
+      const visibleBottom = Math.min(height, scrollTop + viewportHeight);
+      if (
+        rendered &&
+        scrollLeft >= rendered.left &&
+        scrollTop >= rendered.top &&
+        visibleRight <= rendered.right &&
+        visibleBottom <= rendered.bottom
+      )
+        return;
+      rendered = {
+        left: Math.max(0, scrollLeft - overscan),
+        top: Math.max(0, scrollTop - overscan),
+        right: Math.min(width, visibleRight + overscan),
+        bottom: Math.min(height, visibleBottom + overscan),
+      };
+      drawGrid(canvas, rendered.left, rendered.top, rendered.right, rendered.bottom);
+    };
+    if (viewportWidth <= 0 || viewportHeight <= 0) return;
+    paint();
+    const schedule = () => {
+      frame ??= view.requestAnimationFrame(paint);
+    };
+    viewport.addEventListener('scroll', schedule, { passive: true });
+    return () => {
+      viewport.removeEventListener('scroll', schedule);
+      if (frame !== undefined) view.cancelAnimationFrame(frame);
+    };
+  }, [canvasWidth, canvasHeight, drawGrid, viewportRef, viewportWidth, viewportHeight]);
 
   return (
     <canvas

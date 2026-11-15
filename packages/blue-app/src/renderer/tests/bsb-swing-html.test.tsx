@@ -161,10 +161,24 @@ describe('BSB Swing HTML labels', () => {
     expect(markup).toContain('font-size:18px');
   });
 
+  function mockGridViewport(width = 600, height = 400) {
+    const clientWidth = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockReturnValue(width);
+    const clientHeight = vi
+      .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+      .mockReturnValue(height);
+    return () => {
+      clientWidth.mockRestore();
+      clientHeight.mockRestore();
+    };
+  }
+
   it.each(['DOT', 'LINE'] as const)(
     'defers Swing HTML measurement and tiles a fractional %s grid',
     async (gridStyle) => {
       const appendSpy = vi.spyOn(document.body, 'appendChild');
+      const restoreViewport = mockGridViewport();
       const htmlLabel = createDefaultBsbWidgetSnapshot('BSBLabel')!;
       htmlLabel.id = 'uncached-defer-label';
       htmlLabel.x = 10;
@@ -261,11 +275,13 @@ describe('BSB Swing HTML labels', () => {
         }
       } finally {
         appendSpy.mockRestore();
+        restoreViewport();
       }
     },
   );
 
   it('batches fallback DOT grid dots into a single beginPath and fill when createPattern returns null', async () => {
+    const restoreViewport = mockGridViewport();
     const label = createDefaultBsbWidgetSnapshot('BSBLabel')!;
     label.id = 'dot-fallback-label';
     label.x = 10;
@@ -335,12 +351,88 @@ describe('BSB Swing HTML labels', () => {
       // 4 tile corner arcs + (600/20)*(400/25) = 4 + 30*16 = 484 arcs.
       expect(ctxMock.arc).toHaveBeenCalledTimes(4 + (600 / 20) * (400 / 25));
     } finally {
+      restoreViewport();
       createElSpy.mockRestore();
       HTMLCanvasElement.prototype.getContext = originalCanvasCtx;
       await act(async () => {
         root.unmount();
       });
       container.remove();
+    }
+  });
+
+  it('draws only a buffered portion of a large irregular grid and keeps its phase after scrolling', async () => {
+    const restoreViewport = mockGridViewport(500, 350);
+    const context = {
+      translate: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+    };
+    const getContext = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(context as unknown as CanvasRenderingContext2D);
+    const frames: FrameRequestCallback[] = [];
+    const nextFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    const label = createDefaultBsbWidgetSnapshot('BSBLabel')!;
+    label.id = 'distant';
+    label.x = 9000;
+    label.y = 9000;
+    const instrument: BlueSynthBuilderInstrumentSnapshot = {
+      ...makeInstrument([label]),
+      editEnabled: true,
+      gridSettings: {
+        enabled: true,
+        snapEnabled: true,
+        width: 10.1,
+        height: 11.3,
+        gridStyle: 'DOT',
+      },
+    };
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    try {
+      await act(async () =>
+        root.render(
+          createElement(BSBInterfaceCanvas, {
+            instrument,
+            selectedWidgetIds: new Set<string>(),
+            editEnabled: true,
+            onWidgetSelect: vi.fn(),
+          }),
+        ),
+      );
+      const viewport = container.querySelector<HTMLDivElement>(
+        '[data-shortcut-scope="bsb-interface-canvas"]',
+      )!;
+      const canvas = viewport.querySelector('canvas')!;
+      expect([canvas.width, canvas.height]).toEqual([596, 446]);
+      const firstPaint = context.arc.mock.calls.length;
+      expect(firstPaint).toBeGreaterThan(0);
+      expect(firstPaint).toBeLessThan(3000);
+
+      await act(async () => {
+        viewport.scrollLeft = 2000;
+        viewport.scrollTop = 3000;
+        viewport.dispatchEvent(new Event('scroll'));
+        viewport.dispatchEvent(new Event('scroll'));
+        expect(frames).toHaveLength(1);
+        frames.shift()!(0);
+      });
+      expect([canvas.width, canvas.height]).toEqual([692, 542]);
+      expect(context.translate).toHaveBeenLastCalledWith(-1904, -2904);
+      expect(context.arc.mock.calls[firstPaint]!.slice(0, 2)).toEqual([189 * 10.1, 257 * 11.3]);
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+      nextFrame.mockRestore();
+      getContext.mockRestore();
+      restoreViewport();
     }
   });
 });
