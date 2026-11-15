@@ -88,6 +88,7 @@ function getProjectEffect(
 export interface ActiveLibraryProject {
   readonly data: BlueData;
   readonly sessionId: number;
+  /** Monotonic revision of the committed project, when provided by the session. */
   readonly revision?: number;
   readonly commit?: (label?: string) => number | Promise<number>;
 }
@@ -233,6 +234,28 @@ export class UnifiedLibraryProjectAdapter {
     string,
     { key: string; revision: number; expiresAt: number }
   >();
+
+  private readonly effectBrowseRevisions = new WeakMap<
+    Effect,
+    { project: BlueData; sessionId: number; revision: number; hash: string }
+  >();
+
+  private readEffectRevision(project: ActiveLibraryProject, effect: Effect, singleItem: boolean) {
+    const { data, sessionId, revision } = project;
+    // Editor reads and save preflight always hash the live payload.
+    if (singleItem || revision === undefined) return hashText(effect.saveAsXML().toXml());
+    const cached = this.effectBrowseRevisions.get(effect);
+    if (
+      cached?.project === data &&
+      cached.sessionId === sessionId &&
+      cached.revision === revision
+    ) {
+      return cached.hash;
+    }
+    const hash = hashText(effect.saveAsXML().toXml());
+    this.effectBrowseRevisions.set(effect, { project: data, sessionId, revision, hash });
+    return hash;
+  }
 
   constructor(private readonly getActiveProject: ActiveLibraryProjectProvider) {}
 
@@ -636,7 +659,7 @@ export class UnifiedLibraryProjectAdapter {
                   breadcrumb: [channelName, chain === 'pre' ? 'Pre Effects' : 'Post Effects'],
                   supportStatus: 'supported' as const,
                   objectType: 'Effect',
-                  revision: hashText(entry.saveAsXML().toXml()),
+                  revision: this.readEffectRevision(project, entry, only !== undefined),
                 })),
         );
       });

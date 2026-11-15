@@ -42,6 +42,25 @@ function projectData(): BlueData {
 }
 
 describe('UnifiedLibraryProjectAdapter', () => {
+  it('reuses effect browse hashes only while the committed project revision is current', () => {
+    const data = projectData();
+    const effect = new Effect();
+    effect.setName('Filter');
+    data.getMixer().getMaster().getPreEffects().push(effect);
+    let revision = 4;
+    const adapter = new UnifiedLibraryProjectAdapter(() => ({ data, sessionId: 42, revision }));
+    const serialize = vi.spyOn(effect, 'saveAsXML');
+
+    const first = adapter.list('effect')[0]!;
+    expect(adapter.search('Filter', 'effect')[0]!.revision).toBe(first.revision);
+    expect(serialize).toHaveBeenCalledOnce();
+
+    effect.setComments('A committed change');
+    revision += 1;
+    expect(adapter.list('effect')[0]!.revision).not.toBe(first.revision);
+    expect(serialize).toHaveBeenCalledTimes(2);
+  });
+
   it('composes read-only project instruments, UDOs, and shared SoundObjects with stable locators', () => {
     const data = projectData();
     const adapter = new UnifiedLibraryProjectAdapter(() => ({ data, sessionId: 42 }));
