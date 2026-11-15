@@ -92,8 +92,10 @@ function walkCounts(node: LegacyLibraryFolderPlan): {
   return { folders, items, unsupported };
 }
 
-function rawXmlElementToElement(raw: RawXmlElement): Element {
+function createEnvelopeElement(raw: RawXmlElement, leafName: string): Element {
   const el = new Element(raw.name);
+  // checkShape examines the envelope; the raw tree still owns the complete payload.
+  if (raw.name === leafName) return el;
   for (const [key, value] of Object.entries(raw.attributes)) {
     el.setAttribute(key, value);
   }
@@ -101,7 +103,7 @@ function rawXmlElementToElement(raw: RawXmlElement): Element {
     el.setText(raw.text);
   }
   for (const child of raw.children) {
-    el.addElement(rawXmlElementToElement(child));
+    el.addElement(createEnvelopeElement(child, leafName));
   }
   return el;
 }
@@ -109,7 +111,7 @@ function rawXmlElementToElement(raw: RawXmlElement): Element {
 function readLegacyLibraryEnvelope(source: string, sourceInfo: XmlSource) {
   const document = parseRawXmlDocument(source);
   const descriptor = descriptorForRoot(document.root.name);
-  const candidate = rawXmlElementToElement(document.root);
+  const candidate = createEnvelopeElement(document.root, descriptor.leafElement);
   const context = new XmlLoadContext(candidate, sourceInfo);
   let matchedCategory: RawXmlElement;
   try {
