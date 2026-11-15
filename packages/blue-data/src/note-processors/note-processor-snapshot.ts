@@ -2,6 +2,9 @@ import { NoteProcessor } from './note-processor';
 import { NoteProcessorChain } from './note-processor-chain';
 import { UnsupportedProcessor } from './unsupported-processor';
 import { Element } from '../serialization/xml-reader';
+import { XmlLoadContext } from '../serialization/xml-load';
+import { canonicalSeed, validateMapping } from './xml-policy';
+import { parseXmlBoolean, parseXmlInteger, parseXmlNumber } from '../utilities/xml';
 import { getNoteProcessorDefinition } from './note-processor-catalog';
 import { AddProcessor } from './add-processor';
 import { MultiplyProcessor } from './multiply-processor';
@@ -226,9 +229,7 @@ export function reifyProcessorFromSnapshot(
     proc = def.createDefault();
   }
   applyParametersToProcessor(proc, entry.parameters);
-  const wrapper = new Element('noteProcessorChain');
-  wrapper.addElement(proc.saveAsXML());
-  return NoteProcessorChain.loadFromXML(wrapper).getProcessors()[0];
+  return proc;
 }
 
 export function reifyChainFromSnapshot(snapshot: NoteProcessorChainSnapshot): NoteProcessorChain {
@@ -242,67 +243,176 @@ export function reifyChainFromSnapshot(snapshot: NoteProcessorChainSnapshot): No
   return chain;
 }
 
+function parseSnapshotBoolean(value: string | number | boolean, context: XmlLoadContext): boolean {
+  return typeof value === 'string' ? parseXmlBoolean(value, context) : Boolean(value);
+}
+
 function applyParametersToProcessor(
   proc: NoteProcessor,
   params: Record<string, string | number | boolean>,
 ): void {
+  const ctx = new XmlLoadContext(new Element('noteProcessor'));
   if (proc instanceof AddProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.val !== undefined) proc.setVal(String(params.val));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.val !== undefined) {
+      const val = String(params.val);
+      parseXmlNumber(val, ctx);
+      proc.setVal(val);
+    }
   } else if (proc instanceof PchAddProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.val !== undefined) proc.setVal(String(params.val));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.val !== undefined) {
+      const val = String(params.val);
+      parseXmlInteger(val, ctx, -2147483648, 2147483647);
+      proc.setVal(val);
+    }
   } else if (proc instanceof MultiplyProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.val !== undefined) proc.setVal(String(params.val));
-  } else if (proc instanceof RandomAddProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.min !== undefined) proc.setMin(String(params.min));
-    if (params.max !== undefined) proc.setMax(String(params.max));
-    if (params.seedUsed !== undefined) proc.setSeedUsed(Boolean(params.seedUsed));
-    if (params.seed !== undefined) proc.setSeed(String(params.seed));
-  } else if (proc instanceof RandomMultiplyProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.min !== undefined) proc.setMin(String(params.min));
-    if (params.max !== undefined) proc.setMax(String(params.max));
-    if (params.seedUsed !== undefined) proc.setSeedUsed(Boolean(params.seedUsed));
-    if (params.seed !== undefined) proc.setSeed(String(params.seed));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.val !== undefined) {
+      const val = String(params.val);
+      parseXmlNumber(val, ctx);
+      proc.setVal(val);
+    }
+  } else if (proc instanceof RandomAddProcessor || proc instanceof RandomMultiplyProcessor) {
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.min !== undefined) {
+      const min = String(params.min);
+      parseXmlNumber(min, ctx);
+      proc.setMin(min);
+    }
+    if (params.max !== undefined) {
+      const max = String(params.max);
+      parseXmlNumber(max, ctx);
+      proc.setMax(max);
+    }
+    if (Number(proc.getMin()) > Number(proc.getMax())) {
+      throw ctx.error({
+        code: 'value',
+        message: 'Random processor minimum exceeds maximum.',
+        recovery: 'Correct the bounds.',
+      });
+    }
+    if (params.seedUsed !== undefined) proc.setSeedUsed(parseSnapshotBoolean(params.seedUsed, ctx));
+    if (params.seed !== undefined) proc.setSeed(canonicalSeed(String(params.seed)));
   } else if (proc instanceof SubListProcessor) {
-    if (params.start !== undefined) proc.setStart(String(params.start));
-    if (params.end !== undefined) proc.setEnd(String(params.end));
+    if (params.start !== undefined) {
+      const start = String(params.start);
+      parseXmlInteger(start, ctx, -2147483648, 2147483647);
+      proc.setStart(start);
+    }
+    if (params.end !== undefined) {
+      const end = String(params.end);
+      parseXmlInteger(end, ctx, 1, 2147483647);
+      proc.setEnd(end);
+    }
   } else if (proc instanceof RotateProcessor) {
-    if (params.noteIndex !== undefined) proc.setNoteIndex(String(params.noteIndex));
-  } else if (proc instanceof InversionProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.val !== undefined) proc.setVal(String(params.val));
-  } else if (proc instanceof PchInversionProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.val !== undefined) proc.setVal(String(params.val));
+    if (params.noteIndex !== undefined) {
+      const noteIndex = String(params.noteIndex);
+      parseXmlInteger(noteIndex, ctx, -2147483648, 2147483647);
+      proc.setNoteIndex(noteIndex);
+    }
+  } else if (proc instanceof InversionProcessor || proc instanceof PchInversionProcessor) {
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.val !== undefined) {
+      const val = String(params.val);
+      parseXmlNumber(val, ctx);
+      proc.setVal(val);
+    }
   } else if (proc instanceof EqualsProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
     if (params.val !== undefined) proc.setVal(String(params.val));
   } else if (proc instanceof SwitchProcessor) {
-    if (params.pfield1 !== undefined) proc.setPfield1(String(params.pfield1));
-    if (params.pfield2 !== undefined) proc.setPfield2(String(params.pfield2));
+    if (params.pfield1 !== undefined) {
+      const pfield1 = String(params.pfield1);
+      parseXmlInteger(pfield1, ctx, 1, 2147483647);
+      proc.setPfield1(pfield1);
+    }
+    if (params.pfield2 !== undefined) {
+      const pfield2 = String(params.pfield2);
+      parseXmlInteger(pfield2, ctx, 1, 2147483647);
+      proc.setPfield2(pfield2);
+    }
   } else if (proc instanceof TimeWarpProcessor) {
-    if (params.timeWarpString !== undefined) proc.setTimeWarpString(String(params.timeWarpString));
+    if (params.timeWarpString !== undefined) {
+      const timeWarpString = String(params.timeWarpString);
+      validateMapping(timeWarpString, ctx, true);
+      proc.setTimeWarpString(timeWarpString);
+    }
   } else if (proc instanceof LineAddProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.lineAddString !== undefined) proc.setLineAddString(String(params.lineAddString));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.lineAddString !== undefined) {
+      const lineAddString = String(params.lineAddString);
+      validateMapping(lineAddString, ctx, false);
+      proc.setLineAddString(lineAddString);
+    }
   } else if (proc instanceof LineMultiplyProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.lineMultiplyString !== undefined)
-      proc.setLineMultiplyString(String(params.lineMultiplyString));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 1, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.lineMultiplyString !== undefined) {
+      const lineMultiplyString = String(params.lineMultiplyString);
+      validateMapping(lineMultiplyString, ctx, false);
+      proc.setLineMultiplyString(lineMultiplyString);
+    }
   } else if (proc instanceof TuningProcessor) {
-    if (params.pfield !== undefined) proc.setPfield(String(params.pfield));
-    if (params.baseFrequency !== undefined) proc.setBaseFrequency(String(params.baseFrequency));
+    if (params.pfield !== undefined) {
+      const pfield = String(params.pfield);
+      parseXmlInteger(pfield, ctx, 4, 2147483647);
+      proc.setPfield(pfield);
+    }
+    if (params.baseFrequency !== undefined) {
+      const baseFrequency = String(params.baseFrequency);
+      parseXmlNumber(baseFrequency, ctx);
+      proc.setBaseFrequency(baseFrequency);
+    }
     if (params.ratios !== undefined) {
-      const ratios = String(params.ratios)
+      const tokens = String(params.ratios)
         .trim()
         .split(/\s+/)
-        .filter((token) => token.length > 0)
-        .map((token) => parseFloat(token));
-      if (ratios.length > 0 && ratios.every((ratio) => Number.isFinite(ratio))) {
+        .filter((token) => token.length > 0);
+      if (tokens.length > 0) {
+        const ratios = tokens.map((token) => {
+          const value = parseXmlNumber(token, ctx);
+          if (value <= 0) {
+            throw ctx.error({
+              code: 'value',
+              value: token,
+              message: 'Scale values must be positive.',
+              recovery: 'Supply a positive finite value.',
+            });
+          }
+          return value;
+        });
         proc.setRatios(ratios);
       }
     }

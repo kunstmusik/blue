@@ -455,8 +455,9 @@ function selectForward(
 ): void {
   const visited = new Set<number>([start]);
   const queue = [start];
-  while (queue.length > 0) {
-    const node = queue.shift()!;
+  let head = 0;
+  while (head < queue.length) {
+    const node = queue[head++]!;
     for (const edge of outgoing.get(node) ?? []) {
       included.add(edge.gateOrdinal);
       if (edge.targetOrdinal === null || visited.has(edge.targetOrdinal)) continue;
@@ -479,8 +480,9 @@ function selectReverse(
 ): void {
   const visited = new Set<number>([start]);
   const queue = [start];
-  while (queue.length > 0) {
-    const node = queue.shift()!;
+  let head = 0;
+  while (head < queue.length) {
+    const node = queue[head++]!;
     for (const edge of incoming.get(node) ?? []) {
       included.add(edge.gateOrdinal);
       if (visited.has(edge.sourceOrdinal)) continue;

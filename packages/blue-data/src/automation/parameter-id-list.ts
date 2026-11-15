@@ -44,6 +44,33 @@ export class ParameterIdList {
     }
   }
 
+  /** Batch-insert parameter IDs with a single case-insensitive sort instead of per-item splices. */
+  addParameterIds(ids: Iterable<string>): void {
+    const existing = new Set(this._ids);
+    let added = false;
+    const selectedIdx = this.getSelectedIndex();
+    const currentSelected = selectedIdx > 0 ? this._ids[selectedIdx] : null;
+
+    for (const id of ids) {
+      if (existing.has(id)) continue;
+      existing.add(id);
+      this._ids.push(id);
+      added = true;
+    }
+    if (!added) return;
+
+    this._ids.sort((a, b) => CASE_INSENSITIVE_COLLATOR.compare(a, b));
+    this._isSorted = true;
+
+    if (this._ids.length > 0 && this._selectedIndex < 0) {
+      this._selectedIndex = 0;
+    } else if (this._selectedIndex >= this._ids.length) {
+      this._selectedIndex = this._ids.length - 1;
+    } else if (currentSelected !== null) {
+      this._selectedIndex = this._ids.indexOf(currentSelected);
+    }
+  }
+
   removeParameterId(id: string): void {
     const idx = this._ids.indexOf(id);
     if (idx === -1) return;

@@ -85,69 +85,53 @@ export function applyTimeBehavior(
       const multiplier = subjectiveDuration / dur;
       scaleScore(notes, multiplier);
     }
-  } else if (timeBehavior === TimeBehavior.REPEAT) {
-    const originalNotes = notes.deepCopy();
-    originalNotes.sort();
-
-    let objDur = durationForScale >= 0 ? durationForScale : getTotalDuration(originalNotes);
-    let repeatDur = objDur;
-    if (objDur > 0 && repeatPointBeats > 0) {
-      repeatDur = repeatPointBeats;
-    }
-
+  } else if (timeBehavior === TimeBehavior.REPEAT || timeBehavior === TimeBehavior.REPEAT_CLASSIC) {
+    const objDur = durationForScale >= 0 ? durationForScale : getTotalDuration(notes);
+    const repeatDur = objDur > 0 && repeatPointBeats > 0 ? repeatPointBeats : objDur;
     if (repeatDur <= 0) return;
 
+    const sourceNotes = Array.from(notes).sort((a, b) => a.getStartTime() - b.getStartTime());
     notes.clear();
 
-    let windowStart = 0;
-    let windowEnd = Math.min(repeatDur, subjectiveDuration);
+    if (timeBehavior === TimeBehavior.REPEAT) {
+      let windowStart = 0;
+      let windowEnd = Math.min(repeatDur, subjectiveDuration);
 
-    while (windowStart < subjectiveDuration) {
-      const tempNL = originalNotes.deepCopy();
-      setScoreStart(tempNL, windowStart);
-
-      const end = windowEnd;
-      tempNL.removeIf((n) => n.getStartTime() >= end);
-
-      for (const note of tempNL) {
-        const noteStart = note.getStartTime();
-        if (noteStart + note.getSubjectiveDuration() > windowEnd) {
-          note.setSubjectiveDuration(windowEnd - noteStart);
+      while (windowStart < subjectiveDuration) {
+        for (let i = 0; i < sourceNotes.length; i++) {
+          const origNote = sourceNotes[i]!;
+          const shiftedStart = origNote.getStartTime() + windowStart;
+          if (shiftedStart >= windowEnd) break;
+          const note = Note.fromOther(origNote);
+          note.setStartTime(shiftedStart);
+          if (shiftedStart + note.getSubjectiveDuration() > windowEnd) {
+            note.setSubjectiveDuration(windowEnd - shiftedStart);
+          }
+          notes.add(note);
         }
+        windowStart += repeatDur;
+        windowEnd = Math.min(windowStart + repeatDur, subjectiveDuration);
       }
-
-      notes.merge(tempNL);
-      windowStart += repeatDur;
-      windowEnd = Math.min(windowStart + repeatDur, subjectiveDuration);
+      return;
     }
-  } else if (timeBehavior === TimeBehavior.REPEAT_CLASSIC) {
-    const originalNotes = notes.deepCopy();
-    originalNotes.sort();
-
-    let objDur = durationForScale >= 0 ? durationForScale : getTotalDuration(originalNotes);
-    let repeatDur = objDur;
-    if (objDur > 0 && repeatPointBeats > 0) {
-      repeatDur = repeatPointBeats;
-    }
-
-    if (repeatDur <= 0) return;
-
-    notes.clear();
 
     let startVal = 0;
     while (startVal + repeatDur < subjectiveDuration) {
-      const tempNL = originalNotes.deepCopy();
-      setScoreStart(tempNL, startVal);
-      notes.merge(tempNL);
+      for (let i = 0; i < sourceNotes.length; i++) {
+        const origNote = sourceNotes[i]!;
+        const note = Note.fromOther(origNote);
+        note.setStartTime(origNote.getStartTime() + startVal);
+        notes.add(note);
+      }
       startVal += repeatDur;
     }
 
     const remainingDur = subjectiveDuration - startVal;
-    for (let i = 0; i < originalNotes.length; i++) {
-      const origNote = originalNotes.getNote(i);
+    for (let i = 0; i < sourceNotes.length; i++) {
+      const origNote = sourceNotes[i]!;
       if (origNote.getStartTime() + origNote.getSubjectiveDuration() <= remainingDur) {
         const note = Note.fromOther(origNote);
-        note.setStartTime(note.getStartTime() + startVal);
+        note.setStartTime(origNote.getStartTime() + startVal);
         notes.add(note);
       } else {
         break;

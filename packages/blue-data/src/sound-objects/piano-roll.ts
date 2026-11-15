@@ -30,6 +30,70 @@ const GENERATE_FREQUENCY = 0;
 const GENERATE_PCH = 1;
 const GENERATE_MIDI = 2;
 
+const TOKEN_PATTERN = /"[^"]*"|\[[^\]]*\]|\S*/g;
+
+type CompiledTemplateToken =
+  | { readonly kind: 'literal'; readonly value: string }
+  | { readonly kind: 'start' }
+  | { readonly kind: 'dur' }
+  | { readonly kind: 'freq' }
+  | { readonly kind: 'field'; readonly name: string; readonly raw: string };
+
+interface CompiledNoteTemplate {
+  readonly baseTemplate: string;
+  readonly tokenPlan: readonly CompiledTemplateToken[] | null;
+}
+
+function compilePianoNoteTemplate(
+  rawTemplate: string,
+  instrId: string,
+  instrName: string,
+): CompiledNoteTemplate {
+  const baseTemplate = replaceAll(
+    replaceAll(rawTemplate, '<INSTR_ID>', instrId),
+    '<INSTR_NAME>',
+    instrName,
+  );
+
+  const trimmed = baseTemplate.trim();
+  let tokenPlan: CompiledTemplateToken[] | null = null;
+  if (trimmed.startsWith('i') && !trimmed.includes('[') && !trimmed.includes(']')) {
+    const body = trimmed.substring(1);
+    const matches = body.match(TOKEN_PATTERN);
+    if (matches) {
+      const candidate: CompiledTemplateToken[] = [];
+      let validFastPath = true;
+      for (const rawToken of matches) {
+        if (!rawToken) continue;
+        if (!rawToken.includes('<') && !rawToken.includes('>')) {
+          candidate.push({ kind: 'literal', value: rawToken });
+          continue;
+        }
+        const exact = /^<([^<>]+)>$/.exec(rawToken);
+        if (!exact) {
+          validFastPath = false;
+          break;
+        }
+        const name = exact[1]!;
+        if (name === 'START') {
+          candidate.push({ kind: 'start' });
+        } else if (name === 'DUR') {
+          candidate.push({ kind: 'dur' });
+        } else if (name === 'FREQ') {
+          candidate.push({ kind: 'freq' });
+        } else {
+          candidate.push({ kind: 'field', name, raw: rawToken });
+        }
+      }
+      if (validFastPath && candidate.length >= 3) {
+        tokenPlan = candidate;
+      }
+    }
+  }
+
+  return { baseTemplate, tokenPlan };
+}
+
 export class PianoRoll extends AbstractSoundObject {
   private _scale = new Scale();
   private _notes: PianoNote[] = [];
@@ -224,12 +288,16 @@ export class PianoRoll extends AbstractSoundObject {
       instrId = `"${instrId}"`;
     }
 
+    const numScaleDegrees =
+      this._pchGenerationMethod === GENERATE_MIDI ? 12 : this._scale.getNumScaleDegrees();
+    const compiledByTemplate = new Map<string, CompiledNoteTemplate>();
+    const fieldValues = new Map<string, string>();
+    const tokenBuffer: string[] = [];
+
     for (const note of this._notes) {
       let freq = '';
       let octave = note.octave;
       let scaleDegree = note.scaleDegree + this._transposition;
-      const numScaleDegrees =
-        this._pchGenerationMethod === GENERATE_MIDI ? 12 : this._scale.getNumScaleDegrees();
 
       // Normalize scale degree
       if (scaleDegree >= numScaleDegrees) {
@@ -256,29 +324,76 @@ export class PianoRoll extends AbstractSoundObject {
           break;
       }
 
-      let template = note.noteTemplate || this._noteTemplate;
-      template = replaceAll(template, '<INSTR_ID>', instrId);
-      template = replaceAll(template, '<INSTR_NAME>', this._instrumentId);
-      template = replaceAll(template, '<START>', note.start.toString());
-      template = replaceAll(template, '<DUR>', note.duration.toString());
-      template = replaceAll(template, '<FREQ>', freq);
+      const rawTemplate = note.noteTemplate || this._noteTemplate;
+      let compiled = compiledByTemplate.get(rawTemplate);
+      if (!compiled) {
+        compiled = compilePianoNoteTemplate(rawTemplate, instrId, this._instrumentId);
+        compiledByTemplate.set(rawTemplate, compiled);
+      }
 
-      // Substitute custom field values
-      for (const field of note.getFields()) {
-        const fieldDef = field.getFieldDef();
-        const key = `<${fieldDef.getFieldName()}>`;
-        const val =
-          fieldDef.getFieldType() === 'DISCRETE'
-            ? Math.round(field.getValue()).toString()
-            : field.getValue().toString();
-        template = replaceAll(template, key, val);
+      const startStr = note.start.toString();
+      const durStr = note.duration.toString();
+      const fields = note.getFields();
+      fieldValues.clear();
+      const tokenPlan =
+        freq.length > 0 && fields.every((field) => !/[<>]/.test(field.getFieldDef().getFieldName()))
+          ? compiled.tokenPlan
+          : null;
+      if (tokenPlan !== null) {
+        for (const field of fields) {
+          const fieldDef = field.getFieldDef();
+          const name = fieldDef.getFieldName();
+          if (fieldValues.has(name)) continue;
+          const val =
+            fieldDef.getFieldType() === 'DISCRETE'
+              ? Math.round(field.getValue()).toString()
+              : field.getValue().toString();
+          fieldValues.set(name, val);
+        }
+
+        tokenBuffer.length = tokenPlan.length;
+        for (let i = 0; i < tokenPlan.length; i++) {
+          const slot = tokenPlan[i]!;
+          switch (slot.kind) {
+            case 'literal':
+              tokenBuffer[i] = slot.value;
+              break;
+            case 'start':
+              tokenBuffer[i] = startStr;
+              break;
+            case 'dur':
+              tokenBuffer[i] = durStr;
+              break;
+            case 'freq':
+              tokenBuffer[i] = freq;
+              break;
+            case 'field':
+              tokenBuffer[i] = fieldValues.get(slot.name) ?? slot.raw;
+              break;
+          }
+        }
+        const parsed = Note.createFromTokens(tokenBuffer);
+        if (parsed) nl.push(parsed);
+        continue;
+      }
+
+      let rendered = replaceAll(compiled.baseTemplate, '<START>', startStr);
+      rendered = replaceAll(rendered, '<DUR>', durStr);
+      rendered = replaceAll(rendered, '<FREQ>', freq);
+      for (const field of fields) {
+        const definition = field.getFieldDef();
+        const value =
+          definition.getFieldType() === 'DISCRETE'
+            ? Math.round(field.getValue())
+            : field.getValue();
+        rendered = replaceAll(rendered, `<${definition.getFieldName()}>`, value.toString());
       }
 
       try {
-        const parsed = Note.createNoteFromText(template);
+        const parsed = Note.createNoteFromText(rendered);
         if (parsed) nl.push(parsed);
       } catch {
-        console.warn(`[PianoRoll] Failed to parse note: ${template}`);
+        console.warn(`[PianoRoll] Failed to parse note: ${rendered}`);
       }
     }
 

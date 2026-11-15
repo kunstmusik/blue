@@ -7,6 +7,7 @@ import { TuningProcessor } from './tuning-processor';
 import {
   createNoteProcessorChainSnapshot,
   reifyChainFromSnapshot,
+  reifyProcessorFromSnapshot,
   resetSnapshotIdCounter,
 } from './note-processor-snapshot';
 import { PythonProcessor } from './python-processor';
@@ -195,5 +196,80 @@ describe('Note processor snapshot', () => {
     expect(reified.getProcessors()).toHaveLength(1);
     expect(reified.getProcessors()[0]).toBeInstanceOf(PythonProcessor);
     expect((reified.getProcessors()[0] as PythonProcessor).getCode()).toBe('x = 1');
+  });
+
+  it('rejects invalid processor snapshot parameters using XML load constraints', () => {
+    const baseEntry = {
+      id: 'np-invalid',
+      displayName: 'Invalid',
+      supported: true,
+      deferred: false,
+      summary: 'Invalid',
+      serializedXml: '',
+    };
+
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'AddProcessor',
+        parameters: { pfield: '0', val: '1' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'AddProcessor',
+        parameters: { pfield: '4', val: 'abc' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'RandomAddProcessor',
+        parameters: { pfield: '4', min: '10', max: '2' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'SubListProcessor',
+        parameters: { start: '1', end: '0' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'TimeWarpProcessor',
+        parameters: { timeWarpString: '0 0' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'LineAddProcessor',
+        parameters: { pfield: '4', lineAddString: '0 1tail' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'TuningProcessor',
+        parameters: { pfield: '3' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'TuningProcessor',
+        parameters: { ratios: '1 1.5abc' },
+      }),
+    ).toThrow();
+    expect(() =>
+      reifyProcessorFromSnapshot({
+        ...baseEntry,
+        processorType: 'TuningProcessor',
+        parameters: { ratios: '1 -2' },
+      }),
+    ).toThrow();
   });
 });

@@ -87,6 +87,20 @@ export class Note {
     }
   }
 
+  /** Build a Note directly from pre-tokenized p-fields without bracket evaluation or carry. */
+  static createFromTokens(tokens: readonly string[]): Note | null {
+    if (tokens.length < 3) return null;
+    const n = new Note();
+    for (let i = 0; i < tokens.length; i++) {
+      n._pFields.set(i + 1, tokens[i]!);
+    }
+    const rawDur = parseFloat(tokens[2]!);
+    n._startTime = parseFloat(tokens[1]!);
+    n.setSubjectiveDuration(rawDur);
+    n.setTied(rawDur < 0);
+    return n;
+  }
+
   private noteInit(input: string, previousNote: Note | null): void {
     const buffer: string[] = [];
 

@@ -104,6 +104,8 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     const custom = data.getAttribute('customHeight');
     if (custom !== null)
       layer._customHeight = parseXmlInteger(custom, context.at(data), 22, 660, '@customHeight');
+    const pendingParameterIds: string[] = [];
+    const seenParameterIds = new Set<string>();
     for (const child of data.getElements()) {
       switch (child.getName()) {
         case 'backgroundColor':
@@ -117,17 +119,21 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
           break;
         case 'parameterId': {
           const id = readText(child, context);
-          if (!id.trim() || layer._automationParameters.getIds().includes(id))
+          if (!id.trim() || seenParameterIds.has(id))
             throw context.at(child).error({
               code: 'reference',
               value: id,
               message: 'Automation IDs must be nonempty and unique.',
               recovery: 'Supply distinct parameter IDs.',
             });
-          layer._automationParameters.addParameterId(id);
+          seenParameterIds.add(id);
+          pendingParameterIds.push(id);
           break;
         }
       }
+    }
+    if (pendingParameterIds.length > 0) {
+      layer._automationParameters.addParameterIds(pendingParameterIds);
     }
     const selected = data.getAttribute('automationSelectedIndex');
     if (selected !== null)

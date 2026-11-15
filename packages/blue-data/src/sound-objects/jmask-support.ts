@@ -162,6 +162,18 @@ export class TablePoint {
   }
 }
 
+interface TableCache {
+  pointsRef: TablePoint[];
+  rawTimes: Float64Array;
+  rawValues: Float64Array;
+  interpolationType: number;
+  interpolation: number;
+  sorted: Array<Readonly<Pick<TablePoint, 'time' | 'value'>>>;
+  prefixPhs: Float64Array;
+}
+
+const tableCaches = new WeakMap<Table, TableCache>();
+
 export class Table {
   static readonly OFF = 0;
   static readonly ON = 1;
@@ -192,14 +204,77 @@ export class Table {
     }
   }
 
-  private getSortedPoints(): TablePoint[] {
-    const { points } = this;
-    for (let i = 1; i < points.length; i += 1) {
-      if (points[i]!.time < points[i - 1]!.time) {
-        return [...points].sort((left, right) => left.time - right.time);
+  private getOrBuildCache(): TableCache {
+    const { points, interpolationType, interpolation } = this;
+    const size = points.length;
+    const cached = tableCaches.get(this);
+
+    if (
+      cached !== undefined &&
+      cached.pointsRef === points &&
+      cached.rawTimes.length === size &&
+      cached.interpolationType === interpolationType &&
+      Object.is(cached.interpolation, interpolation)
+    ) {
+      let valid = true;
+      for (let i = 0; i < size; i += 1) {
+        const pt = points[i]!;
+        if (!Object.is(pt.time, cached.rawTimes[i]) || !Object.is(pt.value, cached.rawValues[i])) {
+          valid = false;
+          break;
+        }
+      }
+      if (valid) {
+        return cached;
       }
     }
-    return points;
+
+    const rawTimes = new Float64Array(size);
+    const rawValues = new Float64Array(size);
+    let alreadySorted = true;
+    for (let i = 0; i < size; i += 1) {
+      const pt = points[i]!;
+      rawTimes[i] = pt.time;
+      rawValues[i] = pt.value;
+      if (i > 0 && pt.time < rawTimes[i - 1]!) {
+        alreadySorted = false;
+      }
+    }
+
+    const sorted = points.map(({ time, value }) => ({ time, value }));
+    if (!alreadySorted) sorted.sort((left, right) => left.time - right.time);
+
+    const prefixPhs = new Float64Array(Math.max(1, size));
+    let running = 0.0;
+    if (interpolationType !== Table.OFF) {
+      const pw2 = Math.pow(2, interpolation);
+      for (let k = 0; k < size - 1; k += 1) {
+        const p0 = sorted[k]!;
+        const p1 = sorted[k + 1]!;
+        const dx = p1.time - p0.time;
+        running += this.integrateSegment(dx, dx, p0.value, p1.value, pw2);
+        prefixPhs[k + 1] = running;
+      }
+    } else {
+      for (let k = 0; k < size - 1; k += 1) {
+        const p0 = sorted[k]!;
+        const p1 = sorted[k + 1]!;
+        running += p1.time * p0.value - p0.time * p0.value;
+        prefixPhs[k + 1] = running;
+      }
+    }
+
+    const nextCache: TableCache = {
+      pointsRef: points,
+      rawTimes,
+      rawValues,
+      interpolationType,
+      interpolation,
+      sorted,
+      prefixPhs,
+    };
+    tableCaches.set(this, nextCache);
+    return nextCache;
   }
 
   private interpolateValue(ex: number, r: number, a: number, b: number): number {
@@ -359,50 +434,37 @@ export class Table {
   }
 
   getValue(time: number): number {
-    const sorted = this.getSortedPoints();
+    const { sorted } = this.getOrBuildCache();
     const size = sorted.length;
     if (size === 0) {
       return 0.0;
     }
 
-    let a = sorted[0]!;
     if (size === 1 || time <= 0.0) {
-      return a.value;
+      return sorted[0]!.value;
     }
 
-    let b: TablePoint | null = null;
-
-    for (let index = 1; index < size; index += 1) {
-      b = sorted[index]!;
-
-      if (b.time === time) {
-        if (index === size - 1) {
-          return b.value;
-        }
-
-        while (index < size) {
-          const temp = sorted[index]!;
-          if (temp.time !== time) {
-            break;
-          }
-          b = temp;
-          index += 1;
-        }
-
-        return b.value;
-      }
-
-      if (b.time < time) {
-        a = b;
+    let lo = 0;
+    let hi = size;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sorted[mid]!.time <= time) {
+        lo = mid + 1;
       } else {
-        break;
+        hi = mid;
       }
     }
 
-    if (b === a || b === null) {
-      return a.value;
+    if (lo >= 2 && sorted[lo - 1]!.time === time) {
+      return sorted[lo - 1]!.value;
+    }
+    if (lo === size) {
+      return sorted[size - 1]!.value;
     }
 
+    const segIdx = lo === 0 ? 0 : lo - 1;
+    const a = sorted[segIdx]!;
+    const b = sorted[segIdx + 1]!;
     const r = (time - a.time) / (b.time - a.time);
 
     switch (this.interpolationType) {
@@ -417,66 +479,56 @@ export class Table {
   }
 
   getphs(xt: number): number {
-    let erg: number;
-    let phsum = 0.0;
     const xtr = roundTo(xt, 10);
-    const sorted = this.getSortedPoints();
+    const { sorted, prefixPhs } = this.getOrBuildCache();
     const pointsSize = sorted.length;
 
     if (pointsSize === 0) {
-      erg = 0.0;
-    } else if (pointsSize === 1) {
-      erg = xtr * sorted[0]!.value;
-    } else if (xtr <= sorted[0]!.time) {
+      return 0.0;
+    }
+    if (pointsSize === 1) {
+      return xtr * sorted[0]!.value;
+    }
+    if (xtr <= sorted[0]!.time) {
       const y0 = sorted[0]!.value;
-      erg = sorted[0]!.time * y0 - xtr * y0;
-    } else {
-      let index = 0;
-      while (index < pointsSize && sorted[index]!.time < xtr) {
-        index += 1;
-      }
-
-      if (this.interpolationType !== Table.OFF) {
-        const pw2 = Math.pow(2, this.interpolation);
-        if (index >= 2) {
-          for (let k = 0; k < index - 1; k += 1) {
-            const p0 = sorted[k]!;
-            const p1 = sorted[k + 1]!;
-            const dx = p1.time - p0.time;
-            phsum += this.integrateSegment(dx, dx, p0.value, p1.value, pw2);
-          }
-        }
-
-        const last = sorted[pointsSize - 1]!;
-        if (xtr >= last.time) {
-          phsum += xtr * last.value - last.time * last.value;
-        } else {
-          const prev = sorted[index - 1]!;
-          const curr = sorted[index]!;
-          phsum += this.integrateSegment(
-            xtr - prev.time,
-            curr.time - prev.time,
-            prev.value,
-            curr.value,
-            pw2,
-          );
-        }
-        erg = phsum;
-      } else {
-        if (index >= 2) {
-          for (let k = 0; k < index - 1; k += 1) {
-            const p0 = sorted[k]!;
-            const p1 = sorted[k + 1]!;
-            phsum += p1.time * p0.value - p0.time * p0.value;
-          }
-        }
-        const prev = sorted[index - 1]!;
-        phsum += xtr * prev.value - prev.time * prev.value;
-        erg = phsum;
-      }
+      return sorted[0]!.time * y0 - xtr * y0;
     }
 
-    return erg;
+    let lo = 1;
+    let hi = pointsSize;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sorted[mid]!.time < xtr) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    const index = lo;
+    let phsum = prefixPhs[index - 1]!;
+
+    if (this.interpolationType !== Table.OFF) {
+      const pw2 = Math.pow(2, this.interpolation);
+      const last = sorted[pointsSize - 1]!;
+      if (xtr >= last.time) {
+        phsum += xtr * last.value - last.time * last.value;
+      } else {
+        const prev = sorted[index - 1]!;
+        const curr = sorted[index]!;
+        phsum += this.integrateSegment(
+          xtr - prev.time,
+          curr.time - prev.time,
+          prev.value,
+          curr.value,
+          pw2,
+        );
+      }
+      return phsum;
+    }
+
+    const prev = sorted[index - 1]!;
+    phsum += xtr * prev.value - prev.time * prev.value;
+    return phsum;
   }
 
   saveAsXML(): Element {
