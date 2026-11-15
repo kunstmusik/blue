@@ -151,6 +151,15 @@ function safeMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).slice(0, 1000);
 }
 
+async function pathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.promises.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export class UnifiedLibraryImportExportService {
   private operationActive = false;
   private disposed = false;
@@ -377,7 +386,7 @@ export class UnifiedLibraryImportExportService {
               targetPath,
               itemCount: plan.itemCount,
               unsupportedPreservedCount: plan.unsupportedCount,
-              overwritesExisting: fs.existsSync(targetPath),
+              overwritesExisting: await pathExists(targetPath),
             },
           ],
           unrepresentableCount: 0,
@@ -412,7 +421,7 @@ export class UnifiedLibraryImportExportService {
           targetPath,
           itemCount: plan.itemCount,
           unsupportedPreservedCount: plan.unsupportedCount,
-          overwritesExisting: fs.existsSync(targetPath),
+          overwritesExisting: await pathExists(targetPath),
         });
       }
       if (!(await approve({ outputs: summaries, unrepresentableCount: 0 }))) return false;
