@@ -7,6 +7,7 @@ const FROZEN_NORMAL_RGB = (193 << 16) | (205 << 8) | 205;
 
 export default function FrozenSoundObjectBar({
   item,
+  startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
   pixelsPerSecond,
@@ -35,7 +36,7 @@ export default function FrozenSoundObjectBar({
   const bl = selected ? '#ffffff' : rgbToCSS(brighten(rgb, 1.5));
   const bd = selected ? '#ffffff' : rgbToCSS(darken(rgb, 0.5));
 
-  const left = item.startBeats * pixelsPerBeat;
+  const left = startBeats * pixelsPerBeat;
   const width = Math.max(durationBeats * pixelsPerBeat, 4);
 
   let shadeWidth = 0;

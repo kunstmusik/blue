@@ -2426,7 +2426,8 @@ export default function ScoreTimeCanvas({
                   return (
                     <RenderBar
                       key={item.objectId}
-                      item={preview ? { ...item, startBeats, durationBeats } : item}
+                      item={item}
+                      startBeats={startBeats}
                       selected={isSelected}
                       pixelsPerBeat={pixelsPerBeat}
                       pixelsPerSecond={pixelsPerSecond}

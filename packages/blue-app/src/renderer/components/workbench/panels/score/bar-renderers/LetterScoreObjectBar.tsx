@@ -11,6 +11,7 @@ import {
 
 export default function LetterScoreObjectBar({
   item,
+  startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
   rowHeight,
@@ -35,7 +36,7 @@ export default function LetterScoreObjectBar({
     letterColor = isBright(brightened) ? '#000000' : '#ffffff';
   }
 
-  const left = item.startBeats * pixelsPerBeat;
+  const left = startBeats * pixelsPerBeat;
   const width = Math.max(durationBeats * pixelsPerBeat, 4);
   const repeatPointBeats = activeRepeatPointBeats(br.timeBehavior, br.repeatPointBeats);
 

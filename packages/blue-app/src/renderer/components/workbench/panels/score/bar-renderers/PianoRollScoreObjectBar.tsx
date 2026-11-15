@@ -13,6 +13,7 @@ import { SOUND_LAYER_HEIGHT } from '../types';
 
 export default function PianoRollScoreObjectBar({
   item,
+  startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
   rowHeight,
@@ -53,7 +54,7 @@ export default function PianoRollScoreObjectBar({
   const noteColor = selected
     ? rgbToCSS(javaAwtDarker(rgb))
     : rgbToCSS(javaAwtBrighter(javaAwtBrighter(rgb)));
-  const left = item.startBeats * pixelsPerBeat;
+  const left = startBeats * pixelsPerBeat;
 
   return (
     <ScoreObjectBar

@@ -29,6 +29,7 @@ function alphaGradientStyle(rgb: number, alpha: number): string {
 
 export default function AudioClipBar({
   item,
+  startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
   pixelsPerSecond,
@@ -68,7 +69,7 @@ export default function AudioClipBar({
     fadeColor = fadeColorForBackground(rgb);
   }
 
-  const left = item.startBeats * pixelsPerBeat;
+  const left = startBeats * pixelsPerBeat;
   const width = Math.max(durationBeats * pixelsPerBeat, 4);
   const h = barHeight - 4;
   const fadeOverlayTop = 2;

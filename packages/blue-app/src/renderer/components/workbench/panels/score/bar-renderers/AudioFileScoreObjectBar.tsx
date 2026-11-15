@@ -15,6 +15,7 @@ import WaveformBody from './WaveformBody';
 
 export default function AudioFileScoreObjectBar({
   item,
+  startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
   pixelsPerSecond,
@@ -45,7 +46,7 @@ export default function AudioFileScoreObjectBar({
   const bl = selected ? '#ffffff' : rgbToCSS(brighten(rgb, 1.5));
   const bd = selected ? '#ffffff' : rgbToCSS(darken(rgb, 0.5));
 
-  const left = item.startBeats * pixelsPerBeat;
+  const left = startBeats * pixelsPerBeat;
   const width = Math.max(durationBeats * pixelsPerBeat, 4);
 
   return (

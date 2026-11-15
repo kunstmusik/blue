@@ -14,6 +14,7 @@ export interface BarRendererProps {
   pixelsPerSecond?: number;
   rowHeight: number;
   durationBeats: number;
+  startBeats?: number;
 }
 
 export function getScoreObjectBarRenderer(

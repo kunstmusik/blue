@@ -5,6 +5,7 @@ import { SOUND_LAYER_HEIGHT } from '../types';
 
 export default function GenericScoreObjectBar({
   item,
+  startBeats = item.startBeats,
   selected,
   pixelsPerBeat,
   rowHeight,
@@ -22,7 +23,7 @@ export default function GenericScoreObjectBar({
 
   return (
     <ScoreObjectBar
-      left={item.startBeats * pixelsPerBeat}
+      left={startBeats * pixelsPerBeat}
       width={Math.max(durationBeats * pixelsPerBeat, 4)}
       barHeight={barHeight}
       selected={selected}
