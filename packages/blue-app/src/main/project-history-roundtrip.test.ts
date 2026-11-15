@@ -3529,13 +3529,15 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
 
 describe('grouping ScoreObjects through project history', () => {
   it.each([
-    [false, false],
-    [false, true],
-    [true, false],
-    [true, true],
+    ['plain', false],
+    ['plain', true],
+    ['registered', false],
+    ['registered', true],
+    ['new', false],
   ])(
     'handles linked=%s and a second section=%s through commit, undo and redo',
-    async (linked, mixed) => {
+    async (kind, mixed) => {
+      const linked = kind !== 'plain';
       const data = new BlueData();
       const root = data.getScore()[0] as PolyObject;
       const layer = root[0]!;
@@ -3543,10 +3545,10 @@ describe('grouping ScoreObjects through project history', () => {
       let libraryId: string | undefined;
       let object: GenericScore | Instance = source;
       if (linked) {
-        libraryId = data.getSoundObjectLibrary().addObject(source);
+        if (kind === 'registered') libraryId = data.getSoundObjectLibrary().addObject(source);
         object = new Instance();
         object.setSoundObject(source);
-        object.setLibraryId(libraryId);
+        if (libraryId) object.setLibraryId(libraryId);
       }
       assignExplicitScoreObjectId(object, 'group-source');
       layer.push(object);
@@ -3563,6 +3565,13 @@ describe('grouping ScoreObjects through project history', () => {
             {
               ...scoreObjectTarget(data),
               selectionId: 'group-source',
+              ...(linked
+                ? {
+                    ownerKind: 'library' as const,
+                    displayContext: 'instance' as const,
+                    sourceInstanceLocation: scoreObjectTarget(data).location,
+                  }
+                : {}),
             },
           ],
           targetGroupId: assignLayerGroupId(root),
@@ -3576,8 +3585,9 @@ describe('grouping ScoreObjects through project history', () => {
       const historyCopy = vi.spyOn(data, 'historyCopy');
       try {
         expect(prepareTransaction(data, patches).status).toBe('prepared');
-        expect(historyCopy).toHaveBeenCalledTimes(linked ? 1 : 0);
+        expect(historyCopy).toHaveBeenCalledTimes(kind === 'new' ? 1 : 0);
         expect(layer[0]).toBe(object);
+        expect(data.getSoundObjectLibrary().containsObject(source)).toBe(kind === 'registered');
         expect(liveOrc()).toBe(originalOrc);
         expect(history.isDirty()).toBe(false);
 
@@ -3600,6 +3610,12 @@ describe('grouping ScoreObjects through project history', () => {
         expect(getScoreObjectId(liveObject())).toBe('result-group');
         checkSource((liveObject() as PolyObject)[0]![0] as GenericScore | Instance);
         expect(history.isDirty()).toBe(true);
+        if (kind === 'new') {
+          const grouped = (liveObject() as PolyObject)[0]![0] as Instance;
+          expect(grouped.getSoundObject()).toBe(
+            session.read().data!.getSoundObjectLibrary().getObjectById(grouped.getLibraryId()),
+          );
+        }
         expect(liveOrc()).toBe(mixed ? 'sr = 48000' : originalOrc);
 
         expect(
@@ -3617,6 +3633,12 @@ describe('grouping ScoreObjects through project history', () => {
         expect(getScoreObjectId(liveObject())).toBe('result-group');
         checkSource((liveObject() as PolyObject)[0]![0] as GenericScore | Instance);
         expect(history.isDirty()).toBe(true);
+        if (kind === 'new') {
+          const grouped = (liveObject() as PolyObject)[0]![0] as Instance;
+          expect(grouped.getSoundObject()).toBe(
+            session.read().data!.getSoundObjectLibrary().getObjectById(grouped.getLibraryId()),
+          );
+        }
         expect(liveOrc()).toBe(mixed ? 'sr = 48000' : originalOrc);
       } finally {
         historyCopy.mockRestore();

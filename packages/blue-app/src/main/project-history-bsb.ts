@@ -527,7 +527,13 @@ function addIsolatedSectionsForPatch(
       return false;
     }
     const targets = getScorePatchTargets(sp);
-    if (targets.some((t) => t.ownerKind === 'library')) {
+    if (
+      targets.some(
+        (t) =>
+          t.ownerKind === 'library' &&
+          !(sp.type === 'convertToPolyObject' && t.displayContext === 'instance'),
+      )
+    ) {
       return false;
     }
     if (
@@ -661,12 +667,29 @@ function tryPrepareSectionOwnerTransaction(
     owners.set(source, copy);
   }
 
-  // Grouping only accesses the library when the new group contains an Instance.
-  // Discard the section candidates and use the full-document path in that case.
+  // Grouping can validate existing links without modifying the canonical library.
+  // Fall back if it would register a new definition or needs another library operation.
   const needsLibraryCandidate = Symbol('needsLibraryCandidate');
   const scopedDataView = new Proxy(data, {
     get(target, prop) {
-      if (includesGrouping && prop === 'getSoundObjectLibrary') throw needsLibraryCandidate;
+      if (includesGrouping && prop === 'getSoundObjectLibrary') {
+        const library = target.getSoundObjectLibrary();
+        return () =>
+          new Proxy(library, {
+            get(library, member) {
+              if (member !== 'checkAndAddInstanceSoundObjects') throw needsLibraryCandidate;
+              return (instances: Instance[]) => {
+                for (const instance of instances) {
+                  const definition = instance.getSoundObject();
+                  if (!definition) continue;
+                  const libraryId = library.findIdForObject(definition);
+                  if (!libraryId) throw needsLibraryCandidate;
+                  instance.setLibraryId(libraryId);
+                }
+              };
+            },
+          });
+      }
       const sectionKey = SECTION_GETTER_TO_KEY.get(prop);
       if (sectionKey) {
         const cloned = clonedByKey.get(sectionKey);
