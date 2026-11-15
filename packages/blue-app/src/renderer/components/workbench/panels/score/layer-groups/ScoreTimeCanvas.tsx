@@ -1,5 +1,5 @@
 import type { TempoMapSnapshot } from '../../../../../../shared/project-editor';
-import { useRef, useCallback, useState, useEffect, useMemo } from 'react';
+import { memo, useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import ShiftObjectsDialog from '../ShiftObjectsDialog';
 import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
@@ -560,6 +560,19 @@ export default function ScoreTimeCanvas({
     snapValue,
     frameSnapContext,
   ]);
+
+  const snapLinePathsByHeight = useMemo(() => {
+    const paths = new Map<number, string>();
+    if (snapLineXPositions.length > 0 && contentWidth > 0) {
+      for (const layer of group.layers) {
+        const height = layer.height || DEFAULT_ROW_HEIGHT;
+        if (height > 0 && !paths.has(height)) {
+          paths.set(height, snapLineXPositions.map((x) => `M ${x} 0 V ${height}`).join(' '));
+        }
+      }
+    }
+    return paths;
+  }, [contentWidth, group.layers, snapLineXPositions]);
 
   const snapBeatValueMove = useCallback(
     (beats: number): number => {
@@ -2392,7 +2405,7 @@ export default function ScoreTimeCanvas({
                 <SnapLinesLayer
                   layerId={layer.layerId}
                   contentWidth={contentWidth}
-                  lineXPositions={snapLineXPositions}
+                  pathData={snapLinePathsByHeight.get(layer.height || DEFAULT_ROW_HEIGHT) ?? ''}
                   height={layer.height || DEFAULT_ROW_HEIGHT}
                 />
                 {layer.items.map((item: ScoreRowObjectSnapshot) => {
@@ -2888,25 +2901,17 @@ function EmptyAreaContextMenu({
   );
 }
 
-function SnapLinesLayer({
+const SnapLinesLayer = memo(function SnapLinesLayer({
   layerId,
   contentWidth,
-  lineXPositions,
+  pathData,
   height,
 }: {
   layerId: string;
   contentWidth: number;
-  lineXPositions: number[];
+  pathData: string;
   height: number;
 }) {
-  const pathData = useMemo(() => {
-    if (lineXPositions.length === 0 || contentWidth <= 0 || height <= 0) {
-      return '';
-    }
-
-    return lineXPositions.map((x) => `M ${x} 0 V ${height}`).join(' ');
-  }, [contentWidth, height, lineXPositions]);
-
   if (!pathData) {
     return null;
   }
@@ -2930,4 +2935,4 @@ function SnapLinesLayer({
       />
     </svg>
   );
-}
+});
