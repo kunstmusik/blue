@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildWavBytes,
   parseAudioFileMetadata,
   EQUAL_POWER_CENTER_GAIN,
   getMonoPanGains,
   getStereoBalanceGains,
 } from '../../index';
+import { buildWavBytes } from '../../test-support/audio-fixtures';
 
 /**
  * Builds a 16-bit PCM WAV file with specified channels, sample rate, and constant sample values per channel.

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseAudioFileMetadata,
-  AudioFileMetadataError,
-  buildWavBytes,
-  buildAiffBytes,
-  buildAifcBytes,
-} from './audio-file-metadata';
+import { parseAudioFileMetadata, AudioFileMetadataError } from './audio-file-metadata';
+import { buildWavBytes, buildAiffBytes, buildAifcBytes } from '../test-support/audio-fixtures';
 
 describe('parseAudioFileMetadata', () => {
   describe('WAV', () => {

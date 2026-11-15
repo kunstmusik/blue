@@ -601,7 +601,6 @@ export type { FreezeRenderDataResult } from './utilities/freeze-render-data';
 // ─── Audio ───
 export { parseAudioFileMetadata, AudioFileMetadataError } from './audio/audio-file-metadata';
 export type { AudioFileMetadata } from './audio/audio-file-metadata';
-export { buildWavBytes, buildAiffBytes } from './audio/audio-file-metadata';
 export {
   DEFAULT_PAN,
   MIN_PAN,

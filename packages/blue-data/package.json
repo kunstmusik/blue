@@ -16,6 +16,16 @@
         "default": "./dist/cjs/index.js"
       }
     },
+    "./test-support/audio-fixtures": {
+      "import": {
+        "types": "./dist/esm/test-support/audio-fixtures.d.ts",
+        "default": "./dist/esm/test-support/audio-fixtures.js"
+      },
+      "require": {
+        "types": "./dist/cjs/test-support/audio-fixtures.d.ts",
+        "default": "./dist/cjs/test-support/audio-fixtures.js"
+      }
+    },
     "./test-support": {
       "import": {
         "types": "./dist/esm/test-support/csd-comparison.d.ts",

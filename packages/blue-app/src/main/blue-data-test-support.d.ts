@@ -35,3 +35,18 @@ declare module '@blue/data/test-support' {
     withinThreshold: boolean;
   };
 }
+
+declare module '@blue/data/test-support/audio-fixtures' {
+  export function buildWavBytes(
+    channels: number,
+    sampleRate: number,
+    bitsPerSample: number,
+    frameCount: number,
+  ): Uint8Array;
+  export function buildAiffBytes(
+    channels: number,
+    sampleRate: number,
+    bitsPerSample: number,
+    frameCount: number,
+  ): Uint8Array;
+}

@@ -10,9 +10,8 @@ import {
   PolyObject,
   TimeDuration,
   TimePosition,
-  buildAiffBytes,
-  buildWavBytes,
 } from '@blue/data';
+import { buildAiffBytes, buildWavBytes } from '@blue/data/test-support/audio-fixtures';
 import {
   allocateFreezeFileName,
   countFreezeReferences,

@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { AudioClip, buildWavBytes, Element, TimeBase } from '@blue/data';
+import { AudioClip, Element, TimeBase } from '@blue/data';
+import { buildWavBytes } from '@blue/data/test-support/audio-fixtures';
 import {
   commitAudioFileDrop,
   getFileManagerRoots,

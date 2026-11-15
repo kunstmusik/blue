@@ -17,7 +17,7 @@ import {
   summarizeAiffPcmBytes,
 } from '../components/workbench/panels/score/bar-renderers/waveform-cache';
 import type { AudioFadeType } from '../../shared/project-editor';
-import { buildAiffBytes } from '@blue/data';
+import { buildAiffBytes } from '@blue/data/test-support/audio-fixtures';
 
 afterEach(() => {
   clearWaveformCache();
