@@ -1,11 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
+import { StringDecoder } from 'node:string_decoder';
 import {
   LEGACY_LIBRARY_FORMATS,
   XmlLoadError,
   exportLegacyLibraryDocument,
   parseLegacyLibraryDocument,
+  validateLegacyLibraryEnvelope,
   type LegacyLibraryDocumentPlan,
   type LegacyLibraryFolderPlan,
   type LegacyLibraryTreeNode,
@@ -143,8 +145,16 @@ export function commitAtomicExport(
   }
 }
 
-function hashBytes(bytes: Buffer): string {
-  return createHash('sha256').update(bytes).digest('hex');
+async function readLegacyLibrarySource(sourcePath: string) {
+  const hash = createHash('sha256');
+  const decoder = new StringDecoder('utf8');
+  const text: string[] = [];
+  for await (const chunk of fs.createReadStream(sourcePath)) {
+    hash.update(chunk);
+    text.push(decoder.write(chunk));
+  }
+  text.push(decoder.end());
+  return { contents: text.join(''), sourceHash: hash.digest('hex') };
 }
 
 async function hashFile(sourcePath: string): Promise<string> {
@@ -189,10 +199,9 @@ export class UnifiedLibraryImportExportService {
       folderResolutionPaths?: Readonly<Record<string, string>>;
     }[] = [];
     for (const sourcePath of sourcePaths) {
-      const bytes = await fs.promises.readFile(sourcePath);
-      const sourceHash = hashBytes(bytes);
+      const { contents, sourceHash } = await readLegacyLibrarySource(sourcePath);
       try {
-        const plan = parseLegacyLibraryDocument(bytes.toString('utf8'), {
+        const plan = parseLegacyLibraryDocument(contents, {
           kind: 'library',
           label: sourcePath,
           nativePath: sourcePath,
@@ -380,7 +389,7 @@ export class UnifiedLibraryImportExportService {
     try {
       const plan = await this.buildExportPlan(libraryType);
       const contents = exportLegacyLibraryDocument(plan);
-      parseLegacyLibraryDocument(contents);
+      validateLegacyLibraryEnvelope(contents, { kind: 'library', label: targetPath });
       if (
         !(await approve({
           outputs: [
@@ -416,8 +425,8 @@ export class UnifiedLibraryImportExportService {
       for (const descriptor of Object.values(LEGACY_LIBRARY_FORMATS)) {
         const plan = await this.buildExportPlan(descriptor.libraryType);
         const contents = exportLegacyLibraryDocument(plan);
-        parseLegacyLibraryDocument(contents);
         const targetPath = path.join(destinationDirectory, descriptor.fileName);
+        validateLegacyLibraryEnvelope(contents, { kind: 'library', label: targetPath });
         outputs.push({ targetPath, contents });
         summaries.push({
           libraryType: descriptor.libraryType,
@@ -517,9 +526,9 @@ export class UnifiedLibraryImportExportService {
         const sourceId = randomUUID();
         let sourceHash: string | undefined;
         try {
-          const bytes = await fs.promises.readFile(sourcePath);
-          sourceHash = hashBytes(bytes);
-          const plan = parseLegacyLibraryDocument(bytes.toString('utf8'), {
+          const source = await readLegacyLibrarySource(sourcePath);
+          sourceHash = source.sourceHash;
+          const plan = parseLegacyLibraryDocument(source.contents, {
             kind: 'library',
             label: sourcePath,
             nativePath: sourcePath,

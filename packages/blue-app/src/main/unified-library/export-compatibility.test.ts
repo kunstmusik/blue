@@ -10,13 +10,12 @@ describe('legacy export compatibility', () => {
   it('exports all four roots and preserves unsupported payload XML exactly', async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-export-compat-'));
     const sourcePath = path.join(directory, 'soundObjectLibrary.xml');
-    const raw =
-      '<soundObject type="future.Unknown"><name>Raw</name><!--keep--><plugin><![CDATA[data()]]></plugin></soundObject>';
-    fs.writeFileSync(
-      sourcePath,
-      `<soundObjectLibrary><category categoryName="SoundObject Library">${raw}</category></soundObjectLibrary>`,
-      'utf8',
-    );
+    const prefix = '<soundObjectLibrary><category categoryName="SoundObject Library">';
+    const itemPrefix = '<soundObject type="future.Unknown"><name>Raw</name><!--';
+    // Place the first byte of a multibyte character at the end of a stream chunk.
+    const filler = 'x'.repeat(65_535 - Buffer.byteLength(prefix + itemPrefix));
+    const raw = itemPrefix + filler + '🎵--><plugin><![CDATA[data()]]></plugin></soundObject>';
+    fs.writeFileSync(sourcePath, prefix + raw + '</category></soundObjectLibrary>', 'utf8');
     const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
     try {
       const service = new UnifiedLibraryImportExportService(client);

@@ -106,10 +106,7 @@ function rawXmlElementToElement(raw: RawXmlElement): Element {
   return el;
 }
 
-export function parseLegacyLibraryDocument(
-  source: string,
-  sourceInfo: XmlSource = { kind: 'library', label: 'in-memory library' },
-): LegacyLibraryDocumentPlan {
+function readLegacyLibraryEnvelope(source: string, sourceInfo: XmlSource) {
   const document = parseRawXmlDocument(source);
   const descriptor = descriptorForRoot(document.root.name);
   const candidate = rawXmlElementToElement(document.root);
@@ -164,10 +161,26 @@ export function parseLegacyLibraryDocument(
     context.disposeObserver();
   }
 
+  return { descriptor, category: matchedCategory };
+}
+
+/** Validate the XML and library envelope before writing already stored payloads. */
+export function validateLegacyLibraryEnvelope(
+  source: string,
+  sourceInfo: XmlSource = { kind: 'library', label: 'in-memory library' },
+): void {
+  readLegacyLibraryEnvelope(source, sourceInfo);
+}
+
+export function parseLegacyLibraryDocument(
+  source: string,
+  sourceInfo: XmlSource = { kind: 'library', label: 'in-memory library' },
+): LegacyLibraryDocumentPlan {
+  const { descriptor, category } = readLegacyLibraryEnvelope(source, sourceInfo);
   const diagnostics: XmlDiagnostic[] = [];
   const root = parseFolder(
     descriptor,
-    matchedCategory,
+    category,
     true,
     sourceInfo,
     `/${descriptor.rootElement}/${descriptor.categoryElement}[1]`,
