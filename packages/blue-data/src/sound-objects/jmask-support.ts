@@ -205,7 +205,19 @@ export class Table {
     }
   }
 
-  private getOrBuildCache(): TableCache {
+  /** @internal Render-local view of prepared points, never exposed to editing callers. */
+  prepareForGeneration(timeScale = 1): Table {
+    const view = new Table(false);
+    view.points = this.points;
+    view.interpolationType = this.interpolationType;
+    view.interpolation = this.interpolation;
+    const cache = timeScale === 1 ? this.getOrBuildCache() : view.getOrBuildCache(timeScale);
+    tableCaches.set(view, cache);
+    generationTables.add(view);
+    return view;
+  }
+
+  private getOrBuildCache(timeScale = 1): TableCache {
     const { points, interpolationType, interpolation } = this;
     const size = points.length;
     const cached = tableCaches.get(this);
@@ -238,12 +250,12 @@ export class Table {
       const pt = points[i]!;
       rawTimes[i] = pt.time;
       rawValues[i] = pt.value;
-      if (i > 0 && pt.time < rawTimes[i - 1]!) {
+      if (i > 0 && pt.time * timeScale < rawTimes[i - 1]! * timeScale) {
         alreadySorted = false;
       }
     }
 
-    const sorted = points.map(({ time, value }) => ({ time, value }));
+    const sorted = points.map(({ time, value }) => ({ time: time * timeScale, value }));
     if (!alreadySorted) sorted.sort((left, right) => left.time - right.time);
 
     const prefixPhs = new Float64Array(Math.max(1, size));
@@ -2422,18 +2434,86 @@ export class Parameter {
   }
 }
 
-const TABLE_OWNER_TYPES = new Set<Function>([
+const BUILTIN_GENERATOR_TYPES = new Set<Function>([
+  Constant,
+  Random,
   Oscillator,
   Segment,
+  ItemList,
+  Probability,
+]);
+const BUILTIN_DISTRIBUTION_TYPES = new Set<Function>([
+  Uniform,
+  Linear,
+  Triangle,
   Exponential,
   Gaussian,
   Cauchy,
   Beta,
   Weibull,
-  Mask,
-  Quantizer,
-  Accumulator,
 ]);
+
+function canPrepareGenerator(generator: Generator | null): boolean {
+  if (!generator) return true;
+  if (
+    !BUILTIN_GENERATOR_TYPES.has(generator.constructor) ||
+    ['initialize', 'getValue', 'deepCopy'].some((method) => Object.hasOwn(generator, method))
+  )
+    return false;
+  if (generator.constructor !== Probability) return true;
+  const distribution = (generator as Probability).getSelectedProbabilityGenerator();
+  return (
+    distribution !== undefined &&
+    BUILTIN_DISTRIBUTION_TYPES.has(distribution.constructor) &&
+    !Object.hasOwn(distribution, 'getValue') &&
+    !Object.hasOwn(distribution, 'deepCopy')
+  );
+}
+
+function prepareTableOwner<T extends object>(owner: T): T {
+  const view: T = Object.create(owner);
+  for (const [key, value] of Object.entries(owner)) {
+    if (value instanceof Table) {
+      Object.defineProperty(view, key, { value: value.prepareForGeneration() });
+    }
+  }
+  return view;
+}
+
+function prepareGenerator(generator: Generator, duration: number): Generator {
+  switch (generator.constructor) {
+    case Constant:
+    case Random:
+      return generator;
+    case Segment: {
+      const source = generator as Segment;
+      // Segment.initialize normally stretches its copied points in place.
+      return Object.assign(Object.create(source), {
+        table: source.table.prepareForGeneration(duration),
+        initialize() {},
+      });
+    }
+    case ItemList: {
+      const source = generator as ItemList;
+      // Heap mode is the only mode that rewrites the authored ordering.
+      return Object.assign(Object.create(source), {
+        listItems: source.listType === ItemList.HEAP ? [...source.listItems] : source.listItems,
+        index: 0,
+        direction: 0,
+      });
+    }
+    case Probability: {
+      const source = generator as Probability;
+      return Object.assign(Object.create(source), {
+        generators: [prepareTableOwner(source.getSelectedProbabilityGenerator())],
+        selectedIndex: 0,
+        duration: 0,
+      });
+    }
+    default:
+      return prepareTableOwner(generator);
+  }
+}
 
 export class Field {
   parameters: Parameter[] = [];
@@ -2525,19 +2605,30 @@ export class Field {
   /** Generate on an isolated copy because generators retain per-run state. */
   generateNotesFromCopy(duration: number, rnd: JavaRandom): NoteList {
     const field = new Field(false);
-    field.parameters = this.parameters.map((parameter) => new Parameter(parameter, true));
-    for (const { generator, mask, quantizer, accumulator } of field.parameters) {
-      // Only built-in owners guarantee that their private table copies stay stable for a run.
-      const selected =
-        generator?.constructor === Probability
-          ? (generator as Probability).getSelectedProbabilityGenerator()
-          : generator;
-      for (const owner of [selected, mask, quantizer, accumulator]) {
-        if (!owner || !TABLE_OWNER_TYPES.has(owner.constructor)) continue;
-        for (const value of Object.values(owner)) {
-          if (value?.constructor === Table) generationTables.add(value);
+    if (
+      this.parameters.every(
+        ({ generator, mask, quantizer, accumulator }) =>
+          canPrepareGenerator(generator) &&
+          (!mask || mask.constructor === Mask) &&
+          (!quantizer || quantizer.constructor === Quantizer) &&
+          (!accumulator || accumulator.constructor === Accumulator),
+      )
+    ) {
+      field.parameters = this.parameters.map(({ generator, mask, quantizer, accumulator }) => {
+        const run = new Parameter();
+        if (generator) run.generator = prepareGenerator(generator, duration);
+        if (mask?.enabled) run.mask = prepareTableOwner(mask);
+        if (quantizer?.enabled) run.quantizer = prepareTableOwner(quantizer);
+        if (accumulator?.enabled) {
+          run.accumulator = prepareTableOwner(accumulator);
+          run.accumulator.runningValue = 0;
+          run.accumulator.firstTime = true;
         }
-      }
+        return run;
+      });
+    } else {
+      // Custom generators still own their copy and initialization semantics.
+      field.parameters = this.parameters.map((parameter) => new Parameter(parameter, true));
     }
     return field.generateNotes(duration, rnd);
   }

@@ -830,6 +830,31 @@ describe('JMask XML save/load round-trips', () => {
       expect(notes.size).toBeGreaterThan(0);
     });
 
+    it('initializes fresh ItemList and accumulator state without changing authored state', () => {
+      const field = new Field();
+      (field.getParameter(0).generator as Constant).value = 1;
+      (field.getParameter(1).generator as Constant).value = 0.25;
+      const parameter = field.getParameter(2);
+      const list = new ItemList();
+      list.listType = ItemList.SWING;
+      list.listItems = [0.5, 1, 2];
+      list.index = 2;
+      list.direction = 1;
+      parameter.setGenerator(list);
+      const accumulator = parameter.getAccumulator()!;
+      accumulator.enabled = true;
+      accumulator.initialValue = 1;
+      accumulator.runningValue = 99;
+      accumulator.firstTime = false;
+      const expected = new Field(field).generateNotes(2, new JavaRandom(42n)).toString();
+
+      expect(field.generateNotesFromCopy(2, new JavaRandom(42n)).toString()).toBe(expected);
+      expect(field.generateNotesFromCopy(2, new JavaRandom(42n)).toString()).toBe(expected);
+      expect([list.index, list.direction, accumulator.runningValue, accumulator.firstTime]).toEqual(
+        [2, 1, 99, false],
+      );
+    });
+
     it('rebuilds prepared render tables after a point edit between generations', () => {
       const field = new Field();
       (field.getParameter(0).generator as Constant).value = 1;
