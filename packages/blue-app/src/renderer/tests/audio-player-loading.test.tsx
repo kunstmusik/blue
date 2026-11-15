@@ -5,7 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AudioPlayerPanel from '../components/workbench/panels/audio-player/AudioPlayerPanel';
 import { emitPendingAudioFile } from '../components/workbench/panels/audio-player/audio-player-bus';
 import WaveformBody from '../components/workbench/panels/score/bar-renderers/WaveformBody';
-import { clearWaveformCache } from '../components/workbench/panels/score/bar-renderers/waveform-cache';
+import * as waveformCache from '../components/workbench/panels/score/bar-renderers/waveform-cache';
+
+const { clearWaveformCache } = waveformCache;
 
 let root: Root;
 let container: HTMLDivElement;
@@ -63,6 +65,28 @@ afterEach(async () => {
 });
 
 describe('mounted score waveform reset', () => {
+  it('rebuilds waveform paths for new geometry and reuses them for a color change', async () => {
+    const buildPaths = vi.spyOn(waveformCache, 'buildWaveformPathData');
+    const props = {
+      waveformKey: 'clip',
+      filePath: 'clip.wav',
+      pixelSecond: 4,
+      pixelsPerBeat: 4,
+      width: 100,
+      height: 40,
+      color: '#fff',
+    };
+    await act(async () => root.render(<WaveformBody {...props} />));
+    expect(buildPaths).toHaveBeenCalledOnce();
+
+    await act(async () => root.render(<WaveformBody {...props} color="#000" />));
+    expect(buildPaths).toHaveBeenCalledOnce();
+    expect(container.querySelector('path')?.getAttribute('stroke')).toBe('#000');
+
+    await act(async () => root.render(<WaveformBody {...props} height={60} />));
+    expect(buildPaths).toHaveBeenCalledTimes(2);
+  });
+
   it('reloads after a project reset even when the next file and zoom are identical', async () => {
     const props = {
       waveformKey: 'same',

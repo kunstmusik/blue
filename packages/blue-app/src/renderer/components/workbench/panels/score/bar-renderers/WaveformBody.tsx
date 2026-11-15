@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   buildWaveformCacheKey,
   buildWaveformPathData,
@@ -50,17 +50,16 @@ export default function WaveformBody({
     return subscribeWaveformCacheEntry(cacheKey, setEntry);
   }, [cacheKey, cacheGeneration, filePath, pixelSecond, waveformKey]);
 
-  if (!entry || entry.loading || entry.channels.length === 0) {
-    return null;
-  }
-
-  const paths = buildWaveformPathData(entry, {
-    width,
-    height,
-    pixelsPerBeat,
-    startOffsetBeats,
-    looping,
-  });
+  const paths = useMemo(() => {
+    if (!entry || entry.loading || entry.channels.length === 0) return [];
+    return buildWaveformPathData(entry, {
+      width,
+      height,
+      pixelsPerBeat,
+      startOffsetBeats,
+      looping,
+    });
+  }, [entry, width, height, pixelsPerBeat, startOffsetBeats, looping]);
 
   if (paths.length === 0) {
     return null;
