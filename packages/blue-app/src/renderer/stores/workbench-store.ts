@@ -314,18 +314,19 @@ export function prepareDockviewForExplicitPopoutRestore(
   dockview: SerializedDockview,
   floatingOrigins: Record<string, DockingOrigin>,
 ): { layout: SerializedDockview; intents: PreparedPopoutRestoreIntent[] } {
-  const layout = structuredClone(dockview);
-  const serializedPopouts = layout.popoutGroups ?? [];
-  delete layout.popoutGroups;
+  const { popoutGroups: serializedPopouts = [], ...layout } = dockview;
+  if (serializedPopouts.length === 0) return { layout, intents: [] };
 
-  const gridLeaves = collectSerializedGridLeaves(layout.grid.root as unknown as SerializedGridNode);
+  const gridRoot = layout.grid.root as unknown as SerializedGridNode;
+  const gridLeaves = collectSerializedGridLeaves(gridRoot);
+  const editedLeaves = new Map<SerializedGridLeaf, SerializedGridLeaf>();
   const gridGroups = gridLeaves.map((leaf) => leaf.data);
   const gridPanelIds = new Set(gridGroups.flatMap((group) => group.views));
   const intents = serializedPopouts.map((popout) => ({
     serializedGroupId: popout.data.id,
     ...(popout.gridReferenceGroup ? { gridReferenceGroupId: popout.gridReferenceGroup } : {}),
     panelIds: collectSerializedGroupPanelIds(popout.data),
-    position: popout.position,
+    position: popout.position && { ...popout.position },
     ...(popout.url ? { url: popout.url } : {}),
   }));
 
@@ -334,13 +335,19 @@ export function prepareDockviewForExplicitPopoutRestore(
     const targetGroupId = origin?.originGroupId ?? intent.gridReferenceGroupId;
     const targetLeaf =
       gridLeaves.find((leaf) => leaf.data.id === targetGroupId) ??
-      gridLeaves.find((leaf) => leaf.data.views.some((id) => !isAuxiliaryPanelId(id))) ??
+      gridLeaves.find((leaf) =>
+        (editedLeaves.get(leaf) ?? leaf).data.views.some((id) => !isAuxiliaryPanelId(id)),
+      ) ??
       gridLeaves[0];
     if (!targetLeaf) {
       throw new Error('Saved popout has no docked group to restore into');
     }
-    const target = targetLeaf.data;
-
+    let copy = editedLeaves.get(targetLeaf);
+    if (!copy) {
+      copy = { ...targetLeaf, data: { ...targetLeaf.data, views: [...targetLeaf.data.views] } };
+      editedLeaves.set(targetLeaf, copy);
+    }
+    const target = copy.data;
     const missingPanelIds = intent.panelIds.filter((id) => !gridPanelIds.has(id));
     const originIndex = origin?.originIndex;
     const insertAt = Number.isFinite(originIndex)
@@ -348,12 +355,26 @@ export function prepareDockviewForExplicitPopoutRestore(
       : target.views.length;
     target.views.splice(insertAt, 0, ...missingPanelIds);
     for (const panelId of missingPanelIds) gridPanelIds.add(panelId);
-    targetLeaf.visible = true;
+    copy.visible = true;
     if (!target.activeView && target.views.length > 0) {
       target.activeView = target.views[0];
     }
   }
 
+  // Only the paths to edited groups need new grid objects.
+  const replaceEditedLeaves = (node: SerializedGridNode): SerializedGridNode => {
+    if (!Array.isArray(node.data)) return editedLeaves.get(node as SerializedGridLeaf) ?? node;
+    const original = node.data;
+    let children: SerializedGridNode[] | undefined;
+    for (const [index, child] of original.entries()) {
+      const updated = replaceEditedLeaves(child);
+      if (updated === child) continue;
+      children ??= original.slice();
+      children[index] = updated;
+    }
+    return children ? { ...node, data: children } : node;
+  };
+  layout.grid = { ...layout.grid, root: replaceEditedLeaves(gridRoot) as typeof layout.grid.root };
   return { layout, intents };
 }
 

@@ -272,6 +272,10 @@ describe('explicit popout restoration', () => {
       },
     });
 
+    expect(prepared.layout.grid).not.toBe(serialized.grid);
+    expect(prepared.layout.panels).toBe(serialized.panels);
+    expect(serialized.grid.root.data[0]!.data.views).toEqual(['OrchestraTopComponent']);
+    expect(serialized.popoutGroups).toHaveLength(1);
     expect(prepared.layout.popoutGroups).toBeUndefined();
     expect((prepared.layout.grid.root.data as any[])[0].data.views).toEqual([
       'ScoreTopComponent',
