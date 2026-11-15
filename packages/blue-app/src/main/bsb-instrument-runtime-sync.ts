@@ -1,94 +1,64 @@
 import { BlueSynthBuilder, TrackLayerGroup } from '@blue/data';
 import type { BlueData } from '@blue/data';
-import type {
-  BsbInterfacePatch,
-  BsbRealtimeControlUpdate,
-  InstrumentPatch,
-} from '../shared/project-editor';
+import type { BsbRealtimeControlUpdate, InstrumentPatch } from '../shared/project-editor';
 
 export type RuntimeChannelWriter = (name: string, value: number) => Promise<void>;
-type ParameterWriter = (name: string, value: number) => Promise<void>;
 
-function createParameterWriter(
+function collectParameterChannels(instrument: BlueSynthBuilder) {
+  const channels = new Map<string, string | null>();
+  for (const parameter of instrument.getParameters()) {
+    if (!channels.has(parameter.getName())) {
+      channels.set(parameter.getName(), parameter.getCompilationVarName());
+    }
+  }
+  return channels;
+}
+
+/** Resolve channel values from an already-applied instrument patch before submitting writes. */
+export function collectBsbInstrumentRuntimeChannels(
   instrument: BlueSynthBuilder,
-  writeChannel: RuntimeChannelWriter,
-): ParameterWriter {
-  return async (name, value) => {
-    const parameter = instrument.getParameters().find((candidate) => candidate.getName() === name);
-    const compilationName = parameter?.getCompilationVarName();
-    if (compilationName) await writeChannel(compilationName, value);
+  patch: InstrumentPatch,
+): Array<{ name: string; value: number }> {
+  if (!patch.bsbWidgetValues && !patch.bsbInterface) return [];
+  const channels = collectParameterChannels(instrument);
+  const values = new Map<string, number>();
+  const record = (name: string, value: number): void => {
+    const channel = channels.get(name);
+    if (channel) values.set(channel, value);
   };
-}
 
-async function syncWidgetProperties(
-  instrument: BlueSynthBuilder,
-  patch: Extract<BsbInterfacePatch, { type: 'updateWidgetProperties' }>,
-  writeParameter: ParameterWriter,
-): Promise<void> {
-  const widget = instrument.getGraphicInterface().findWidgetById(patch.widgetId);
-  if (!widget?.objectName) return;
+  for (const [name, value] of Object.entries(patch.bsbWidgetValues ?? {})) record(name, value);
 
-  const properties = patch.properties;
-  if (typeof properties.value === 'number') {
-    await writeParameter(widget.objectName, properties.value);
-  }
-  if (typeof properties.selected === 'boolean') {
-    await writeParameter(widget.objectName, properties.selected ? 1 : 0);
-  }
-  if (typeof properties.selectedIndex === 'number') {
-    await writeParameter(widget.objectName, properties.selectedIndex);
-  }
-  if (typeof properties.xValue === 'number') {
-    await writeParameter(`${widget.objectName}X`, properties.xValue);
-  }
-  if (typeof properties.yValue === 'number') {
-    await writeParameter(`${widget.objectName}Y`, properties.yValue);
-  }
-}
-
-async function syncBsbInterfacePatch(
-  instrument: BlueSynthBuilder,
-  patch: BsbInterfacePatch,
-  writeChannel: RuntimeChannelWriter,
-  writeParameter: ParameterWriter,
-): Promise<void> {
-  if (patch.type === 'applyPreset') {
+  const edit = patch.bsbInterface;
+  if (edit?.type === 'applyPreset') {
     for (const parameter of instrument.getParameters()) {
-      const compilationName = parameter.getCompilationVarName();
-      if (compilationName) await writeChannel(compilationName, parameter.getFixedValue());
+      const channel = parameter.getCompilationVarName();
+      if (channel) values.set(channel, parameter.getFixedValue());
     }
-    return;
+  } else if (edit?.type === 'updateSliderBankValue' || edit?.type === 'updateWidgetProperties') {
+    const name = instrument.getGraphicInterface().findWidgetById(edit.widgetId)?.objectName;
+    if (name && edit.type === 'updateSliderBankValue') {
+      record(`${name}_${edit.sliderIndex}`, edit.value);
+    } else if (name && edit.type === 'updateWidgetProperties') {
+      const { value, selected, selectedIndex, xValue, yValue } = edit.properties;
+      if (typeof value === 'number') record(name, value);
+      if (typeof selected === 'boolean') record(name, selected ? 1 : 0);
+      if (typeof selectedIndex === 'number') record(name, selectedIndex);
+      if (typeof xValue === 'number') record(`${name}X`, xValue);
+      if (typeof yValue === 'number') record(`${name}Y`, yValue);
+    }
   }
 
-  if (patch.type === 'updateSliderBankValue') {
-    const widget = instrument.getGraphicInterface().findWidgetById(patch.widgetId);
-    if (widget?.objectName) {
-      await writeParameter(`${widget.objectName}_${patch.sliderIndex}`, patch.value);
-    }
-    return;
-  }
-
-  if (patch.type === 'updateWidgetProperties') {
-    await syncWidgetProperties(instrument, patch, writeParameter);
-  }
+  return Array.from(values, ([name, value]) => ({ name, value }));
 }
 
-/**
- * Push values from an already-applied BSB instrument patch to a running engine.
- */
 export async function syncBsbInstrumentRuntimeChannels(
   instrument: BlueSynthBuilder,
   patch: InstrumentPatch,
   writeChannel: RuntimeChannelWriter,
 ): Promise<void> {
-  const writeParameter = createParameterWriter(instrument, writeChannel);
-
-  for (const [objectName, value] of Object.entries(patch.bsbWidgetValues ?? {})) {
-    await writeParameter(objectName, value);
-  }
-
-  if (patch.bsbInterface) {
-    await syncBsbInterfacePatch(instrument, patch.bsbInterface, writeChannel, writeParameter);
+  for (const { name, value } of collectBsbInstrumentRuntimeChannels(instrument, patch)) {
+    await writeChannel(name, value);
   }
 }
 
@@ -124,7 +94,7 @@ export async function syncBsbRealtimeControlUpdate(
   data: BlueData,
   update: BsbRealtimeControlUpdate,
   projectSessionId: number,
-  writeChannel: RuntimeChannelWriter,
+  writeChannels: (entries: readonly { name: string; value: number }[]) => Promise<void>,
 ): Promise<void> {
   const instrument = resolveBsbRealtimeControlInstrument(data, update, projectSessionId);
   if (!instrument) return;
@@ -132,26 +102,31 @@ export async function syncBsbRealtimeControlUpdate(
   const widget = instrument.getGraphicInterface().findWidgetById(update.widgetId);
   if (!widget?.objectName) return;
 
-  const writeParameter = createParameterWriter(instrument, writeChannel);
+  const parameters = instrument.getParameters();
+  const entries: { name: string; value: number }[] = [];
+  const addParameter = (name: string, value: number) => {
+    const channel = parameters
+      .find((parameter) => parameter.getName() === name)
+      ?.getCompilationVarName();
+    if (channel) entries.push({ name: channel, value });
+  };
 
   switch (update.kind) {
     case 'value':
-      await writeParameter(widget.objectName, update.payload.value);
-      return;
+      addParameter(widget.objectName, update.payload.value);
+      break;
     case 'selected':
-      await writeParameter(widget.objectName, update.payload.selected ? 1 : 0);
-      return;
+      addParameter(widget.objectName, update.payload.selected ? 1 : 0);
+      break;
     case 'selectedIndex':
-      await writeParameter(widget.objectName, update.payload.selectedIndex);
-      return;
+      addParameter(widget.objectName, update.payload.selectedIndex);
+      break;
     case 'xy':
-      await writeParameter(`${widget.objectName}X`, update.payload.xValue);
-      await writeParameter(`${widget.objectName}Y`, update.payload.yValue);
-      return;
+      addParameter(`${widget.objectName}X`, update.payload.xValue);
+      addParameter(`${widget.objectName}Y`, update.payload.yValue);
+      break;
     case 'sliderBank':
-      await writeParameter(
-        `${widget.objectName}_${update.payload.sliderIndex}`,
-        update.payload.value,
-      );
+      addParameter(`${widget.objectName}_${update.payload.sliderIndex}`, update.payload.value);
   }
+  if (entries.length > 0) await writeChannels(entries);
 }

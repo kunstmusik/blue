@@ -246,6 +246,7 @@ import {
 import { MixerGatePublisher, type MixerGateEngineIO } from './mixer-mute-solo-runtime';
 import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
+  collectBsbInstrumentRuntimeChannels,
   syncBsbInstrumentRuntimeChannels,
   syncBsbRealtimeControlUpdate,
 } from './bsb-instrument-runtime-sync';
@@ -4651,7 +4652,7 @@ async function applyRuntimeWorkOperation(
         const instrument = resolveBsbInstrumentByOwnerKey(data, operation.ownerKey);
         if (instrument) {
           // Write through the plan's own channel writer. Routing these through
-          // syncActiveRuntimeChannel would re-enter the performance chain that
+          // Reconciliation previews would re-enter the performance chain that
           // is currently executing this plan and deadlock until the watchdog
           // fences the performance.
           await syncBsbInstrumentRuntimeChannels(
@@ -6438,18 +6439,6 @@ ipcRegistration.handle(
 /**
  * Synchronize real-time parameter changes to active engine sessions.
  */
-async function syncActiveRuntimeChannel(
-  name: string,
-  value: number,
-  gestureId?: string,
-): Promise<void> {
-  await projectRuntimeReconciliation.previewChannelValue({
-    channel: name,
-    value,
-    gestureId,
-  });
-}
-
 async function syncActiveRuntimeChannels(
   entries: readonly { name: string; value: number }[],
   gestureId?: string,
@@ -6566,10 +6555,8 @@ async function syncEngineWithProjectPatch(
     if (orchestraPatch.type === 'updateInstrument') {
       const instrument = arrangement.getInstrumentById(orchestraPatch.assignmentId);
       if (instrument instanceof BlueSynthBuilder) {
-        await syncBsbInstrumentRuntimeChannels(
-          instrument,
-          orchestraPatch.patch,
-          syncActiveRuntimeChannel,
+        await syncActiveRuntimeChannels(
+          collectBsbInstrumentRuntimeChannels(instrument, orchestraPatch.patch),
         );
       }
     }
@@ -6588,10 +6575,8 @@ async function syncEngineWithProjectPatch(
       ?.find((track) => track.getUniqueId() === scorePatch.track.trackId)
       ?.getInstrument();
     if (instrument instanceof BlueSynthBuilder) {
-      await syncBsbInstrumentRuntimeChannels(
-        instrument,
-        scorePatch.patch,
-        syncActiveRuntimeChannel,
+      await syncActiveRuntimeChannels(
+        collectBsbInstrumentRuntimeChannels(instrument, scorePatch.patch),
       );
     }
   }
@@ -6698,8 +6683,13 @@ async function commitProjectDocumentPatchBatch(
       for (const ownerIdentity of blueX7BindingsToInvalidate) {
         invalidateActiveBlueX7Binding(ownerIdentity);
       }
-      for (const id of collectAffectedProjectScoreAutomationParameterIds(getCurrentData(), patch)) {
-        scoreAutomationParameterIds.add(id);
+      if (patch.score?.type === 'clearLayerAutomations') {
+        for (const id of collectAffectedProjectScoreAutomationParameterIds(
+          getCurrentData(),
+          patch,
+        )) {
+          scoreAutomationParameterIds.add(id);
+        }
       }
       if (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning()) {
         void syncEngineWithProjectPatch(getCurrentData(), patch, scoreAutomationParameterIds).catch(
@@ -7402,13 +7392,7 @@ ipcRegistration.handle(
       getCurrentData(),
       update,
       getCurrentProjectSessionId(),
-      async (name: string, value: number) => {
-        await projectRuntimeReconciliation.previewChannelValue({
-          channel: name,
-          value,
-          gestureId,
-        });
-      },
+      (entries) => syncActiveRuntimeChannels(entries, gestureId),
     ).catch((error) => {
       console.error('[main] Failed to sync realtime BSB control update:', error);
     });

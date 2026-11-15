@@ -389,7 +389,7 @@ describe('syncBsbInstrumentRuntimeChannels', () => {
       payload: { value: 0.625 },
     };
     await syncBsbRealtimeControlUpdate(data, update, 9, writer);
-    expect(writer).toHaveBeenCalledWith('gk_blue_auto3', 0.625);
+    expect(writer).toHaveBeenCalledExactlyOnceWith([{ name: 'gk_blue_auto3', value: 0.625 }]);
 
     writer.mockClear();
     await syncBsbRealtimeControlUpdate(data, update, 10, writer);
@@ -404,7 +404,9 @@ describe('syncBsbInstrumentRuntimeChannels', () => {
 
       await syncBsbRealtimeControlUpdate(fixture.data, createUpdate(fixture), 9, writer);
 
-      expect(writer.mock.calls).toEqual(expectedWrites);
+      expect(writer).toHaveBeenCalledExactlyOnceWith(
+        expectedWrites.map(([name, value]) => ({ name, value })),
+      );
     },
   );
 });
