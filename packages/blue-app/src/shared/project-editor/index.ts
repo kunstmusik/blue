@@ -54,6 +54,7 @@ export {
 
 export {
   createEffectEditorSnapshot,
+  createEffectEditorViewSnapshot,
   createMixerEffectEntrySnapshot,
   createLibraryEffectSnapshot,
   createEmptyMixerSnapshot,

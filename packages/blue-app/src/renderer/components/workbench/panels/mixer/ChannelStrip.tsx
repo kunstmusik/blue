@@ -243,11 +243,13 @@ interface ChannelStripProps {
   panningEnabled?: boolean;
 }
 
+type SerializedEffectEditorSnapshot = EffectEditorSnapshot & { effectXml: string };
+
 interface EffectDialogState {
   mode: 'create' | 'edit';
   chain: MixerChainKind;
   entryId: string;
-  snapshot: EffectEditorSnapshot;
+  snapshot: SerializedEffectEditorSnapshot;
 }
 
 function getLevelDisplay(level: number): string {
@@ -274,7 +276,7 @@ function createProjectEffectSnapshotFromXml(
   entryId: string,
   projectRef: ProjectEffectRef,
   projectUdos: readonly UdoDefinitionSnapshot[],
-): EffectEditorSnapshot {
+): SerializedEffectEditorSnapshot {
   const effect = Effect.loadFromXML(Element.parse(effectXml));
   return createEffectEditorSnapshot(effect, entryId, 'project', {
     projectRef,
@@ -283,10 +285,10 @@ function createProjectEffectSnapshotFromXml(
 }
 
 function applyEffectPatchToSnapshot(
-  snapshot: EffectEditorSnapshot,
+  snapshot: SerializedEffectEditorSnapshot,
   patch: EffectEditablePatch,
   projectUdos: readonly UdoDefinitionSnapshot[],
-): EffectEditorSnapshot {
+): SerializedEffectEditorSnapshot {
   const effect = Effect.loadFromXML(Element.parse(snapshot.effectXml));
   applyEffectEditablePatchToEffect(effect, patch);
   return createEffectEditorSnapshot(effect, snapshot.effectId, snapshot.ownerType, {
@@ -1366,13 +1368,18 @@ export default React.memo(function ChannelStrip({
           ownerType: 'project',
           projectRef,
         });
-        if (!snapshot || useProjectStore.getState().sessionId !== openSessionId) return;
+        if (
+          snapshot?.effectXml === undefined ||
+          useProjectStore.getState().sessionId !== openSessionId
+        )
+          return;
         setEffectDialog({
           mode: 'edit',
           chain,
           entryId: entry.entryId,
           snapshot: {
             ...snapshot,
+            effectXml: snapshot.effectXml,
             projectUdos: [...readProjectUdos()],
           },
         });

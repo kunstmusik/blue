@@ -452,31 +452,44 @@ function createEffectSnapshotBase(effect: Effect, includeSerializedXml = true): 
   };
 }
 
-export function createEffectEditorSnapshot(
+type EffectEditorSnapshotRefs = {
+  projectRef?: ProjectEffectRef;
+  libraryRef?: LibraryEffectRef;
+  /**
+   * Project-global UDO projection. Required for project-owned effects so the
+   * separate effect window receives completion scope; omitted/empty for
+   * library-owned effects.
+   */
+  projectUdos?: UdoDefinitionSnapshot[];
+};
+
+export function createEffectEditorViewSnapshot(
   effect: Effect,
   effectId: string,
   ownerType: 'project' | 'library',
-  refs?: {
-    projectRef?: ProjectEffectRef;
-    libraryRef?: LibraryEffectRef;
-    /**
-     * Project-global UDO projection. Required for project-owned effects so the
-     * separate effect window receives completion scope; omitted/empty for
-     * library-owned effects.
-     */
-    projectUdos?: UdoDefinitionSnapshot[];
-  },
+  refs?: EffectEditorSnapshotRefs,
 ): EffectEditorSnapshot {
-  const base = createEffectSnapshotBase(effect, true);
+  const base = createEffectSnapshotBase(effect, false);
   return {
     ...base,
-    effectXml: base.effectXml ?? '',
     effectId,
     ownerType,
     projectRef: refs?.projectRef,
     libraryRef: refs?.libraryRef,
     // Library-owned effects never receive project UDOs, even if a project is open.
     projectUdos: ownerType === 'project' ? (refs?.projectUdos ?? []) : [],
+  };
+}
+
+export function createEffectEditorSnapshot(
+  effect: Effect,
+  effectId: string,
+  ownerType: 'project' | 'library',
+  refs?: EffectEditorSnapshotRefs,
+): EffectEditorSnapshot & { effectXml: string } {
+  return {
+    ...createEffectEditorViewSnapshot(effect, effectId, ownerType, refs),
+    effectXml: effect.saveAsXML().toXml(),
   };
 }
 

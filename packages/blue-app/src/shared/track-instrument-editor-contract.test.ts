@@ -219,6 +219,8 @@ describe('Effect editor contract', () => {
 
   it('accepts complete project and library effect identities', () => {
     expect(isEffectEditorRequest(projectRequest)).toBe(true);
+    expect(isEffectEditorRequest({ ...projectRequest, includeSerializedXml: false })).toBe(true);
+    expect(isEffectEditorRequest({ ...projectRequest, includeSerializedXml: 'false' })).toBe(false);
     expect(
       isEffectEditorRequest({
         ownerType: 'library',

@@ -321,6 +321,7 @@ import {
   createProjectEditorSnapshot,
   createScopedProjectEditorSnapshot,
   createEffectEditorSnapshot,
+  createEffectEditorViewSnapshot,
   createTrackInstrumentEditorSnapshot,
   createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
@@ -1171,7 +1172,11 @@ function getProjectEffectEditorSnapshot(request: EffectEditorRequest) {
     return null;
   }
 
-  return createEffectEditorSnapshot(result.entry, result.effectId, 'project', {
+  const createSnapshot =
+    request.includeSerializedXml === false
+      ? createEffectEditorViewSnapshot
+      : createEffectEditorSnapshot;
+  return createSnapshot(result.entry, result.effectId, 'project', {
     projectRef: request.projectRef,
     projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
   });
@@ -1394,7 +1399,11 @@ async function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) 
     }
   }
 
-  return createEffectEditorSnapshot(updatedEntry.entry, updatedEntry.effectId, 'project', {
+  const createSnapshot =
+    request.includeSerializedXml === false
+      ? createEffectEditorViewSnapshot
+      : createEffectEditorSnapshot;
+  return createSnapshot(updatedEntry.entry, updatedEntry.effectId, 'project', {
     projectRef: request.projectRef,
     projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
   });

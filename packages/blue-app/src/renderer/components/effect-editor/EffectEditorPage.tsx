@@ -59,7 +59,7 @@ function parseRequestFromLocation(): {
     }
   }
 
-  return { request: baseRequest, mode };
+  return { request: { ...baseRequest, includeSerializedXml: false }, mode };
 }
 
 export default function EffectEditorPage(): React.ReactElement {

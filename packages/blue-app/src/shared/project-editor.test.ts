@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BlueData,
   AudioClip,
@@ -17,6 +17,8 @@ import {
 import {
   applyProjectDocumentPatch,
   createBlueLiveEditorTargetSnapshot,
+  createEffectEditorSnapshot,
+  createEffectEditorViewSnapshot,
   createProjectEditorSnapshot,
   createScopedProjectEditorSnapshot,
   createScoreObjectPropertiesTarget,
@@ -99,6 +101,21 @@ describe('Scratch Pad project bridge', () => {
 });
 
 describe('Lazy XML omission for project snapshots', () => {
+  it('serializes effect XML only for editor clients that need the payload', () => {
+    const effect = new Effect();
+    effect.setName('Filter');
+    const save = vi.spyOn(effect, 'saveAsXML');
+    const view = createEffectEditorViewSnapshot(effect, 'fx-1', 'project');
+    expect(view.name).toBe('Filter');
+    expect(view).not.toHaveProperty('effectXml');
+    expect(save).not.toHaveBeenCalled();
+
+    const serialized = createEffectEditorSnapshot(effect, 'fx-1', 'project');
+    expect(serialized).toMatchObject(view);
+    expect(serialized.effectXml).toContain('Filter');
+    expect(save).toHaveBeenCalledOnce();
+  });
+
   it('omits eager score, Blue Live, and effect XML when includeSerializedXml is false and resolves XML on demand', () => {
     const data = new BlueData();
     data.getScore().length = 0;

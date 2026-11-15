@@ -99,8 +99,15 @@ export function isTrackInstrumentEditorRequest(
 export function isEffectEditorRequest(value: unknown): value is EffectEditorRequest {
   if (
     !isObject(value) ||
-    !hasOnlyKeys(value, ['effectId', 'ownerType', 'projectRef', 'libraryRef']) ||
-    !isNonEmptyString(value.effectId)
+    !hasOnlyKeys(value, [
+      'effectId',
+      'ownerType',
+      'projectRef',
+      'libraryRef',
+      'includeSerializedXml',
+    ]) ||
+    !isNonEmptyString(value.effectId) ||
+    (value.includeSerializedXml !== undefined && typeof value.includeSerializedXml !== 'boolean')
   )
     return false;
 

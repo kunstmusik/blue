@@ -1374,7 +1374,6 @@ export interface EffectSnapshot {
 }
 
 export interface EffectEditorSnapshot extends EffectSnapshot {
-  effectXml: string;
   effectId: string;
   ownerType: 'project' | 'library';
   projectRef?: ProjectEffectRef;
@@ -1390,6 +1389,7 @@ export interface EffectEditorSnapshot extends EffectSnapshot {
 export interface EffectEditorRequest {
   effectId: string;
   ownerType: 'project' | 'library';
+  includeSerializedXml?: boolean;
   projectRef?: ProjectEffectRef;
   libraryRef?: LibraryEffectRef;
 }
