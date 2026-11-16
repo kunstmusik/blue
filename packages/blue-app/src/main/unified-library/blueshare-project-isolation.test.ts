@@ -1,3 +1,4 @@
+import { forkProjectGraph } from '../project-history-graph';
 import { describe, expect, it, vi } from 'vitest';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,7 +10,6 @@ import { UnifiedLibraryProjectAdapter } from './project-adapter';
 import { ProjectSession } from '../project-session';
 import { ProjectHistory } from '../project-history';
 import { MockHistoryContext } from '../project-history-test-support';
-import { transferProjectEditorIdentities } from '../../shared/project-editor/identity';
 import type { ProjectRuntimeReconciliation } from '../project-runtime-reconciliation';
 import {
   createSyntheticInstrumentXml,
@@ -62,11 +62,12 @@ function createConnectedProject() {
 
   const live = () => session.read().data!;
 
-  const adapter = new UnifiedLibraryProjectAdapter(() => {
+  const adapter = new UnifiedLibraryProjectAdapter((options) => {
     const current = session.read();
     if (!current.data) throw new Error('No active project session');
-    const candidate = current.data.historyCopy();
-    transferProjectEditorIdentities(current.data, candidate);
+    if (!options)
+      return { data: current.data, sessionId: current.sessionId, revision: current.revision };
+    const candidate = forkProjectGraph(current.data, new Set(options.rootFields));
     return {
       data: candidate,
       sessionId: current.sessionId,
@@ -75,6 +76,7 @@ function createConnectedProject() {
         const receipt = await history.commitPreparedStructuralMutation({
           label: label ?? 'Library Transfer',
           candidate,
+          rootFields: options.rootFields,
           expectedDocumentId: current.documentId!,
           expectedSessionId: current.sessionId,
           expectedRevision: current.revision,

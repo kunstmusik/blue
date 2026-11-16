@@ -52,8 +52,8 @@ export class Instance extends AbstractSoundObject {
   getSoundObject(): SoundObject | null {
     return this._soundObject;
   }
-  /** Rebinds the target without changing this Instance's authored presentation. */
-  setSoundObject(sObj: SoundObject): void {
+  /** Rebinds or clears the target while preserving the Instance's presentation. */
+  setSoundObject(sObj: SoundObject | null): void {
     this._soundObject = sObj;
   }
 

@@ -22,7 +22,6 @@ import {
   prepareTransaction,
   validatePreconditions,
   rollbackScalarRecords,
-  restoreStructuralMemento,
   type ScalarFieldRecord,
 } from './project-history-memento';
 import { ProjectSession } from './project-session';
@@ -202,7 +201,7 @@ describe('project-history-memento', () => {
       expect(data.getSoundObjectLibrary()).toBe(library);
     });
 
-    it('isolates bounded structural edits without a whole-project copy and uses one copy when forced', () => {
+    it('isolates bounded structural edits without a whole-project copy', () => {
       const data = new BlueData();
       const copies = vi.spyOn(BlueData.prototype, 'historyCopy');
       try {
@@ -211,14 +210,6 @@ describe('project-history-memento', () => {
         ]);
         expect(isolated.status).toBe('prepared');
         expect(copies).not.toHaveBeenCalled();
-
-        const forced = prepareTransaction(
-          data,
-          [{ orchestra: { type: 'addInstrument', instrumentType: 'generic' } }],
-          { forceStructural: true },
-        );
-        expect(forced.status).toBe('prepared');
-        expect(copies).toHaveBeenCalledOnce();
       } finally {
         copies.mockRestore();
       }
@@ -250,29 +241,13 @@ describe('project-history-memento', () => {
       expect(result.transaction.kind).toBe('structure');
       if (result.transaction.kind !== 'structure') return;
 
-      const { candidate, delta, changed } = result.transaction;
+      const { delta, changed, apply } = result.transaction;
       expect(changed).toBe(true);
-
-      expect(candidate).not.toBe(data);
-
-      // Verify source data was NOT mutated
       expect(data.getArrangement().size()).toBe(0);
-
-      // Verify candidate was mutated
-      expect(candidate.getArrangement().size()).toBe(1);
-
-      // Verify sidecars were transferred
-      const candClip = (candidate.getScore()[0] as TrackLayerGroup)[0][0];
-      expect(getScoreObjectId(candClip)).toBe('clip-orig-1');
-
       const originalXml = data.saveToString();
-      const expectedXml = candidate.saveToString();
-      candidate.getArrangement().getInstrument(0)!.setName('Changed after capture');
-      candClip.setName('Changed candidate clip');
-      expect(data.saveToString()).toBe(originalXml);
-
-      applyProjectGraphDelta(data, delta, 'after');
-      expect(data.saveToString()).toBe(expectedXml);
+      apply();
+      expect(data.getArrangement().size()).toBe(1);
+      const expectedXml = data.saveToString();
       expect((data.getScore()[0] as TrackLayerGroup)[0][0]).toBe(clip);
       expect(getScoreObjectId(clip)).toBe('clip-orig-1');
       applyProjectGraphDelta(data, delta, 'before');
@@ -299,29 +274,6 @@ describe('project-history-memento', () => {
       expect(result.status).toBe('stale');
       expect((result as { reason: string }).reason).toContain('Precondition value mismatch');
       expect(data.getProjectProperties().title).toBe('Title A');
-    });
-
-    it('restores structural memento into a project session without aliasing', () => {
-      const session = new ProjectSession();
-      const initial = new BlueData();
-      initial.getProjectProperties().title = 'State 1';
-      session.replace(initial, '/path/doc.blue');
-
-      const mementoData = new BlueData();
-      mementoData.getProjectProperties().title = 'State 2 (Memento)';
-
-      const snap = restoreStructuralMemento(session, mementoData, {
-        stateId: 'state-restored-2',
-      });
-
-      expect(snap.data?.getProjectProperties().title).toBe('State 2 (Memento)');
-      expect(snap.filePath).toBe('/path/doc.blue');
-      expect(snap.stateId).toBe('state-restored-2');
-      expect(snap.revision).toBe(1);
-
-      // Mutating session.data does not mutate mementoData
-      snap.data!.getProjectProperties().title = 'Mutated Active';
-      expect(mementoData.getProjectProperties().title).toBe('State 2 (Memento)');
     });
 
     it('prepares single-owner instrument structure transactions without whole-project historyCopy', () => {

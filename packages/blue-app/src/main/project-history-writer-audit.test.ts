@@ -159,8 +159,9 @@ describe('Project history canonical writer audit (T014)', () => {
       const docId = session.read().documentId!;
       const originalXml = session.read().data!.saveToString();
       const accepted = report.value;
-      const receipt = await history.commitDirectMutation({
+      const receipt = await history.commitScopedMutation({
         label: 'Insert Instrument',
+        rootFields: ['arrangement'] as const,
         mutator: (candidate) => {
           candidate.getArrangement().addInstrument(accepted.deepCopy());
           return true;
@@ -384,13 +385,14 @@ describe('Project history canonical writer audit (T014)', () => {
     });
   });
 
-  describe('Direct main-process mutations via commitDirectMutation', () => {
+  describe('Direct main-process mutations via commitScopedMutation', () => {
     it('does not serialize a project for an ordinary direct edit', async () => {
       const { history } = setupTest();
       const serialization = vi.spyOn(BlueData.prototype, 'saveToString');
       try {
-        const receipt = await history.commitDirectMutation({
+        const receipt = await history.commitScopedMutation({
           label: 'Rename Project',
+          rootFields: ['projectProperties'] as const,
           mutator: (candidate) => {
             candidate.getProjectProperties().title = 'Renamed';
             return true;
@@ -406,8 +408,9 @@ describe('Project history canonical writer audit (T014)', () => {
       const { session, history, context } = setupTest();
       const docId = session.read().documentId!;
 
-      const receipt = await history.commitDirectMutation({
+      const receipt = await history.commitScopedMutation({
         label: 'Direct Structural Edit',
+        rootFields: ['projectProperties'] as const,
         mutator: (candidate) => {
           candidate.getProjectProperties().author = 'Steven Yi';
           candidate.getProjectProperties().title = 'Direct Mutated Title';
@@ -440,8 +443,9 @@ describe('Project history canonical writer audit (T014)', () => {
     it('returns unchanged receipt and does not advance revision if mutator returns false', async () => {
       const { session, history } = setupTest();
 
-      const receipt = await history.commitDirectMutation({
+      const receipt = await history.commitScopedMutation({
         label: 'No-op Direct Edit',
+        rootFields: ['projectProperties'] as const,
         mutator: (_candidate) => false,
       });
 
@@ -480,8 +484,9 @@ describe('Project history canonical writer audit (T014)', () => {
       await vi.waitFor(() => expect(applyOperation).toHaveBeenCalledOnce());
 
       let directRan = false;
-      const directPromise = history.commitDirectMutation({
+      const directPromise = history.commitScopedMutation({
         label: 'Direct publication after replay',
+        rootFields: ['projectProperties'] as const,
         mutator: (candidate) => {
           directRan = true;
           candidate.getProjectProperties().author = 'After replay';
@@ -504,8 +509,9 @@ describe('Project history canonical writer audit (T014)', () => {
       const { session, history } = setupTest({ bytesLimit: 500 });
       const beforeXml = session.read().data!.saveToString();
 
-      const receipt = await history.commitDirectMutation({
+      const receipt = await history.commitScopedMutation({
         label: 'Oversized Direct Edit',
+        rootFields: ['globalOrcSco'] as const,
         mutator: (candidate) => {
           candidate.getGlobalOrcSco().setGlobalOrc('x'.repeat(2_000));
           return true;
@@ -539,8 +545,9 @@ describe('Project history canonical writer audit (T014)', () => {
       ).toBe('committed');
       await history.undo(context.nextUndoRequest(documentId, 1));
       const before = session.read().data!.saveToString();
-      const proposal = await history.commitDirectMutation({
+      const proposal = await history.commitScopedMutation({
         label: 'Oversized Direct Edit',
+        rootFields: ['globalOrcSco'] as const,
         mutator: (candidate) => {
           candidate.getGlobalOrcSco().setGlobalOrc('y'.repeat(4000));
           return true;
@@ -558,19 +565,20 @@ describe('Project history canonical writer audit (T014)', () => {
       const { session, history } = setupTest({ bytesLimit: 500 });
       const edit = {
         label: 'Oversized Direct Edit',
-        mutator: (candidate: BlueData) => {
+        rootFields: ['globalOrcSco'] as const,
+        mutator: (candidate: Pick<BlueData, 'getGlobalOrcSco'>) => {
           candidate.getGlobalOrcSco().setGlobalOrc('z'.repeat(2000));
           return true;
         },
       };
-      const proposal = await history.commitDirectMutation(edit);
+      const proposal = await history.commitScopedMutation(edit);
       const token = proposal.oversizeProposal!.token;
-      expect((await history.commitDirectMutation({ ...edit, proposalToken: token })).changed).toBe(
+      expect((await history.commitScopedMutation({ ...edit, proposalToken: token })).changed).toBe(
         true,
       );
       expect(history.read().length).toBe(0);
       expect(session.read().data!.getGlobalOrcSco().getGlobalOrc()).toBe('z'.repeat(2000));
-      expect((await history.commitDirectMutation({ ...edit, proposalToken: token })).changed).toBe(
+      expect((await history.commitScopedMutation({ ...edit, proposalToken: token })).changed).toBe(
         false,
       );
     });

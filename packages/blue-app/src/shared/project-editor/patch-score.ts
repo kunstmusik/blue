@@ -1165,8 +1165,22 @@ function applyAddScoreObjectsPatch(
   }
   // Validate every serialized candidate before the first timeline mutation.
   const loaded = new Map<number, SoundObject | AudioClip>();
+  const linkedSources = new Map<number, Instance>();
+  const lookupCache: ScoreLookupCache = {};
   try {
     for (const [index, object] of patch.objects.entries()) {
+      if (
+        object.serializedXml === undefined &&
+        object.sourceTarget?.displayContext === 'instance'
+      ) {
+        const source = object.sourceTarget;
+        const location = source.location ?? source.sourceInstanceLocation;
+        const resolved = location
+          ? resolveTimelineTargetWithSelectionId(data, location, source.selectionId, lookupCache)
+          : null;
+        if (!(resolved?.sObj instanceof Instance) || !resolved.sObj.getSoundObject()) return false;
+        linkedSources.set(index, resolved.sObj);
+      }
       if (object.serializedXml === undefined) continue;
       const root = Element.parse(object.serializedXml);
       const candidate =
@@ -1182,7 +1196,7 @@ function applyAddScoreObjectsPatch(
   let changed = false;
 
   for (const [index, obj] of patch.objects.entries()) {
-    const candidate = loaded.get(index);
+    const candidate = loaded.get(index) ?? linkedSources.get(index);
     let sObj: SoundObject | null =
       candidate && !(candidate instanceof AudioClip) ? candidate.deepCopy() : null;
     let clip: AudioClip | null = candidate instanceof AudioClip ? candidate : null;

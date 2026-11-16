@@ -551,7 +551,7 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
             id: 'library-cut-linked-sound-object',
             type: 'warning',
             title: 'Cut SoundObject',
-            message: `Cut this SoundObject and remove its project definition plus ${preview.value.linkedInstanceCount} linked score instance${preview.value.linkedInstanceCount === 1 ? '' : 's'}?`,
+            message: `Cut this SoundObject and remove its project definition plus ${preview.value.linkedInstanceCount} linked instance${preview.value.linkedInstanceCount === 1 ? '' : 's'}?`,
             actions: [
               { id: 'cut', label: 'Cut', role: 'destructive' },
               { id: 'cancel', label: 'Cancel', role: 'cancel' },

@@ -260,7 +260,7 @@ export default function SoundObjectLibraryPanel(): React.ReactElement {
           title={`Delete “${pendingDelete.node.displayName}”?`}
           description={`Delete “${pendingDelete.node.displayName}”${
             pendingDelete.linkedInstances > 0
-              ? ` and ${pendingDelete.linkedInstances} linked score instance${pendingDelete.linkedInstances === 1 ? '' : 's'}`
+              ? ` and ${pendingDelete.linkedInstances} linked instance${pendingDelete.linkedInstances === 1 ? '' : 's'}`
               : ''
           }? You can undo this while the project remains open.`}
           actions={[

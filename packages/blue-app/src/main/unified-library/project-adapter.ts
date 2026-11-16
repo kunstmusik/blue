@@ -1,3 +1,4 @@
+import type { ProjectMutationRoot } from '../project-history-graph';
 import { resolveTuningDependencies } from '../tuning-scale-dependencies';
 import { randomUUID } from 'node:crypto';
 import type {
@@ -15,11 +16,13 @@ import {
   XmlLoadError,
   BlueSynthBuilder,
   Effect,
+  FrozenSoundObject,
   GenericInstrument,
   Instance,
   JavaScriptInstrument,
   LiveObject,
   OpcodeDefinition,
+  PatternsLayerGroup,
   PolyObject,
   PythonInstrument,
   Sound,
@@ -94,8 +97,127 @@ export interface ActiveLibraryProject {
 }
 
 export type ActiveLibraryProjectProvider = (options?: {
-  readonly mutable?: boolean;
+  readonly mutable: true;
+  readonly rootFields: readonly ProjectMutationRoot[];
 }) => ActiveLibraryProject | null;
+
+function projectItemMutationRoots(locator: ProjectItemLocator): readonly ProjectMutationRoot[] {
+  switch (locator.kind) {
+    case 'instrument':
+      return ['arrangement', 'mixer'];
+    case 'effect':
+      return ['mixer'];
+    case 'udo':
+      return opcodeOwnerRoots(locator);
+    case 'soundObject':
+      return ['score', 'sObjLib', 'liveData'];
+  }
+}
+
+function opcodeOwnerRoots(owner: {
+  readonly instrumentAssignmentId?: string;
+  readonly track?: unknown;
+}): readonly ProjectMutationRoot[] {
+  if (owner.track) return ['score', 'sObjLib'];
+  if (owner.instrumentAssignmentId) return ['arrangement'];
+  return ['opcodeList'];
+}
+
+function insertionMutationRoots(target: InsertionTargetSnapshot): readonly ProjectMutationRoot[] {
+  switch (target.destinationKind) {
+    case 'trackInstrument':
+      return ['score', 'sObjLib'];
+    case 'scoreBsbSound':
+      return ['score', 'sObjLib', 'mixer'];
+    case 'blueLive':
+      return ['liveData', 'sObjLib'];
+    case 'projectSoundObjectLibrary':
+      return ['sObjLib'];
+  }
+  switch (target.libraryType) {
+    case 'instrument':
+      return ['arrangement', 'mixer'];
+    case 'udo':
+      return opcodeOwnerRoots(target);
+    case 'effect':
+      return ['mixer'];
+    case 'soundObject':
+      return ['score', 'sObjLib', 'mixer'];
+  }
+}
+
+function findSharedInstanceUses(data: BlueData, libraryId: string) {
+  const library = data.getSoundObjectLibrary();
+  const definition = library.getObjectById(libraryId);
+  const uses: { instance: Instance; location: string; remove: () => void }[] = [];
+  const visited = new Set<SoundObject>();
+  const visit = (
+    object: SoundObject | AudioClip | null,
+    location: string,
+    remove?: () => void,
+  ): void => {
+    if (object instanceof Instance) {
+      if (
+        object.getLibraryId() === libraryId ||
+        (definition && object.getSoundObject() === definition)
+      ) {
+        uses.push({
+          instance: object,
+          location,
+          remove:
+            remove ??
+            (() => {
+              // A pattern, frozen source, or library entry can own this Instance.
+              // Preserve the owner and clear the reference using the XML null sentinel.
+              object.setSoundObject(null);
+              object.setLibraryId('');
+            }),
+        });
+      }
+      return;
+    }
+    if (!object || object instanceof AudioClip || visited.has(object)) return;
+    visited.add(object);
+    if (object instanceof PolyObject) {
+      object.forEach((layer, index) => visitLayer(layer, `${location}/layer-${index}`));
+    } else if (object instanceof FrozenSoundObject) {
+      visit(object.getFrozenSoundObject(), `${location}/frozen-source`);
+    }
+  };
+  const visitLayer = (items: (SoundObject | AudioClip)[], location: string): void => {
+    items.forEach((item, index) =>
+      visit(item, `${location}/object-${index}`, () => items.splice(index, 1)),
+    );
+  };
+
+  data.getScore().forEach((group, index) => {
+    const location = `score/group-${index}`;
+    if (group instanceof PolyObject) visit(group, location);
+    if (group instanceof TrackLayerGroup) {
+      group.forEach((track, index) => visitLayer(track, `${location}/layer-${index}`));
+    }
+    if (group instanceof PatternsLayerGroup) {
+      group.forEach((layer, index) =>
+        visit(layer.getSoundObject(), `${location}/layer-${index}/source`),
+      );
+    }
+  });
+  const bins = data.getLiveData().getLiveObjectBins();
+  for (let column = 0; column < bins.getColumnCount(); column++) {
+    for (let row = 0; row < bins.getRowCount(); row++) {
+      const object = bins.getLiveObject(column, row);
+      if (object) {
+        visit(object.getSoundObject(), `blueLive/column-${column}/row-${row}`, () =>
+          bins.setLiveObject(column, row, null),
+        );
+      }
+    }
+  }
+  for (const entry of library.getEntries()) {
+    if (entry.libraryId !== libraryId) visit(entry.object, `library/${entry.libraryId}`);
+  }
+  return uses;
+}
 
 export interface ProjectInsertionInput {
   readonly key: LibraryItemKey;
@@ -834,7 +956,10 @@ export class UnifiedLibraryProjectAdapter {
       label: current.displayName,
     });
     if (!report.ok) throw new XmlLoadError(report.diagnostics);
-    const project = this.getActiveProject({ mutable: true });
+    const project = this.getActiveProject({
+      mutable: true,
+      rootFields: projectItemMutationRoots(key.locator),
+    });
     if (!project || project.sessionId !== key.projectSessionId) return null;
     const accepted = report.value;
     let changed = false;
@@ -861,11 +986,15 @@ export class UnifiedLibraryProjectAdapter {
     } else {
       const value = accepted as SoundObject;
       if (!value) throw new Error('Unsupported SoundObject payload');
+      const uses = findSharedInstanceUses(project.data, key.locator.libraryId);
       changed = project.data
         .getSoundObjectLibrary()
         .replaceObjectById(key.locator.libraryId, value);
       if (changed) {
-        this.relinkSharedInstances(project.data, key.locator.libraryId, value);
+        for (const { instance } of uses) {
+          instance.setSoundObject(value);
+          instance.setLibraryId(key.locator.libraryId);
+        }
       }
     }
     if (!changed) return null;
@@ -907,8 +1036,8 @@ export class UnifiedLibraryProjectAdapter {
       project,
       'Update Project Item from Library',
       (project.revision ?? 0) + 1,
-      () => savedSource,
-    ) as ProjectLibraryEditorSource;
+      (revision) => (revision === project.revision ? this.getEditorSource(key) : savedSource),
+    ) as ProjectLibraryEditorSource | null;
   }
 
   createContextTarget(
@@ -961,21 +1090,9 @@ export class UnifiedLibraryProjectAdapter {
     const project = this.getActiveProject();
     if (!project || project.sessionId !== key.projectSessionId)
       return { linkedInstanceCount: 0, locations: [] };
-    const libraryId = key.locator.libraryId;
-    const locations: string[] = [];
-    const visit = (group: PolyObject, path: string): void => {
-      group.forEach((layer, layerIndex) =>
-        layer.forEach((object, objectIndex) => {
-          const location = `${path}/layer-${layerIndex}/object-${objectIndex}`;
-          if (object instanceof Instance && object.getLibraryId() === libraryId) {
-            locations.push(location);
-          } else if (object instanceof PolyObject) visit(object, location);
-        }),
-      );
-    };
-    project.data.getScore().forEach((group, index) => {
-      if (group instanceof PolyObject) visit(group, `score/group-${index}`);
-    });
+    const locations = findSharedInstanceUses(project.data, key.locator.libraryId).map(
+      ({ location }) => location,
+    );
     return { linkedInstanceCount: locations.length, locations };
   }
 
@@ -1008,7 +1125,10 @@ export class UnifiedLibraryProjectAdapter {
     if (key.scope === 'user') throw new Error('Project delete requires a project key');
     const confirmation = this.deleteConfirmations.get(confirmationToken);
     this.deleteConfirmations.delete(confirmationToken);
-    const project = this.getActiveProject({ mutable: true });
+    const project = this.getActiveProject({
+      mutable: true,
+      rootFields: projectItemMutationRoots(key.locator),
+    });
     if (!project || project.sessionId !== key.projectSessionId)
       throw new Error('Stale project session');
     if (
@@ -1041,20 +1161,10 @@ export class UnifiedLibraryProjectAdapter {
       });
     } else {
       identity = key.locator.libraryId;
-      const removeInstances = (group: PolyObject): void => {
-        for (const layer of group) {
-          for (let index = layer.length - 1; index >= 0; index -= 1) {
-            const object = layer[index]!;
-            if (object instanceof Instance && object.getLibraryId() === identity) {
-              layer.splice(index, 1);
-              changed = true;
-            } else if (object instanceof PolyObject) removeInstances(object);
-          }
-        }
-      };
-      for (const group of project.data.getScore())
-        if (group instanceof PolyObject) removeInstances(group);
-      changed = project.data.getSoundObjectLibrary().removeObjectById(identity) || changed;
+      const uses = findSharedInstanceUses(project.data, identity);
+      changed = project.data.getSoundObjectLibrary().removeObjectById(identity);
+      // Reverse order keeps the recorded indices valid when a layer has several uses.
+      if (changed) for (const use of uses.reverse()) use.remove();
     }
     if (!changed) throw new Error('Project library item not found');
     return withProjectRevision(
@@ -1117,7 +1227,10 @@ export class UnifiedLibraryProjectAdapter {
     target: InsertionTargetSnapshot,
     libraryType: LibraryType,
   ): ActiveLibraryProject {
-    const project = this.getActiveProject({ mutable: true });
+    const project = this.getActiveProject({
+      mutable: true,
+      rootFields: insertionMutationRoots(target),
+    });
     if (!project || project.sessionId !== target.projectSessionId) {
       throw new Error('Stale project session');
     }
@@ -1137,7 +1250,9 @@ export class UnifiedLibraryProjectAdapter {
     layer: Array<SoundObject | AudioClip>;
     objectIndex: number;
   } {
-    const project = mutable ? this.getActiveProject({ mutable: true }) : this.getActiveProject();
+    const project = mutable
+      ? this.getActiveProject({ mutable: true, rootFields: ['score', 'sObjLib'] })
+      : this.getActiveProject();
     if (!project || project.sessionId !== request.projectSessionId) {
       throw new Error('The source project changed.');
     }
@@ -1426,47 +1541,8 @@ export class UnifiedLibraryProjectAdapter {
           },
         });
         if (!changed) throw new Error('Stale SoundObject target');
-        if (soundObject instanceof Instance) {
-          this.resolveNewSharedInstance(project.data, soundObject.getLibraryId(), definition);
-        }
         return selectionId;
       }
-    }
-  }
-
-  private resolveNewSharedInstance(
-    data: BlueData,
-    libraryId: string,
-    definition: SoundObject,
-  ): void {
-    this.relinkSharedInstances(data, libraryId, definition, true);
-  }
-
-  private relinkSharedInstances(
-    data: BlueData,
-    libraryId: string,
-    definition: SoundObject,
-    onlyMissing = false,
-  ): void {
-    const visit = (group: PolyObject): void => {
-      for (const layer of group) {
-        for (const object of layer) {
-          if (
-            object instanceof Instance &&
-            object.getLibraryId() === libraryId &&
-            (!onlyMissing || !object.getSoundObject())
-          ) {
-            object.setSoundObject(definition);
-            object.setLibraryId(libraryId);
-          } else if (object instanceof PolyObject) {
-            visit(object);
-          }
-        }
-      }
-    };
-    for (const group of data.getScore()) if (group instanceof PolyObject) visit(group);
-    for (const { object } of data.getSoundObjectLibrary().getEntries()) {
-      if (object instanceof PolyObject) visit(object);
     }
   }
 

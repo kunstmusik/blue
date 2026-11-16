@@ -871,6 +871,7 @@ describe('ProjectHistory coordinator', () => {
     it('groups a scalar edit followed by a structural edit with exact XML replay', async () => {
       const { session, history, context } = setupHistory();
       const docId = session.read().documentId!;
+      const copy = vi.spyOn(session.read().data!, 'historyCopy');
       const initialXml = session.read().data!.saveToString();
 
       await history.commit(
@@ -918,11 +919,13 @@ describe('ProjectHistory coordinator', () => {
       expect(session.read().data?.getProjectProperties().title).toBe('During Gesture');
       expect(session.read().data?.getArrangement().size()).toBe(1);
       expect(session.read().data!.saveToString()).toBe(finalXml);
+      expect(copy).not.toHaveBeenCalled();
     });
 
     it('groups a structural edit followed by a scalar edit with exact XML replay', async () => {
       const { session, history, context } = setupHistory();
       const docId = session.read().documentId!;
+      const copy = vi.spyOn(session.read().data!, 'historyCopy');
       const initialXml = session.read().data!.saveToString();
 
       await history.commit(
@@ -970,6 +973,7 @@ describe('ProjectHistory coordinator', () => {
       expect(session.read().data?.getProjectProperties().title).toBe('After Structure');
       expect(session.read().data?.getArrangement().size()).toBe(1);
       expect(session.read().data!.saveToString()).toBe(finalXml);
+      expect(copy).not.toHaveBeenCalled();
     });
 
     it('metadata-only end closes matching group without extra action or mutation', async () => {

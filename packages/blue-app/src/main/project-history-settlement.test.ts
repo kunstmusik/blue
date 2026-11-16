@@ -496,6 +496,7 @@ describe('Project history settlement barrier (T015)', () => {
       const preparedPromise = history.commitPreparedStructuralMutation({
         label: 'Prepared after undo',
         candidate,
+        rootFields: ['projectProperties'],
         expectedDocumentId: documentId,
         expectedSessionId: sessionId,
         expectedRevision: 1,

@@ -54,6 +54,7 @@ import {
 import {
   applyProjectGraphDelta,
   captureProjectGraphDeltaWithSnapshots,
+  forkProjectGraph,
   isNetZeroProjectGraphDelta,
   type GraphSnapshot,
   type ProjectGraphDelta,
@@ -449,21 +450,25 @@ function getScorePatchTargets(
       }
     }
   }
-  if ('objects' in sp && Array.isArray(sp.objects)) {
-    for (const obj of sp.objects) {
-      if (obj && typeof obj === 'object' && 'sourceTarget' in obj && obj.sourceTarget) {
-        targets.push(obj.sourceTarget);
-      }
-    }
-  }
+  // Paste sourceTarget identifies a placement to read and copy. Ownership of
+  // the referenced definition does not make the definition a write target.
   return targets;
+}
+
+function writesLibraryDefinition(score: NonNullable<ProjectDocumentPatch['score']>): boolean {
+  return (
+    score.type !== 'convertToPolyObject' &&
+    score.type !== 'moveScoreObjects' &&
+    score.type !== 'removeScoreObjects' &&
+    getScorePatchTargets(score).some((target) => target.ownerKind === 'library')
+  );
 }
 
 function addIsolatedSectionsForPatch(
   patch: ProjectDocumentPatch,
   sections: Set<IsolatedSectionKey>,
   rootFields: Set<PropertyKey>,
-): boolean {
+): void {
   if (patch.clojureProject !== undefined) {
     rootFields.add('pluginDataXml');
   }
@@ -539,16 +544,12 @@ function addIsolatedSectionsForPatch(
       sections.add('soundObjectLibrary');
     }
     const targets = getScorePatchTargets(sp);
-    const changesPlacement =
-      sp.type === 'convertToPolyObject' ||
-      sp.type === 'moveScoreObjects' ||
-      sp.type === 'removeScoreObjects';
-    if (
-      targets.some(
-        (t) => t.ownerKind === 'library' && !(changesPlacement && t.displayContext === 'instance'),
-      )
-    ) {
-      return false;
+    if (writesLibraryDefinition(sp)) {
+      // A definition can be reached through any of these owners. Capture
+      // their alias graph together when a batch may mutate a definition.
+      sections.add('soundObjectLibrary');
+      sections.add('score');
+      sections.add('liveData');
     }
     if (
       targets.some(
@@ -579,7 +580,6 @@ function addIsolatedSectionsForPatch(
       }
     }
   }
-  return true;
 }
 
 function cloneProjectSection(data: BlueData, key: IsolatedSectionKey): object {
@@ -644,41 +644,65 @@ function getProjectSection(data: BlueData, key: IsolatedSectionKey): object {
   }
 }
 
+function getProjectPatchScope(data: BlueData, patches: readonly ProjectDocumentPatch[]) {
+  const requiredSections = new Set<IsolatedSectionKey>();
+  const rootFields = new Set<PropertyKey>();
+  for (const patch of patches) addIsolatedSectionsForPatch(patch, requiredSections, rootFields);
+  const sections = [...requiredSections].map((key) => {
+    const source = getProjectSection(data, key);
+    const field = Reflect.ownKeys(data).find((field) => Reflect.get(data, field) === source);
+    if (field === undefined) throw new Error(`Missing project history section ${key}`);
+    rootFields.add(field);
+    return { key, source, field };
+  });
+  const writesDefinition = patches.some(
+    (patch) => patch.score && writesLibraryDefinition(patch.score),
+  );
+  if (
+    (requiredSections.has('score') || requiredSections.has('liveData')) &&
+    data.getSoundObjectLibrary().size() > 0
+  ) {
+    // Replay must find definitions even if the last placement was removed.
+    rootFields.add('sObjLib');
+  }
+  return { sections, requiredSections, rootFields, writesDefinition };
+}
+
+export function getProjectPatchRootFields(
+  data: BlueData,
+  patches: readonly ProjectDocumentPatch[],
+): readonly PropertyKey[] {
+  return [...getProjectPatchScope(data, patches).rootFields];
+}
+
 function tryPrepareSectionOwnerTransaction(
   data: BlueData,
   patches: readonly ProjectDocumentPatch[],
   context?: ProjectDocumentPatchContext,
 ): PreparedIsolatedStructureResult | null {
-  const requiredSections = new Set<IsolatedSectionKey>();
-  const rootFields = new Set<PropertyKey>();
-  for (const patch of patches) {
-    if (!addIsolatedSectionsForPatch(patch, requiredSections, rootFields)) return null;
-  }
-  if (requiredSections.size === 0 && rootFields.size === 0) return null;
+  const { sections, requiredSections, rootFields, writesDefinition } = getProjectPatchScope(
+    data,
+    patches,
+  );
+  if (rootFields.size === 0) return null;
 
-  // The detached root shares read-only project sections with the active project.
-  // Every mutable section is copied before applying any patch.
-  const candidate: BlueData = Object.assign(Object.create(Object.getPrototypeOf(data)), data);
+  // Definitions and placements can alias across sections. Fork them as one graph.
+  const candidate: BlueData = writesDefinition
+    ? forkProjectGraph(data, rootFields)
+    : Object.assign(Object.create(Object.getPrototypeOf(data)), data);
   assignHistoryNodeId(candidate, getHistoryNodeId(data));
   restoreGraphEditorMetadata(candidate, readGraphEditorMetadata(data));
-  for (const key of requiredSections) {
-    const source = getProjectSection(data, key);
-    const field = Reflect.ownKeys(data).find((field) => Reflect.get(data, field) === source);
-    if (field === undefined) return null;
-    const copy = cloneProjectSection(data, key);
-    transferHistoryNodeIds(source, copy, (a, b) =>
-      restoreGraphEditorMetadata(b, readGraphEditorMetadata(a)),
-    );
-    Reflect.set(candidate, field, copy);
-    rootFields.add(field);
+  if (!writesDefinition) {
+    for (const { key, source, field } of sections) {
+      const copy = cloneProjectSection(data, key);
+      transferHistoryNodeIds(source, copy, (a, b) =>
+        restoreGraphEditorMetadata(b, readGraphEditorMetadata(a)),
+      );
+      Reflect.set(candidate, field, copy);
+    }
   }
   const copyScoreIds = requiredSections.has('score') || requiredSections.has('liveData');
-  if (copyScoreIds) {
-    copyAssignedScoreObjectIds(data, candidate);
-    // Undoing a removed Instance must still resolve its canonical definition
-    // when this was the only reference in the edited score or Live section.
-    if (data.getSoundObjectLibrary().size() > 0) rootFields.add('sObjLib');
-  }
+  if (copyScoreIds) copyAssignedScoreObjectIds(data, candidate);
 
   const patchChanged = patches.map((patch) =>
     isBsbSelectionPatch(patch) ? false : applyProjectDocumentPatch(candidate, patch, context),

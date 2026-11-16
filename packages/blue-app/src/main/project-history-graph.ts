@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
+import type { BlueData } from '@blue/data';
 import {
+  copyAssignedScoreObjectIds,
   readGraphEditorMetadata,
   restoreGraphEditorMetadata,
   type GraphEditorMetadata,
@@ -484,6 +486,34 @@ function alignReplacementNodes(
 
 export type GraphSnapshot = ReturnType<typeof snapshot>;
 
+export type ProjectMutationRoot =
+  | 'arrangement'
+  | 'mixer'
+  | 'score'
+  | 'sObjLib'
+  | 'liveData'
+  | 'opcodeList'
+  | 'projectProperties'
+  | 'globalOrcSco';
+
+/** Fingerprint data uses graph-local references so a retry can rebuild detached objects. */
+export function describeProjectGraph(snapshot: GraphSnapshot): unknown {
+  const ids = new Map([...snapshot.nodes.keys()].map((id, index) => [id, index]));
+  const describe = (value: Value) =>
+    isReference(value)
+      ? ['ref', ids.get(value.ref)]
+      : [
+          typeof value,
+          typeof value === 'bigint' || typeof value === 'symbol' ? String(value) : value,
+        ];
+  return [...snapshot.nodes.values()].map((node) => [
+    node.prototype?.constructor.name,
+    node.kind,
+    node.fields.map(([key, field]) => [String(key), describe(field.value)]),
+    node.content?.map(describe),
+  ]);
+}
+
 export interface CapturedProjectGraphDelta {
   delta: ProjectGraphDelta;
   beforeSnapshot: GraphSnapshot;
@@ -498,10 +528,11 @@ export function captureProjectGraphDeltaWithSnapshots(
   before: object,
   after: object,
   rootFields?: ReadonlySet<PropertyKey>,
+  alignReplacements = true,
 ): CapturedProjectGraphDelta {
   const oldSnapshot = snapshot(before, rootFields),
     afterSnapshot = snapshot(after, rootFields);
-  alignReplacementNodes(oldSnapshot, afterSnapshot);
+  if (alignReplacements) alignReplacementNodes(oldSnapshot, afterSnapshot);
   const old = oldSnapshot.nodes,
     next = afterSnapshot.nodes;
   const rootId = getHistoryNodeId(before);
@@ -788,6 +819,40 @@ function allocate(node: Node, objects: Map<number, object>): object {
   if (Object.getPrototypeOf(value) !== node.prototype) Object.setPrototypeOf(value, node.prototype);
   assignHistoryNodeId(value, node.id);
   return value;
+}
+
+/**
+ * Fork the selected project sections in one graph so aliases between them
+ * resolve to the same detached object. Other sections are borrowed for reads.
+ */
+export function forkProjectGraph(root: BlueData, rootFields: ReadonlySet<PropertyKey>): BlueData {
+  const { nodes } = snapshot(root, rootFields);
+  const rootId = getHistoryNodeId(root);
+  const blueprint = nodes.get(rootId)!;
+  const fork = Object.create(blueprint.prototype) as BlueData;
+  assignHistoryNodeId(fork, rootId);
+  nodes.delete(rootId);
+  applyProjectGraphDelta(
+    fork,
+    {
+      rootId,
+      fields: blueprint.fields.map(([key, after]) => ({ id: rootId, key, after })),
+      contents: [],
+      metadata: [],
+      beforeNodes: [],
+      afterNodes: [...nodes.values()],
+    },
+    'after',
+    { nodes: new Map(), objects: new Map([[rootId, fork]]) },
+  );
+  restoreGraphEditorMetadata(fork, blueprint.metadata);
+  for (const key of Reflect.ownKeys(root)) {
+    if (!rootFields.has(key)) {
+      Object.defineProperty(fork, key, Object.getOwnPropertyDescriptor(root, key)!);
+    }
+  }
+  if (rootFields.has('score') || rootFields.has('liveData')) copyAssignedScoreObjectIds(root, fork);
+  return fork;
 }
 
 /** Validate and materialize everything before the first canonical write; rollback on unexpected failure. */

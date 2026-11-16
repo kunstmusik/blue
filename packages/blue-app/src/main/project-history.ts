@@ -1,9 +1,12 @@
+import { getProjectPatchRootFields } from './project-history-bsb';
 import { compactHistoryRuntimePatches } from './project-history-runtime-patches';
 import {
-  captureProjectGraphDelta,
   captureProjectGraphDeltaWithSnapshots,
   applyProjectGraphDelta,
   applyTextChange,
+  forkProjectGraph,
+  describeProjectGraph,
+  type ProjectMutationRoot,
   createTextChange,
   estimateTextChangeBytes,
   mergeProjectGraphDeltas,
@@ -73,11 +76,11 @@ import {
   changesScoreTimeContext,
 } from '../shared/project-editor/patch-score-dependencies';
 import {
+  copyAssignedScoreObjectIds,
   getKnownMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   getMarkerSnapshotIds,
   getTempoPointSnapshotId,
-  transferProjectEditorIdentities,
 } from '../shared/project-editor/identity';
 import type { ProjectSession, ProjectSessionSnapshot } from './project-session';
 import type { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';
@@ -214,8 +217,23 @@ function collectChangedTargets(patches: readonly ProjectDocumentPatch[]): string
   return [...targets];
 }
 
+type ProjectMutationGetters = {
+  arrangement: 'getArrangement';
+  mixer: 'getMixer';
+  score: 'getScore';
+  sObjLib: 'getSoundObjectLibrary';
+  liveData: 'getLiveData';
+  opcodeList: 'getOpcodeList';
+  projectProperties: 'getProjectProperties';
+  globalOrcSco: 'getGlobalOrcSco';
+};
+
 export type HistoryRecord =
-  | { readonly kind: 'values'; readonly records: readonly ScalarFieldRecord[] }
+  | {
+      readonly kind: 'values';
+      readonly records: readonly ScalarFieldRecord[];
+      readonly rootFields: readonly PropertyKey[];
+    }
   | { readonly kind: 'bsb'; readonly delta: ProjectGraphDelta }
   | {
       readonly kind: 'structure';
@@ -1024,13 +1042,6 @@ export function computeStructuralInversePatches(
   return inverse.length > 0 ? inverse : null;
 }
 
-function bsbGroupingEndpoint(data: BlueData, delta: ProjectGraphDelta): BlueData {
-  const result = data.historyCopy();
-  transferProjectEditorIdentities(data, result);
-  applyProjectGraphDelta(result, delta, 'after');
-  return result;
-}
-
 function payloadFingerprint(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
@@ -1502,18 +1513,6 @@ export class ProjectHistory {
     return JSON.stringify(request);
   }
 
-  private static directMutationFingerprint(
-    label: string,
-    beforeMemento: BlueData,
-    afterMemento: BlueData,
-  ): string {
-    try {
-      return payloadFingerprint([label, beforeMemento.saveToString(), afterMemento.saveToString()]);
-    } catch {
-      return `${label}:${beforeMemento.constructor.name}:${afterMemento.constructor.name}`;
-    }
-  }
-
   private createDirectReceipt(
     current: ProjectSessionSnapshot,
     changed: boolean,
@@ -1767,12 +1766,8 @@ export class ProjectHistory {
   }
 
   private async waitForBarrierToRelease(): Promise<void> {
-    while (this.activeBarrier !== null) {
-      if (this.barrierReleasePromise) {
-        await this.barrierReleasePromise;
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-      }
+    while (this.barrierReleasePromise) {
+      await this.barrierReleasePromise;
     }
   }
 
@@ -1827,14 +1822,13 @@ export class ProjectHistory {
       const contexts = Array.from(this.participants.keys());
 
       this.closeGroup();
+      this.initBarrierReleasePromise();
 
       if (contexts.length > 0) {
         let resolveBarrier!: (result: { ok: boolean; reason?: string }) => void;
         const barrierPromise = new Promise<{ ok: boolean; reason?: string }>((resolve) => {
           resolveBarrier = resolve;
         });
-
-        this.initBarrierReleasePromise();
 
         const timeoutHandle = setTimeout(() => {
           if (this.activeBarrier?.barrierId === barrierId) {
@@ -1962,11 +1956,9 @@ export class ProjectHistory {
   private async commitInternal(
     request: ProjectHistoryCommitRequest,
   ): Promise<ProjectHistoryResponse> {
-    if (this.activeBarrier) {
-      const isPrefix = request.barrierId === this.activeBarrier.barrierId;
-      if (!isPrefix) {
-        await this.waitForBarrierToRelease();
-      }
+    const isPrefix = this.activeBarrier && request.barrierId === this.activeBarrier.barrierId;
+    if (this.barrierReleasePromise && !isPrefix) {
+      await this.waitForBarrierToRelease();
     }
 
     const current = this.session.read();
@@ -2322,7 +2314,11 @@ export class ProjectHistory {
     let historyRecord: HistoryRecord;
     if (transaction.kind === 'scalar') {
       const compressedRecords = compressScalarTextRecords(transaction.records);
-      historyRecord = { kind: 'values', records: compressedRecords };
+      historyRecord = {
+        kind: 'values',
+        records: compressedRecords,
+        rootFields: getProjectPatchRootFields(current.data, request.patches ?? []),
+      };
     } else if (transaction.kind === 'bsb') {
       historyRecord = { kind: 'bsb', delta: transaction.delta };
     } else {
@@ -2373,15 +2369,14 @@ export class ProjectHistory {
     let candidateBytes = estimatedBytes;
     let candidateForwardPatches = initialForwardPatches;
     let candidateInversePatches = computedInverses;
-    let adoptGraphIdentitiesFrom: BlueData | undefined;
-    let groupingAfterData =
-      transaction.kind === 'structure' && !transaction.apply ? transaction.candidate : current.data;
+    let groupingAfterData = current.data;
 
     if (canGroup) {
       const top = this.entries[this.cursor - 1]!;
       if (top.record.kind === 'values' && historyRecord.kind === 'values') {
         candidateMergedRecord = {
           kind: 'values',
+          rootFields: [...new Set([...top.record.rootFields, ...historyRecord.rootFields])],
           records: mergeScalarRecords(
             top.record.records,
             transaction.kind === 'scalar' ? transaction.records : historyRecord.records,
@@ -2393,41 +2388,31 @@ export class ProjectHistory {
           delta: mergeProjectGraphDeltas(
             top.record.delta,
             historyRecord.delta,
-            transaction.kind === 'structure' && !transaction.apply
-              ? transaction.candidate
-              : transaction.kind === 'bsb' || transaction.kind === 'structure'
-                ? () => bsbGroupingEndpoint(current.data!, transaction.delta)
-                : current.data,
-            transaction.kind === 'bsb'
-              ? transaction.getGroupingEndpointSnapshot
-              : transaction.kind === 'structure'
-                ? (transaction.getGroupingEndpointSnapshot ?? transaction.afterSnapshot)
-                : undefined,
+            undefined,
+            transaction.kind === 'scalar' ? undefined : transaction.getGroupingEndpointSnapshot,
           ),
         };
       } else {
-        const beforeMem = current.data.historyCopy();
-        transferProjectEditorIdentities(current.data, beforeMem);
-        if (transaction.kind === 'scalar') rollbackScalarRecords(beforeMem, transaction.records);
-        if (top.record.kind !== 'values')
-          applyProjectGraphDelta(beforeMem, top.record.delta, 'before');
-        if (top.record.kind === 'values') {
-          rollbackScalarRecords(beforeMem, top.record.records);
-        }
-        const afterMem =
-          transaction.kind === 'structure' && !transaction.apply
-            ? transaction.candidate
-            : current.data.historyCopy();
-        if (transaction.kind !== 'structure' || transaction.apply) {
-          transferProjectEditorIdentities(current.data, afterMem);
-        }
-        if (transaction.kind === 'bsb' || (transaction.kind === 'structure' && transaction.apply))
-          applyProjectGraphDelta(afterMem, transaction.delta, 'after');
-        groupingAfterData = afterMem;
-        adoptGraphIdentitiesFrom = afterMem;
+        const getScope = (record: HistoryRecord) =>
+          record.kind === 'values' ? record.rootFields : record.delta.rootFields;
+        const beforeScope = getScope(top.record);
+        const afterScope = getScope(historyRecord);
+        if (!beforeScope || !afterScope) throw new Error('Missing project gesture edit scope');
+        const scope = new Set([...beforeScope, ...afterScope]);
+        const before = forkProjectGraph(current.data, scope);
+        if (transaction.kind === 'scalar') rollbackScalarRecords(before, transaction.records);
+        if (top.record.kind === 'values') rollbackScalarRecords(before, top.record.records);
+        else applyProjectGraphDelta(before, top.record.delta, 'before');
+
+        const after = forkProjectGraph(current.data, scope);
+        if (transaction.kind !== 'scalar')
+          applyProjectGraphDelta(after, transaction.delta, 'after');
+        groupingAfterData = after;
         candidateMergedRecord = {
           kind: 'structure',
-          delta: captureProjectGraphDelta(beforeMem, afterMem),
+          // The coordinator already assigned identities to both endpoints.
+          // Pairing replacements again could relabel the object we are about to commit.
+          delta: captureProjectGraphDeltaWithSnapshots(before, after, scope, false).delta,
         };
       }
       const mergedRecord = candidateMergedRecord!;
@@ -2660,27 +2645,9 @@ export class ProjectHistory {
       }
     }
 
-    // Apply change to ProjectSession
-    if (transaction.kind === 'structure') {
-      if (transaction.apply) transaction.apply();
-      else
-        applyProjectGraphDelta(
-          current.data,
-          transaction.delta,
-          'after',
-          transaction.beforeSnapshot,
-        );
-      this.session.recordMutation({ changed: true, stateId: nextStateId });
-    } else {
-      if (transaction.kind === 'bsb') transaction.apply();
-      this.session.recordMutation({
-        changed: true,
-        stateId: nextStateId,
-      });
-    }
-
-    if (adoptGraphIdentitiesFrom)
-      transferProjectEditorIdentities(adoptGraphIdentitiesFrom, this.session.read().data!);
+    // Scalar transactions have already applied their values.
+    if (transaction.kind !== 'scalar') transaction.apply();
+    this.session.recordMutation({ changed: true, stateId: nextStateId });
 
     if (request.phase === 'end') {
       const isMatchingGroup = matchesActiveGroup(this.activeGroup, request);
@@ -2765,96 +2732,91 @@ export class ProjectHistory {
 
   /**
    * Publishes a structure prepared outside the history coordinator only when
-   * its document/session/revision fence is still current. This keeps delayed
+   * its document/session/revision fence and caller validation still pass. This keeps delayed
    * filesystem or Java work from absorbing edits made while it was running.
    */
   async commitPreparedStructuralMutation(options: {
     label: string;
     candidate: BlueData;
+    rootFields: readonly ProjectMutationRoot[];
     expectedDocumentId: string;
     expectedSessionId: number;
     expectedRevision: number;
     proposalToken?: string;
     origin?: ProjectHistoryOrigin;
+    validateBeforeCommit?: (current: ProjectSessionSnapshot) => string | undefined;
+    onCommitted?: () => void;
   }): Promise<ProjectDocumentCommitReceipt> {
-    return this.enqueueOrderedMutation(async () => {
-      const current = this.session.read();
-      if (
-        !current.data ||
-        !current.documentId ||
-        current.documentId !== options.expectedDocumentId ||
-        current.sessionId !== options.expectedSessionId ||
-        current.revision !== options.expectedRevision
-      ) {
-        return this.createDirectReceipt(current, false, current.stateId ?? '', {
-          error: 'Prepared structural mutation is stale and was discarded',
-        });
-      }
-
-      return this.commitDirectMutationInternal({
-        label: options.label,
-        preparedCandidate: options.candidate,
-        expectedRevision: options.expectedRevision,
-        proposalToken: options.proposalToken,
-        origin: options.origin,
-        mutator: () => true,
-      });
-    });
+    return this.enqueueOrderedMutation(() => this.commitScopedMutationInternal(options));
   }
 
-  async commitDirectMutation(options: {
+  async commitScopedMutation<Root extends ProjectMutationRoot>(options: {
     label: string;
-    mutator: (candidate: BlueData) => boolean;
-    preparedCandidate?: BlueData;
+    rootFields: readonly Root[];
+    mutator: (candidate: Pick<BlueData, ProjectMutationGetters[Root]>) => boolean;
+    expectedDocumentId?: string;
+    expectedSessionId?: number;
     expectedRevision?: number;
     proposalToken?: string;
     origin?: ProjectHistoryOrigin;
   }): Promise<ProjectDocumentCommitReceipt> {
-    return this.enqueueOrderedMutation(() => this.commitDirectMutationInternal(options));
+    return this.enqueueOrderedMutation(() => this.commitScopedMutationInternal(options));
   }
 
-  private async commitDirectMutationInternal(options: {
-    label: string;
-    mutator: (candidate: BlueData) => boolean;
-    preparedCandidate?: BlueData;
-    expectedRevision?: number;
-    proposalToken?: string;
-    origin?: ProjectHistoryOrigin;
-  }): Promise<ProjectDocumentCommitReceipt> {
+  private async commitScopedMutationInternal(
+    options: {
+      label: string;
+      rootFields: readonly ProjectMutationRoot[];
+      expectedDocumentId?: string;
+      expectedSessionId?: number;
+      expectedRevision?: number;
+      proposalToken?: string;
+      origin?: ProjectHistoryOrigin;
+    } & (
+      | {
+          candidate: BlueData;
+          validateBeforeCommit?: (current: ProjectSessionSnapshot) => string | undefined;
+          onCommitted?: () => void;
+        }
+      | { mutator: (candidate: BlueData) => boolean }
+    ),
+  ): Promise<ProjectDocumentCommitReceipt> {
     await this.waitForBarrierToRelease();
-    this.closeGroup();
     const current = this.session.read();
+    if (
+      (options.expectedDocumentId !== undefined &&
+        current.documentId !== options.expectedDocumentId) ||
+      (options.expectedSessionId !== undefined &&
+        current.sessionId !== options.expectedSessionId) ||
+      (options.expectedRevision !== undefined && current.revision !== options.expectedRevision)
+    ) {
+      return this.createDirectReceipt(current, false, current.stateId ?? '', {
+        error: 'Prepared structural mutation is stale and was discarded',
+      });
+    }
     if (!current.data || !current.documentId) {
       throw new Error('No active project session');
     }
-
-    if (options.expectedRevision !== undefined && options.expectedRevision !== current.revision) {
-      return this.createDirectReceipt(current, false, current.stateId ?? '', {
-        error: `Revision mismatch (expected ${options.expectedRevision}, current ${current.revision})`,
-      });
+    if ('candidate' in options) {
+      const error = options.validateBeforeCommit?.(current);
+      if (error) return this.createDirectReceipt(current, false, current.stateId ?? '', { error });
     }
 
     const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
     const nextStateId = `state-${randomUUID()}`;
-
-    const candidate = options.preparedCandidate ?? current.data.historyCopy();
-    if (!options.preparedCandidate) {
-      transferProjectEditorIdentities(current.data, candidate);
+    const scope = new Set(options.rootFields);
+    const candidate =
+      'candidate' in options ? options.candidate : forkProjectGraph(current.data, scope);
+    if ('mutator' in options && !options.mutator(candidate)) {
+      return this.createDirectReceipt(current, false);
     }
 
-    const changed = options.preparedCandidate ? true : options.mutator(candidate);
-    if (!changed) {
-      return {
-        revision: current.revision,
-        sessionId: current.sessionId,
-        changed: false,
-        documentId: current.documentId,
-        stateId: current.stateId ?? '',
-      };
-    }
-
-    const { delta: directDelta, beforeSnapshot: directBeforeSnapshot } =
-      captureProjectGraphDeltaWithSnapshots(current.data, candidate);
+    const {
+      delta: directDelta,
+      beforeSnapshot: directBeforeSnapshot,
+      afterSnapshot,
+    } = captureProjectGraphDeltaWithSnapshots(current.data, candidate, scope);
+    if (isNetZeroProjectGraphDelta(directDelta)) return this.createDirectReceipt(current, false);
     const historyRecord: HistoryRecord = {
       kind: 'structure',
       delta: directDelta,
@@ -2864,9 +2826,9 @@ export class ProjectHistory {
       JSON.stringify({ label: options.label, origin: options.origin }).length * 2 +
       256;
     const expectedRevision = current.revision;
-    const payloadFingerprint =
+    const fingerprint =
       options.proposalToken || estimatedBytes > this.retainedBytesLimit
-        ? ProjectHistory.directMutationFingerprint(options.label, current.data, candidate)
+        ? payloadFingerprint([options.label, describeProjectGraph(afterSnapshot)])
         : '';
 
     if (options.proposalToken) {
@@ -2876,7 +2838,7 @@ export class ProjectHistory {
         proposal.token !== options.proposalToken ||
         proposal.documentId !== current.documentId ||
         proposal.expectedRevision !== expectedRevision ||
-        proposal.payloadFingerprint !== payloadFingerprint
+        proposal.payloadFingerprint !== fingerprint
       ) {
         return this.createDirectReceipt(current, false, current.stateId ?? '', {
           error: 'Oversize proposal token is invalid, stale, or already consumed',
@@ -2892,7 +2854,7 @@ export class ProjectHistory {
         token,
         documentId: current.documentId,
         expectedRevision,
-        payloadFingerprint,
+        payloadFingerprint: fingerprint,
         label: options.label,
         origin: options.origin,
       };
@@ -2905,6 +2867,8 @@ export class ProjectHistory {
         },
       });
     }
+
+    this.closeGroup();
 
     // Truncate redo stack on new commit (chronological branch semantics)
     if (this.cursor < this.entries.length) {
@@ -2932,8 +2896,12 @@ export class ProjectHistory {
     this.activeGroup = null;
 
     applyProjectGraphDelta(current.data, historyRecord.delta, 'after', directBeforeSnapshot);
+    if (scope.has('score') || scope.has('liveData')) {
+      copyAssignedScoreObjectIds(candidate, current.data);
+    }
     this.session.recordMutation({ changed: true, stateId: nextStateId });
     this.enforceLimits();
+    if ('candidate' in options) options.onCommitted?.();
 
     const updatedSnap = this.session.read();
     const projection = this.read();

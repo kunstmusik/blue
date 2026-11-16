@@ -1,14 +1,12 @@
 import {
-  applyProjectGraphDelta,
   applyTextChange,
-  captureProjectGraphDeltaWithSnapshots,
-  isNetZeroProjectGraphDelta,
   type GraphSnapshot,
   type ProjectGraphDelta,
   type TextChange,
 } from './project-history-graph';
 import { isRejectedMixerChannelUpdate } from '../shared/project-editor/patch-mixer-bluelive';
 import {
+  getProjectPatchRootFields,
   prepareBsbTransaction,
   prepareIsolatedOwnerStructureTransaction,
   type PreparedBsbTransaction,
@@ -30,7 +28,6 @@ import type {
   ProjectDocumentPatchContext,
 } from '../shared/project-editor/contract';
 import {
-  applyProjectDocumentPatch,
   classifyProjectDocumentPatch,
   findMixerChannelById,
   validateProjectDocumentPatch,
@@ -43,13 +40,11 @@ import {
   getScoreObjectId,
   getLayerSelectionId,
   getLayerGroupId,
-  transferProjectEditorIdentities,
 } from '../shared/project-editor/identity';
 import type {
   ProjectHistoryPrecondition,
   ProjectHistoryTargetType,
 } from '../shared/project-history';
-import type { ProjectSession, ProjectSessionSnapshot } from './project-session';
 
 export interface ScalarFieldRecord {
   targetType: ProjectHistoryTargetType;
@@ -79,12 +74,9 @@ export interface PreparedScalarTransaction {
 
 export interface PreparedStructuralTransaction {
   readonly kind: 'structure';
-  readonly candidate: BlueData;
   readonly delta: ProjectGraphDelta;
-  readonly beforeSnapshot?: GraphSnapshot;
-  readonly afterSnapshot?: GraphSnapshot;
-  readonly apply?: () => void;
-  readonly getGroupingEndpointSnapshot?: () => GraphSnapshot;
+  readonly apply: () => void;
+  readonly getGroupingEndpointSnapshot: () => GraphSnapshot;
   readonly changed: boolean;
   readonly patchChanged?: readonly boolean[];
   readonly patchAccepted?: readonly boolean[];
@@ -104,7 +96,6 @@ export interface PreconditionValidationResult {
 export interface PrepareTransactionOptions {
   preconditions?: readonly ProjectHistoryPrecondition[];
   context?: ProjectDocumentPatchContext;
-  forceStructural?: boolean;
 }
 
 export type PrepareTransactionResult =
@@ -728,7 +719,7 @@ export function prepareTransaction(
   options?: PrepareTransactionOptions,
 ): PrepareTransactionResult {
   let allEmpty = true;
-  let allScalar = !options?.forceStructural;
+  let allScalar = true;
   for (const patch of patches) {
     const classification = classifyProjectDocumentPatch(patch);
     if (classification === 'invalid') {
@@ -827,88 +818,28 @@ export function prepareTransaction(
     };
   }
 
-  if (!options?.forceStructural) {
-    try {
-      const compact = prepareBsbTransaction(data, patches, options?.context);
-      if (compact) return { status: 'prepared', transaction: compact };
-      const isolated = prepareIsolatedOwnerStructureTransaction(data, patches, options?.context);
-      if (isolated) {
-        let materializedCandidate: BlueData | undefined;
-        const tx: PreparedStructuralTransaction = {
-          kind: 'structure',
-          get candidate(): BlueData {
-            if (!materializedCandidate) {
-              const copy = data.historyCopy();
-              transferProjectEditorIdentities(data, copy);
-              applyProjectGraphDelta(copy, isolated.delta, 'after');
-              materializedCandidate = copy;
-            }
-            return materializedCandidate;
-          },
-          delta: isolated.delta,
-          apply: isolated.apply,
-          getGroupingEndpointSnapshot: isolated.getGroupingEndpointSnapshot,
-          changed: isolated.patchChanged.some(Boolean) && isolated.changed,
-          patchChanged: isolated.patchChanged,
-          patchAccepted: isolated.patchAccepted,
-        };
-        return { status: 'prepared', transaction: tx };
-      }
-    } catch (err) {
-      return { status: 'invalid', reason: err instanceof Error ? err.message : String(err) };
-    }
-  }
-
-  // 4. Structural transaction: prepare on detached candidate
-  const candidate = data.historyCopy();
-  transferProjectEditorIdentities(data, candidate);
-
-  let changed = false;
-  const patchChanged: boolean[] = [];
-  const patchAccepted: boolean[] = [];
   try {
-    for (const patch of patches) {
-      const c = isBsbSelectionOnly(patch)
-        ? false
-        : applyProjectDocumentPatch(candidate, patch, options?.context);
-      patchChanged.push(c);
-      patchAccepted.push(true);
-      changed = c || changed;
+    const compact = prepareBsbTransaction(data, patches, options?.context);
+    if (compact) {
+      compact.delta.rootFields = getProjectPatchRootFields(data, patches);
+      return { status: 'prepared', transaction: compact };
     }
+    const isolated = prepareIsolatedOwnerStructureTransaction(data, patches, options?.context);
+    if (isolated) {
+      isolated.delta.rootFields ??= getProjectPatchRootFields(data, patches);
+      return {
+        status: 'prepared',
+        transaction: {
+          kind: 'structure',
+          ...isolated,
+          changed: isolated.patchChanged.some(Boolean) && isolated.changed,
+        },
+      };
+    }
+    return { status: 'invalid', reason: 'No project history scope for this structural patch' };
   } catch (err) {
-    return {
-      status: 'invalid',
-      reason: err instanceof Error ? err.message : String(err),
-    };
+    return { status: 'invalid', reason: err instanceof Error ? err.message : String(err) };
   }
-
-  const { delta, beforeSnapshot, afterSnapshot } = captureProjectGraphDeltaWithSnapshots(
-    data,
-    candidate,
-  );
-  return {
-    status: 'prepared',
-    transaction: {
-      kind: 'structure',
-      delta,
-      candidate,
-      beforeSnapshot,
-      afterSnapshot,
-      changed: changed && !isNetZeroProjectGraphDelta(delta),
-      patchChanged,
-      patchAccepted,
-    },
-  };
-}
-
-export function restoreStructuralMemento(
-  session: ProjectSession,
-  memento: BlueData,
-  options?: { stateId?: string; invalidateSession?: boolean },
-): ProjectSessionSnapshot {
-  const restored = memento.historyCopy();
-  transferProjectEditorIdentities(memento, restored);
-  return session.publishCommittedDocument(restored, options);
 }
 
 /**

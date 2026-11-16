@@ -50,6 +50,7 @@ import {
   getMixerChannelSnapshotId,
   getMixerEntrySnapshotId,
   getScoreObjectId,
+  recordScoreObjectIdForData,
 } from '../shared/project-editor/identity';
 import {
   createMixerSnapshot,
@@ -84,7 +85,7 @@ import {
  * The fixture table below is completeness-checked against the preparation
  * classification tables: a variant added to the patch union without a
  * round-trip fixture fails this suite. Structural variants restore from
- * detached history-copy mementos, so exact canonical equality of the whole
+ * scoped graph deltas, so exact canonical equality of the whole
  * document (the affected-subtree superset) is asserted via saveToString().
  */
 
@@ -2154,6 +2155,7 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
       // patches() may first prepare baseline state (setup) before returning
       // the committed action, so the baseline snapshot follows it.
       const patches = entry.patches(live(), session);
+      const copy = vi.spyOn(live(), 'historyCopy');
       live().getScratchPadData().setScratchText('unrelated project content\n'.repeat(20000));
 
       const fingerprintOf = (data: BlueData): string =>
@@ -2174,6 +2176,7 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
         expect(history.read().length).toBe(0);
         const undo = await history.undo(context.nextUndoRequest(docId, session.read().revision));
         expect(undo.status).toBe('unchanged');
+        expect(copy).not.toHaveBeenCalled();
         return;
       }
 
@@ -2215,6 +2218,7 @@ describe('Project patch round trips through real ProjectHistory (T117)', () => {
         committedFingerprint,
       );
       expect(entry.identity?.(live())).toEqual(identityAfterCommit);
+      expect(copy).not.toHaveBeenCalled();
     });
   }
 
@@ -3649,6 +3653,176 @@ describe('grouping ScoreObjects through project history', () => {
 });
 
 describe('linked Instance timing through project history', () => {
+  it('pastes a linked Instance onto a Track and reuses its definition on redo', async () => {
+    const data = buildProject();
+    const definition = new GenericScore();
+    const libraryId = data.getSoundObjectLibrary().addObject(definition);
+    const source = new Instance();
+    source.setLibraryId(libraryId);
+    source.setSoundObject(definition);
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/track-instance-paste.blue');
+    const history = new ProjectHistory({ session });
+    const context = new MockHistoryContext('track-instance-paste');
+    const { documentId } = session.read();
+    const copy = vi.spyOn(data, 'historyCopy');
+    const track = scoreLayer(data, 0);
+    const originalLength = track.length;
+    const committed = await history.commit(
+      context.nextCommitRequest(documentId!, 0, 'Paste Track Instance', [
+        {
+          score: {
+            type: 'addTrackItem',
+            track: trackRef(data, session),
+            item: { objectType: 'Instance', serializedXml: source.saveAsXML().toXml() },
+            startBeats: 4,
+          },
+        },
+      ]),
+    );
+    expect(committed.status).toBe('committed');
+    expect((track.at(-1) as Instance).getSoundObject()).toBe(definition);
+    expect((await history.undo(context.nextUndoRequest(documentId!, 1))).status).toBe('committed');
+    expect(track).toHaveLength(originalLength);
+    expect((await history.redo(context.nextRedoRequest(documentId!, 2))).status).toBe('committed');
+    expect((track.at(-1) as Instance).getSoundObject()).toBe(definition);
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it('pastes from a library-owned source with scoped history and rejects a stale source', async () => {
+    const data = new BlueData();
+    const root = data.getScore()[0] as PolyObject;
+    const definition = new GenericScore();
+    const libraryId = data.getSoundObjectLibrary().addObject(definition);
+    const instance = new Instance();
+    instance.setSoundObject(definition);
+    instance.setLibraryId(libraryId);
+    assignExplicitScoreObjectId(instance, 'copy-source');
+    recordScoreObjectIdForData(data, 'old-source');
+    root[0]!.push(instance);
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/pasted-instance.blue');
+    const history = new ProjectHistory({ session });
+    const context = new MockHistoryContext('linked-paste');
+    const { documentId } = session.read();
+    const copy = vi.spyOn(data, 'historyCopy');
+    const paste = (selectionId: string): ProjectDocumentPatch => ({
+      score: {
+        type: 'addScoreObjects',
+        groupId: assignLayerGroupId(root),
+        objects: [
+          {
+            selectionId: 'copy-destination',
+            layerIndex: 0,
+            objectType: 'Instance',
+            name: 'Linked clone',
+            startBeats: 2,
+            durationBeats: 1,
+            sourceTarget: {
+              ...scoreObjectTarget(data),
+              selectionId,
+              location: undefined,
+              ownerKind: 'library',
+              displayContext: 'instance',
+              sourceInstanceLocation: scoreObjectTarget(data).location,
+            },
+          },
+        ],
+      },
+    });
+    const xml = data.saveToString();
+    const stale = await history.commit(
+      context.nextCommitRequest(documentId!, 0, 'Paste Instance', [paste('old-source')]),
+    );
+    expect(stale.status).toBe('unchanged');
+    expect(data.saveToString()).toBe(xml);
+    const commit = await history.commit(
+      context.nextCommitRequest(documentId!, 0, 'Paste Instance', [paste('copy-source')]),
+    );
+    expect(commit.status).toBe('committed');
+    expect((root[0]![1] as Instance).getSoundObject()).toBe(definition);
+    expect((await history.undo(context.nextUndoRequest(documentId!, 1))).status).toBe('committed');
+    expect(data.saveToString()).toBe(xml);
+    expect((await history.redo(context.nextRedoRequest(documentId!, 2))).status).toBe('committed');
+    expect((root[0]![1] as Instance).getSoundObject()).toBe(definition);
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    'scopes a definition edit and a placement move (move first %s)',
+    async (moveFirst) => {
+      const data = new BlueData();
+      const root = data.getScore()[0] as PolyObject;
+      root.newLayerAt(1);
+      const definition = new GenericScore();
+      definition.setScoreText('i1 0 1');
+      const libraryId = data.getSoundObjectLibrary().addObject(definition);
+      const placement = new Instance();
+      placement.setSoundObject(definition);
+      placement.setLibraryId(libraryId);
+      assignExplicitScoreObjectId(placement, 'linked-placement');
+      root[0]!.push(placement);
+      const livePlacement = placement.deepCopy() as Instance;
+      const liveObject = new LiveObject();
+      liveObject.setSoundObject(livePlacement);
+      data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, liveObject);
+      const target: ScoreObjectEditorTargetSnapshot = {
+        ...scoreObjectTarget(data),
+        selectionId: 'linked-placement',
+        selectedObjectType: 'Instance',
+        location: undefined,
+        ownerKind: 'library',
+        displayContext: 'instance',
+        sourceInstanceLocation: scoreObjectTarget(data).location,
+      };
+      const edit: ProjectDocumentPatch = {
+        score: { type: 'updateTypeSpecificEditor', target, patch: { text: 'i1 0 2' } },
+      };
+      const move: ProjectDocumentPatch = {
+        score: {
+          type: 'moveScoreObjects',
+          moves: [
+            {
+              target,
+              targetGroupId: assignLayerGroupId(root),
+              targetLayerIndex: 1,
+              targetStartBeats: 4,
+            },
+          ],
+        },
+      };
+      const session = new ProjectSession();
+      session.replace(data, '/tmp/mixed-instance.blue');
+      const history = new ProjectHistory({ session });
+      const context = new MockHistoryContext('mixed-instance');
+      const { documentId } = session.read();
+      const copy = vi.spyOn(data, 'historyCopy');
+      const patches = moveFirst ? [move, edit] : [edit, move];
+      const before = data.saveToString();
+      expect(prepareTransaction(data, patches).status).toBe('prepared');
+      expect(data.saveToString()).toBe(before);
+      expect(
+        (await history.commit(context.nextCommitRequest(documentId!, 0, 'Edit and move', patches)))
+          .status,
+      ).toBe('committed');
+      expect(root[1]![0]).toBe(placement);
+      expect(livePlacement.getSoundObject()).toBe(definition);
+      expect(definition.getScoreText()).toBe('i1 0 2');
+      expect((await history.undo(context.nextUndoRequest(documentId!, 1))).status).toBe(
+        'committed',
+      );
+      expect(root[0]![0]).toBe(placement);
+      expect(data.saveToString()).toBe(before);
+      expect((await history.redo(context.nextRedoRequest(documentId!, 2))).status).toBe(
+        'committed',
+      );
+      expect(root[1]![0]).toBe(placement);
+      expect(livePlacement.getSoundObject()).toBe(definition);
+      expect(definition.getScoreText()).toBe('i1 0 2');
+      expect(copy).not.toHaveBeenCalled();
+    },
+  );
+
   it('restores the registered definition when undoing removal of its last score placement', async () => {
     const data = new BlueData();
     const definition = new GenericScore();

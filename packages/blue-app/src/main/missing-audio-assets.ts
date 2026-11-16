@@ -232,7 +232,10 @@ export function buildReplacementMappings(
  * matches a mapped original path. Mirrors Java reconcileAudioFiles. Returns
  * true when at least one AudioFile path changed.
  */
-export function applyReplacementMappings(data: BlueData, mappings: Map<string, string>): boolean {
+export function applyReplacementMappings(
+  data: Pick<BlueData, 'getScore'>,
+  mappings: Map<string, string>,
+): boolean {
   if (mappings.size === 0) {
     return false;
   }

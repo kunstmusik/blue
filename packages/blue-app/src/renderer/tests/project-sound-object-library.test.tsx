@@ -322,7 +322,7 @@ describe('Project SoundObject Library panel', () => {
     const dialog = document.body.querySelector('[role="alertdialog"]');
     expect(dialog).toBeTruthy();
     expect(dialog?.textContent).toContain('Delete “Shared Motif”?');
-    expect(dialog?.textContent).toContain('and 3 linked score instances');
+    expect(dialog?.textContent).toContain('and 3 linked instances');
 
     // Cancel first
     const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;

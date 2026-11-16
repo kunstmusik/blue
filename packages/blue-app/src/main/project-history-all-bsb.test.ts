@@ -367,8 +367,9 @@ describe('all BSB property/configuration families', () => {
 it('compacts detached direct host actions with unrelated large project content', async () => {
   const f = setup();
   const before = f.data.saveToString();
-  const response = await f.history.commitDirectMutation({
+  const response = await f.history.commitScopedMutation({
     label: 'host edit',
+    rootFields: ['projectProperties'] as const,
     mutator: (candidate) => {
       candidate.getProjectProperties().title = 'host title';
       return true;

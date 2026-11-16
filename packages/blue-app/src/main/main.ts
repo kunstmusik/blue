@@ -440,6 +440,7 @@ import type {
   IpcMainLike,
 } from './ipc/ipc-registration';
 import { createProjectLifecycle } from './project-lifecycle';
+import { forkProjectGraph } from './project-history-graph';
 import { createProjectHistory, type ProjectHistorySnapshotCaptureContext } from './project-history';
 import { ProjectSession } from './project-session';
 import {
@@ -1974,6 +1975,7 @@ async function handleFreezeScoreObjects(
       const receipt = await projectHistory.commitPreparedStructuralMutation({
         label,
         candidate: stagedProject,
+        rootFields: ['score', 'sObjLib'],
         expectedDocumentId: initialDocumentId,
         expectedSessionId: initialSessionId,
         expectedRevision: initialRevision,
@@ -5451,8 +5453,12 @@ async function resolveMissingAudioAssets(
     return { ok: true, changed: false };
   }
 
-  const receipt = await projectHistory.commitDirectMutation({
+  const receipt = await projectHistory.commitScopedMutation({
     label: 'Relink Missing Audio',
+    rootFields: ['score'],
+    expectedDocumentId: getCurrentProjectSessionDocumentId(),
+    expectedSessionId: getCurrentProjectSessionId(),
+    expectedRevision: getCurrentProjectRevision(),
     mutator: (candidate) => applyReplacementMappings(candidate, mappings),
     proposalToken: request.historyProposalToken,
   });
@@ -7642,11 +7648,7 @@ async function startUnifiedLibraryStage(): Promise<void> {
             revision: initialRevision,
           };
         }
-        // Library adapters historically mutated the live graph and then
-        // reported a revision. Give each mutating operation a detached candidate
-        // so a paused save/undo barrier never observes an uncommitted library edit.
-        const candidate = data.historyCopy();
-        transferProjectEditorIdentities(data, candidate);
+        const candidate = forkProjectGraph(data, new Set(options.rootFields));
         return {
           data: candidate,
           sessionId: initialSessionId,
@@ -7664,17 +7666,13 @@ async function startUnifiedLibraryStage(): Promise<void> {
             const receipt = await projectHistory.commitPreparedStructuralMutation({
               label: label ?? 'Library Transfer',
               candidate,
+              rootFields: options.rootFields,
               expectedDocumentId: initialDocId,
               expectedSessionId: initialSessionId,
               expectedRevision: initialRevision,
             });
-            if (!receipt.changed) {
-              throw new Error(
-                receipt.oversizeProposal?.explanation ??
-                  receipt.error ??
-                  'Library transfer was not committed to project history',
-              );
-            }
+            const error = receipt.oversizeProposal?.explanation ?? receipt.error;
+            if (error) throw new Error(error);
             return receipt.revision;
           },
         };
