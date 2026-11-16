@@ -3,6 +3,8 @@
 This file contains stable, cross-cutting rules for coding agents. Feature-specific
 requirements belong in `specs/<feature>/`; historical changes belong in git history.
 The governing rules are in `.specify/memory/constitution.md`.
+See the [maintainer documentation index](docs/README.md) for project-wide
+guidance and where to record feature decisions and evidence.
 
 ## Repository map
 

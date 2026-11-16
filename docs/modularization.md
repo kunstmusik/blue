@@ -1,4 +1,4 @@
-# Modularization Review Rule
+# Modularization and ownership
 
 Use this rule before splitting a large module. The purpose of a split is to make a
 responsibility easier to locate, test, and review while preserving the existing contract;
@@ -37,7 +37,7 @@ it instead of creating speculative helper modules.
 
 ## Boundary review record
 
-For every accepted or deferred proposal, record:
+Record each accepted or deferred proposal in the owning feature plan or change description.
 
 - responsibility and public façade;
 - extracted modules and their dependency direction;
@@ -113,391 +113,81 @@ Feature-specific reference contracts and concrete retained owner boundaries:
   details host-document modal containment for shortcuts (`use-keyboard-shortcuts.ts`) and pure internal
   playback lifecycle transitions and atomic compatibility projection (`renderer/stores/playback-store.ts`).
 
-## First-wave boundary maps
+## Current ownership map
 
-The maps below describe the delivered ownership boundaries. The façades remain the
-compatibility surface; the extracted files are package-internal.
+Use these boundaries to choose a home for changes. Keep public import paths stable
+when moving internals. Validate runtime import direction and exercise each changed
+boundary through its existing callers.
 
-### Seam 4 — score-object document reducer
+### Portable project model and generation
 
-- **Façade:** `ScoreObjectEditorPanel.tsx` still re-exports `applyPatchToDocument`; the
-  five reducer tests now import the canonical reducer module directly.
-- **Responsibility/dependencies:** `score-object-document-reducer.ts` owns the optimistic
-  document transformation, automation patch shaping, and BSB snapshot updates. It consumes
-  project-editor contracts and the existing store-owned BSB snapshot helper; it does not own
-  React effects or store wiring.
-- **Canonical state owner:** the renderer document is transient editor state; committed project
-  state remains owned by the existing document bridge and main-process `BlueData`.
-- **Lowest test seam:** the score-object tracker/sound, JMask, audio-clip, and object-builder
-  reducer tests (T021) cover the moved behavior. The BSB structured branch intentionally keeps
-  its shallow-copy aliasing/mutation behavior; no `structuredClone` purification was introduced.
-- **Rollback boundary:** restore the reducer block to `ScoreObjectEditorPanel.tsx`, revert the
-  five test import repoints, and remove the one new file. The only sanctioned edits were the
-  mechanical move, panel re-export, and test repoints.
+- `@blue/data` owns `BlueData`, the canonical project model, and reads and writes
+  project XML under the [compatibility contract](../specs/116-xml-compatibility-contracts/contracts/xml-loading.md).
+  Keep XML validation and migration, CSD generation, and runtime policy behind
+  the `BlueData` API. Policy code consumes public model getters and explicit inputs.
+  Keep disk pruning, mixer code generation, and parameter/score assembly separate
+  from CSD orchestration. Check XML acceptance and CSD parity at the model boundary.
+- Keep JMask XML validation independent of snapshot hydration and model construction.
+  The JMask field owns generator and modifier configuration. Use the JMask façade
+  for existing consumers and keep implementation imports directed toward leaf code.
+  Check [XML acceptance](../packages/blue-data/src/sound-objects/jmask-xml-acceptance.test.ts)
+  and [generation](../packages/blue-data/src/sound-objects/j-mask.test.ts).
+- Use static ES imports in `@blue/data`. Electron main or host-specific packages
+  supply filesystem, process, engine, and Java resources at explicit boundaries.
 
-### Seam 3 — BlueData XML/CSD/runtime policy
+### Shared project editor
 
-- **Façade:** `packages/blue-data/src/blue-data.ts` retains the aggregate, public methods, and
-  one-line delegates.
-- **Responsibility/dependencies:** `xml-policy.ts` owns load/save/XML preservation; `csd-policy.ts`
-  owns synchronous and asynchronous CSD rendering; `runtime-policy.ts` owns on-load/runtime
-  processing. Policy modules receive `import type { BlueData }` and import only non-back-importing
-  policy/data helpers. They are not exported from `@blue/data`.
-- **Canonical state owner:** `BlueData` remains the owner of project fields, unknown XML/plugin
-  data, render settings, and runtime state. The extraction preserves raw render-time assignment,
-  wholesale plugin XML replacement, `this.version` mutation, and migration-before-deserialization.
-- **Lowest test seam:** the BlueData XML, frozen-roundtrip, migration, CSD determinism/copy-safety/
-  scheduling/automation/disk/parity, and BlueLive suites (T022); local Java fixtures passed where
-  available.
-- **Rollback boundary:** revert the three policy files and the façade delegates. The sanctioned
-  semantic deletion is the three grep-verified dead functions recorded in the seam-3 change.
+- `packages/blue-app/src/shared/project-editor.ts` is the compatibility façade.
+  Shared contracts and stable identity helpers underpin snapshot builders and patch
+  appliers. Snapshots are read projections. Keep builders independent of write
+  appliers, and keep patches independent of Electron and renderer state.
+- Keep score time, automation, and object edits in their domain appliers. Compose
+  the document change at the document patch boundary. Verify mutations and the
+  resulting projections in [project editor tests](../packages/blue-app/src/shared/project-editor.test.ts).
 
-### Seam 2 — auxiliary workbench layout
+### Main-process history and runtime
 
-- **Façade:** `auxiliary-layout.ts` is a pure re-export barrel, so existing renderer and test
-  imports remain unchanged.
-- **Responsibility/dependencies:** `auxiliary-layout-model.ts` owns pure state/types/selectors and
-  commands; `auxiliary-layout-migrations.ts` owns v2–v4 migration and shape guards;
-  `workbench-layout-envelope.ts` owns the v7 codec; `auxiliary-layout-dockview.ts` owns Dockview,
-  DOM, drag/drop, transition, reconcile, and rollback behavior. Pure modules do not import the
-  adapter, Dockview runtime, or DnD implementation.
-- **Canonical state owner:** the existing workbench store owns live layout state; existing main
-  window-layout persistence owns stored layout. The adapter may replace canonical state only with
-  an `applied` transition result.
-- **Lowest test seam:** auxiliary layout, persistence, store, and slideout tests (T023), including
-  migration versions, rollback/ownership invariants, and the 200px Java Blue parity case.
-- **Rollback boundary:** restore the original `auxiliary-layout.ts` and remove the four sibling
-  modules; no consumer or persistence wiring changed.
+- `ProjectSession` owns active document identity, path and revision. Route durable
+  edits through `ProjectHistory` with typed patches or a supported direct adapter.
+  Prepare changes without publishing them. Commit and replay preserve stable
+  identities and publish the model and ledger together.
+- Keep patch inversion and compaction independent of the transaction coordinator.
+  Store compact scalar records or reversible graph deltas. Account for retained
+  payloads, including runtime replay hints and active cancellation checkpoints.
+  Follow the [history data model](../specs/103-global-undo-redo/data-model.md)
+  and the [gesture and history contract](../specs/119-fix-implicit-state-machines/contracts/gestures-and-history.md).
+  Check canonical state, identity, dirty state, and runtime outcomes through
+  commit, undo, and redo. Use [history coordinator tests](../packages/blue-app/src/main/project-history.test.ts)
+  and [graph delta tests](../packages/blue-app/src/main/project-history-graph.test.ts) for the separate responsibilities.
+- `main.ts` owns application composition, window lifecycle, startup rollback,
+  and normal shutdown. Assemble IPC registrars through the registration lease.
+  Preserve channel modes, order, and teardown with the
+  [IPC inventory test](../packages/blue-app/src/main/ipc/main-process-ipc-inventory.test.ts)
+  and [startup lifecycle test](../packages/blue-app/src/main/startup-lifecycle.test.ts).
+- Render and freeze operations, REPL command serialization, and secondary editor
+  coordination have separate main-owned coordinators. Inject host capabilities
+  at composition, and keep project replacement and Java on-load policy with
+  their owners. Keep Csound execution on the audited main-process boundary.
+  Test render/freeze cancellation and artifact settlement at the operation seam,
+  and test Electron window and menu behavior where it depends on native ownership.
 
-### Seam 1 — shared project-editor
+### Renderer state and UI
 
-- **Façade:** `packages/blue-app/src/shared/project-editor.ts` is the one-line compatibility
-  façade over the internal `project-editor/index.ts` barrel. Existing source specifiers and the
-  emitted CommonJS path remain stable, preventing a stale pre-refactor file from shadowing the
-  internal directory after an incremental build.
-- **Responsibility/dependencies:** `contract.ts` owns snapshot/patch/realtime types and validators;
-  `identity.ts` owns all six WeakMap registries; `bsb-widgets.ts` owns BSB serialization and patch
-  helpers; `snapshot-score.ts` owns score/document/automation builders; `snapshot-mixer-orchestra.ts`
-  owns mixer/orchestra/instrument/transport/BlueLive builders and JMask payload snapshots;
-  `patch-score.ts` owns score/tempo/meter appliers; `patch-mixer-bluelive.ts` owns mixer/BlueLive/
-  MIDI appliers and nested-poly snapshots; `patch-document.ts` owns document orchestration. The
-  dependency direction is contracts/identity/BSB → snapshot builders → patch appliers → document
-  orchestration; builders do not import patch modules.
-- **Canonical state owner:** `BlueData` and its existing main/renderer document bridge remain the
-  canonical project owners. Snapshots are projections; patches mutate the existing model through
-  the existing contracts. The identity registries exist exactly once in `identity.ts`.
-- **Lowest test seam:** the project-editor, score-timeline-automation, and project-store checkpoint
-  (T024), plus the main/preload builds. The first run had one unrelated performance timing miss;
-  the corrected focused checkpoint passed 22 files and 178 tests.
-- **Rollback boundary:** restore the original `project-editor.ts` implementation, remove the eight
-  internal modules, and leave the 284 consumer import specifiers untouched. The file façade plus
-  explicit internal index surface is the compatibility proof; no consumer edits were needed for
-  this seam.
-
-### Seam-3 deletion record
-
-`registerNestedEffectOpcodes`, `applyOpcodeNameReplacements`, and
-`getBlueLiveAlwaysOnInstrumentId` were grep-verified dead code and were deleted while moving the
-CSD policy. No live caller or fixture depends on them.
-
-### Commit mapping
-
-The four seam commits were created in the required risk order. Each commit is independently
-revertible; the only sanctioned semantic edits are the three dead-code deletions in seam 3 and
-the five reducer-test import repoints in seam 4.
-
-| Order | Commit    | Boundary                                                           | Rollback unit                                             |
-| ----- | --------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
-| 1     | `02817ce` | Score-object reducer (seam 4)                                      | Reducer file, panel façade, and five test repoints        |
-| 2     | `493c1cf` | BlueData XML/CSD/runtime policies (seam 3)                         | Three policy files and thin `BlueData` delegates          |
-| 3     | `e2069bd` | Auxiliary layout model/migrations/envelope/adapter (seam 2)        | Four extracted layout modules and barrel                  |
-| 4     | `e4ce585` | Shared project-editor contract/identity/snapshots/patches (seam 1) | Directory barrel, internal modules, and stale map cleanup |
-
-## Second-wave boundary inventory — 088-large-file-refactor
-
-The following inventory freezes the responsibilities that remain in the two target façades
-before the second-wave ownership moves. It is an ownership record, not a line-count target.
-
-### `packages/blue-app/src/renderer/stores/project-store.ts`
-
-| Responsibility                               | Callers                                                                                   | State read/write                                                                                 | Side effects                                           | Failure/lifecycle                                                      | Test seam                                                            | Rollback unit                             |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------- |
-| Zustand façade and project-loaded projection | Renderer stores, hooks, editors, tests                                                    | Transient renderer snapshot; no `BlueData` write                                                 | Zustand updates, MIDI/layer selection reconciliation   | Reset on project/session replacement; preserves dirty flag for refresh | `project-store.test.ts`, IPC listener tests                          | Restore delegate wiring                   |
-| BSB optimistic snapshot patching             | Instrument editors, score-object reducer, presets/performance tests                       | Caller-owned instrument snapshot; nested tree identity and metadata aliases                      | None; pure renderer transformation                     | Tolerated malformed/missing targets remain no-ops                      | BSB editor, presets, performance, sound-patch tests; direct BSB seam | Restore BSB implementation inline         |
-| Patch batching and canonical acknowledgement | All optimistic project-document actions                                                   | One pending FIFO, trailing timer, in-flight commit, local revision/session fence, dirty baseline | Typed preload commit/refresh calls, toast/log delivery | One in-flight batch; no retry; refresh is best effort                  | Direct queue fake-timer/adapters plus façade tests                   | Restore queue protocol inline             |
-| Cross-domain optimistic reducers             | Score, mixer, orchestra, MIDI, project properties, transport, UDO, Blue Live, scratch pad | Transient renderer snapshots                                                                     | Realtime-control preload calls                         | Existing reducer-specific no-op and immediate-update behavior          | Existing project-store/domain suites                                 | Retain in façade until narrow seam exists |
-| Renderer-only session/UI state               | Toolbar, score navigation, missing-audio and editor panels                                | Dirty/loading/title/selection/session projection                                                 | Zustand-only state changes                             | Reset with project lifecycle                                           | Store and panel tests                                                | Retain in façade                          |
-
-Canonical ownership remains the main-process `BlueData` document bridge. The BSB seam and queue
-depend on shared contracts and injected callbacks; neither imports the façade, host APIs, React,
-Zustand, or Electron.
-
-### `packages/blue-app/src/main/main.ts`
-
-| Responsibility                                     | Callers                                             | State read/write                                           | Side effects                                                   | Failure/lifecycle                                                     | Test seam                                        | Rollback unit                        |
-| -------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------ |
-| Application composition and pre-ready registration | Electron app lifecycle                              | Window/service references                                  | Protocol registration, IPC registration, verification branches | Pre-ready once; startup failure unwinds completed reversible stages   | IPC inventory and startup lifecycle oracle       | Restore composition call             |
-| Project identity and replacement coordination      | File actions, document IPC, editor/runtime handlers | Active `BlueData`, native path, revision, session identity | Filesystem, runtime/editor cleanup, broadcasts, recent files   | Open/new/save-as/revert/close preserve current order and stale fences | Project session/lifecycle and replacement suites | Restore identity writes in main      |
-| Window/menu/activation lifecycle                   | Main renderer, settings/about/popouts               | BrowserWindow refs and layout/follow state                 | Window creation/focus/menu/event listeners                     | Explicit normal shutdown order                                        | Window/layout/workbench tests                    | Restore composition wiring           |
-| Direct project/file-session IPC (17)               | Renderer/preload bridge                             | Project session plus recent/MIDI/missing-audio owners      | Dialogs, filesystem, replacement and broadcasts                | Preserve null/status/error envelopes                                  | Project-lifecycle registrar tests                | Restore one registrar block          |
-| Direct artifact IPC (15)                           | Renderer/preload bridge                             | Project read and host artifact state                       | Dialogs, import/export, SoundFont/CsoundRC, native paths       | Preserve cancellation/validation/owner targeting                      | Project-artifacts registrar tests                | Restore one registrar block          |
-| Playback/runtime/render IPC (30)                   | Renderer/preload bridge                             | Engine/runtime/project session owners                      | Playback, CSD, Blue Live, REPL, realtime, render/freeze        | Preserve mutual exclusion, cancellation, events                       | Playback-runtime/source-audit tests              | Restore one registrar block          |
-| Project document/editor/audio IPC (27)             | Renderer/preload bridge                             | Project session/document and editor owners                 | Patch commit, editor windows, audio/score-object tools         | Preserve receipt/fence/broadcast and unavailable/error forms          | Project-document registrar tests                 | Restore one registrar block          |
-| Application/settings/layout IPC (23)               | Renderer/preload bridge                             | Settings, OSC, file manager, window-layout owners          | Confirmation, persistence, native paths, targeting             | Fail-closed confirmation and ordered shutdown                         | Application registrar tests                      | Restore one registrar block          |
-| Existing registrar/service composition (65)        | Main startup/shutdown                               | Unified library, code repository, workbench, MIDI owners   | SQLite/services/windows/listeners                              | Duplicate-safe lease and exact disposer                               | Existing registrar tests plus inventory          | Restore lease adoption independently |
-
-`ProjectSession` is the sole writer for active document identity, native path, revision, and
-numeric session fence. It does not absorb runtime, window, engine, library, MIDI, or temporary-file
-ownership. `main.ts` remains the application composition root and retains the explicit normal
-shutdown order; failed startup uses a separate reverse-order rollback stack.
-
-## Second-wave review decisions
-
-- Accepted: BSB snapshot reducer, patch queue coordinator, `ProjectSession`, project lifecycle
-  coordinator, transactional IPC registration lease, startup-failure rollback, and five cohesive
-  IPC registrars.
-- Retained: cross-domain renderer reducers, runtime/window/service implementations, and main
-  composition/menu/normal-shutdown code whose callers still cross multiple domains.
-- Deferred: additional score/mixer/orchestra reducer splits, one-module-per-channel IPC splits,
-  generic event buses, and a replacement god object. Revisit only after a smaller owner, explicit
-  dependency direction, and a focused oracle exist.
-
-### Final boundary audit — 2026-08-23
-
-- A source search found no direct assignments to the retired `currentData`, `currentFilePath`,
-  `currentProjectRevision`, or `currentProjectSessionId` variables in `main.ts`; `ProjectSession`
-  is the only active identity writer.
-- A source search found one renderer patch queue owner (`createProjectPatchQueue`) and no second
-  pending-patch or in-flight-commit protocol in the façade. The façade delegates revision, flush,
-  await, and reset operations to that queue.
-- The five domain registrar modules own the real `electronIpcMain` registrations; `main.ts`
-  retains only the compatibility collector and composes them through one ordered 112-endpoint
-  transaction. Existing registrar owners remain separate, expose frozen channel-order arrays for
-  the executable 177-endpoint oracle, and use the shared lease.
-- Pure renderer modules have no back-imports from the store façade or main process. Main-process
-  registrars remain host-side and do not import renderer modules. No new dependency cycle was
-  identified.
-- Accepted-seam rollback remains independently scoped: remove the BSB module, queue module,
-  session/lifecycle modules, lease adoption, or domain registrar composition without changing
-  unrelated reducer families or host services.
-
-### Seam 5 — global project history and transaction coordination (103-global-undo-redo)
-
-- **Façade:** `packages/blue-app/src/shared/project-history.ts` exposes serializable request/response
-  contracts, IPC channel tokens, selection hints, and barrier events. `ProjectSession` remains the
-  canonical active project document owner.
-- **Responsibility/dependencies:**
-  - `packages/blue-app/src/main/project-history.ts` owns transaction and history coordination
-    (commit, undo, redo, read, adjacent gesture grouping, deduplication, 200-action / 64 MiB
-    accounting, whole-entry eviction, and settlement barrier orchestration).
-  - `packages/blue-app/src/main/project-history-memento.ts` owns detached canonical capture/restore
-    and identity sidecar remapping.
-  - `packages/blue-app/src/main/project-runtime-reconciliation.ts` owns generation-scoped,
-    acknowledged live runtime outcomes per performance.
-  - Renderer history client and patch queues consume shared contracts via typed preload contracts
-    without back-imports.
-- **Canonical state owner:** `ProjectSession` owns live in-memory project data and `.blue` XML is the
-  canonical project format. Retained history mementos are detached main-only state; renderers own
-  uncommitted drafts and local presentation state.
-- **Lowest test seam:**
-  - `@blue/data` history-copy and identity tests (`packages/blue-data/src/blue-data-history-copy.test.ts`).
-  - Unit tests for coordinator, memento, barrier settlement, and runtime reconciliation in
-    `packages/blue-app/src/main/*.test.ts`.
-  - Renderer queue, listener, and bridge tests in `packages/blue-app/src/renderer/tests/*.test.ts`.
-- **Rollback boundary:** Revert the history coordinator, history-copy/memento support, and history
-  integration calls as one feature unit; project XML persistence remains unchanged.
-
-## Deferred inventory
-
-Each item has a candidate seam and a concrete reason to defer it. Revisit only when the stated
-test/contract prerequisite exists; do not split it solely because the file remains large.
-
-### `packages/blue-app/src/main/main.ts` (5,017 lines)
-
-- **Accepted seams:** `ProjectSession`, `project-lifecycle.ts`, the transactional registration
-  lease, and five channel-set registrar adapters now provide the narrow ownership boundaries.
-- **Retained responsibility:** handler implementations, runtime/window/service wiring, composition,
-  and explicit normal shutdown remain in `main.ts`. The completed composition checkpoint proves
-  source order and startup-failure compatibility; retaining the handler bodies avoids inventing
-  shallow host-operation wrappers without narrower state ownership.
-- **Risk:** high; initialization ordering and host-side side effects cross nearly every feature.
-- **Revisit condition:** identify a narrower host-state owner and focused behavior oracle before
-  relocating any handler body out of the composition root; the 177-endpoint compatibility oracle
-  must continue to pass unchanged.
-
-### `packages/blue-app/src/renderer/stores/project-store.ts` (4,926 lines)
-
-- **Accepted seams:** BSB snapshot mutation and the patch queue now live in store-independent
-  modules behind the unchanged façade and are covered by direct identity/timing tests.
-- **Retained responsibility:** cross-domain score, mixer, orchestra, MIDI, transport, and UI
-  reducers remain in the façade because their narrow ownership boundary is not yet isolated.
-- **Risk:** high; shared-reference aliasing, optimistic updates, and store subscriptions remain
-  behaviorally coupled in the retained reducer families.
-- **Revisit condition:** identify a smaller injected reducer owner and add a cross-domain oracle
-  before any further split.
-
-### Score timeline canvases
-
-`ScoreTimeCanvas.tsx` (2,119 lines) and `TrackLayerGroupCanvas.tsx` (1,586 lines) share the
-following candidate boundary:
-
-- **Candidate seam:** pure geometry/painting and hit-testing versus render-cycle state,
-  pointer/selection state, and canvas lifecycle.
-- **Risk:** high performance sensitivity; small ownership changes can alter invalidation and
-  pointer timing.
-- **Review outcome:** defer until profiling identifies a stable pure boundary and canvas-level
-  geometry/hit-test tests exist. Retain render orchestration with the component until then.
-
-### `packages/blue-app/src/main/unified-library/service.ts` (1,870 lines)
-
-- **Candidate seam:** repository/index/search operations versus project adapter and service
-  orchestration.
-- **Risk:** medium-high; SQLite lifecycle, preview lookup, and editor callbacks share failure and
-  performance behavior.
-- **Review outcome:** defer until repository and adapter interfaces are documented and performance
-  thresholds have isolated tests; the service remains the canonical orchestration owner.
-
-### `packages/blue-app/src/renderer/stores/workbench-store.ts` (1,715 lines)
-
-- **Candidate seam:** auxiliary-layout state transitions versus persistence/session orchestration.
-- **Risk:** medium; it is already a thin coordinator over the seam-2 layout modules.
-- **Review outcome:** retain/defer pending post-seam-2 size and consumer review. Split only if a
-  store-independent command/test seam remains after the new layout ownership is exercised.
-
-## Third-wave boundary records (Waves 1–5)
-
-### Wave 1 — `@blue/data` pure domain splits
-
-- **Seam 1A (`packages/blue-data/src/sound-objects/jmask-support.ts`):**
-  - **Façade:** `jmask-support.ts` re-exports all public JMask classes, interfaces, and functions;
-    zero external import specifiers changed.
-  - **Extracted modules & dependency direction:** `jmask/xml-policy.ts` (`jmaskType`,
-    `validateJmaskXml`) → `jmask/core-table-modifiers.ts` → `jmask/probability-distributions.ts` →
-    `jmask/generators.ts` → `jmask/field-parameter.ts` → `jmask/snapshot-hydration.ts` →
-    `jmask-support.ts`. Leaf XML validation never imports snapshot hydration or field/table models.
-  - **Canonical state owner:** `Field`, `Parameter`, and `Table` instances remain owned by `JMask`
-    and `BlueData`; all modules remain browser-safe and host-neutral with top-level static ES
-    imports only.
-  - **Lowest practical test seam:** `j-mask.test.ts`, `jmask-xml-acceptance.test.ts`,
-    `score-generation-perf-parity.test.ts`, `jmask-save-load.test.ts`, and
-    `xml-owner-root-contract.test.ts`.
-  - **Rollback boundary:** leaf validator (`xml-policy.ts`), core/distributions, and
-    generators/field/hydration are independently revertible behind `jmask-support.ts`.
-- **Seam 1B (`packages/blue-data/src/blue-data/csd-policy.ts`):**
-  - **Façade:** `csd-policy.ts` retains standard/async/BlueLive CSD orchestration and re-exports
-    `buildStandardCSD`, `buildStandardCSDAsync`, `toBlueLiveCSD`, `toBlueLiveCSDAsync`,
-    `buildScoreText`, `RenderCsdResult`, `BlueMixerGateContext`, and mixer gate channel constants.
-  - **Extracted modules & dependency direction:** `csd-disk-pruning.ts` (consumes `BlueData` via
-    public getters and structural `DiskPruningGateContext` without private `getBlueDataState` casts),
-    `csd-mixer-codegen.ts` (uses `blueData.getMixer()`/`blueData.getScore()` and explicit
-    parameters), and `csd-parameter-score.ts` (uses public `BlueData` getters) → `csd-policy.ts`.
-  - **Canonical state owner:** `BlueData` remains the canonical model owner; CSD results are
-    disposable render artifacts.
-  - **Lowest practical test seam:** `blue-data-csd-parity.test.ts`, `blue-data-csd-disk.test.ts`,
-    `csd-disk-pruning.test.ts`, `mixer-optimization-csd.test.ts`, `blue-data-csd-copy-safety.test.ts`,
-    `csd-policy.test.ts`, `blue-live-csd.test.ts`, and `blue-live-async.test.ts`.
-  - **Rollback boundary:** disk pruning, mixer codegen, and parameter/score assembly are
-    independently revertible behind `csd-policy.ts`.
-
-### Wave 2 — `@blue/app` shared project-editor splits
-
-- **Seam 2A (`packages/blue-app/src/shared/project-editor/snapshot-score.ts`):**
-  - **Façade:** `snapshot-score.ts` and `project-editor/index.ts` remain the unchanged
-    compatibility surface.
-  - **Extracted modules & dependency direction:** `contract.ts` / `identity.ts` / `bsb-widgets.ts` →
-    `snapshot-score-automation.ts` → `snapshot-score-editor.ts` (including `normalizeAudioFadeType`
-    and `resolveTimelineScoreObjects` to keep dependencies strictly one-way) → `snapshot-score.ts`.
-  - **Canonical state owner:** `BlueData` remains the canonical project owner; snapshots remain
-    immutable projections.
-  - **Lowest practical test seam:** `project-editor.test.ts`,
-    `score-timeline-automation-contract.test.ts`, `score-object-editor-contract.test.ts`, and
-    `score-timeline-automation-single-line.test.tsx`.
-  - **Rollback boundary:** `snapshot-score-automation.ts` and `snapshot-score-editor.ts` are
-    independently revertible behind `snapshot-score.ts`.
-- **Seam 2B (`packages/blue-app/src/shared/project-editor/patch-score.ts`):**
-  - **Façade:** `patch-score.ts` retains layer/group/marker orchestration and `applyScoreObjectPatch`
-    dispatch while re-exporting all moved public APIs.
-  - **Extracted modules & dependency direction:** `contract.ts` / `identity.ts` / `snapshot-*` →
-    `patch-score-time.ts` + `patch-score-automation.ts` + `patch-score-objects.ts` →
-    `patch-score.ts` (`patch-score-objects.ts` imports `isValidTimeBase` from `patch-score-time.ts`
-    with zero back-imports).
-  - **Canonical state owner:** `BlueData` mutations flow exclusively through existing patch
-    contracts and `ProjectHistory`.
-  - **Lowest practical test seam:** `project-editor.test.ts`,
-    `score-timeline-automation-contract.test.ts`, and `project-history-roundtrip.test.ts`.
-  - **Rollback boundary:** each of the three extracted patch modules is independently revertible.
-
-### Wave 3 — `project-history` patch algebra & `project-store` optimistic reducers
-
-- **Seam 3A (`packages/blue-app/src/main/project-history.ts`):**
-  - **Façade:** `project-history.ts` retains `ProjectHistory` mutable state/transactions/barriers
-    and re-exports `HistoryRecord`, `scalarRecordsToInversePatches`,
-    `scalarRecordsToForwardPatches`, `hasConcreteInversePatches`,
-    `accumulateConcreteInversePatches`, and `computeStructuralInversePatches`.
-  - **Extracted module & dependency direction:** `project-history-patch-algebra.ts` (pure functions
-    over patches, mementos, and scalar records, with no back-import to `project-history.ts`) →
-    `project-history.ts`.
-  - **Canonical state owner:** `ProjectSession` and `ProjectHistory` remain sole owners of project
-    and undo/redo state.
-  - **Lowest practical test seam:** `project-history.test.ts`, `project-history-roundtrip.test.ts`,
-    and `global-project-history.integration.test.ts`.
-  - **Rollback boundary:** restore pure algebra helpers inline into `project-history.ts` and
-    remove `project-history-patch-algebra.ts`.
-- **Seam 3B (`packages/blue-app/src/renderer/stores/project-store.ts`):**
-  - **Façade:** `project-store.ts` remains the Zustand store owner, patch queue owner, and
-    cross-domain coordinator (`renameLayer` → mixer, mixer channel rename → track,
-    `updateAssignment` → mixer, and `blueLiveGridStructureVersion` via `onGridStructureChanged`).
-  - **Extracted modules & dependency direction:** `renderer/stores/project-store/mixer-snapshot-reducer.ts`
-    (with `{ createId }` seam), `score-snapshot-reducer.ts` (with `{ now }` seam), and
-    `orchestra-snapshot-reducer.ts` (with `onGridStructureChanged` callback for Blue Live grid
-    mutations) → `project-store.ts`.
-  - **Canonical state owner:** transient renderer snapshots remain owned by `useProjectStore`;
-    committed project state remains owned by main-process `BlueData`.
-  - **Lowest practical test seam:** `project-store-optimistic-reducers.test.ts` (structural sharing,
-    deterministic ID/clock seams, cross-domain coordination), `project-store.test.ts`,
-    `bsb-undo-regression.test.tsx`, and `mixer-channel-strip-isolation.test.tsx`.
-  - **Rollback boundary:** each reducer family (`mixer`, `score`, `orchestra`) is independently
-    revertible.
-
-### Wave 4 — `main.ts` host coordinators
-
-- **Façade & IPC/Runtime Invariants:** `main.ts` retains the `132` domain channel registrations
-  (`130` `ipcRegistration.handle`/`on` calls expanding to `132` channels), `javaScriptSession`,
-  `lastProjectOnLoadState`, `runProjectOnLoad`, `ensureJavaRuntimeSession`, and
-  `disposeJavaRuntimeSession`. The remaining `81` of the `213` total inbound IPC registrations
-  are registered across the 5 separate registrar modules (`unified-library/ipc.ts`,
-  `code-repository/ipc.ts`, `blueshare/ipc.ts`, `workbench-window-host.ts`, and
-  `midi-input-coordinator.ts`).
-- **Extracted modules & dependency direction:**
-  - `main/repl-console-coordinator.ts` (REPL queue and open/evaluate/reinitialize commands via
-    narrow callbacks).
-  - `main/render-freeze-coordinator.ts` (render/freeze operation state, `createCsoundExecutionSeam`,
-    `handleRenderToDisk`, `handleFreezeScoreObjects`, `handleCancelRenderOperation`, external output
-    command launch; audited in `csound-runtime-boundary.test.ts`).
-  - `main/secondary-editor-coordinator.ts` (Effect and Track Instrument editor snapshot/patch
-    coordination, removed-target window closing, and secondary-window history snapshot projection).
-- **Lowest practical test seam:** `main-process-ipc-inventory.test.ts` (213 total registrations:
-  132 domain channels from `main.ts` plus 81 across the 5 separate registrar modules),
-  `csound-runtime-boundary.test.ts`, `repl-console-runtime.test.ts`, `render-to-disk.test.ts`,
-  `freeze-score-objects.test.ts`, and `project-history.test.ts`.
-- **Rollback boundary:** each coordinator factory (`repl-console-coordinator.ts`,
-  `render-freeze-coordinator.ts`, `secondary-editor-coordinator.ts`) is independently revertible.
-
-### Wave 5 — Guarded renderer UI extractions
-
-- **Seam 5A (`ScoreTimeCanvas.tsx`):**
-  - **Extracted modules:** `score-time-canvas-geometry.ts` (pure color/geometry/hit-testing helpers)
-    and `ScoreTimeCanvasContextMenus.tsx` (`ObjectContextMenu`, `EmptyAreaContextMenu`) →
-    `ScoreTimeCanvas.tsx`.
-  - **Sanctioned boundary rule:** `ScoreTimeCanvas`'s exact authored-duration `findItemOnLayer`
-    remains intentionally distinct from `score-timeline-gesture-utils.ts`'s 4px minimum hit width
-    (`findTimelineItemAtX`); both contracts are pinned in `score-time-canvas-geometry.test.ts`.
-  - **Lowest practical test seam:** `score-time-canvas-geometry.test.ts` and
-    `score-time-canvas-cross-group.test.tsx`.
-- **Seam 5B (`TrackerScoreObjectEditor.tsx`):**
-  - **Extracted module:** `tracker-editor-utils.ts` (pure column, pitch, Scala scale parsing, and
-    formatting helpers) → `TrackerScoreObjectEditor.tsx` (which retains `TRACKER_FIELD_CLASS`,
-    `TRACKER_MONO_FIELD_CLASS`, virtualized grid state, and focus traversal).
-  - **Lowest practical test seam:** `tracker-score-object-editor-keyboard.test.tsx`,
-    `score-object-editor-panel.test.tsx`, `tracker-field-classes.test.tsx`, and
-    `number-input-inventory.test.ts`.
+- `project-store.ts` owns the optimistic snapshot and coordinates cross-domain
+  projections. Use one patch queue for commit ordering, acknowledgements, and
+  session fences. Keep domain reducers independent of the Zustand store and
+  preload I/O. Inject clocks or ID creation at the specific call sites that
+  need deterministic tests. Check [reducers](../packages/blue-app/src/renderer/tests/project-store-optimistic-reducers.test.ts)
+  and [queue behavior](../packages/blue-app/src/renderer/tests/project-patch-queue.test.ts)
+  at their own seams.
+- Keep live workbench layout in the workbench store and persisted layout behind
+  the main-owned layout envelope. Keep the layout model and migrations free of
+  Dockview and DOM dependencies. Apply the [tree drag and drop contract](tree-drag-and-drop.md)
+  when a runtime transition moves a panel between documents.
+- Keep score hit-testing and geometry separate from React gesture ownership.
+  Preserve the distinction between authored-duration lookup and the minimum
+  pointer hit width covered by the
+  [timeline geometry tests](../packages/blue-app/src/renderer/tests/score-time-canvas-geometry.test.ts).
+  Apply the [popout conventions](popout-popup-conventions.md) to extracted menus.
+  Keep track-grid virtualization and focus ownership in the Tracker editor,
+  separate from pitch, scale, and formatting helpers.

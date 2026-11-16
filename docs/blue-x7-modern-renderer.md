@@ -1,19 +1,18 @@
 # BlueX7 Modern Renderer
 
-BlueX7 projects now render through Blue's maintained modern six-operator FM
-module. This is an intentional sonic migration: project voice data remains
-canonical and lossless, while new renders are not expected to null against the
-legacy Pinkston/PCM implementation.
+BlueX7 renders through Blue's maintained modern six-operator FM module.
+Preserve supported project voice data across edits and saves. Use the modern
+module's synthesis contract and fixtures for audio comparisons.
 
 ## Project compatibility
 
-Java-created BlueX7 XML remains supported in its established element order and
-with its established defaults. Unknown attributes, nodes, and extra envelope
-points are preserved when a project is saved again. A first save adds a
-`parameterList` containing 151 stable automation Parameters. Java Blue does not
-write that metadata, so Java cannot preserve Blue Electron Parameter IDs,
-curves, colors, enabled state, or Track automation assignments after it edits
-and saves the same project.
+Load supported Java-created voices under the
+[XML compatibility contract](../specs/116-xml-compatibility-contracts/contracts/xml-loading.md).
+The loader requires a complete voice and rejects unknown attributes, unknown
+nodes, and extra envelope points. Saving writes a `parameterList` containing
+151 stable automation parameters. Java Blue omits this metadata on save, so a
+Java round trip loses Blue 3 parameter IDs, curves, colors, enabled states, and
+Track automation assignments.
 
 Copy, paste, library insertion, and Track assignment create a new ownership
 boundary and therefore regenerate Parameter IDs while retaining eligible
@@ -38,9 +37,8 @@ state; it does not allocate a 126-slot live operator projection. No live
 ftable/table publication or Parameter `chnget` path is used.
 
 Output uses the fixed calibration factor
-`giBlueX7OutputCalibration = 0.75`. The checked algorithm corpus stays finite
-and below the 0.9 target peak; this calibration is deliberately global rather
-than voice-dependent normalization.
+`giBlueX7OutputCalibration = 0.75`. Keep calibration global. The algorithm
+corpus must remain finite and below the 0.9 target peak.
 
 The following differences from the legacy implementation are accepted and
 documented rather than treated as regressions:

@@ -179,7 +179,7 @@ These are counting relationships, not borrowed source code.
 
 ## License compatibility
 
-The repository's [LICENSING.md](../LICENSING.md) is decisive:
+The repository's [licensing policy](../../LICENSING.md) governs source reuse.
 
 | Location/source                              | Verified license                                        | Consequence                                                                                                                    |
 | -------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |

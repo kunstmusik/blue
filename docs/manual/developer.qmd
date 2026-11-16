@@ -6,8 +6,8 @@ and a native Blue Engine. The archived Java manual's Maven and
 NetBeans-module instructions apply to the older application, not this
 repository.
 
-Install Node.js 22 or newer and pnpm 12.8.1, matching the repository's
-`packageManager` version and CI setup. App source builds also
+Install Node.js 22 or newer and the pnpm version pinned in the root
+`package.json` `packageManager` field. App source builds also
 need Java 17 or newer, Maven 3 or newer, CMake 3.21 or newer, and a C/C++
 toolchain. The native build bootstraps the repository's pinned vcpkg revision.
 Install Quarto to build the manual. Csound 7 is required for playback and
@@ -81,6 +81,9 @@ Blue 3 does not expose the Java application's NetBeans RCP plugin APIs.
 When extending a SoundObject, instrument, Note Processor, or widget, follow
 the extension type's model registration and serialization paths, its editor
 contract, and the ProjectHistory path for user edits. Extend CSD generation
-or note processing where that feature requires it. Preserve unknown `.blue`
-data and compare Java behavior for compatibility changes. Feature-specific
+or note processing where that feature requires it. For compatibility changes,
+consult Java behavior and the repository's XML loading contract. Load supported
+data, migrate documented historical forms, and diagnose unexpected content.
+Reject unexpected input unless the contract defines a safe recovery. See
+`docs/README.md` in the source checkout for maintainer guides. Feature-specific
 requirements and validation belong in `specs/`.

@@ -1,9 +1,9 @@
 # Waveform data handling
 
-This change addresses findings 1 and 2 of the October 28, 2026 Electron memory
-audit: unbounded score waveform retention and repeated whole-file audio work.
-It changes disposable display data only; project models, XML, history, audio
-playback, fades, offsets, and looping remain owned by their existing paths.
+Waveform summaries are disposable renderer display data. Project models, XML,
+history, audio playback, fades, offsets, and looping keep their existing owners.
+
+## Renderer ownership
 
 The renderer waveform cache is a string-keyed Map of WeakRef values, with no
 entry-count or byte budget. Mounted views strongly own their current waveform
@@ -26,10 +26,10 @@ work for that entry.
 The player and score share one serialized waveform loading queue per renderer.
 Only the running job holds file bytes or decoded PCM. Jobs check cancellation
 before reading, after reading, and after decoding; an already running browser
-decode cannot be interrupted, but its obsolete result is discarded. Contexts
-close before the next job starts. Fresh IPC-owned ArrayBuffers go directly to
-the decoder, which may detach them; cached models and shared caller buffers
-are not passed in.
+decode can finish after cancellation, in which case the queue discards its
+result. Jobs reuse one live AudioContext in the renderer. Clearing the waveform
+cache releases the shared context. A later decode creates a new one. Pass fresh
+IPC-owned ArrayBuffers to the decoder because decoding may detach them.
 
 The player reads and decodes a selected file once to build an overview with at
 most 2,048 min/max buckets per channel. Resizing redraws that summary without
@@ -39,6 +39,8 @@ resolution; score waveforms retain their existing resolution-dependent sample
 summaries and channel geometry. The player displays the first channel as before.
 Uncompressed AIFF uses the existing PCM summarizer when browser codecs cannot
 decode it.
+
+## Metadata and filesystem boundary
 
 Main exposes typed, read-only `get-audio-file-metadata` IPC through the existing
 project-document registrar and preload bridge. It uses the existing host path
@@ -50,7 +52,9 @@ filesystem paths are passed unchanged. The player gets metadata independently
 of waveform success; the score duration cache uses header metadata instead of
 requesting all audio bytes and retains at most 256 durations.
 
-Java behavior was consulted at revision
+## Compatibility and provenance
+
+The Java behavior reference is revision
 `3ca3f40579c48a023299a68130d8ab6b9e950974`, in
 `blue-ui-utilities/.../audio/AudioWaveformCache.java`,
 `AudioWaveformCacheGenerator.java`, `AudioWaveformUI.java`, and
@@ -59,9 +63,7 @@ queued analysis, resolution-dependent score summaries, and header-based metadata
 The TypeScript weak-value cache and fixed player overview are intentional
 host/UI implementation choices. No Java source was copied or translated.
 
-All additions are original within the application's existing GPL-3.0-or-later
-scope. Existing MIT data APIs are reused through imports. No new dependency,
-third-party source, asset, or generated table is incorporated.
+## Validation
 
 Correctness tests use read/decode counts, strongly owned summaries, simulated
 collected values and delayed finalization, synthetic large files, exact
@@ -78,21 +80,3 @@ multichannel lanes, fades, source offsets, and looping still render correctly.
 Repeat on Windows CI/native Windows; synthetic-path checks do not replace that
 platform run. Any before/after speed or resident-memory measurements must follow
 `docs/performance-testing.md` on a controlled reference machine.
-
-## Verification on October 29, 2026
-
-- Workspace correctness validation passed for data/Java/client/CLI, native unit
-  tests, and script checks. The final weak-value cache change passed the full app
-  suite: 539 test files, 5,834 passed tests, and 15 skipped. Engine-dependent tests
-  used the existing verified native engine through `BLUE_ENGINE_PATH`.
-- `pnpm lint`, renderer type checking, main/preload builds, the production
-  renderer build, and `git diff --check` passed.
-- An Electron 44.5.1 smoke check on macOS loaded a one-second stereo 44.1 kHz WAV,
-  verified header metadata through IPC, and counted exactly one browser decode
-  after opening the file and resizing the native window three times.
-- Native Windows validation and controlled whole-app memory/speed measurements
-  were not run on this macOS host. The deterministic checks establish ownership, cache-miss recovery, and reduced
-  read/decode work, not a measured process-RAM reduction.
-- The final cache policy uses weak values without entry-count or byte limits.
-  A 200-file workload verifies reuse of all actively owned summaries; collected
-  values reload normally and delayed finalizers cannot purge newer results.

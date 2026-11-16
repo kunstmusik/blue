@@ -17,13 +17,13 @@ Dirty is `stateId !== savedStateId`. A saved token may remain known even after i
 
 - `entryId`, `documentId`, `beforeStateId`, `afterStateId`.
 - `label`, `sourceContextId`, optional `originViewId`, optional `gestureId`/stable `fieldId`.
-- `record`: `values`, compact `bsb`, or `structure` ([completed footprint audit](../../docs/project-history-audit.md)).
+- `record`: `values`, compact `bsb`, or `structure` ([completed footprint audit](history-footprint-audit.md)).
 - `selectionBefore`, `selectionAfter`: bounded stable-ID selections or text ranges for the origin; no complete workspace snapshot.
 - `retainedBytes`: conservative unique retained payload accounting, including identity metadata.
 
 `values` holds ordered typed target/field/before/after records. Target IDs are stable; resolution and expected values validate before apply. Large text values use graph text spans instead of retaining complete strings.
 
-Both `structure` and `bsb` retain reversible model-graph deltas: changed own fields, collection/text spans, editor metadata, and isolated blueprints for added/removed subgraphs. References to unchanged nodes are numeric history identities, with no retained complete BlueData roots or mutable live aliases. Replay resolves and validates targets before applying changes in place, preserving unaffected references and restoring prototypes, editor identities and aliases for recreated nodes. BSB-only preparation clones affected owners, including Sound-owned builders; other preparation may clone transient project candidates. No candidate or complete preimage/postimage survives in a completed entry or pending oversize proposal.
+Both `structure` and `bsb` retain reversible model-graph deltas: changed own fields, collection/text spans, editor metadata, and isolated blueprints for added/removed subgraphs. References to unchanged nodes are numeric history identities, with no retained complete BlueData roots or mutable live aliases. Replay resolves and validates targets before applying changes in place, preserving unaffected references and restoring prototypes, editor identities and aliases for recreated nodes. BSB-only preparation clones affected owners, including Sound-owned builders; other preparation stages affected sections or a detached candidate through its mutation adapter. No candidate or complete preimage/postimage survives in a completed entry or pending oversize proposal.
 
 Grouped deltas retain earliest preimages and final postimages. Replay patches consolidate runtime endpoint intent and bounded restart markers rather than repeated code/XML. Replay hints and metadata count in entry estimates. Genuinely added/deleted large content still consumes its actual changed payload.
 
@@ -31,7 +31,11 @@ A history entry is immutable after grouping closes. A forming group retains the 
 
 ## History state
 
-`entries`, `cursor` (number of applied retained entries, 0..length), `activeGroup`, `savedStateId`, `retainedBytes`, `limitReached`, `busy`, and command label/availability projections. New changed commit truncates redo; unchanged/rejected requests do not. Evict oldest whole entries until limits hold. One active group may retain at most one additional byte budget of baseline entry references for exact cancellation ([retention contract](../../docs/project-history-audit.md)), with shared references counted once; rollback uses the entry preimage. If a single prepared entry exceeds the byte budget, return an oversize proposal without publication. Confirmation creates the new state with empty history and unchanged saved checkpoint; cancellation changes nothing.
+`entries`, `cursor` (number of applied retained entries, 0..length), `activeGroup`, `savedStateId`, `retainedBytes`, `limitReached`, `busy`, and command label/availability projections. A changed commit truncates redo. Unchanged or rejected requests preserve redo.
+
+The [default limits](../../packages/blue-app/src/main/project-history.ts) are 200 entries and 64 MiB. Evict the oldest whole entries until both limits hold. One active group may retain at most one additional byte budget of baseline entry references for exact cancellation. Count shared references once and roll back from the entry preimage.
+
+If a single prepared entry exceeds the byte budget, return an oversize proposal before publication. Confirmation creates the new state with empty history and an unchanged saved checkpoint. Cancellation preserves the prior state.
 
 ## Prepared transaction (main only)
 

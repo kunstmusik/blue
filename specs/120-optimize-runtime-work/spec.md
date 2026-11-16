@@ -169,7 +169,7 @@ and the shared-memory conclusion misses an internal consumer.
 
    Evidence: `packages/blue-app/src/main/project-history-memento.ts:807`,
    `project-history-graph.ts:428`, `project-history.ts:2229`, `:2308`, `:2713`.
-   Existing retained-memory improvements are documented in [the history audit](../../docs/project-history-audit.md).
+   Existing retained-memory improvements are documented in [the history audit](../103-global-undo-redo/history-footprint-audit.md).
 
 2. **Dense automation repeats the same prefix search every audio cycle**
    - **What this is:** `AutomationManager::evaluate()` starts scanning at point 1 even though runtime state has a segment index.

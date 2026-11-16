@@ -117,7 +117,7 @@ Users understand the choices, and maintainers can trace calculations and code pr
 
 ### Existing Behavior & Data Compatibility
 
-- **Reference Behavior**: Java Blue's `RulerConfigDialog.java` labels 29.97 as drop while `TimeDisplayFormat.java` uses fractional elapsed seconds and clamps frames. Blue 3 inherits this and has separate ruler/transport formatter copies. Source locations and investigation are in [SMPTE Review](../../docs/smpte-timecode-review.md).
+- **Reference Behavior**: Java Blue's `RulerConfigDialog.java` labels 29.97 as drop while `TimeDisplayFormat.java` uses fractional elapsed seconds and clamps frames. Blue 3 inherits this and has separate ruler/transport formatter copies. Source locations and investigation are in [SMPTE Review](timecode-review.md).
 - **Compatibility Requirements**: Load supported Java `.blue` projects; preserve numeric selector values, stored timing, identities, and unrelated XML. Java need not preserve the new mode extension. Projects lacking explicit mode use NDF. Planning must inspect unsupported historical string recovery and MUST NOT silently convert `30df` to 29.97.
 - **Intentional Divergences**: Replace clock-plus-fraction conversion with physical-frame timecode, allow valid final-frame labels, and offer real DF. These corrections fulfill the requested industry alignment. Stored timing remains unchanged; labels and newly entered text acquire corrected meanings. The plan must trace these divergences and validation.
 - **State Ownership**: Active `BlueData` owns effective project format, persisted in canonical `.blue` XML. Derived contexts/snapshots consume it. App preferences own new-project defaults only. Playback telemetry remains transient runtime state.

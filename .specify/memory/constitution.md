@@ -344,7 +344,7 @@ discarded slow samples MUST NOT be used to manufacture a pass.
 Legacy mixed suites not yet migrated MUST be inventoried with explicit follow-up work. Until
 that work is verified, documentation MUST describe the implemented scope and remaining timing
 coupling rather than claim that the whole workspace is separated. The current application
-and data commands, inventory, and migration record are in `docs/performance-testing.md`.
+and data commands, inventory, and measurement boundaries are in `docs/performance-testing.md`.
 
 ### Change Discipline and Validation
 Implementation MUST preserve unrelated work, keep edits surgical, and avoid speculative

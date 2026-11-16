@@ -80,7 +80,7 @@ edge/group/panel moves, merge, and popout dock-back — goes through
 - defers with `status: 'deferred'` while a participating tree drag is active,
 - fails closed with `status: 'failed'` and the previous layout when preflight
   or Dockview mutation errors occur, and
-- only an `status: 'applied'` result may replace canonical workbench state.
+- only a `status: 'applied'` result may replace canonical workbench state.
 
 The serialized workbench envelope remains version 7; drag managers, active
 drags, and transition statuses are never persisted.
@@ -101,11 +101,3 @@ selection, expansion, scroll, focus, presentation, and edge sizes; the
 coexistence suite cycles every tree surface together with the native
 Libraries tree, verifies independent managers across documents, and keeps a
 canary that fails if a raw uncoordinated Arborist tree rejoins a document.
-
-## Completion verification
-
-The final focused unit suite passed 103 tests, and the convergence browser
-suite passed all 13 tests. The affected renderer build and repository lint
-also passed. Drag managers, active drags, and transition statuses remain
-renderer-session state; no project, library, settings, or serialized layout
-data was changed.

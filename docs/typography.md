@@ -288,41 +288,7 @@ changed in the codebase:
 
 ---
 
-## 11. Initial Audit Inventory and Migration Map
-
-### Initial Baseline Counts
-
-At the start of normalization (Phase 2), the static audit detected the following unmigrated assignments across approximately 187 renderer files:
-
-| Category                                                                                                             | Initial Count | Migration Target                                    |
-| -------------------------------------------------------------------------------------------------------------------- | ------------: | --------------------------------------------------- |
-| **Legacy custom roles** (`text-nano`, `text-micro`, `text-tiny`, `text-ui`, `text-body`, `text-content`, `--text-*`) |           740 | Replace with `text-role-*` / `--text-role-*`        |
-| **Tailwind default scale** (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, etc.)                           |           297 | Replace with `text-role-*`                          |
-| **Arbitrary font sizes** (`text-[Npx]`, `[font-size:Npx]`)                                                           |            26 | Replace with `text-role-*`                          |
-| **Raw CSS font sizes** (`font-size: Npx`)                                                                            |            38 | Use `var(--text-role-*)`                            |
-| **Inline/React font sizes** (`style={{ fontSize: ... }}`)                                                            |            27 | Use `text-role-*` or `var(--text-role-*)`           |
-| **Raw SVG font sizes** (`fontSize={...}`)                                                                            |             2 | Use `text-role-*` or `var(--text-role-*)`           |
-| **Raw Canvas font literals** (`ctx.font = '...'`)                                                                    |             1 | Use `resolveTypographyRoleFont(el, role)`           |
-| **Unapproved line-height overrides** (`leading-*`)                                                                   |            34 | Remove or use companion line height                 |
-| **Application text below 11 px floor**                                                                               |           160 | Eliminate; elevate to Subheadline (11 px) or higher |
-
-### Migration Map by Surface
-
-| Surface Group                       | Key Components / Files                                                                                                                 | Semantic Role Target                                                                           | Notes                                                                                       |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **Main Shell & Toolbar**            | `App.tsx`, `MainToolbar.tsx`, `PlaybackControls.tsx`, `ToolbarDisplays.tsx`, `ToolbarBlueLive.tsx`                                     | Body (13/16), Callout (12/15), Headline (13/16 bold)                                           | Keep monospaced playhead/selection readouts at Body/Callout                                 |
-| **Settings & Secondary Windows**    | `SettingsApp.tsx`, `SettingsSection.tsx`, `SettingsField.tsx`, `AboutApp.tsx`, `EffectEditorPage.tsx`, `TrackInstrumentEditorPage.tsx` | Title 2 (17/22), Title 3 (15/20), Body (13/16), Callout (12/15)                                | Form controls inherit Body baseline                                                         |
-| **Libraries & Dialogs**             | `LibraryBreadcrumbs.tsx`, `LibraryTree.tsx`, `LibrarySearchBar.tsx`, `ErrorBoundary.tsx`, `ColorPicker.tsx`                            | Body (13/16), Callout (12/15), Title 3 (15/20)                                                 | Breadcrumbs and search bar use Body                                                         |
-| **Workbench & Panels**              | `WorkbenchShell.tsx`, `DockviewPanel.tsx`, `AuxiliaryRail.tsx`, `AuxiliarySlideout.tsx`, `ReplConsolePanel.tsx`, `OutputPanel.tsx`     | Title 3 (15/20), Headline (13/16 bold), Body (13/16)                                           | Dockview tabs use Body (13/16); output/repl use Body monospaced                             |
-| **Mixer**                           | `MixerPanel.tsx`, `ChannelStrip.tsx`, `EffectsChainContextMenu.tsx`                                                                    | Subheadline (11/14) for meters/faders/bus labels; Callout/Body for channel names and selectors | Adjust channel strip row heights for 11–13 px text                                          |
-| **Piano Roll & Score**              | `PitchHeader.tsx`, `TimeBar.tsx`, `FieldEditor.tsx`, `ColumnHeader.tsx`, `PatternLayerHeader.tsx`, `ScoreTimeCanvas.tsx`               | Subheadline (11/14) for pitch names, ruler marks, time marks; Callout/Body for headers         | Selective pitch label display on smallest rows                                              |
-| **Line Editors & Automation**       | `EditableLineCanvas.tsx`, `AutomationLineView.tsx`, `LineDefinitionTable.tsx`, `TableEditor.tsx`                                       | Subheadline (11/14) via `resolveTypographyRoleFont`                                            | Canvas/SVG text resolves `--text-role-subheadline`                                          |
-| **BlueX7 & Specialized Tools**      | `blue-x7-editor.tsx`, `operator-panel.tsx`, `envelope-editor.tsx`, `SoundFontViewerPanel.tsx`, `TrackerScoreObjectEditor.tsx`          | Title 3, Headline, Callout, Subheadline                                                        | Preserve monospaced tracker cells; operator grid uses Callout                               |
-| **Blue Synth Builder (BSB) Chrome** | `BSBPropertySheet.tsx`, `FontChooserDialog.tsx`, `ValuePanel.tsx`, `BSBXYControllerWidget.tsx`, `WidgetWrapper.tsx`                    | Title 3, Headline, Body, Callout                                                               | **BSB application chrome is not exempt.** Only user-authored widget font data is preserved. |
-
----
-
-## 12. Exception Registry
+## 11. Exception Registry
 
 <!-- renderer-typography-exceptions:start -->
 

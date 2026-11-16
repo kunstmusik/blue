@@ -100,10 +100,9 @@ All these budgets remain separate from ordinary test timeouts, which prevent han
 Deterministic work-count/render-count guards, fake-clock debounce/grouping tests,
 and audio sample/duration/output equivalence remain in correctness testing.
 
-The redundant mock-engine command-to-failure <1 s assertion was removed from the
-functional test: its timing boundary did not represent the specification's
-failure-determination-to-visible-error requirement. Failure outcomes and canonical
-commit preservation remain asserted, and the browser reporting budget remains.
+Keep engine failure outcomes and canonical commit preservation in correctness
+tests. For reporting latency, measure from failure determination to the relevant
+renderer reporting boundary and state whether the measurement includes painting.
 
 ## Results and interpretation
 
@@ -140,7 +139,7 @@ lower-level measurements aid diagnosis and do not replace it. Follow-up measurem
 work should address the remaining boundaries above, representative disk workloads,
 and controlled platform baselines before selecting tight blocking gates.
 
-## Paired meter comparison (SC-003)
+## Paired meter comparison
 
 Each fresh process collects four fixed pairs in AB, BA, AB, BA order, where A is
 non-metering baseline and B is the metered fixture. Both phases mount the same
@@ -209,39 +208,20 @@ not replace a passing measurement on controlled reference hardware. Performance
 collection is not a required branch check; this change does not modify GitHub
 branch protection or product performance budgets.
 
-## Data separation verification
+## Data measurement boundaries
 
-`packages/blue-data/tests/integration/performance-benchmark.test.ts` now defines
-four shared workloads, each registered as correctness and tagged measurement cases.
-The normal suite exercises loading, CSD generation, cloning, saving, and reloading
-without reading the measurement clock or enforcing elapsed-time budgets. The opt-in
-suite records the same seven operation boundaries and preserves their budgets.
+The data suite shares workloads between default correctness tests and opt-in
+measurements. Preserve the model, count, CSD, clone, and XML round-trip
+assertions in the default suite. Timed cases measure load, generation, save,
+and the large fixture's build, clone, save, and load as separate observations.
 
-- [x] Preserve all four workloads' model, count, CSD, clone, and XML round-trip
-      assertions in default data correctness tests.
-- [x] Select four tagged cases only with `pnpm --filter @blue/data test:performance`;
-      normal selection runs four correctness cases and filters all four speed cases.
-- [x] Collect three fresh processes, four measurement cases and seven raw timing
-      observations per successful round (21 observations total), with package/revision
-      and environment metadata. Missing timings cannot produce a passing collection;
-      failed rounds retain observations recorded before the failure.
+These are cold observations per process after module and fixture setup.
+Exclude intervening correctness assertions from the operation boundary.
+Use the controlled reference configuration for acceptance. These measurements
+cover model work, while painted UI, engine, and audible latency require their
+own measurements.
 
-Data operations are cold/single observations after module/fixture setup, without
-warmup or a statistical baseline comparison. Three such samples do not establish a
-tail-latency distribution. The large fixture's build/clone/save/load boundaries are
-measured independently, excluding its intervening correctness assertions. These
-component measurements do not establish painted UI, engine, or audible latency.
-Use the controlled reference configuration described above for acceptance.
-
-## License and provenance
-
-Application and workspace-runner changes remain in the existing GPL-3.0-or-later
-scope; the runner moved from app scripts to repository scripts within that scope.
-Data test/configuration additions are original within the data package's MIT scope.
-Existing Vitest and Playwright dependencies are reused;
-no new dependency or third-party source implementation is incorporated.
-Documentation additions are original within their existing scopes; the developer
-manual chapter retains its GFDL 1.3 license.
+## External engine test runtime
 
 The engine CI job downloads the official
 [Csound 7.0.0 Linux minimal runtime](https://github.com/csound/csound/releases/tag/7.0.0)

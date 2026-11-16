@@ -140,7 +140,7 @@ documented migrations, with diagnostics for unexpected input. Java Blue is
 not required to read Blue 3 extensions. See the
 [project constitution](.specify/memory/constitution.md) for the governing
 compatibility and ownership rules, and
-[repository history](docs/repository-history.md) for the Java/TypeScript
+[repository history](REPOSITORY_HISTORY.md) for the Java/TypeScript
 repository transition.
 
 ## Contributing
@@ -149,6 +149,8 @@ Read [AGENTS.md](AGENTS.md), the
 [project constitution](.specify/memory/constitution.md), and
 [licensing guidance](LICENSING.md) before making changes. Features use a
 specification → plan → tasks → implementation workflow under `specs/`.
+Use the [maintainer documentation index](docs/README.md) to find current
+architecture, renderer, testing, and release guidance.
 For behavior, rendering, or serialization changes, consult the Java reference
 and add focused regression coverage. Larger module changes follow the
 [modularization guide](docs/modularization.md).
