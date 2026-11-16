@@ -1,6 +1,6 @@
 import { createFrameSnapContext } from '../snap-grid-utils';
 import type { TempoMapSnapshot } from '../../../../../../shared/project-editor';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type {
   AutomationParameterSnapshot,
   AutomationPointSnapshot,
@@ -94,7 +94,7 @@ const EDGE_THRESHOLD_PX = 6;
 /** Hit-test tolerance (screen px) for hovering a point to show its readout. */
 const HOVER_THRESHOLD_PX = 6;
 
-export default function AutomationLayerOverlay({
+function AutomationLayerOverlay({
   automation,
   pixelsPerBeat,
   visibleStartBeats,
@@ -1057,3 +1057,5 @@ function computeRangeScale(
   }
   return { anchorBeat: drag.anchorBeat, scaleFactor: 1 };
 }
+
+export default memo(AutomationLayerOverlay);

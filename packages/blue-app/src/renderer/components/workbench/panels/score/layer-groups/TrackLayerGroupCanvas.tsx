@@ -299,6 +299,16 @@ export default function TrackLayerGroupCanvas({
   const captureScoreSoundObject = useLibraryStore((state) => state.captureScoreSoundObject);
   const applyProjectDocumentPatch = useProjectStore((state) => state.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((state) => state.flushPendingPatches);
+  const commitAutomationPatch = useCallback(
+    async (patch: ScoreAutomationPatch, metadata?: ProjectDocumentCommitMetadata) => {
+      await applyProjectDocumentPatch(
+        { score: patch },
+        metadata ?? { label: 'Edit Score Automation' },
+      );
+      await flushPendingPatches();
+    },
+    [applyProjectDocumentPatch, flushPendingPatches],
+  );
   const moveScoreObjects = useProjectStore((state) => state.moveScoreObjects);
   const resizeScoreObjects = useProjectStore((state) => state.resizeScoreObjects);
   const setAudioClipEditorPreview = useProjectStore((state) => state.setAudioClipEditorPreview);
@@ -2219,18 +2229,7 @@ export default function TrackLayerGroupCanvas({
                     tempoMap={tempoMap}
                     smpteFrameRate={smpteFrameRate}
                     mode={mode}
-                    onPatch={(
-                      patch: ScoreAutomationPatch,
-                      metadata?: ProjectDocumentCommitMetadata,
-                    ) => {
-                      void (async () => {
-                        await applyProjectDocumentPatch(
-                          { score: patch },
-                          metadata ?? { label: 'Edit Score Automation' },
-                        );
-                        await flushPendingPatches();
-                      })();
-                    }}
+                    onPatch={commitAutomationPatch}
                   />
                 )}
               </div>

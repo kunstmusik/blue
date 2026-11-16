@@ -349,6 +349,16 @@ export default function ScoreTimeCanvas({
   const clipboard = useScoreSelectionStore((s) => s.clipboard);
   const applyProjectDocumentPatch = useProjectStore((s) => s.applyProjectDocumentPatch);
   const flushPendingPatches = useProjectStore((s) => s.flushPendingPatches);
+  const commitAutomationPatch = useCallback(
+    async (patch: ScoreAutomationPatch, metadata?: ProjectDocumentCommitMetadata) => {
+      await applyProjectDocumentPatch(
+        { score: patch },
+        metadata ?? { label: 'Edit Score Automation' },
+      );
+      await flushPendingPatches();
+    },
+    [applyProjectDocumentPatch, flushPendingPatches],
+  );
   const openPanel = useWorkbenchStore((s) => s.openPanel);
   const moveScoreObjects = useProjectStore((s) => s.moveScoreObjects);
   const [showShiftDialog, setShowShiftDialog] = useState(false);
@@ -2449,18 +2459,7 @@ export default function ScoreTimeCanvas({
                     tempoMap={tempoMap}
                     smpteFrameRate={smpteFrameRate}
                     mode={mode}
-                    onPatch={(
-                      patch: ScoreAutomationPatch,
-                      metadata?: ProjectDocumentCommitMetadata,
-                    ) => {
-                      void (async () => {
-                        await applyProjectDocumentPatch(
-                          { score: patch },
-                          metadata ?? { label: 'Edit Score Automation' },
-                        );
-                        await flushPendingPatches();
-                      })();
-                    }}
+                    onPatch={commitAutomationPatch}
                   />
                 )}
               </div>
