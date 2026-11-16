@@ -3,7 +3,6 @@ import { memo, useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import ShiftObjectsDialog from '../ShiftObjectsDialog';
 import { ConfirmationDialog } from '../../../../dialogs/ConfirmationDialog';
-import { ChevronRight } from 'lucide-react';
 import type {
   PolyObjectLayerGroupSnapshot,
   ScoreLayerGroupSnapshot,
@@ -12,6 +11,15 @@ import type {
   ScoreRowObjectSnapshot,
 } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
+import {
+  buildGlobalLayerData,
+  findItemOnLayer,
+  findLayerAtY,
+  getGlobalLayerIndexForY,
+  getLayerAdjustBounds,
+  sameTarget,
+} from './score-time-canvas-geometry';
+import { EmptyAreaContextMenu, ObjectContextMenu } from './ScoreTimeCanvasContextMenus';
 import { RenderBar } from '../bar-renderers/renderer-registry';
 import {
   useScoreSelectionStore,
@@ -44,7 +52,6 @@ import {
   portalEventIsolationProps,
 } from '../../../../../hooks/host-portals';
 import { isTextEditingTarget } from '../../../../../hooks/use-keyboard-shortcuts';
-import { cn } from '../../../../../lib/cn';
 import { useFreezeOperationStore } from '../../../../../stores/freeze-operation-store';
 import { snapValueToBeats } from '@blue/data';
 import type { SnapValueName } from '@blue/data';
@@ -65,7 +72,6 @@ import {
   layerGroupAcceptsObjectType,
   readScoreEntryXml,
   translateClipboardEntriesForPaste,
-  type ScorePasteObject,
 } from './score-clipboard-utils';
 import {
   BLUE_LIBRARY_DRAG_MIME,
@@ -104,194 +110,6 @@ interface Props {
   onDoubleClickObject?: ScoreObjectDoubleClick;
 }
 
-function argbToRGB(argb: number): number {
-  return argb & 0x00ffffff;
-}
-
-function rgbToCSS(rgb: number): string {
-  return `#${rgb.toString(16).padStart(6, '0')}`;
-}
-
-function colorToCSS(argb: number): string {
-  return rgbToCSS(argbToRGB(argb));
-}
-
-function brighten(rgb: number, factor: number): number {
-  const r = Math.min(255, Math.round(((rgb >> 16) & 0xff) * factor));
-  const g = Math.min(255, Math.round(((rgb >> 8) & 0xff) * factor));
-  const b = Math.min(255, Math.round((rgb & 0xff) * factor));
-  return (r << 16) | (g << 8) | b;
-}
-
-function darken(rgb: number, factor: number): number {
-  const r = Math.max(0, Math.round(((rgb >> 16) & 0xff) * factor));
-  const g = Math.max(0, Math.round(((rgb >> 8) & 0xff) * factor));
-  const b = Math.max(0, Math.round((rgb & 0xff) * factor));
-  return (r << 16) | (g << 8) | b;
-}
-
-function textColorForBackground(argb: number): string {
-  const r = (argb >> 16) & 0xff;
-  const g = (argb >> 8) & 0xff;
-  const b = argb & 0xff;
-  return r + g + b > 128 * 3 ? '#000000' : '#ffffff';
-}
-
-function findItemOnLayer(layer: ScoreLayerSnapshot, xBeats: number): ScoreRowObjectSnapshot | null {
-  for (let i = layer.items.length - 1; i >= 0; i--) {
-    const item = layer.items[i];
-    if (xBeats >= item.startBeats && xBeats <= item.startBeats + item.durationBeats) {
-      return item;
-    }
-  }
-  return null;
-}
-
-function findLayerAtY(
-  layers: ScoreLayerSnapshot[],
-  localY: number,
-): { layer: ScoreLayerSnapshot; index: number; yOffset: number } | null {
-  let yOff = 0;
-  for (let i = 0; i < layers.length; i++) {
-    const h = layers[i].height || DEFAULT_ROW_HEIGHT;
-    if (localY >= yOff && localY < yOff + h) {
-      return { layer: layers[i], index: i, yOffset: yOff };
-    }
-    yOff += h;
-  }
-  return null;
-}
-
-function buildGlobalLayerData(layerGroups: ScoreLayerGroupSnapshot[]): {
-  layerMap: Array<{ groupId: string; localIndex: number; acceptsScoreObject: boolean }>;
-  groupStartIndexById: Map<string, number>;
-  groupYOffsetById: Map<string, number>;
-} {
-  const layerMap: Array<{ groupId: string; localIndex: number; acceptsScoreObject: boolean }> = [];
-  const groupStartIndexById = new Map<string, number>();
-  const groupYOffsetById = new Map<string, number>();
-
-  let yOff = 0;
-  for (const group of layerGroups) {
-    groupStartIndexById.set(group.groupId, layerMap.length);
-    groupYOffsetById.set(group.groupId, yOff);
-
-    const acceptsScoreObject = group.groupType === 'polyObject';
-    for (let li = 0; li < group.layers.length; li++) {
-      const h = group.layers[li].height || DEFAULT_ROW_HEIGHT;
-      layerMap.push({ groupId: group.groupId, localIndex: li, acceptsScoreObject });
-      yOff += h;
-    }
-
-    yOff += GROUP_SPACER;
-  }
-
-  return { layerMap, groupStartIndexById, groupYOffsetById };
-}
-
-function getGlobalLayerIndexForY(layerGroups: ScoreLayerGroupSnapshot[], y: number): number {
-  let runningY = 0;
-  let runningIndex = 0;
-  const totalLayers = layerGroups.reduce((sum, group) => sum + group.layers.length, 0);
-
-  for (const group of layerGroups) {
-    for (const layer of group.layers) {
-      const h = layer.height || DEFAULT_ROW_HEIGHT;
-      if (y <= runningY + h) {
-        return runningIndex;
-      }
-      runningY += h;
-      runningIndex += 1;
-    }
-
-    if (runningIndex < totalLayers && y <= runningY + GROUP_SPACER) {
-      return runningIndex;
-    }
-
-    runningY += GROUP_SPACER;
-  }
-
-  return Math.max(totalLayers - 1, 0);
-}
-
-function getLayerAdjustBounds(
-  layerMap: Array<{ acceptsScoreObject: boolean }>,
-  startLayerIndex: number,
-): { min: number; max: number } {
-  let min = -startLayerIndex;
-  for (let i = startLayerIndex - 1; i >= 0; i--) {
-    if (layerMap[i].acceptsScoreObject) {
-      continue;
-    }
-    min = i + 1 - startLayerIndex;
-    break;
-  }
-
-  let max = layerMap.length - 1 - startLayerIndex;
-  for (let i = startLayerIndex + 1; i < layerMap.length; i++) {
-    if (layerMap[i].acceptsScoreObject) {
-      continue;
-    }
-    max = i - 1 - startLayerIndex;
-    break;
-  }
-
-  return { min, max };
-}
-
-function collectAllItemSelectionEntries(
-  group: PolyObjectLayerGroupSnapshot,
-): Array<{ objectId: string; editorTarget?: ScoreObjectEditorTargetSnapshot }> {
-  const entries: Array<{ objectId: string; editorTarget?: ScoreObjectEditorTargetSnapshot }> = [];
-  for (const layer of group.layers) {
-    for (const item of layer.items) {
-      entries.push({ objectId: item.objectId, editorTarget: item.editorTarget });
-    }
-  }
-  return entries;
-}
-
-function sameLocation(
-  a: ScoreObjectEditorTargetSnapshot['location'] | undefined,
-  b: ScoreObjectEditorTargetSnapshot['location'] | undefined,
-): boolean {
-  if (!a || !b) return false;
-  if (a.rootGroupIndex !== b.rootGroupIndex) return false;
-  if (a.layerIndex !== b.layerIndex || a.objectIndex !== b.objectIndex) return false;
-  if (a.containerPath.length !== b.containerPath.length) return false;
-  for (let i = 0; i < a.containerPath.length; i++) {
-    const segmentA = a.containerPath[i];
-    const segmentB = b.containerPath[i];
-    if (
-      segmentA.layerIndex !== segmentB.layerIndex ||
-      segmentA.objectIndex !== segmentB.objectIndex
-    ) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function sameTarget(
-  a: ScoreObjectEditorTargetSnapshot | null | undefined,
-  b: ScoreObjectEditorTargetSnapshot | null | undefined,
-): boolean {
-  if (!a || !b) return false;
-  if (a.selectedObjectType !== b.selectedObjectType || a.editorObjectType !== b.editorObjectType)
-    return false;
-  if (a.ownerKind !== b.ownerKind) return false;
-  if (a.displayContext !== b.displayContext) return false;
-  if (sameLocation(a.location, b.location)) return true;
-  if (sameLocation(a.sourceInstanceLocation, b.sourceInstanceLocation)) return true;
-  if (a.library && b.library) {
-    return (
-      a.library.libraryId === b.library.libraryId &&
-      a.library.libraryIndex === b.library.libraryIndex
-    );
-  }
-  return false;
-}
-
 type GestureMode = 'none' | 'marquee' | 'move' | 'resizeLeft' | 'resizeRight';
 
 interface PendingConvertTarget {
@@ -301,7 +119,6 @@ interface PendingConvertTarget {
 }
 
 const RESIZE_EDGE_PX = 5;
-const DEFAULT_SOBJ_DURATION = 4.0;
 const MIN_SCORE_OBJECT_DURATION = 0.25;
 
 export default function ScoreTimeCanvas({
@@ -2205,10 +2022,6 @@ export default function ScoreTimeCanvas({
     return entries.length > 0 ? Math.min(...entries.map((e) => e.startBeats)) : 0;
   }, [getSelectedEntries]);
 
-  const handleSelectAll = useCallback(() => {
-    setSelection(collectAllItemSelectionEntries(group));
-  }, [group, setSelection]);
-
   const handleCanvasKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (isTextEditingTarget(e.target)) return;
@@ -2593,310 +2406,6 @@ export default function ScoreTimeCanvas({
         />
       )}
     </ContextMenu.Root>
-  );
-}
-
-function ObjectContextMenu({
-  menuItemClass,
-  subMenuClass,
-  sepClass,
-  onAlignLeft,
-  onAlignCenter,
-  onAlignRight,
-  onCopy,
-  onCut,
-  onAddToProjectSoundObjectLibrary,
-  canAddToProjectSoundObjectLibrary,
-  onRemove,
-  onFollowTheLeader,
-  onReverse,
-  onShift,
-  onSetColor,
-  onSetToLayerColor,
-  onSetSubjectiveToObjective,
-  canSetObjectiveDuration,
-  onReplaceWithBuffer,
-  canReplaceWithBuffer,
-  onFreezeUnfreeze,
-  onExport,
-  canExport,
-  onConvertToObjectBuilder,
-  canConvertToObjectBuilder,
-  onConvertToPolyObject,
-  canConvertToPolyObject,
-}: {
-  menuItemClass: string;
-  subMenuClass: string;
-  sepClass: string;
-  onAlignLeft: () => void;
-  onAlignCenter: () => void;
-  onAlignRight: () => void;
-  onCopy: () => void;
-  onCut: () => void;
-  onAddToProjectSoundObjectLibrary: () => void;
-  canAddToProjectSoundObjectLibrary: boolean;
-  onRemove: () => void;
-  onFollowTheLeader: () => void;
-  onReverse: () => void;
-  onShift: () => void;
-  onSetColor: () => void;
-  onSetToLayerColor: () => void;
-  onSetSubjectiveToObjective: () => void;
-  canSetObjectiveDuration: boolean;
-  onReplaceWithBuffer: () => void;
-  canReplaceWithBuffer: boolean;
-  onFreezeUnfreeze: () => void;
-  onExport: () => void;
-  canExport: boolean;
-  onConvertToObjectBuilder: () => void;
-  canConvertToObjectBuilder: boolean;
-  onConvertToPolyObject: () => void;
-  canConvertToPolyObject: boolean;
-}) {
-  return (
-    <>
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!canAddToProjectSoundObjectLibrary}
-        onSelect={onAddToProjectSoundObjectLibrary}
-      >
-        Add to Project SoundObjects
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={onFreezeUnfreeze}>
-        Freeze/Unfreeze ScoreObjects
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!canConvertToPolyObject}
-        onSelect={onConvertToPolyObject}
-      >
-        Convert to PolyObject
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!canConvertToObjectBuilder}
-        onSelect={onConvertToObjectBuilder}
-      >
-        Convert to ObjectBuilder
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!canReplaceWithBuffer}
-        onSelect={onReplaceWithBuffer}
-      >
-        Replace with SoundObject in Buffer
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={onFollowTheLeader}>
-        Follow the Leader
-      </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={onReverse}>
-        Reverse
-      </ContextMenu.Item>
-      <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className={cn(menuItemClass, 'editor-context-menu__subtrigger')}>
-          <span>Align</span>
-          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-        </ContextMenu.SubTrigger>
-        <PopoutContextMenuPortal>
-          <ContextMenu.SubContent className={subMenuClass} {...portalEventIsolationProps}>
-            <ContextMenu.Item className={menuItemClass} onSelect={onAlignLeft}>
-              Align Left
-            </ContextMenu.Item>
-            <ContextMenu.Item className={menuItemClass} onSelect={onAlignCenter}>
-              Align Center
-            </ContextMenu.Item>
-            <ContextMenu.Item className={menuItemClass} onSelect={onAlignRight}>
-              Align Right
-            </ContextMenu.Item>
-          </ContextMenu.SubContent>
-        </PopoutContextMenuPortal>
-      </ContextMenu.Sub>
-      <ContextMenu.Item className={menuItemClass} onSelect={onShift}>
-        Shift…
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!canSetObjectiveDuration}
-        onSelect={onSetSubjectiveToObjective}
-      >
-        Set Subjective Time to Objective Time
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={onCut}>
-        Cut<span className="float-right text-blue-muted text-role-callout ml-4">⌘X</span>
-      </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={onCopy}>
-        Copy<span className="float-right text-blue-muted text-role-callout ml-4">⌘C</span>
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={onRemove}>
-        Remove<span className="float-right text-blue-muted text-role-callout ml-4">Del</span>
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={onSetColor}>
-        Set Color…
-      </ContextMenu.Item>
-      <ContextMenu.Item className={menuItemClass} onSelect={onSetToLayerColor}>
-        Set to Layer Color
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} disabled={!canExport} onSelect={onExport}>
-        Export…
-      </ContextMenu.Item>
-    </>
-  );
-}
-
-function EmptyAreaContextMenu({
-  menuItemClass,
-  sepClass,
-  clipboard,
-  libraryClipboardAvailable,
-  libraryBsbAvailable,
-  contextMenuPos,
-  group,
-  onPaste,
-  onPasteAsPolyObject,
-  onLibraryPaste,
-  onPasteBsb,
-  snapBeatValue,
-  addScoreObjects,
-  onSelectLayer,
-  onSelectAllBefore,
-  onSelectAllAfter,
-  onImport,
-}: {
-  menuItemClass: string;
-  sepClass: string;
-  clipboard: ScoreObjectClipboardEntry[];
-  libraryClipboardAvailable: boolean;
-  libraryBsbAvailable: boolean;
-  contextMenuPos: { xBeats: number; layerIndex: number } | null;
-  group: PolyObjectLayerGroupSnapshot;
-  onPaste: () => void;
-  onPasteAsPolyObject: () => void;
-  onLibraryPaste: () => void;
-  onPasteBsb: () => void;
-  snapBeatValue: (b: number) => number;
-  addScoreObjects: (objects: ScorePasteObject[]) => void;
-  onSelectLayer: () => void;
-  onSelectAllBefore: () => void;
-  onSelectAllAfter: () => void;
-  onImport: () => void;
-}) {
-  const handleAddSobj = (typeName: string) => {
-    if (contextMenuPos == null) return;
-    const isContainer = typeName === 'PolyObject';
-    addScoreObjects([
-      {
-        layerIndex: contextMenuPos.layerIndex,
-        groupId: group.groupId,
-        name: typeName,
-        startBeats: snapBeatValue(contextMenuPos.xBeats),
-        durationBeats: DEFAULT_SOBJ_DURATION,
-        objectType: typeName,
-        isContainer,
-      },
-    ]);
-  };
-
-  const addSobjTypes = [
-    { name: 'AudioFile', pos: 10 },
-    { name: 'Comment', pos: 20 },
-    { name: 'External', pos: 30 },
-    { name: 'GenericScore', pos: 40 },
-    { name: 'JMask', pos: 50 },
-    { name: 'LineObject', pos: 60 },
-    { name: 'ObjectBuilder', pos: 70 },
-    { name: 'PatternObject', pos: 80 },
-    { name: 'PianoRoll', pos: 90 },
-    { name: 'PolyObject', pos: 100 },
-    { name: 'PythonObject', pos: 110 },
-    { name: 'JavaScriptObject', pos: 120 },
-    { name: 'Sound', pos: 130 },
-    { name: 'TrackerObject', pos: 140 },
-    { name: 'ZakLineObject', pos: 150 },
-  ];
-
-  return (
-    <>
-      <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className={cn(menuItemClass, 'editor-context-menu__subtrigger')}>
-          <span>Add SoundObject</span>
-          <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-        </ContextMenu.SubTrigger>
-        <PopoutContextMenuPortal>
-          <ContextMenu.SubContent className="editor-context-menu" {...portalEventIsolationProps}>
-            {addSobjTypes.map((t) => (
-              <ContextMenu.Item
-                key={t.name}
-                className={menuItemClass}
-                onSelect={() => handleAddSobj(t.name)}
-              >
-                {t.name}
-              </ContextMenu.Item>
-            ))}
-          </ContextMenu.SubContent>
-        </PopoutContextMenuPortal>
-      </ContextMenu.Sub>
-      <ContextMenu.Separator className={sepClass} />
-      {(libraryClipboardAvailable || libraryBsbAvailable || clipboard.length > 0) && (
-        <>
-          <ContextMenu.Item
-            className={menuItemClass}
-            disabled={!libraryClipboardAvailable && clipboard.length === 0}
-            onSelect={libraryClipboardAvailable ? onLibraryPaste : onPaste}
-          >
-            Paste<span className="float-right text-blue-muted text-role-callout ml-4">⌘V</span>
-          </ContextMenu.Item>
-          {clipboard.length > 0 && (
-            <ContextMenu.Item
-              className={menuItemClass}
-              disabled={clipboard.some((entry) => entry.objectType === 'AudioClip')}
-              onSelect={onPasteAsPolyObject}
-            >
-              Paste as PolyObject
-            </ContextMenu.Item>
-          )}
-          <ContextMenu.Item
-            className={menuItemClass}
-            disabled={!libraryBsbAvailable}
-            onSelect={onPasteBsb}
-          >
-            Paste BSB As Sound
-          </ContextMenu.Item>
-          <ContextMenu.Separator className={sepClass} />
-        </>
-      )}
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!contextMenuPos}
-        onSelect={onSelectLayer}
-      >
-        Select Layer
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!contextMenuPos}
-        onSelect={onSelectAllBefore}
-      >
-        Select All Before
-      </ContextMenu.Item>
-      <ContextMenu.Item
-        className={menuItemClass}
-        disabled={!contextMenuPos}
-        onSelect={onSelectAllAfter}
-      >
-        Select All After
-      </ContextMenu.Item>
-      <ContextMenu.Separator className={sepClass} />
-      <ContextMenu.Item className={menuItemClass} onSelect={onImport}>
-        Import…
-      </ContextMenu.Item>
-    </>
   );
 }
 
