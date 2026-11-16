@@ -406,7 +406,11 @@ import {
 } from './audio-layout-preflight';
 import { type AudioLayoutDiagnostic, type AudioLayoutErrorPayload } from '../shared/audio-layout';
 import { tokenizeCommand } from './disk-render-command';
-import { executeFreezeUnfreeze, type FreezeExecutionSeam } from './freeze-score-objects';
+import {
+  executeFreezeUnfreeze,
+  type FreezeExecutionSeam,
+  type FreezeArtifactSettlement,
+} from './freeze-score-objects';
 import { spawn } from 'child_process';
 import { BlueSynthBuilder } from '@blue/data';
 import {
@@ -1887,7 +1891,7 @@ async function handleFreezeScoreObjects(
     };
   }
 
-  const projectDirectory = getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null;
+  const projectDirectory = getCurrentProjectDirectory();
   if (!projectDirectory) {
     return {
       ok: false,
@@ -1917,6 +1921,7 @@ async function handleFreezeScoreObjects(
   const stagedProject = getCurrentData().historyCopy();
   transferProjectEditorIdentities(getCurrentData(), stagedProject);
 
+  const pendingArtifacts: { settlement?: FreezeArtifactSettlement } = {};
   try {
     const settings = loadProgramSettings();
     const seam = createCsoundExecutionSeam(cancellationSignal);
@@ -1932,6 +1937,9 @@ async function handleFreezeScoreObjects(
         utility: settings.utility,
         platform: process.platform,
         isCancelled: () => cancellationSignal.cancelled,
+        onPreparedArtifacts: (settlement) => {
+          pendingArtifacts.settlement = settlement;
+        },
         // SPEC 085: a systemic freeze failure aborts every in-flight render
         // through the shared operation controller. The user-cancellation
         // signal stays untouched so the outcome is reported as a failure,
@@ -1951,21 +1959,7 @@ async function handleFreezeScoreObjects(
       },
     );
 
-    // Fence against project replacement/closure during render execution
-    if (
-      getCurrentProjectSessionDocumentId() !== initialDocumentId ||
-      getCurrentProjectSessionId() !== initialSessionId ||
-      getCurrentProjectRevision() !== initialRevision
-    ) {
-      result.ok = false;
-      result.frozenCount = 0;
-      result.unfrozenCount = 0;
-      result.error = 'Freeze result was discarded because the project changed while rendering.';
-      return result;
-    }
-
-    // Broadcast updated project if any mutations occurred
-    if (result.frozenCount > 0 || result.unfrozenCount > 0) {
+    if (result.ok && (result.frozenCount > 0 || result.unfrozenCount > 0)) {
       const label =
         result.frozenCount > 0 && result.unfrozenCount > 0
           ? 'Freeze/Unfreeze Score Objects'
@@ -1980,17 +1974,25 @@ async function handleFreezeScoreObjects(
         expectedSessionId: initialSessionId,
         expectedRevision: initialRevision,
         proposalToken: request.historyProposalToken,
+        validateBeforeCommit: ({ filePath }) =>
+          pendingArtifacts.settlement?.validateCommit(filePath),
+        onCommitted: () => {
+          activeRenderCancellationSignal = null;
+          pendingArtifacts.settlement?.accept();
+        },
       });
       if (receipt.changed) {
         result.project = getCurrentProjectDocument();
       } else {
         result.ok = false;
+        result.cancelled = cancellationSignal.cancelled;
         result.frozenCount = 0;
         result.unfrozenCount = 0;
-        result.error =
-          receipt.oversizeProposal?.explanation ??
-          receipt.error ??
-          'Freeze result was not committed to project history.';
+        result.error = result.cancelled
+          ? null
+          : (receipt.oversizeProposal?.explanation ??
+            receipt.error ??
+            'Freeze result was not committed to project history.');
         if (receipt.oversizeProposal) {
           result.historyOversizeProposal = receipt.oversizeProposal;
         }
@@ -1999,7 +2001,11 @@ async function handleFreezeScoreObjects(
 
     return result;
   } finally {
-    finishRenderOperation(operationId);
+    try {
+      pendingArtifacts.settlement?.discard();
+    } finally {
+      finishRenderOperation(operationId);
+    }
   }
 }
 
@@ -2008,11 +2014,11 @@ async function handleFreezeScoreObjects(
 async function handleCancelRenderOperation(
   request: CancelRenderOperationRequest,
 ): Promise<boolean> {
-  if (activeRenderOperationId !== request.operationId) {
+  if (activeRenderOperationId !== request.operationId || !activeRenderCancellationSignal) {
     return false;
   }
 
-  activeRenderCancellationSignal!.cancelled = true;
+  activeRenderCancellationSignal.cancelled = true;
 
   activeRenderAbortController?.abort();
 

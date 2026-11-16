@@ -3,7 +3,7 @@
  *
  * Mirrors Java FreezeUnfreezeAction:
  *   - Freeze: render source object to project-local freezeN.wav/aif, replace with FrozenSoundObject
- *   - Unfreeze: restore nested source, reference-count cleanup of freeze file
+ *   - Unfreeze: restore nested source and preserve the audio for history and shared uses
  *
  * Uses Utility freeze flags, not a caller-selected Csound executable.
  */
@@ -13,12 +13,10 @@ import * as path from 'path';
 import {
   BlueData,
   FrozenSoundObject,
-  PolyObject,
   type SoundObject,
   parseAudioFileMetadata,
   buildFreezeRenderData,
   beatsToDuration,
-  type Score,
   type JavaRuntimeClientContract,
   type JavaScriptSession,
 } from '@blue/data';
@@ -35,8 +33,15 @@ import type {
 import { planFreezeCommand } from './disk-render-command';
 import { writeTempCsdSnapshot, cleanupTempCsdSnapshots } from './render-command';
 import { generateDiskCsd } from './render-to-disk';
+import { isSameProjectPathIdentity } from './project-path';
 
 // ─── Types ───
+
+export interface FreezeArtifactSettlement {
+  validateCommit(filePath: string | null): string | undefined;
+  accept(): void;
+  discard(): void;
+}
 
 export interface FreezeContext {
   data: BlueData;
@@ -45,6 +50,8 @@ export interface FreezeContext {
   platform: string;
   /** True after the operation has been cancelled by its main-process owner. */
   isCancelled?: () => boolean;
+  /** Let the history caller settle filesystem effects after the revision fence. */
+  onPreparedArtifacts?: (settlement: FreezeArtifactSettlement) => void;
   /**
    * SPEC 085: called when a systemic failure dooms the operation so the
    * owner can abort every in-flight render immediately (the shared
@@ -175,37 +182,6 @@ export function allocateFreezeFileName(
   return candidate;
 }
 
-// ─── Reference Counting ───
-
-/**
- * Recursively count all FrozenSoundObjects in the score that reference
- * the given filename. Walks nested PolyObjects.
- */
-export function countFreezeReferences(score: Score, fileName: string): number {
-  let count = 0;
-
-  function walkLayerGroup(lg: unknown): void {
-    if (lg instanceof PolyObject) {
-      for (const layer of lg) {
-        for (const sObj of layer) {
-          if (sObj instanceof FrozenSoundObject && sObj.getFrozenWaveFileName() === fileName) {
-            count++;
-          }
-          if (sObj instanceof PolyObject) {
-            walkLayerGroup(sObj);
-          }
-        }
-      }
-    }
-  }
-
-  for (const lg of score) {
-    walkLayerGroup(lg);
-  }
-
-  return count;
-}
-
 // ─── Eligibility ───
 
 /**
@@ -305,7 +281,7 @@ export async function executeFreezeUnfreeze(
   executionSeam: FreezeExecutionSeam,
   itemEventCallback?: FreezeItemEventCallback,
 ): Promise<FreezeOperationResult> {
-  const { data, projectDirectory, isCancelled } = context;
+  const { data, projectDirectory, isCancelled, platform } = context;
 
   const emitItemEvent = (
     selectionId: string,
@@ -333,17 +309,13 @@ export async function executeFreezeUnfreeze(
     item: { target: ScoreObjectEditorTargetSnapshot; sObj: SoundObject; isFrozen: boolean };
     replacement: SoundObject;
     generatedArtifactPath?: string;
-    unfreezeArtifact?: { fileName: string; path: string };
   };
 
   const result = (
     ok: boolean,
     rejectedTargets: FreezeRejectedTarget[],
     options: Partial<
-      Pick<
-        FreezeOperationResult,
-        'cancelled' | 'frozenCount' | 'unfrozenCount' | 'deletedFiles' | 'error'
-      >
+      Pick<FreezeOperationResult, 'cancelled' | 'frozenCount' | 'unfrozenCount' | 'error'>
     > = {},
   ): FreezeOperationResult => ({
     ok,
@@ -351,7 +323,7 @@ export async function executeFreezeUnfreeze(
     cancelled: options.cancelled ?? false,
     frozenCount: options.frozenCount ?? 0,
     unfrozenCount: options.unfrozenCount ?? 0,
-    deletedFiles: options.deletedFiles ?? [],
+    deletedFiles: [],
     rejectedTargets,
     error: options.error ?? null,
     project: null,
@@ -441,7 +413,6 @@ export async function executeFreezeUnfreeze(
       const frozen = item.sObj as FrozenSoundObject;
       const nested = frozen.getFrozenSoundObject();
       const fileName = frozen.getFrozenWaveFileName();
-      const artifactPath = resolveFreezeArtifactPath(projectDirectory, fileName);
       emitItemEvent(item.target.selectionId, item.sObj.getName(), 'unfreeze', 'running', {
         freezeFile: fileName,
       });
@@ -457,13 +428,7 @@ export async function executeFreezeUnfreeze(
       }
       const restored = nested.deepCopy() as SoundObject;
       restored.setStartTime(frozen.getStartTime());
-      staged.push({
-        item,
-        replacement: restored,
-        ...(artifactPath && fs.existsSync(artifactPath)
-          ? { unfreezeArtifact: { fileName, path: artifactPath } }
-          : {}),
-      });
+      staged.push({ item, replacement: restored });
     }
 
     // Prepare freeze jobs sequentially: the shared script session behind CSD
@@ -708,47 +673,71 @@ export async function executeFreezeUnfreeze(
     layerResult!.layer[layerResult!.objectIndex] = replacement.replacement;
   }
 
-  for (const replacement of staged) {
-    const freezeFile = replacement.item.isFrozen
-      ? (replacement.item.sObj as FrozenSoundObject).getFrozenWaveFileName()
-      : (replacement.replacement as FrozenSoundObject).getFrozenWaveFileName();
-    emitItemEvent(
-      replacement.item.target.selectionId,
-      replacement.item.sObj.getName(),
-      replacement.item.isFrozen ? 'unfreeze' : 'freeze',
-      'complete',
-      { freezeFile },
-    );
-  }
-
-  const deletedFiles: string[] = [];
-  for (const artifact of staged.flatMap((replacement) =>
-    replacement.unfreezeArtifact ? [replacement.unfreezeArtifact] : [],
-  )) {
-    if (countFreezeReferences(data.getScore(), artifact.fileName) === 0) {
-      try {
-        fs.unlinkSync(artifact.path);
-        deletedFiles.push(artifact.fileName);
-      } catch {
-        // The artifact was verified during staging; a later delete race is non-fatal.
+  let settled = false;
+  const artifacts: FreezeArtifactSettlement = {
+    validateCommit(filePath) {
+      if (isCancelled?.()) return 'Freeze operation cancelled.';
+      const hostPath = platform === 'win32' ? path.win32 : path.posix;
+      if (
+        !filePath ||
+        !isSameProjectPathIdentity(projectDirectory, hostPath.dirname(filePath), platform)
+      ) {
+        return 'The project directory changed during freeze/unfreeze. Run the action again.';
       }
-    }
-  }
+    },
+    accept() {
+      if (settled) return;
+      settled = true;
 
-  statusCallback({
-    operationId,
-    kind: 'freeze',
-    phase: 'completed',
-    message: 'Freeze/unfreeze complete.',
-    progress: 100,
-    outputPath: null,
-    error: null,
-  });
+      // Saved projects and undo entries can still refer to artifacts after unfreeze.
+      for (const replacement of staged) {
+        const freezeFile = replacement.item.isFrozen
+          ? (replacement.item.sObj as FrozenSoundObject).getFrozenWaveFileName()
+          : (replacement.replacement as FrozenSoundObject).getFrozenWaveFileName();
+        emitItemEvent(
+          replacement.item.target.selectionId,
+          replacement.item.sObj.getName(),
+          replacement.item.isFrozen ? 'unfreeze' : 'freeze',
+          'complete',
+          { freezeFile },
+        );
+      }
+
+      statusCallback({
+        operationId,
+        kind: 'freeze',
+        phase: 'completed',
+        message: 'Freeze/unfreeze complete.',
+        progress: 100,
+        outputPath: null,
+        error: null,
+      });
+    },
+    discard() {
+      if (settled) return;
+      settled = true;
+      removeGeneratedArtifacts();
+      if (isCancelled?.()) {
+        reportCancelled();
+        return;
+      }
+      statusCallback({
+        operationId,
+        kind: 'freeze',
+        phase: 'failed',
+        message: 'Freeze/unfreeze was not committed.',
+        progress: null,
+        outputPath: null,
+        error: 'The prepared replacements were discarded.',
+      });
+    },
+  };
+  if (context.onPreparedArtifacts) context.onPreparedArtifacts(artifacts);
+  else artifacts.accept();
 
   return result(true, [], {
     frozenCount: staged.filter((replacement) => !replacement.item.isFrozen).length,
     unfrozenCount: staged.filter((replacement) => replacement.item.isFrozen).length,
-    deletedFiles,
   });
 }
 

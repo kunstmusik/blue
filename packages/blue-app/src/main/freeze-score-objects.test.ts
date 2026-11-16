@@ -14,14 +14,18 @@ import {
 import { buildAiffBytes, buildWavBytes } from '@blue/data/test-support/audio-fixtures';
 import {
   allocateFreezeFileName,
-  countFreezeReferences,
   executeFreezeUnfreeze,
+  type FreezeArtifactSettlement,
   isFreezeEligible,
   resolveFreezeArtifactPath,
   resolveFreezeTargets,
 } from './freeze-score-objects';
 import type { ScoreObjectEditorTargetSnapshot } from '../shared/project-editor';
 import type { FreezeItemStatus } from '../shared/render-freeze-contract';
+import { ProjectHistory } from './project-history';
+import { forkProjectGraph } from './project-history-graph';
+import { createDeferred, MockHistoryContext } from './project-history-test-support';
+import { ProjectSession } from './project-session';
 import {
   createProjectEditorSnapshot,
   createScoreObjectEditorDocument,
@@ -101,64 +105,6 @@ describe('allocateFreezeFileName', () => {
     );
     expect(resolveFreezeArtifactPath(tempDir, '../outside.wav')).toBeNull();
     expect(resolveFreezeArtifactPath(tempDir, path.join(tempDir, 'outside.wav'))).toBeNull();
-  });
-});
-
-describe('countFreezeReferences', () => {
-  function createScoreWithFrozenObjects(fileNames: string[]): BlueData {
-    const data = new BlueData();
-    const score = data.getScore();
-    const polyObj = score[0] as PolyObject;
-    const layer = polyObj[0];
-
-    for (const fileName of fileNames) {
-      const fso = new FrozenSoundObject();
-      fso.setFrozenWaveFileName(fileName);
-      fso.setNumChannels(2);
-      fso.setStartTime(TimePosition.beats(0));
-      fso.setSubjectiveDuration(TimeDuration.beats(2));
-      layer.push(fso);
-    }
-
-    return data;
-  }
-
-  it('counts zero when no frozen objects reference the file', () => {
-    const data = createScoreWithFrozenObjects(['freeze0.wav']);
-    expect(countFreezeReferences(data.getScore(), 'freeze1.wav')).toBe(0);
-  });
-
-  it('counts one when a single frozen object references the file', () => {
-    const data = createScoreWithFrozenObjects(['freeze0.wav']);
-    expect(countFreezeReferences(data.getScore(), 'freeze0.wav')).toBe(1);
-  });
-
-  it('counts multiple references to the same file', () => {
-    const data = createScoreWithFrozenObjects(['freeze0.wav', 'freeze0.wav', 'freeze1.wav']);
-    expect(countFreezeReferences(data.getScore(), 'freeze0.wav')).toBe(2);
-  });
-
-  it('counts frozen objects in nested PolyObjects', () => {
-    const data = new BlueData();
-    const score = data.getScore();
-    const rootPoly = score[0] as PolyObject;
-    const rootLayer = rootPoly[0];
-
-    // Create a nested PolyObject with a frozen object inside
-    const nested = new PolyObject(true);
-    nested.newLayerAt(-1);
-    const nestedLayer = nested[0];
-
-    const fso = new FrozenSoundObject();
-    fso.setFrozenWaveFileName('freeze2.wav');
-    fso.setNumChannels(2);
-    fso.setStartTime(TimePosition.beats(0));
-    fso.setSubjectiveDuration(TimeDuration.beats(2));
-    nestedLayer.push(fso);
-
-    rootLayer.push(nested);
-
-    expect(countFreezeReferences(data.getScore(), 'freeze2.wav')).toBe(1);
   });
 });
 
@@ -278,67 +224,187 @@ describe('resolveFreezeTargets', () => {
     expect(runCsound).not.toHaveBeenCalled();
   });
 
-  it('deletes a shared artifact only after the final reference is unfrozen', async () => {
-    const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-shared-'));
-    try {
-      const data = new BlueData();
-      const layer = (data.getScore()[0] as PolyObject)[0];
-      for (let index = 0; index < 2; index++) {
-        const source = new GenericScore();
-        source.setName(`Source ${index + 1}`);
-        source.setStartTime(TimePosition.beats(index * 2));
-        source.setSubjectiveDuration(TimeDuration.beats(1));
+  function prepareFreezeHistory(data: BlueData, filePath: string) {
+    const session = new ProjectSession();
+    session.replace(data, filePath);
+    const history = new ProjectHistory({ session });
+    history.checkpointSave();
+    const { documentId, sessionId, revision } = session.read();
+    const rootFields = ['score', 'sObjLib'] as const;
+    const candidate = forkProjectGraph(data, new Set(rootFields));
+    return {
+      session,
+      history,
+      candidate,
+      commit(settlement: FreezeArtifactSettlement) {
+        return history.commitPreparedStructuralMutation({
+          label: 'Freeze/Unfreeze Score Objects',
+          candidate,
+          rootFields,
+          expectedDocumentId: documentId!,
+          expectedSessionId: sessionId,
+          expectedRevision: revision,
+          validateBeforeCommit: (current) => settlement.validateCommit(current.filePath),
+          onCommitted: () => settlement.accept(),
+        });
+      },
+    };
+  }
+
+  it.each(['library copy', 'undo history'] as const)(
+    'preserves the audio when unfreezing leaves a reference in the %s',
+    async (owner) => {
+      const projectDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-unfreeze-'));
+      try {
+        const fileName = 'freeze0.wav';
+        const artifactPath = path.join(projectDirectory, fileName);
+        const artifact = createWavFile();
+        fs.writeFileSync(artifactPath, artifact);
+        const data = new BlueData();
+        const layer = (data.getScore()[0] as PolyObject)[0];
         const frozen = new FrozenSoundObject();
-        frozen.setFrozenSoundObject(source);
-        frozen.setFrozenWaveFileName('freeze0.wav');
-        frozen.setStartTime(TimePosition.beats(index * 2));
-        frozen.setSubjectiveDuration(TimeDuration.beats(1));
+        frozen.setFrozenSoundObject(new GenericScore());
+        frozen.setFrozenWaveFileName(fileName);
         layer.push(frozen);
+        const library = data.getSoundObjectLibrary();
+        const libraryCopy = owner === 'library copy' ? frozen.deepCopy() : undefined;
+        const libraryId = libraryCopy && library.addObject(libraryCopy);
+        const writer = prepareFreezeHistory(data, path.join(projectDirectory, 'project.blue'));
+        const status = vi.fn();
+        const onPreparedArtifacts = vi.fn<(settlement: FreezeArtifactSettlement) => void>();
+        const runCsound = vi.fn();
+
+        const operation = await executeFreezeUnfreeze(
+          {
+            data: writer.candidate,
+            projectDirectory,
+            utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
+            platform: process.platform,
+            onPreparedArtifacts,
+          },
+          [createTarget(0)],
+          'unfreeze',
+          status,
+          { runCsound },
+        );
+
+        expect(operation).toMatchObject({ ok: true, unfrozenCount: 1, deletedFiles: [] });
+        expect(layer[0]).toBe(frozen);
+        const [settlement] = onPreparedArtifacts.mock.calls[0]!;
+        const receipt = await writer.commit(settlement);
+        expect(receipt.changed).toBe(true);
+        expect(layer[0]).toBeInstanceOf(GenericScore);
+        expect(status).toHaveBeenLastCalledWith(expect.objectContaining({ phase: 'completed' }));
+        expect(runCsound).not.toHaveBeenCalled();
+        expect(writer.history.isDirty()).toBe(true);
+
+        const context = new MockHistoryContext('freeze-history');
+        const { documentId, revision } = writer.session.read();
+        const undo = await writer.history.undo(context.nextUndoRequest(documentId!, revision));
+        expect(undo.status).toBe('committed');
+        expect((layer[0] as FrozenSoundObject).getFrozenWaveFileName()).toBe(fileName);
+        expect(writer.history.isDirty()).toBe(false);
+        expect(fs.readFileSync(artifactPath)).toEqual(artifact);
+        const redo = await writer.history.redo(
+          context.nextRedoRequest(documentId!, writer.session.read().revision),
+        );
+        expect(redo.status).toBe('committed');
+        expect(layer[0]).toBeInstanceOf(GenericScore);
+        expect(writer.history.isDirty()).toBe(true);
+        if (libraryId) expect(library.getObjectById(libraryId)).toBe(libraryCopy);
+        expect(fs.readFileSync(artifactPath)).toEqual(artifact);
+      } finally {
+        fs.rmSync(projectDirectory, { recursive: true, force: true });
       }
-      const artifactPath = path.join(projectDirectory, 'freeze0.wav');
-      fs.writeFileSync(artifactPath, createWavFile());
-      const runCsound = vi.fn();
+    },
+  );
 
-      const first = await executeFreezeUnfreeze(
-        {
-          data,
-          projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
-          platform: 'linux',
-        },
-        [createTarget(0)],
-        'unfreeze-first',
-        vi.fn(),
-        { runCsound },
-      );
+  it.each([
+    { action: 'cancel', phase: 'cancelled', expectedError: /cancelled/i },
+    { action: 'Save As', phase: 'failed', expectedError: /directory changed/i },
+    { action: 'same-directory Save As', phase: 'completed', expectedError: null },
+  ])(
+    'settles prepared freeze audio after $action during a save',
+    async ({ action, phase, expectedError }) => {
+      const projectDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-freeze-save-'));
+      try {
+        const data = new BlueData();
+        const layer = (data.getScore()[0] as PolyObject)[0];
+        const source = new GenericScore();
+        source.setSubjectiveDuration(TimeDuration.beats(1));
+        layer.push(source);
+        const writer = prepareFreezeHistory(data, path.join(projectDirectory, 'project.blue'));
+        const status = vi.fn();
+        const onPreparedArtifacts = vi.fn<(settlement: FreezeArtifactSettlement) => void>();
+        const isMac = process.platform === 'darwin';
+        let cancelled = false;
+        const operation = await executeFreezeUnfreeze(
+          {
+            data: writer.candidate,
+            projectDirectory,
+            utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
+            platform: process.platform,
+            isCancelled: () => cancelled,
+            onPreparedArtifacts,
+          },
+          [createTarget(0)],
+          'freeze-save',
+          status,
+          {
+            runCsound: async (args) => {
+              const artifact = isMac ? buildAiffBytes(1, 100, 16, 100) : createWavFile();
+              fs.writeFileSync(args[1]!, artifact);
+              return { exitCode: 0, stderr: '' };
+            },
+          },
+        );
+        expect(operation).toMatchObject({ ok: true, frozenCount: 1 });
+        const artifactPath = path.join(projectDirectory, isMac ? 'freeze0.aif' : 'freeze0.wav');
+        expect(fs.existsSync(artifactPath)).toBe(true);
+        const started = createDeferred<void>();
+        const release = createDeferred<void>();
+        const save = writer.history.runSettlementBarrier('save', async () => {
+          started.resolve();
+          await release.promise;
+          if (action === 'Save As') {
+            writer.session.publishPath(path.join(projectDirectory, 'new', 'project.blue'));
+          } else if (action === 'same-directory Save As') {
+            writer.session.publishPath(path.join(projectDirectory, 'renamed.blue'));
+          }
+          writer.history.checkpointSave();
+        });
+        await started.promise;
+        const [settlement] = onPreparedArtifacts.mock.calls[0]!;
+        const commit = writer.commit(settlement);
+        if (action === 'cancel') cancelled = true;
+        release.resolve();
+        await save;
+        const receipt = await commit;
 
-      expect(first.ok).toBe(true);
-      expect(first.deletedFiles).toEqual([]);
-      expect(fs.existsSync(artifactPath)).toBe(true);
-
-      const second = await executeFreezeUnfreeze(
-        {
-          data,
-          projectDirectory,
-          utility: { csoundExecutable: 'csound', freezeFlags: '-Wdo', freezeMaxJobs: 4 },
-          platform: 'linux',
-        },
-        [createTarget(1)],
-        'unfreeze-final',
-        vi.fn(),
-        { runCsound },
-      );
-
-      expect(second.ok).toBe(true);
-      expect(second.deletedFiles).toEqual(['freeze0.wav']);
-      expect(fs.existsSync(artifactPath)).toBe(false);
-      expect(layer[0]).toBeInstanceOf(GenericScore);
-      expect(layer[1]).toBeInstanceOf(GenericScore);
-      expect(runCsound).not.toHaveBeenCalled();
-    } finally {
-      fs.rmSync(projectDirectory, { recursive: true, force: true });
-    }
-  });
+        settlement.discard();
+        expect(status).toHaveBeenLastCalledWith(expect.objectContaining({ phase }));
+        if (expectedError) {
+          expect(receipt).toMatchObject({
+            changed: false,
+            revision: 0,
+            error: expect.stringMatching(expectedError),
+          });
+          expect(layer[0]).toBe(source);
+          expect(writer.history.getEntries()).toHaveLength(0);
+          expect(writer.history.isDirty()).toBe(false);
+          expect(fs.existsSync(artifactPath)).toBe(false);
+        } else {
+          expect(receipt).toMatchObject({ changed: true, revision: 1 });
+          expect(layer[0]).toBeInstanceOf(FrozenSoundObject);
+          expect(writer.history.getEntries()).toHaveLength(1);
+          expect(writer.history.isDirty()).toBe(true);
+          expect(fs.existsSync(artifactPath)).toBe(true);
+        }
+      } finally {
+        fs.rmSync(projectDirectory, { recursive: true, force: true });
+      }
+    },
+  );
 
   it('keeps a multi-target operation atomic when a later target is rejected', async () => {
     const projectDirectory = fs.mkdtempSync(path.join(process.cwd(), 'freeze-atomic-'));
@@ -1207,7 +1273,7 @@ describe('executeFreezeUnfreeze parallel execution (SPEC 085)', () => {
       expect(layer[1]).toBeInstanceOf(FrozenSoundObject);
       expect(layer[2]).toBeInstanceOf(GenericScore);
       expect((layer[2] as GenericScore).getName()).toBe('Nested');
-      expect(fs.existsSync(path.join(projectDirectory, 'freeze9.wav'))).toBe(false);
+      expect(fs.existsSync(path.join(projectDirectory, 'freeze9.wav'))).toBe(true);
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
@@ -1627,23 +1693,5 @@ describe('executeFreezeUnfreeze aggregate progress (SPEC 085)', () => {
     } finally {
       fs.rmSync(projectDirectory, { recursive: true, force: true });
     }
-  });
-
-  describe('freeze history external file preservation (T058, US5)', () => {
-    it('preserves generated freeze audio file on disk when freeze action is undone or unfrozen via history', () => {
-      const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-freeze-history-'));
-      try {
-        const audioFileName = 'freeze0.wav';
-        const audioFilePath = path.join(tempDir, audioFileName);
-        fs.writeFileSync(audioFilePath, createWavFile());
-        expect(fs.existsSync(audioFilePath)).toBe(true);
-
-        // Undoing a freeze action or restoring an unfrozen state in project history
-        // must never delete or destroy the generated audio asset on disk
-        expect(fs.existsSync(audioFilePath)).toBe(true);
-      } finally {
-        fs.rmSync(tempDir, { recursive: true, force: true });
-      }
-    });
   });
 });
