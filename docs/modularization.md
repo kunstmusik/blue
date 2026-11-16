@@ -363,3 +363,141 @@ following candidate boundary:
 - **Risk:** medium; it is already a thin coordinator over the seam-2 layout modules.
 - **Review outcome:** retain/defer pending post-seam-2 size and consumer review. Split only if a
   store-independent command/test seam remains after the new layout ownership is exercised.
+
+## Third-wave boundary records (Waves 1–5)
+
+### Wave 1 — `@blue/data` pure domain splits
+
+- **Seam 1A (`packages/blue-data/src/sound-objects/jmask-support.ts`):**
+  - **Façade:** `jmask-support.ts` re-exports all public JMask classes, interfaces, and functions;
+    zero external import specifiers changed.
+  - **Extracted modules & dependency direction:** `jmask/xml-policy.ts` (`jmaskType`,
+    `validateJmaskXml`) → `jmask/core-table-modifiers.ts` → `jmask/probability-distributions.ts` →
+    `jmask/generators.ts` → `jmask/field-parameter.ts` → `jmask/snapshot-hydration.ts` →
+    `jmask-support.ts`. Leaf XML validation never imports snapshot hydration or field/table models.
+  - **Canonical state owner:** `Field`, `Parameter`, and `Table` instances remain owned by `JMask`
+    and `BlueData`; all modules remain browser-safe and host-neutral with top-level static ES
+    imports only.
+  - **Lowest practical test seam:** `j-mask.test.ts`, `jmask-xml-acceptance.test.ts`,
+    `score-generation-perf-parity.test.ts`, `jmask-save-load.test.ts`, and
+    `xml-owner-root-contract.test.ts`.
+  - **Rollback boundary:** leaf validator (`xml-policy.ts`), core/distributions, and
+    generators/field/hydration are independently revertible behind `jmask-support.ts`.
+- **Seam 1B (`packages/blue-data/src/blue-data/csd-policy.ts`):**
+  - **Façade:** `csd-policy.ts` retains standard/async/BlueLive CSD orchestration and re-exports
+    `buildStandardCSD`, `buildStandardCSDAsync`, `toBlueLiveCSD`, `toBlueLiveCSDAsync`,
+    `buildScoreText`, `RenderCsdResult`, `BlueMixerGateContext`, and mixer gate channel constants.
+  - **Extracted modules & dependency direction:** `csd-disk-pruning.ts` (consumes `BlueData` via
+    public getters and structural `DiskPruningGateContext` without private `getBlueDataState` casts),
+    `csd-mixer-codegen.ts` (uses `blueData.getMixer()`/`blueData.getScore()` and explicit
+    parameters), and `csd-parameter-score.ts` (uses public `BlueData` getters) → `csd-policy.ts`.
+  - **Canonical state owner:** `BlueData` remains the canonical model owner; CSD results are
+    disposable render artifacts.
+  - **Lowest practical test seam:** `blue-data-csd-parity.test.ts`, `blue-data-csd-disk.test.ts`,
+    `csd-disk-pruning.test.ts`, `mixer-optimization-csd.test.ts`, `blue-data-csd-copy-safety.test.ts`,
+    `csd-policy.test.ts`, `blue-live-csd.test.ts`, and `blue-live-async.test.ts`.
+  - **Rollback boundary:** disk pruning, mixer codegen, and parameter/score assembly are
+    independently revertible behind `csd-policy.ts`.
+
+### Wave 2 — `@blue/app` shared project-editor splits
+
+- **Seam 2A (`packages/blue-app/src/shared/project-editor/snapshot-score.ts`):**
+  - **Façade:** `snapshot-score.ts` and `project-editor/index.ts` remain the unchanged
+    compatibility surface.
+  - **Extracted modules & dependency direction:** `contract.ts` / `identity.ts` / `bsb-widgets.ts` →
+    `snapshot-score-automation.ts` → `snapshot-score-editor.ts` (including `normalizeAudioFadeType`
+    and `resolveTimelineScoreObjects` to keep dependencies strictly one-way) → `snapshot-score.ts`.
+  - **Canonical state owner:** `BlueData` remains the canonical project owner; snapshots remain
+    immutable projections.
+  - **Lowest practical test seam:** `project-editor.test.ts`,
+    `score-timeline-automation-contract.test.ts`, `score-object-editor-contract.test.ts`, and
+    `score-timeline-automation-single-line.test.tsx`.
+  - **Rollback boundary:** `snapshot-score-automation.ts` and `snapshot-score-editor.ts` are
+    independently revertible behind `snapshot-score.ts`.
+- **Seam 2B (`packages/blue-app/src/shared/project-editor/patch-score.ts`):**
+  - **Façade:** `patch-score.ts` retains layer/group/marker orchestration and `applyScoreObjectPatch`
+    dispatch while re-exporting all moved public APIs.
+  - **Extracted modules & dependency direction:** `contract.ts` / `identity.ts` / `snapshot-*` →
+    `patch-score-time.ts` + `patch-score-automation.ts` + `patch-score-objects.ts` →
+    `patch-score.ts` (`patch-score-objects.ts` imports `isValidTimeBase` from `patch-score-time.ts`
+    with zero back-imports).
+  - **Canonical state owner:** `BlueData` mutations flow exclusively through existing patch
+    contracts and `ProjectHistory`.
+  - **Lowest practical test seam:** `project-editor.test.ts`,
+    `score-timeline-automation-contract.test.ts`, and `project-history-roundtrip.test.ts`.
+  - **Rollback boundary:** each of the three extracted patch modules is independently revertible.
+
+### Wave 3 — `project-history` patch algebra & `project-store` optimistic reducers
+
+- **Seam 3A (`packages/blue-app/src/main/project-history.ts`):**
+  - **Façade:** `project-history.ts` retains `ProjectHistory` mutable state/transactions/barriers
+    and re-exports `HistoryRecord`, `scalarRecordsToInversePatches`,
+    `scalarRecordsToForwardPatches`, `hasConcreteInversePatches`,
+    `accumulateConcreteInversePatches`, and `computeStructuralInversePatches`.
+  - **Extracted module & dependency direction:** `project-history-patch-algebra.ts` (pure functions
+    over patches, mementos, and scalar records, with no back-import to `project-history.ts`) →
+    `project-history.ts`.
+  - **Canonical state owner:** `ProjectSession` and `ProjectHistory` remain sole owners of project
+    and undo/redo state.
+  - **Lowest practical test seam:** `project-history.test.ts`, `project-history-roundtrip.test.ts`,
+    and `global-project-history.integration.test.ts`.
+  - **Rollback boundary:** restore pure algebra helpers inline into `project-history.ts` and
+    remove `project-history-patch-algebra.ts`.
+- **Seam 3B (`packages/blue-app/src/renderer/stores/project-store.ts`):**
+  - **Façade:** `project-store.ts` remains the Zustand store owner, patch queue owner, and
+    cross-domain coordinator (`renameLayer` → mixer, mixer channel rename → track,
+    `updateAssignment` → mixer, and `blueLiveGridStructureVersion` via `onGridStructureChanged`).
+  - **Extracted modules & dependency direction:** `renderer/stores/project-store/mixer-snapshot-reducer.ts`
+    (with `{ createId }` seam), `score-snapshot-reducer.ts` (with `{ now }` seam), and
+    `orchestra-snapshot-reducer.ts` (with `onGridStructureChanged` callback for Blue Live grid
+    mutations) → `project-store.ts`.
+  - **Canonical state owner:** transient renderer snapshots remain owned by `useProjectStore`;
+    committed project state remains owned by main-process `BlueData`.
+  - **Lowest practical test seam:** `project-store-optimistic-reducers.test.ts` (structural sharing,
+    deterministic ID/clock seams, cross-domain coordination), `project-store.test.ts`,
+    `bsb-undo-regression.test.tsx`, and `mixer-channel-strip-isolation.test.tsx`.
+  - **Rollback boundary:** each reducer family (`mixer`, `score`, `orchestra`) is independently
+    revertible.
+
+### Wave 4 — `main.ts` host coordinators
+
+- **Façade & IPC/Runtime Invariants:** `main.ts` retains the `132` domain channel registrations
+  (`130` `ipcRegistration.handle`/`on` calls expanding to `132` channels), `javaScriptSession`,
+  `lastProjectOnLoadState`, `runProjectOnLoad`, `ensureJavaRuntimeSession`, and
+  `disposeJavaRuntimeSession`. The remaining `81` of the `213` total inbound IPC registrations
+  are registered across the 5 separate registrar modules (`unified-library/ipc.ts`,
+  `code-repository/ipc.ts`, `blueshare/ipc.ts`, `workbench-window-host.ts`, and
+  `midi-input-coordinator.ts`).
+- **Extracted modules & dependency direction:**
+  - `main/repl-console-coordinator.ts` (REPL queue and open/evaluate/reinitialize commands via
+    narrow callbacks).
+  - `main/render-freeze-coordinator.ts` (render/freeze operation state, `createCsoundExecutionSeam`,
+    `handleRenderToDisk`, `handleFreezeScoreObjects`, `handleCancelRenderOperation`, external output
+    command launch; audited in `csound-runtime-boundary.test.ts`).
+  - `main/secondary-editor-coordinator.ts` (Effect and Track Instrument editor snapshot/patch
+    coordination, removed-target window closing, and secondary-window history snapshot projection).
+- **Lowest practical test seam:** `main-process-ipc-inventory.test.ts` (213 total registrations:
+  132 domain channels from `main.ts` plus 81 across the 5 separate registrar modules),
+  `csound-runtime-boundary.test.ts`, `repl-console-runtime.test.ts`, `render-to-disk.test.ts`,
+  `freeze-score-objects.test.ts`, and `project-history.test.ts`.
+- **Rollback boundary:** each coordinator factory (`repl-console-coordinator.ts`,
+  `render-freeze-coordinator.ts`, `secondary-editor-coordinator.ts`) is independently revertible.
+
+### Wave 5 — Guarded renderer UI extractions
+
+- **Seam 5A (`ScoreTimeCanvas.tsx`):**
+  - **Extracted modules:** `score-time-canvas-geometry.ts` (pure color/geometry/hit-testing helpers)
+    and `ScoreTimeCanvasContextMenus.tsx` (`ObjectContextMenu`, `EmptyAreaContextMenu`) →
+    `ScoreTimeCanvas.tsx`.
+  - **Sanctioned boundary rule:** `ScoreTimeCanvas`'s exact authored-duration `findItemOnLayer`
+    remains intentionally distinct from `score-timeline-gesture-utils.ts`'s 4px minimum hit width
+    (`findTimelineItemAtX`); both contracts are pinned in `score-time-canvas-geometry.test.ts`.
+  - **Lowest practical test seam:** `score-time-canvas-geometry.test.ts` and
+    `score-time-canvas-cross-group.test.tsx`.
+- **Seam 5B (`TrackerScoreObjectEditor.tsx`):**
+  - **Extracted module:** `tracker-editor-utils.ts` (pure column, pitch, Scala scale parsing, and
+    formatting helpers) → `TrackerScoreObjectEditor.tsx` (which retains `TRACKER_FIELD_CLASS`,
+    `TRACKER_MONO_FIELD_CLASS`, virtualized grid state, and focus traversal).
+  - **Lowest practical test seam:** `tracker-score-object-editor-keyboard.test.tsx`,
+    `score-object-editor-panel.test.tsx`, `tracker-field-classes.test.tsx`, and
+    `number-input-inventory.test.ts`.
