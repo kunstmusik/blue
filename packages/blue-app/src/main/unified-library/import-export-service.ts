@@ -6,9 +6,8 @@ import { SaxesParser } from 'saxes';
 import {
   LEGACY_LIBRARY_FORMATS,
   XmlLoadError,
-  exportLegacyLibraryDocument,
+  exportValidatedLegacyLibraryDocument,
   planLegacyLibraryDocument,
-  validateLegacyLibraryEnvelope,
   type LegacyLibraryDocumentPlan,
   type LegacyLibraryFolderPlan,
   type LegacyLibraryTreeNode,
@@ -292,6 +291,41 @@ async function readLegacyLibrarySource(sourcePath: string) {
   }
 }
 
+function serializeValidatedLegacyExport(
+  plan: LegacyLibraryDocumentPlan,
+  targetPath: string,
+): string {
+  // The writer owns the envelope. Only stored fragments can introduce markup
+  // into it, so validate each fragment without projecting or reparsing the file.
+  const parser = new SaxesParser({ xmlns: false });
+  let rootName: string | undefined;
+  parser.on('opentag', ({ name }) => {
+    rootName ??= name;
+  });
+  parser.on('xmldecl', () => {
+    throw new Error('XML declarations are not allowed inside library items');
+  });
+  try {
+    return exportValidatedLegacyLibraryDocument(plan, (xml, expectedRoot) => {
+      if (xml.charCodeAt(0) === 0xfeff) {
+        throw new Error('A library item cannot contain a leading byte order mark');
+      }
+      if (/<!DOCTYPE\b/i.test(xml)) {
+        throw new Error('XML document type declarations are not allowed');
+      }
+      rootName = undefined;
+      parser.write(xml).close();
+      if (rootName !== expectedRoot) {
+        throw new Error(`Expected an XML library item named ${expectedRoot}`);
+      }
+    });
+  } catch (error) {
+    throw new Error(`Cannot export legacy library to ${targetPath}: ${String(error)}`, {
+      cause: error,
+    });
+  }
+}
+
 async function hashFile(sourcePath: string): Promise<string> {
   const hash = createHash('sha256');
   for await (const chunk of fs.createReadStream(sourcePath)) hash.update(chunk);
@@ -521,8 +555,7 @@ export class UnifiedLibraryImportExportService {
     this.operationActive = true;
     try {
       const plan = await this.buildExportPlan(libraryType);
-      const contents = exportLegacyLibraryDocument(plan);
-      validateLegacyLibraryEnvelope(contents, { kind: 'library', label: targetPath });
+      const contents = serializeValidatedLegacyExport(plan, targetPath);
       if (
         !(await approve({
           outputs: [
@@ -557,9 +590,8 @@ export class UnifiedLibraryImportExportService {
       const summaries: LibraryExportPreflight['outputs'][number][] = [];
       for (const descriptor of Object.values(LEGACY_LIBRARY_FORMATS)) {
         const plan = await this.buildExportPlan(descriptor.libraryType);
-        const contents = exportLegacyLibraryDocument(plan);
         const targetPath = path.join(destinationDirectory, descriptor.fileName);
-        validateLegacyLibraryEnvelope(contents, { kind: 'library', label: targetPath });
+        const contents = serializeValidatedLegacyExport(plan, targetPath);
         outputs.push({ targetPath, contents });
         summaries.push({
           libraryType: descriptor.libraryType,

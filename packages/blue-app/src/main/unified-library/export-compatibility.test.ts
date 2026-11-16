@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseLegacyLibraryDocument } from '@blue/data';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryImportExportService } from './import-export-service';
@@ -51,6 +51,43 @@ describe('legacy export compatibility', () => {
         parseLegacyLibraryDocument(fs.readFileSync(path.join(directory, 'udoLibrary.xml'), 'utf8'))
           .libraryType,
       ).toBe('udo');
+    } finally {
+      await client.close();
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects corrupt stored item XML before approval or replacing the file', async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-export-invalid-'));
+    const source = path.join(directory, 'source.xml');
+    const destination = path.join(directory, 'soundObjectLibrary.xml');
+    fs.writeFileSync(
+      source,
+      '<soundObjectLibrary><category categoryName="Sounds"><soundObject type="future.Shape"/></category></soundObjectLibrary>',
+    );
+    fs.writeFileSync(destination, 'original bytes');
+    const client = UnifiedLibraryRepositoryClient.openForTesting(':memory:');
+    try {
+      const service = new UnifiedLibraryImportExportService(client);
+      await service.executeManualImport((await service.previewManualImport([source])).previewToken);
+      const getPayload = client.getItemPayload.bind(client);
+      const read = vi.spyOn(client, 'getItemPayload');
+      const approve = vi.fn(async () => true);
+      for (const payloadXml of [
+        '<soundObject><name></soundObject>',
+        '<soundObject/><soundObject/>',
+        '<category categoryName="Injected"/>',
+        '\uFEFF<soundObject/>',
+        '<?xml version="1.0"?><soundObject/>',
+        '<soundObject><!-- <!DOCTYPE forbidden> --></soundObject>',
+      ]) {
+        read.mockImplementationOnce(async (id) => ({ ...(await getPayload(id)), payloadXml }));
+        await expect(service.exportCurrent('soundObject', destination, approve)).rejects.toThrow(
+          /Cannot export legacy library/,
+        );
+        expect(fs.readFileSync(destination, 'utf8')).toBe('original bytes');
+      }
+      expect(approve).not.toHaveBeenCalled();
     } finally {
       await client.close();
       fs.rmSync(directory, { recursive: true, force: true });

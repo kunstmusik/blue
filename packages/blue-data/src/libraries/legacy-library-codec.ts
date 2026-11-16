@@ -23,6 +23,17 @@ function descriptorForRoot(rootName: string): LegacyLibraryFormatDescriptor {
 }
 
 function escapeAttribute(value: string): string {
+  for (const character of value) {
+    const code = character.codePointAt(0)!;
+    if (
+      (code < 0x20 && code !== 9 && code !== 10 && code !== 13) ||
+      (code >= 0xd800 && code <= 0xdfff) ||
+      code === 0xfffe ||
+      code === 0xffff
+    ) {
+      throw new Error('A legacy library folder name contains an invalid XML character');
+    }
+  }
   return value
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
@@ -218,6 +229,7 @@ export function planLegacyLibraryDocument(
 function serializeFolder(
   descriptor: LegacyLibraryFormatDescriptor,
   folder: LegacyLibraryFolderPlan,
+  validatePayload: ((xml: string, expectedRoot: string) => void) | undefined,
 ): string {
   const rootAttribute =
     descriptor.ordering === 'categoriesFirst'
@@ -232,13 +244,31 @@ function serializeFolder(
         ]
       : folder.children;
   const body = orderedChildren
-    .map((child) =>
-      child.kind === 'folder' ? serializeFolder(descriptor, child) : child.payload.rawXml,
-    )
+    .map((child) => {
+      if (child.kind === 'folder') return serializeFolder(descriptor, child, validatePayload);
+      const xml = child.payload.rawXml;
+      validatePayload?.(xml, descriptor.leafElement);
+      return xml;
+    })
     .join('');
   return `${open}${body}</${descriptor.categoryElement}>`;
 }
 
+function serializeLibraryDocument(
+  plan: LegacyLibraryDocumentPlan,
+  validatePayload?: (xml: string, expectedRoot: string) => void,
+): string {
+  return `<${plan.descriptor.rootElement}>${serializeFolder(plan.descriptor, plan.root, validatePayload)}</${plan.descriptor.rootElement}>`;
+}
+
 export function exportLegacyLibraryDocument(plan: LegacyLibraryDocumentPlan): string {
-  return `<${plan.descriptor.rootElement}>${serializeFolder(plan.descriptor, plan.root)}</${plan.descriptor.rootElement}>`;
+  return serializeLibraryDocument(plan);
+}
+
+/** Check each raw payload before appending it to the generated envelope. */
+export function exportValidatedLegacyLibraryDocument(
+  plan: LegacyLibraryDocumentPlan,
+  validatePayload: (xml: string, expectedRoot: string) => void,
+): string {
+  return serializeLibraryDocument(plan, validatePayload);
 }
