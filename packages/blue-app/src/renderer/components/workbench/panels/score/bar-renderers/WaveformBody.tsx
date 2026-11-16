@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useScoreViewportBounds } from '../score-viewport-scroll';
 import {
   buildWaveformCacheKey,
-  buildWaveformPathData,
+  buildWaveformSegments,
   getWaveformCacheEntry,
   getWaveformCacheGeneration,
   requestWaveform,
@@ -64,9 +64,9 @@ export default function WaveformBody({
       ? width
       : Math.min(width, visibleEndBeats * pixelsPerBeat - waveformLeft);
 
-  const paths = useMemo(() => {
-    if (!entry || entry.loading || entry.channels.length === 0) return [];
-    return buildWaveformPathData(entry, {
+  const geometry = useMemo(() => {
+    if (!entry || entry.loading || entry.channels.length === 0) return null;
+    return buildWaveformSegments(entry, {
       width,
       height,
       pixelsPerBeat,
@@ -76,38 +76,49 @@ export default function WaveformBody({
       clipEndPx,
     });
   }, [entry, width, height, pixelsPerBeat, startOffsetBeats, looping, clipStartPx, clipEndPx]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    const view = canvas?.ownerDocument.defaultView;
+    if (!canvas || !geometry || !view?.CanvasRenderingContext2D) return;
+    const ratio = view.devicePixelRatio || 1;
+    const width = Math.ceil(geometry.width * ratio);
+    const height = Math.ceil(geometry.height * ratio);
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context.clearRect(0, 0, geometry.width, geometry.height);
+    context.strokeStyle = color;
+    context.lineWidth = 1;
+    context.beginPath();
+    const { segments } = geometry;
+    for (let index = 0; index < segments.length; index += 3) {
+      const x = segments[index]!;
+      context.moveTo(x, segments[index + 1]!);
+      context.lineTo(x, segments[index + 2]!);
+    }
+    context.stroke();
+  }, [color, geometry]);
 
-  if (paths.length === 0) {
-    return null;
-  }
+  if (!geometry) return null;
 
   return (
-    <svg
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
       data-waveform-key={waveformKey}
+      width={geometry.width}
+      height={geometry.height}
       style={{
         position: 'absolute',
         top: 2,
-        left: 1,
-        width,
-        height,
-        overflow: 'hidden',
+        left: geometry.left + 1,
+        width: geometry.width,
+        height: geometry.height,
         pointerEvents: 'none',
       }}
-      width={width}
-      height={height}
-      viewBox={`0 0 ${Math.max(1, width)} ${Math.max(1, height)}`}
-      preserveAspectRatio="none"
-    >
-      {paths.map((path, index) => (
-        <path
-          key={`${cacheKey}-${index}`}
-          d={path}
-          stroke={color}
-          strokeWidth={1}
-          fill="none"
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
-    </svg>
+    />
   );
 }

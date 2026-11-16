@@ -10,7 +10,7 @@ import AudioFileScoreObjectBar from '../components/workbench/panels/score/bar-re
 import FrozenSoundObjectBar from '../components/workbench/panels/score/bar-renderers/FrozenSoundObjectBar';
 import {
   buildWaveformCacheKey,
-  buildWaveformPathData,
+  buildWaveformSegments,
   clearWaveformCache,
   setWaveformCacheEntry,
   summarizeWaveformChannels,
@@ -174,8 +174,8 @@ describe('AudioClip bar renderer', () => {
       expect(channels![1]).toEqual({ min: [0.5, -0.5], max: [0.5, -0.5] });
     });
 
-    it('builds looping waveform path data with file-start offsets', () => {
-      const paths = buildWaveformPathData(
+    it('builds looping waveform segments with file-start offsets', () => {
+      const geometry = buildWaveformSegments(
         {
           key: buildWaveformCacheKey('aclp:test.wav', 8),
           filePath: 'test.wav',
@@ -197,14 +197,11 @@ describe('AudioClip bar renderer', () => {
         },
       );
 
-      expect(paths).toHaveLength(1);
-      expect(paths[0]).toContain('M0.5');
-      expect(paths[0]).toContain('V12.5');
-      expect(paths[0]).toContain('M1.5');
+      expect(geometry?.segments.slice(0, 6)).toEqual([0.5, 7.5, 12.5, 1.5, 2.5, 17.5]);
     });
 
-    it('stacks stereo waveform paths into equal-height channel bands', () => {
-      const paths = buildWaveformPathData(
+    it('stacks stereo waveform segments into equal-height channel bands', () => {
+      const geometry = buildWaveformSegments(
         {
           key: buildWaveformCacheKey('fso:frozen5.aif', 1),
           filePath: 'frozen5.aif',
@@ -222,11 +219,11 @@ describe('AudioClip bar renderer', () => {
         },
       );
 
-      expect(paths).toEqual(['M0.5 0V20', 'M0.5 20V40']);
+      expect(geometry?.segments).toEqual([0.5, 0, 20, 0.5, 20, 40]);
     });
   });
 
-  it('renders waveform SVG when cached waveform data is available', () => {
+  it('renders a waveform canvas when cached waveform data is available', () => {
     const cacheKey = buildWaveformCacheKey('aclp:clip.wav', 100);
     setWaveformCacheEntry({
       key: cacheKey,
@@ -278,8 +275,7 @@ describe('AudioClip bar renderer', () => {
     expect(html).toContain(
       'background:linear-gradient(180deg, rgba(145,218,145,0.761) 0%, rgba(102,153,102,0.761) 6px)',
     );
-    expect(html).toContain('<svg');
-    expect(html).toContain('<path');
+    expect(html).toContain('<canvas');
   });
 
   it('renders selected audio clips with Java-style translucent white fill and waveform', () => {
@@ -334,7 +330,7 @@ describe('AudioClip bar renderer', () => {
       'background:linear-gradient(180deg, rgba(255,255,255,0.502) 0%, rgba(255,255,255,0.502) 6px)',
     );
     expect(html).toContain('background-color:#000000');
-    expect(html).toContain('stroke="rgba(255,255,255,0.502)"');
+    expect(html).toContain('data-waveform-key="aclp:selected.wav"');
   });
 
   it('renders fade polygons with Java-style translucency and inner offsets', () => {
@@ -485,6 +481,6 @@ describe('AudioClip bar renderer', () => {
 
     expect(html).toContain('data-waveform-key="fso:frozen5.aif"');
     expect(html).toContain('height="40"');
-    expect(html.match(/<path/g)).toHaveLength(2);
+    expect(html.match(/<canvas/g)).toHaveLength(1);
   });
 });

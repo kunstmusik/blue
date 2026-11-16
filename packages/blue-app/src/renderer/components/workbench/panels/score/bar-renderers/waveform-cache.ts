@@ -419,7 +419,7 @@ export function requestWaveform(
   return entry;
 }
 
-export function buildWaveformPathData(
+export function buildWaveformSegments(
   entry: WaveformCacheEntry,
   options: {
     width: number;
@@ -430,7 +430,7 @@ export function buildWaveformPathData(
     clipStartPx?: number;
     clipEndPx?: number;
   },
-): string[] {
+): { left: number; width: number; height: number; segments: number[] } | null {
   const width = Math.max(0, Math.floor(options.width));
   const height = Math.max(1, Math.floor(options.height));
   const pixelsPerBeat = Math.max(1, options.pixelsPerBeat);
@@ -439,43 +439,29 @@ export function buildWaveformPathData(
 
   const startX = Math.max(0, Math.floor(options.clipStartPx ?? 0));
   const endX = Math.min(width, Math.ceil(options.clipEndPx ?? width));
-  if (endX <= startX || entry.channels.length === 0) {
-    return [];
-  }
+  if (endX <= startX || entry.channels.length === 0) return null;
 
-  // Java Blue gives each channel its own equal-height band. Keep the integer
-  // geometry used by AudioWaveformUI so mono and multichannel files render at
-  // the same vertical scale as the desktop implementation.
+  // Java Blue gives each channel its own equal-height band, using integer
+  // geometry for the center so mono and multichannel files scale the same way.
   const channelHeight = Math.floor(height / entry.channels.length);
   const channelMiddle = Math.floor(channelHeight / 2);
   const startOffsetPixels = Math.max(0, startOffsetBeats * pixelsPerBeat);
-
-  return entry.channels
-    .map((channel, channelIndex) => {
-      const sampleCount = Math.min(channel.min.length, channel.max.length);
-      if (sampleCount === 0) {
-        return '';
+  const segments: number[] = [];
+  for (const [channelIndex, channel] of entry.channels.entries()) {
+    const sampleCount = Math.min(channel.min.length, channel.max.length);
+    if (sampleCount === 0) continue;
+    const center = channelMiddle + channelIndex * channelHeight;
+    for (let x = startX; x < endX; x += 1) {
+      let sampleIndex = Math.floor(startOffsetPixels + x);
+      if (looping) {
+        sampleIndex %= sampleCount;
+      } else if (sampleIndex >= sampleCount) {
+        break;
       }
-
-      const center = channelMiddle + channelIndex * channelHeight;
-      const segments: string[] = [];
-      for (let x = startX; x < endX; x += 1) {
-        let sampleIndex = Math.floor(startOffsetPixels + x);
-
-        if (looping) {
-          sampleIndex = ((sampleIndex % sampleCount) + sampleCount) % sampleCount;
-        } else if (sampleIndex >= sampleCount) {
-          break;
-        }
-
-        const min = channel.min[sampleIndex] ?? 0;
-        const max = channel.max[sampleIndex] ?? 0;
-        const yTop = center - max * channelMiddle;
-        const yBottom = center - min * channelMiddle;
-        segments.push(`M${x + 0.5} ${yTop}V${yBottom}`);
-      }
-
-      return segments.join(' ');
-    })
-    .filter((path) => path.length > 0);
+      const min = channel.min[sampleIndex] ?? 0;
+      const max = channel.max[sampleIndex] ?? 0;
+      segments.push(x - startX + 0.5, center - max * channelMiddle, center - min * channelMiddle);
+    }
+  }
+  return segments.length ? { left: startX, width: endX - startX, height, segments } : null;
 }

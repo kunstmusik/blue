@@ -70,8 +70,21 @@ afterEach(async () => {
 });
 
 describe('mounted score waveform reset', () => {
-  it('rebuilds waveform paths for new geometry and reuses them for a color change', async () => {
-    const buildPaths = vi.spyOn(waveformCache, 'buildWaveformPathData');
+  it('rebuilds waveform segments for geometry changes and reuses them when repainting', async () => {
+    const buildSegments = vi.spyOn(waveformCache, 'buildWaveformSegments');
+    const context = {
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      strokeStyle: '',
+    };
+    vi.stubGlobal('CanvasRenderingContext2D', class {});
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      context as unknown as CanvasRenderingContext2D,
+    );
     const props = {
       waveformKey: 'clip',
       filePath: 'clip.wav',
@@ -82,21 +95,22 @@ describe('mounted score waveform reset', () => {
       color: '#fff',
     };
     await act(async () => root.render(<WaveformBody {...props} />));
-    expect(buildPaths).toHaveBeenCalledOnce();
+    expect(buildSegments).toHaveBeenCalledOnce();
 
     await act(async () => root.render(<WaveformBody {...props} color="#000" />));
-    expect(buildPaths).toHaveBeenCalledOnce();
-    expect(container.querySelector('path')?.getAttribute('stroke')).toBe('#000');
+    expect(buildSegments).toHaveBeenCalledOnce();
+    expect(context.strokeStyle).toBe('#000');
+    expect(context.stroke).toHaveBeenCalledTimes(2);
 
     await act(async () => root.render(<WaveformBody {...props} height={60} />));
-    expect(buildPaths).toHaveBeenCalledTimes(2);
+    expect(buildSegments).toHaveBeenCalledTimes(2);
   });
 
   it('bounds looping waveform segments to the score viewport while retaining their clip coordinates', async () => {
     const store = createScoreViewportScrollStore(0, 0);
     store.setContainerWidth(100);
     store.setScrollLeft(1001);
-    const path = () => container.querySelector('path')?.getAttribute('d') ?? '';
+    const canvas = () => container.querySelector<HTMLCanvasElement>('canvas[data-waveform-key]');
     await act(async () =>
       root.render(
         <ScoreViewportScrollProvider store={store}>
@@ -114,12 +128,12 @@ describe('mounted score waveform reset', () => {
         </ScoreViewportScrollProvider>,
       ),
     );
-    expect(path()).toMatch(/^M900\.5 /);
-    expect(path().match(/M/g)).toHaveLength(100);
+    expect(canvas()?.style.left).toBe('901px');
+    expect(canvas()?.width).toBe(100);
 
     await act(async () => store.setScrollLeft(2001));
-    expect(path()).toMatch(/^M1900\.5 /);
-    expect(path().match(/M/g)).toHaveLength(100);
+    expect(canvas()?.style.left).toBe('1901px');
+    expect(canvas()?.width).toBe(100);
     expect(decode).toHaveBeenCalledOnce();
   });
 
@@ -134,11 +148,11 @@ describe('mounted score waveform reset', () => {
       color: '#fff',
     };
     await act(async () => root.render(<WaveformBody {...props} />));
-    expect(container.querySelectorAll('path')).toHaveLength(2);
+    expect(container.querySelectorAll('canvas[data-waveform-key]')).toHaveLength(1);
     await act(async () => clearWaveformCache());
     expect(readBytes).toHaveBeenCalledTimes(2);
     expect(decode).toHaveBeenCalledTimes(2);
-    expect(container.querySelectorAll('path')).toHaveLength(2);
+    expect(container.querySelectorAll('canvas[data-waveform-key]')).toHaveLength(1);
   });
 });
 
