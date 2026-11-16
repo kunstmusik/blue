@@ -82,7 +82,7 @@ describe('Track item project patches', () => {
     ).toBe(true);
     expect(track).toHaveLength(3);
 
-    const snapshot = createProjectEditorSnapshot(data, null, 5, 8);
+    const snapshot = createProjectEditorSnapshot(data, null, 5, 8, { includeSerializedXml: true });
     const sourceItem =
       snapshot.score?.layerGroups[0]?.groupType === 'track'
         ? snapshot.score.layerGroups[0].layers[0]?.items[0]

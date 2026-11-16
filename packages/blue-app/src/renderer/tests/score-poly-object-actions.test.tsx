@@ -341,7 +341,9 @@ describe('PolyObject score context actions', () => {
     source.setSubjectiveDuration(TimeDuration.time(0, 0, 2, 0));
     topPoly[0].push(source);
 
-    const snapshot = createProjectEditorSnapshot(data, null);
+    const snapshot = createProjectEditorSnapshot(data, null, 0, undefined, {
+      includeSerializedXml: true,
+    });
     const group = snapshot.score.layerGroups[0]!;
     const item = group.layers[0]!.items[0]!;
     const pasteResult = createPolyObjectPasteObjectFromClipboard({
@@ -400,7 +402,9 @@ describe('PolyObject score context actions', () => {
     sourceInstance.setStartTime(TimePosition.beats(2));
     topPoly[0].push(sourceInstance);
 
-    const snapshot = createProjectEditorSnapshot(data, null);
+    const snapshot = createProjectEditorSnapshot(data, null, 0, undefined, {
+      includeSerializedXml: true,
+    });
     const group = snapshot.score.layerGroups[0]!;
     const item = group.layers[0]!.items[0]!;
     const entry: ScoreObjectClipboardEntry = {

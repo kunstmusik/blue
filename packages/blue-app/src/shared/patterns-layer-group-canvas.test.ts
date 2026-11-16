@@ -45,7 +45,9 @@ function buildPatternProject(patternBeatsLength = 4): BlueData {
 }
 
 function getPatternGroupSnapshot(data: BlueData): PatternsLayerGroupSnapshot {
-  const snapshot = createProjectEditorSnapshot(data, null, 1);
+  const snapshot = createProjectEditorSnapshot(data, null, 1, undefined, {
+    includeSerializedXml: true,
+  });
   const group = snapshot.score.layerGroups.find((candidate) => candidate.groupType === 'patterns');
   if (!group || group.groupType !== 'patterns') {
     throw new Error('patterns layer group snapshot missing');

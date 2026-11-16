@@ -2420,7 +2420,7 @@ export function createScopedProjectEditorSnapshot(
   if (!sections) {
     return createProjectEditorSnapshot(data, filePath, sessionId, documentId, options);
   }
-  const includeSerializedXml = options?.includeSerializedXml ?? true;
+  const includeSerializedXml = options?.includeSerializedXml ?? false;
   const result: Partial<ProjectEditorSnapshot> &
     Pick<ProjectEditorSnapshot, 'filePath' | 'version' | 'sessionId' | 'documentId' | 'loaded'> = {
     filePath,
@@ -2495,7 +2495,7 @@ export function createProjectEditorSnapshot(
   documentId?: string,
   options?: ProjectEditorSnapshotOptions,
 ): ProjectEditorSnapshot {
-  const includeSerializedXml = options?.includeSerializedXml ?? true;
+  const includeSerializedXml = options?.includeSerializedXml ?? false;
   const orchestra = createOrchestraSnapshot(data);
   reconcileMixerWithArrangement(data, orchestra);
   return {

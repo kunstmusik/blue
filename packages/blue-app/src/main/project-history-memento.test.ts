@@ -391,6 +391,23 @@ describe('project-history-memento', () => {
       expect(fallback.mixer).toBeDefined();
     });
 
+    it('serializes score and effect XML only when a project snapshot requests it', () => {
+      const data = new BlueData();
+      const object = new GenericScore();
+      (data.getScore()[0] as PolyObject)[0]!.push(object);
+      const effect = new Effect();
+      data.getMixer().getMaster().getPreEffects().push(effect);
+      const scoreXml = vi.spyOn(object, 'saveAsXML');
+      const effectXml = vi.spyOn(effect, 'saveAsXML');
+      createProjectEditorSnapshot(data, null);
+      createScopedProjectEditorSnapshot(data, null, 0, undefined, ['mixer', 'score']);
+      expect(scoreXml).not.toHaveBeenCalled();
+      expect(effectXml).not.toHaveBeenCalled();
+      createProjectEditorSnapshot(data, null, 0, undefined, { includeSerializedXml: true });
+      expect(scoreXml).toHaveBeenCalledOnce();
+      expect(effectXml).toHaveBeenCalledOnce();
+    });
+
     it.each(['tempo', 'resolution', 'resolutionDecimal'] as const)(
       'publishes updated score data for %s edits through commit, undo, and redo',
       async (edit) => {

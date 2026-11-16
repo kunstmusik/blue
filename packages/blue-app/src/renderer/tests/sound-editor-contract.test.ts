@@ -136,7 +136,9 @@ describe('Sound Score Object Editor', () => {
 
     it('pastes Sound score objects with embedded BSB widgets intact and rekeyed', () => {
       const { data, target } = createDataWithSound(MINIMAL_BSB_XML);
-      const snapshot = createProjectEditorSnapshot(data, null);
+      const snapshot = createProjectEditorSnapshot(data, null, 0, undefined, {
+        includeSerializedXml: true,
+      });
       const group = snapshot.score.layerGroups[0];
       if (!group || group.groupType !== 'polyObject') {
         throw new Error('Expected root polyObject group');

@@ -437,7 +437,9 @@ describe('score multigroup object identity', () => {
       },
     });
 
-    const updatedSnapshot = createProjectEditorSnapshot(data, null);
+    const updatedSnapshot = createProjectEditorSnapshot(data, null, 0, undefined, {
+      includeSerializedXml: true,
+    });
     const canonicalItem = updatedSnapshot.score.layerGroups[0]!.layers[0]!.items[0]!;
 
     expect((data.getScore()[0] as TrackLayerGroup)[0]![0]).toBeInstanceOf(AudioClip);
