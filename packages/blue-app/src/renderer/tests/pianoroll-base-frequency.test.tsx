@@ -140,12 +140,17 @@ describe('PianoRoll Base Frequency editor', () => {
       dispose: vi.fn(),
     } as unknown as NoteCanvasMouseListener;
 
-    const renderAtScroll = (scrollLeft: number) => {
+    const getFarNoteStart = vi.fn(() => 30);
+    Object.defineProperty(notes[2], 'start', { get: getFarNoteStart });
+    const renderAtScroll = (
+      scrollLeft: number,
+      previewNotes: ReadonlyMap<number, (typeof notes)[number]> | null = null,
+    ) => {
       act(() => {
         root.render(
           <PianoRollCanvas
             notes={notes}
-            previewNotes={null}
+            previewNotes={previewNotes}
             scale={payload.scale}
             fieldDefinitions={payload.fieldDefinitions}
             selectedIndices={new Set()}
@@ -169,6 +174,19 @@ describe('PianoRoll Base Frequency editor', () => {
     renderAtScroll(0);
     let mountedNotes = container.querySelectorAll('div[title^="Note: "]');
     expect(mountedNotes.length).toBe(1);
+
+    getFarNoteStart.mockClear();
+    renderAtScroll(
+      0,
+      new Map([
+        [0, { ...notes[0]!, start: 25 }],
+        [1, { ...notes[1]!, start: 2 }],
+      ]),
+    );
+    mountedNotes = container.querySelectorAll('div[title^="Note: "]');
+    expect(mountedNotes.length).toBe(1);
+    expect(mountedNotes[0]!.getAttribute('style')).toContain('left: 128px');
+    expect(getFarNoteStart).not.toHaveBeenCalled();
 
     renderAtScroll(900);
     mountedNotes = container.querySelectorAll('div[title^="Note: "]');

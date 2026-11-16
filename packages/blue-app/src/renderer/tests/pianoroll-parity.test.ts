@@ -351,9 +351,13 @@ describe('NoteCanvasMouseListener', () => {
     expect(harness.calls.setSelection.at(-1)).toEqual([0]);
   });
 
-  it('keeps local previewNotes during note move and does not commit until release', () => {
+  it('previews only the moved note and does not commit until release', () => {
     const note = createPayload().notes[0]!;
-    const harness = createListenerHarness({ notes: [note], selectedIndices: new Set([0]) });
+    const untouched = { ...note, start: 5 };
+    const harness = createListenerHarness({
+      notes: [note, untouched],
+      selectedIndices: new Set([0]),
+    });
     const startX = note.start * harness.payload.pixelSecond + 10;
     const startY = getMidiNoteY(note.octave, note.scaleDegree, harness.payload.noteHeight) + 5;
 
@@ -361,8 +365,11 @@ describe('NoteCanvasMouseListener', () => {
     harness.listener.mouseDragged(createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }));
 
     expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
-    expect(harness.listener.getPreviewNotes()).not.toBeNull();
-    expect(harness.listener.getPreviewNotes()![0]!.start).toBeCloseTo(2);
+    const preview = harness.listener.getPreviewNotes()!;
+    expect([...preview.keys()]).toEqual([0]);
+    expect(preview.get(0)!.start).toBeCloseTo(2);
+    expect(note.start).toBe(1);
+    expect(untouched.start).toBe(5);
 
     harness.listener.mouseReleased(
       createMouseEvent({ clientX: startX + 40, clientY: startY - 20 }),
@@ -424,7 +431,7 @@ describe('NoteCanvasMouseListener', () => {
     harness.listener.mouseDragged(createMouseEvent({ clientX: rightEdgeX + 40, clientY: startY }));
     expect(harness.calls.commitNoteTimeEdit).toHaveLength(0);
     expect(harness.listener.getPreviewNotes()).not.toBeNull();
-    expect(harness.listener.getPreviewNotes()![0]!.duration).toBeGreaterThan(note.duration);
+    expect(harness.listener.getPreviewNotes()!.get(0)!.duration).toBeGreaterThan(note.duration);
 
     harness.listener.cancel();
     expect(harness.listener.getPreviewNotes()).toBeNull();

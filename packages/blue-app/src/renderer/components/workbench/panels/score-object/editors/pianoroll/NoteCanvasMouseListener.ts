@@ -75,8 +75,6 @@ export type PianoRollGestureState =
   | {
       readonly kind: 'create';
       readonly startBeat: number;
-      readonly startOctave: number;
-      readonly startScaleDegree: number;
       readonly dragStartX: number;
       createNote: NoteSnapshot;
       pointerX: number;
@@ -185,7 +183,7 @@ export class PianoRollAutoScroller {
 export class NoteCanvasMouseListener {
   private callbacks: NoteCanvasListenerCallbacks;
   private state: PianoRollGestureState = { kind: 'idle' };
-  private previewNotes: NoteSnapshot[] | null = null;
+  private previewNotes: ReadonlyMap<number, NoteSnapshot> | null = null;
   private readonly autoScroller: PianoRollAutoScroller;
 
   constructor(callbacks: NoteCanvasListenerCallbacks) {
@@ -225,7 +223,7 @@ export class NoteCanvasMouseListener {
     }
   }
 
-  getPreviewNotes(): NoteSnapshot[] | null {
+  getPreviewNotes(): ReadonlyMap<number, NoteSnapshot> | null {
     return this.previewNotes;
   }
 
@@ -471,14 +469,12 @@ export class NoteCanvasMouseListener {
         this.state = {
           kind: 'create',
           startBeat: beat,
-          startOctave: octave,
-          startScaleDegree: scaleDegree,
           dragStartX: x,
           createNote,
           pointerX: e.clientX,
           pointerY: e.clientY,
         };
-        this.previewNotes = [...this.callbacks.notes, createNote];
+        this.previewNotes = new Map([[this.callbacks.notes.length, createNote]]);
         this.callbacks.requestRedraw();
         return;
       }
@@ -534,21 +530,19 @@ export class NoteCanvasMouseListener {
         const deltaDegree = scaleDegree - this.state.startScaleDegree;
         const notes = this.callbacks.notes;
         const selected = this.callbacks.selectedIndices;
-        this.previewNotes = notes.map((n, i) => {
-          const src = this.state.kind === 'move' ? this.state.sourceByIndex.get(i) : undefined;
-          if (
-            src &&
-            (selected.has(i) || (this.state.kind === 'move' && i === this.state.mouseNoteIndex))
-          ) {
-            return {
-              ...n,
-              start: src.originStart + deltaBeat,
-              octave: src.octave + deltaOctave,
-              scaleDegree: (((src.scaleDegree + deltaDegree) % nd) + nd) % nd,
-            };
-          }
-          return n;
-        });
+        const preview = new Map<number, NoteSnapshot>();
+        for (const src of this.state.sourceData) {
+          const i = src.noteIndex;
+          const note = notes[i];
+          if (!note || (!selected.has(i) && i !== this.state.mouseNoteIndex)) continue;
+          preview.set(i, {
+            ...note,
+            start: src.originStart + deltaBeat,
+            octave: src.octave + deltaOctave,
+            scaleDegree: (((src.scaleDegree + deltaDegree) % nd) + nd) % nd,
+          });
+        }
+        this.previewNotes = preview;
         this.autoScroller.start();
         this.callbacks.requestRedraw();
         break;
@@ -581,14 +575,8 @@ export class NoteCanvasMouseListener {
           duration = Math.max(minDuration, duration);
         }
 
-        this.state.createNote = {
-          octave: this.state.startOctave,
-          scaleDegree: this.state.startScaleDegree,
-          start: this.state.startBeat,
-          duration,
-          fieldValues: this.callbacks.fieldDefinitions.map((fd) => fd.defaultValue),
-        };
-        this.previewNotes = [...this.callbacks.notes, this.state.createNote];
+        this.state.createNote = { ...this.state.createNote, duration };
+        this.previewNotes = new Map([[this.callbacks.notes.length, this.state.createNote]]);
         this.callbacks.requestRedraw();
         break;
       }
@@ -612,19 +600,18 @@ export class NoteCanvasMouseListener {
           }
         }
 
-        const finalTimeAdjust = timeAdjust;
-        this.previewNotes = this.callbacks.notes.map((n, i) => {
-          const src =
-            this.state.kind === 'resize_right' ? this.state.sourceByIndex.get(i) : undefined;
-          if (src) {
-            return {
-              ...n,
-              start: src.originStart,
-              duration: Math.max(minDuration, src.originDuration + finalTimeAdjust),
-            };
-          }
-          return n;
-        });
+        const notes = this.callbacks.notes;
+        const preview = new Map<number, NoteSnapshot>();
+        for (const src of this.state.sourceData) {
+          const note = notes[src.noteIndex];
+          if (!note) continue;
+          preview.set(src.noteIndex, {
+            ...note,
+            start: src.originStart,
+            duration: Math.max(minDuration, src.originDuration + timeAdjust),
+          });
+        }
+        this.previewNotes = preview;
         this.callbacks.requestRedraw();
         break;
       }
@@ -652,18 +639,20 @@ export class NoteCanvasMouseListener {
           }
         }
 
-        const finalTimeAdjust = timeAdjust;
-        this.previewNotes = this.callbacks.notes.map((n, i) => {
-          const src =
-            this.state.kind === 'resize_left' ? this.state.sourceByIndex.get(i) : undefined;
-          if (src) {
-            const originEnd = src.originStart + src.originDuration;
-            const newStart = src.originStart + finalTimeAdjust;
-            const newDuration = originEnd - newStart;
-            return { ...n, start: newStart, duration: Math.max(minDuration, newDuration) };
-          }
-          return n;
-        });
+        const notes = this.callbacks.notes;
+        const preview = new Map<number, NoteSnapshot>();
+        for (const src of this.state.sourceData) {
+          const note = notes[src.noteIndex];
+          if (!note) continue;
+          const originEnd = src.originStart + src.originDuration;
+          const start = src.originStart + timeAdjust;
+          preview.set(src.noteIndex, {
+            ...note,
+            start,
+            duration: Math.max(minDuration, originEnd - start),
+          });
+        }
+        this.previewNotes = preview;
         this.callbacks.requestRedraw();
         break;
       }
@@ -680,27 +669,24 @@ export class NoteCanvasMouseListener {
         const valueDelta = -(deltaY / yScale) * range;
         const selected = this.state.fieldEditNoteIndices;
         const notes = this.callbacks.notes;
-        this.previewNotes = notes.map((n, i) => {
-          const selIdx = selected.indexOf(i);
-          if (selIdx >= 0) {
-            const origVal =
-              this.state.kind === 'field_edit' ? this.state.originalFieldValues[selIdx]! : 0;
-            const newVal = Math.max(
-              fieldDef.minValue,
-              Math.min(fieldDef.maxValue, origVal + valueDelta),
-            );
-            const newFields = [...n.fieldValues];
-            if (
-              this.state.kind === 'field_edit' &&
-              this.state.affectedFieldIndex < newFields.length
-            ) {
-              newFields[this.state.affectedFieldIndex] =
-                fieldDef.fieldType === 'DISCRETE' ? Math.round(newVal) : newVal;
-            }
-            return { ...n, fieldValues: newFields };
+        const fieldIndex = this.state.affectedFieldIndex;
+        const preview = new Map<number, NoteSnapshot>();
+        for (const [selIdx, i] of selected.entries()) {
+          const note = notes[i];
+          if (!note) continue;
+          const origVal = this.state.originalFieldValues[selIdx]!;
+          const newVal = Math.max(
+            fieldDef.minValue,
+            Math.min(fieldDef.maxValue, origVal + valueDelta),
+          );
+          const fieldValues = [...note.fieldValues];
+          if (fieldIndex < fieldValues.length) {
+            fieldValues[fieldIndex] =
+              fieldDef.fieldType === 'DISCRETE' ? Math.round(newVal) : newVal;
           }
-          return n;
-        });
+          preview.set(i, { ...note, fieldValues });
+        }
+        this.previewNotes = preview;
         this.callbacks.requestRedraw();
         break;
       }
@@ -721,7 +707,7 @@ export class NoteCanvasMouseListener {
         if (this.previewNotes) {
           const endData: NoteData[] = [];
           for (const src of state.sourceData) {
-            const pn = this.previewNotes[src.noteIndex];
+            const pn = this.previewNotes.get(src.noteIndex);
             if (pn) {
               endData.push({
                 noteIndex: src.noteIndex,
@@ -766,7 +752,7 @@ export class NoteCanvasMouseListener {
         if (this.previewNotes) {
           const endData: NoteData[] = [];
           for (const src of state.sourceData) {
-            const pn = this.previewNotes[src.noteIndex];
+            const pn = this.previewNotes.get(src.noteIndex);
             if (pn && (pn.start !== src.originStart || pn.duration !== src.originDuration)) {
               endData.push({ ...src, originStart: pn.start, originDuration: pn.duration });
             }
@@ -782,7 +768,7 @@ export class NoteCanvasMouseListener {
         if (this.previewNotes && state.affectedFieldIndex >= 0) {
           const selected = state.fieldEditNoteIndices;
           const endValues = selected.map((i) => {
-            const note = this.previewNotes![i];
+            const note = this.previewNotes!.get(i);
             return note ? (note.fieldValues[state.affectedFieldIndex] ?? 0) : 0;
           });
           const hasChange = endValues.some((val, idx) => val !== state.originalFieldValues[idx]);

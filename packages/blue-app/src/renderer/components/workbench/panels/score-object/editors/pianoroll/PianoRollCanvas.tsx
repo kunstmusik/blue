@@ -15,7 +15,7 @@ import { cn } from '../../../../../../lib/cn';
 
 interface PianoRollCanvasProps {
   notes: NoteSnapshot[];
-  previewNotes: NoteSnapshot[] | null;
+  previewNotes: ReadonlyMap<number, NoteSnapshot> | null;
   scale: ScaleSnapshot;
   fieldDefinitions: FieldDefSnapshot[];
   selectedIndices: Set<number>;
@@ -123,15 +123,21 @@ export default function PianoRollCanvas({
   const totalRows = isMidi ? MIDI_NOTE_COUNT : OCTAVES * numDegrees;
   const canvasHeight = totalRows * noteHeight;
 
-  const displayNotes = previewNotes ?? notes;
-
-  const maxStart = displayNotes.reduce(
-    (max, n) => Math.max(max, n.start + n.duration),
-    durationBeats,
+  const scoreEnd = useMemo(
+    () => notes.reduce((max, note) => Math.max(max, note.start + note.duration), durationBeats),
+    [notes, durationBeats],
   );
+  // Keep the authored extent as the floor during a gesture so dragging left
+  // cannot shrink the scroll range under the pointer.
+  let previewEnd = scoreEnd;
+  if (previewNotes) {
+    for (const note of previewNotes.values()) {
+      previewEnd = Math.max(previewEnd, note.start + note.duration);
+    }
+  }
   // Grid layers keep drawing to the viewport edge even when the scored
   // duration is shorter than the visible pane.
-  const canvasWidth = Math.max(maxStart * pixelSecond + 200, minWidth ?? 0, 800);
+  const canvasWidth = Math.max(previewEnd * pixelSecond + 200, minWidth ?? 0, 800);
 
   const pitchToY = useCallback(
     (octave: number, scaleDegree: number): number => {
@@ -316,7 +322,7 @@ export default function PianoRollCanvas({
 
   const hasViewport = viewportWidth > 0 && viewportHeight > 0;
   const viewMinX = hasViewport ? Math.max(0, scrollLeft - PIANO_ROLL_OVERSCAN_X) : 0;
-  const viewMaxX = hasViewport ? scrollLeft + viewportWidth + PIANO_ROLL_OVERSCAN_X : canvasWidth;
+  const viewMaxX = hasViewport ? scrollLeft + viewportWidth + PIANO_ROLL_OVERSCAN_X : Infinity;
   const viewMinY = hasViewport ? Math.max(0, scrollTop - PIANO_ROLL_OVERSCAN_Y) : 0;
   const viewMaxY = hasViewport ? scrollTop + viewportHeight + PIANO_ROLL_OVERSCAN_Y : canvasHeight;
 
@@ -361,40 +367,37 @@ export default function PianoRollCanvas({
     return lines;
   }, [totalRows, noteHeight, numDegrees, isMidi, viewMinY, viewMaxY]);
 
-  const visibleNotes = useMemo(() => {
-    const visible: Array<{
-      index: number;
-      note: NoteSnapshot;
-      x: number;
-      y: number;
-      width: number;
-    }> = [];
-    for (let i = 0; i < displayNotes.length; i += 1) {
-      const note = displayNotes[i]!;
+  const positionVisibleNote = useCallback(
+    (index: number, note: NoteSnapshot) => {
       const x = note.start * pixelSecond;
-      const w = note.duration * pixelSecond;
-      const renderW = Math.max(w - 1, 4);
-      if (hasViewport && (x + renderW < viewMinX || x > viewMaxX)) {
-        continue;
-      }
+      const width = Math.max(note.duration * pixelSecond - 1, 4);
+      if (hasViewport && (x + width < viewMinX || x > viewMaxX)) return null;
       const y = pitchToY(note.octave, note.scaleDegree);
-      if (hasViewport && (y + noteHeight < viewMinY || y > viewMaxY)) {
-        continue;
-      }
-      visible.push({ index: i, note, x, y, width: renderW });
+      if (hasViewport && (y + noteHeight < viewMinY || y > viewMaxY)) return null;
+      return { index, note, x, y, width };
+    },
+    [pixelSecond, hasViewport, viewMinX, viewMaxX, viewMinY, viewMaxY, pitchToY, noteHeight],
+  );
+
+  const visibleScoreNotes = useMemo(() => {
+    const visible: NonNullable<ReturnType<typeof positionVisibleNote>>[] = [];
+    for (const [index, note] of notes.entries()) {
+      const positioned = positionVisibleNote(index, note);
+      if (positioned) visible.push(positioned);
     }
     return visible;
-  }, [
-    displayNotes,
-    pixelSecond,
-    hasViewport,
-    viewMinX,
-    viewMaxX,
-    viewMinY,
-    viewMaxY,
-    pitchToY,
-    noteHeight,
-  ]);
+  }, [notes, positionVisibleNote]);
+
+  const visibleNotes = useMemo(() => {
+    if (!previewNotes) return visibleScoreNotes;
+    const visible = visibleScoreNotes.filter(({ index }) => !previewNotes.has(index));
+    for (const [index, note] of previewNotes) {
+      const positioned = positionVisibleNote(index, note);
+      if (positioned) visible.push(positioned);
+    }
+    visible.sort((left, right) => left.index - right.index);
+    return visible;
+  }, [positionVisibleNote, previewNotes, visibleScoreNotes]);
 
   const getTooltipText = useCallback(
     (note: NoteSnapshot): string => {

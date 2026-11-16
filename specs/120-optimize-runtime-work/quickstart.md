@@ -125,3 +125,9 @@ these temporary diagnostics.
 
 The automation row owns its resize measurement. It disconnects its observer when the last
 line is removed, the row unmounts, or the host document changes. Each line uses the shared height.
+
+The Piano Roll pointer listener owns the sparse preview during create, move, resize, and field
+gestures. The canvas combines affected notes with the visible authored notes and keeps the
+authored scroll extent as a floor until the gesture ends. Release and the existing history
+settlement path commit through the document bridge. Escape, blur, stale source, and disposal
+discard the preview and stop autoscroll.
