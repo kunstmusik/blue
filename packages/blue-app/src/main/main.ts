@@ -1140,9 +1140,8 @@ function getScoreObjectFileResolutionContext(data: BlueData): {
 
 function getRealtimeSfDirOption(data: BlueData, projectDirectory: string | null): string | null {
   const sfDir = getProjectMediaDirectory(data, projectDirectory);
-  if (!sfDir) return null;
-
-  fs.mkdirSync(sfDir, { recursive: true });
+  // Do not create the media folder here; it is created only when a file is written to it.
+  if (!sfDir || !fs.existsSync(sfDir)) return null;
   return `--env:SFDIR=${sfDir}`;
 }
 
