@@ -21,12 +21,6 @@ import {
   BlueData,
   type XmlDiagnostic,
   XmlLoadError,
-  BlueX7,
-  Effect,
-  PolyObject,
-  Send,
-  BSBGroup,
-  BSBWidget,
   TrackLayerGroup,
   type BlueX7Voice,
   setExternalCommandExecutor,
@@ -35,9 +29,7 @@ import {
   CSDImportMode,
   buildMidiImportProject,
   resolveMixerGateIntent,
-  type MeterBindingMap,
 } from '@blue/data';
-import type { MeterBindingMapPayload } from '../shared/meter-types';
 import { buildBatchedEngineOutputPayload, type EngineOutputChunk } from '../shared/io-provider';
 import { buildMeterBindingMapPayload } from './meter-binding';
 import {
@@ -53,14 +45,12 @@ import {
   resetPanel,
   syncLegacyRendererSettings,
   updatePlaybackPreferences,
-  clearSettingsCache,
 } from './program-settings-store';
 import {
   loadWindowLayoutSettings,
   resetWindowLayout,
   setCurrentSessionWindowResetHandler,
   updateWindowLayout,
-  WINDOW_LAYOUT_RESET_CHANNEL,
 } from './window-layout-store';
 import {
   attachWindowStateHandlers,
@@ -110,7 +100,7 @@ import {
 import type { EngineProbeRequest, EngineProbeResult } from '../shared/engine-runtime';
 import type { CsoundIoQueryRequest, CsoundIoQueryResult } from '../shared/csound-runtime';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
-import type { AudioLayoutManifest, TempoMap } from '@blue/data';
+import type { AudioLayoutManifest } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 import {
   clearActiveBlueX7Bindings,
@@ -180,20 +170,16 @@ import { MixerGainPreviewAdapter } from './mixer-gain-preview';
 import { showEngineRecoveryFailureDialog } from './engine-recovery-dialog';
 import type { EngineRecoverySessionKind } from '../shared/engine-recovery';
 import {
-  closeEffectEditorWindow,
   closeEffectEditorWindowsForOwner,
   broadcastProjectDocumentUpdateToEffectWindows,
   focusEffectEditorWindowMode,
   hasOpenProjectEffectWindows,
-  isEffectEditorWebContents,
   openEffectEditorWindow,
   openEffectInterfaceWindow,
 } from './effect-editor-window-manager';
 import {
   broadcastProjectDocumentUpdateToTrackInstrumentWindows,
   closeTrackInstrumentEditorWindows,
-  closeTrackInstrumentEditorWindowsForGroup,
-  closeTrackInstrumentEditorWindowsForTrack,
   focusTrackInstrumentEditorWindow,
   getOpenTrackInstrumentTargets,
   isTrackInstrumentEditorWebContents,
@@ -213,8 +199,8 @@ import {
   registerBlueAudioProtocolHandler,
   resolveAuthorizedAudioFilePath,
 } from './audio-stream-protocol';
-import { createMainExternalExecutor, executeExternalTest } from './external-executor';
-import { inspectSoundFont, type SoundFontExecutionSeam } from './soundfont-viewer';
+import { createMainExternalExecutor } from './external-executor';
+import { inspectSoundFont } from './soundfont-viewer';
 import {
   buildAutomationRuntimeTimingContext,
   collectAffectedProjectScoreAutomationParameterIds,
@@ -222,7 +208,7 @@ import {
 } from './score-automation-runtime-sync';
 import type { JavaRuntimeClient } from './java-runtime/java-runtime-client';
 import { JavaRuntimeSessionManager } from './java-runtime/java-runtime-session';
-import { evaluateJavaScriptConsole } from './repl-console-runtime';
+import { createReplConsoleCoordinator } from './repl-console-coordinator';
 import { testScoreObject } from './score-object-test';
 import { runScoreObjectTestRequest as runFencedScoreObjectTestRequest } from './score-object-test-request';
 import {
@@ -244,7 +230,6 @@ import {
   type RuntimeWorkOperation,
 } from './project-runtime-reconciliation';
 import { MixerGatePublisher, type MixerGateEngineIO } from './mixer-mute-solo-runtime';
-import { syncRuntimeChannel } from './runtime-channel-sync';
 import {
   collectBsbInstrumentRuntimeChannels,
   syncBsbInstrumentRuntimeChannels,
@@ -253,7 +238,6 @@ import {
 import {
   broadcastToWorkbenchWindows,
   disposeWorkbenchWindowHost,
-  getWorkbenchWindowManager,
   hasFloatingWorkbenchWindows,
   initWorkbenchWindowHost,
   registerFloatingWindow,
@@ -263,10 +247,7 @@ import {
   sendToMainWindow,
 } from './workbench-window-host';
 import { getWindowTitle } from '../shared/window-title';
-import {
-  PROJECT_DOCUMENT_UPDATED_CHANNEL,
-  type ProjectDocumentUpdatedEvent,
-} from '../shared/workbench-window-contract';
+import { PROJECT_DOCUMENT_UPDATED_CHANNEL } from '../shared/workbench-window-contract';
 import {
   REPL_CONSOLE_CLOSE_CHANNEL,
   REPL_CONSOLE_EVALUATE_CHANNEL,
@@ -277,10 +258,8 @@ import {
   type ReplConsoleCloseResult,
   type ReplConsoleEvaluateRequest,
   type ReplConsoleEvaluateResult,
-  type ReplConsoleLanguage,
   type ReplConsoleOpenRequest,
   type ReplConsoleOpenResult,
-  type ReplConsoleProjectContext,
   type ReplConsoleReinitializeRequest,
   type ReplConsoleReinitializeResult,
 } from '../shared/repl-console';
@@ -315,31 +294,18 @@ import {
   type OscServerRuntimeSnapshot,
 } from '../shared/osc-control';
 import {
-  applyEffectEditablePatchToEffect,
-  applyProjectDocumentPatch,
-  createBsbRealtimeControlUpdate,
   createProjectEditorSnapshot,
   createScopedProjectEditorSnapshot,
-  createEffectEditorSnapshot,
-  createEffectEditorViewSnapshot,
-  createTrackInstrumentEditorSnapshot,
-  createProjectUdoListSnapshot,
   createScoreObjectEditorDocument,
   createNestedPolyObjectSnapshot,
   resolveTimelineScoreObjects,
   createNoteProcessorChainSnapshot,
-  findMixerChannelById,
-  getMixerChannelSnapshotId,
-  getMixerEntrySnapshotId,
   isEmptyProjectDocumentPatch,
-  isScoreColorPatchAccepted,
   isBsbRealtimeControlUpdate,
   createScoreObjectPropertiesTarget,
   resolveEditorTarget,
-  resolveTimelineTarget,
   type EffectEditorPatchRequest,
   type EffectEditorRequest,
-  type EffectEditablePatch,
   type TrackInstrumentEditorPatchRequest,
   type TrackInstrumentEditorRequest,
   type TrackInstrumentEditorPatchResult,
@@ -375,29 +341,16 @@ import {
   type ScoreObjectImportResult,
 } from '../shared/score-object-file';
 import type {
-  RenderToDiskRequest,
-  FreezeScoreObjectsRequest,
-  CancelRenderOperationRequest,
   RenderOperationResult,
-  RenderOperationStatus,
   FreezeOperationResult,
-  FreezeItemStatus,
-  DiskRenderAction,
 } from '../shared/render-freeze-contract';
+import { createRenderFreezeCoordinator } from './render-freeze-coordinator';
+import { createSecondaryEditorCoordinator } from './secondary-editor-coordinator';
 import {
-  RENDER_OPERATION_STATUS_CHANNEL,
-  FREEZE_ITEM_STATUS_CHANNEL,
   isCancelRenderOperationRequest,
   isFreezeScoreObjectsRequest,
   isRenderToDiskRequest,
 } from '../shared/render-freeze-contract';
-import {
-  executeRenderToDisk,
-  parseCsoundProgressLine,
-  resolveOutputFilePath,
-  resolveRenderWorkingDirectory,
-  type RenderExecutionSeam,
-} from './render-to-disk';
 import { generateDiskCsdForScreen, generateRealtimeCsdForScreen } from './csd-generation';
 import {
   audioLayoutDiagnosticFromError,
@@ -405,13 +358,6 @@ import {
   type PreflightAudioLayoutOptions,
 } from './audio-layout-preflight';
 import { type AudioLayoutDiagnostic, type AudioLayoutErrorPayload } from '../shared/audio-layout';
-import { tokenizeCommand } from './disk-render-command';
-import {
-  executeFreezeUnfreeze,
-  type FreezeExecutionSeam,
-  type FreezeArtifactSettlement,
-} from './freeze-score-objects';
-import { spawn } from 'child_process';
 import { BlueSynthBuilder } from '@blue/data';
 import {
   collectMissingAudioFiles,
@@ -463,7 +409,6 @@ import {
   PROJECT_RUNTIME_OUTCOME_CHANNEL,
   type ProjectHistoryInvalidResponse,
   type ProjectHistoryOrigin,
-  type ProjectHistoryActionPhase,
   type ProjectRuntimeOutcomeEvent,
   type ProjectDocumentCommitMetadata,
   type ProjectHistoryReadResponse,
@@ -619,64 +564,6 @@ function isMainWindowWebContents(sender: unknown): boolean {
   if (sender === mainWindow.webContents) return true;
   const senderId = (sender as { id?: number } | null | undefined)?.id;
   return typeof senderId === 'number' && senderId === mainWindow.webContents.id;
-}
-
-function captureSecondaryWindowPublishedSnapshot(
-  hasEffectWindows: boolean,
-  trackTargets: readonly { rootGroupId: string; trackId: string }[],
-): unknown {
-  const data = getCurrentData();
-  if (!data) return null;
-  const projectUdos = createProjectUdoListSnapshot(data);
-  if (trackTargets.length === 0) {
-    return hasEffectWindows ? { projectUdos } : null;
-  }
-
-  const groupsByRootId = new Map<
-    string,
-    {
-      groupId: string;
-      groupType: 'track';
-      layers: Array<{
-        layerId: string;
-        instrument: {
-          snapshot: NonNullable<
-            ReturnType<typeof createTrackInstrumentEditorSnapshot>
-          >['instrument'];
-        };
-      }>;
-    }
-  >();
-
-  for (const target of trackTargets) {
-    const trackSnapshot = createTrackInstrumentEditorSnapshot(data, {
-      track: {
-        rootGroupId: target.rootGroupId,
-        trackId: target.trackId,
-        projectSessionId: getCurrentProjectSessionId(),
-        projectRevision: getCurrentProjectRevision(),
-      },
-    });
-    if (!trackSnapshot) continue;
-    let group = groupsByRootId.get(target.rootGroupId);
-    if (!group) {
-      group = { groupId: target.rootGroupId, groupType: 'track', layers: [] };
-      groupsByRootId.set(target.rootGroupId, group);
-    }
-    if (!group.layers.some((layer) => layer.layerId === target.trackId)) {
-      group.layers.push({
-        layerId: target.trackId,
-        instrument: { snapshot: trackSnapshot.instrument },
-      });
-    }
-  }
-
-  return {
-    projectUdos,
-    score: {
-      layerGroups: [...groupsByRootId.values()],
-    },
-  };
 }
 
 let lastCapturedChangedTargets: readonly string[] | undefined;
@@ -901,12 +788,6 @@ let blueShareService: BlueShareService | null = null;
 let unregisterBlueShareIpc: (() => void) | null = null;
 let unregisterDomainIpc: (() => void) | null = null;
 
-// ─── Render/Freeze operation lifecycle ───
-let activeRenderOperationId: string | null = null;
-let activeRenderAbortController: AbortController | null = null;
-let activeRenderOperationKind: RenderOperationStatus['kind'] | null = null;
-let activeRenderAction: DiskRenderAction | null = null;
-let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
 let engineBridge: EngineBridge | null = null;
 let blueLiveSession: BlueLiveEngineSession | null = null;
 let blueLiveTriggerController: BlueLiveTriggerController | null = null;
@@ -953,7 +834,6 @@ let activeAuditionPlayback = false;
 let javaScriptRuntimeReady: Promise<void> | null = null;
 let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
-let replRuntimeQueue: Promise<unknown> = Promise.resolve();
 let midiInputCoordinator: MidiInputCoordinator | null = null;
 let oscControlService: OscControlService | null = null;
 let recentProjectFiles: string[] = [];
@@ -1131,402 +1011,30 @@ function initializeOscControlService(): void {
   void oscControlService.start(preferences);
 }
 
-function getProjectMixerChannelBySnapshotId(channelId: string) {
-  if (!getCurrentData()) {
-    return null;
-  }
+const secondaryEditorCoordinator = createSecondaryEditorCoordinator({
+  getCurrentData,
+  getCurrentProjectSessionId,
+  getCurrentProjectRevision,
+  getEngineBridge: () => engineBridge,
+  isBlueLiveRunning: () => blueLiveSession?.isRunning() ?? false,
+  commitProjectDocumentPatchBatch: (patches, options) =>
+    commitProjectDocumentPatchBatch(patches, options),
+  syncEngineWithProjectPatch: (data, patch) => syncEngineWithProjectPatch(data, patch),
+});
 
-  return findMixerChannelById(getCurrentData().getMixer(), channelId);
-}
-
-function getProjectEffectEntryByRequest(request: EffectEditorRequest) {
-  if (!getCurrentData() || request.ownerType !== 'project' || !request.projectRef) {
-    return null;
-  }
-
-  const channel = getProjectMixerChannelBySnapshotId(request.projectRef.channelId);
-  if (!channel) {
-    return null;
-  }
-
-  const chain =
-    request.projectRef.chain === 'pre' ? channel.getPreEffects() : channel.getPostEffects();
-  const index = chain.findIndex(
-    (entry) => getMixerEntrySnapshotId(entry) === request.projectRef?.entryId,
-  );
-  if (index < 0) {
-    return null;
-  }
-
-  const entry = chain[index];
-  if (!(entry instanceof Effect)) {
-    return null;
-  }
-
-  return {
-    channel,
-    chain,
-    entry,
-    effectId: request.projectRef.entryId,
-  };
-}
-
-function getProjectEffectEditorSnapshot(request: EffectEditorRequest) {
-  const result = getProjectEffectEntryByRequest(request);
-  if (!result) {
-    return null;
-  }
-
-  const createSnapshot =
-    request.includeSerializedXml === false
-      ? createEffectEditorViewSnapshot
-      : createEffectEditorSnapshot;
-  return createSnapshot(result.entry, result.effectId, 'project', {
-    projectRef: request.projectRef,
-    projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
-  });
-}
-
-function trackInstrumentRequestIsCurrent(request: TrackInstrumentEditorRequest): boolean {
-  const { projectSessionId, projectRevision } = request.track;
-  return (
-    projectSessionId === getCurrentProjectSessionId() &&
-    projectRevision === getCurrentProjectRevision()
-  );
-}
-
-function getTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
-  if (!getCurrentData() || !trackInstrumentRequestIsCurrent(request)) return null;
-
-  return getCurrentTrackInstrumentEditorSnapshot(request);
-}
-
-function getCurrentTrackInstrumentEditorSnapshot(request: TrackInstrumentEditorRequest) {
-  if (!getCurrentData() || request.track.projectSessionId !== getCurrentProjectSessionId())
-    return null;
-
-  return createTrackInstrumentEditorSnapshot(getCurrentData(), {
-    track: {
-      ...request.track,
-      projectSessionId: getCurrentProjectSessionId(),
-      projectRevision: getCurrentProjectRevision(),
-    },
-  });
-}
-
-async function applyTrackInstrumentEditorPatch(
-  request: TrackInstrumentEditorPatchRequest,
-): Promise<TrackInstrumentEditorPatchResult> {
-  const data = getCurrentData();
-  if (!data) {
-    return { status: 'unavailable', snapshot: null };
-  }
-  const currentSnapshot = getCurrentTrackInstrumentEditorSnapshot(request);
-  if (!currentSnapshot) {
-    return { status: 'unavailable', snapshot: null };
-  }
-  if (!trackInstrumentRequestIsCurrent(request)) {
-    return { status: 'stale', snapshot: currentSnapshot };
-  }
-
-  const patch: ProjectDocumentPatch = {
-    score: {
-      type: 'updateTrackInstrument',
-      track: currentSnapshot.track,
-      patch: request.patch,
-    },
-  };
-
-  const receipt = await commitProjectDocumentPatchBatch([patch], {
-    label: request.historyContext?.label ?? 'Update Track Instrument',
-    gestureId: request.historyContext?.gestureId,
-    fieldId: request.historyContext?.fieldId,
-    phase: request.historyContext?.phase,
-    expectedRevision: request.track.projectRevision,
-    operationId: request.historyContext?.operationId,
-    contextSequence: request.historyContext?.contextSequence,
-    barrierId: request.historyContext?.barrierId,
-    origin: request.historyContext
-      ? {
-          contextId: request.historyContext.contextId,
-          viewId: request.historyContext.viewId,
-          selection: request.historyContext.selection,
-        }
-      : undefined,
-  });
-
-  if (!receipt.changed) {
-    return { status: 'unchanged', snapshot: currentSnapshot };
-  }
-
-  const directRealtimeUpdate = request.patch.bsbInterface
-    ? createBsbRealtimeControlUpdate(
-        {
-          track: {
-            projectSessionId: getCurrentProjectSessionId(),
-            rootGroupId: request.track.rootGroupId,
-            trackId: request.track.trackId,
-          },
-        },
-        request.patch.bsbInterface,
-      )
-    : undefined;
-  if (
-    !directRealtimeUpdate &&
-    (engineBridge?.isCurrentlyPlaying() || blueLiveSession?.isRunning())
-  ) {
-    try {
-      await syncEngineWithProjectPatch(getCurrentData(), patch);
-    } catch (error) {
-      console.error('[main] Failed to sync Track instrument editor patch:', error);
-    }
-  }
-  return {
-    status: 'applied',
-    snapshot: getTrackInstrumentEditorSnapshot({
-      track: {
-        ...request.track,
-        projectSessionId: getCurrentProjectSessionId(),
-        projectRevision: getCurrentProjectRevision(),
-      },
-    }),
-  };
-}
-
-function computeInterfaceBounds(effect: Effect): { maxW: number; maxH: number } {
-  let maxW = 1;
-  let maxH = 1;
-  const gi = effect.getGraphicInterface();
-  const rootGroup = gi.getRootGroup();
-
-  const visit = (widgets: BSBWidget[]) => {
-    for (const widget of widgets) {
-      if (widget instanceof BSBGroup) {
-        visit(widget.getChildren());
-        continue;
-      }
-      const ctor = widget.constructor.name;
-      const size = getWidgetSize(widget, ctor);
-      maxW = Math.max(maxW, widget.x + size.width);
-      maxH = Math.max(maxH, widget.y + size.height);
-    }
-  };
-
-  visit(rootGroup.getChildren());
-  return { maxW, maxH };
-}
-
-function getWidgetSize(widget: BSBWidget, ctor: string): { width: number; height: number } {
-  const w = widget as any;
-  const vde = w.valueDisplayEnabled === true;
-
-  switch (ctor) {
-    case 'BSBKnob': {
-      const kw = typeof w.knobWidth === 'number' ? w.knobWidth : 60;
-      const le = w.labelEnabled === true;
-      return { width: kw, height: kw + (le ? 16 : 0) + (vde ? 14 : 0) };
-    }
-    case 'BSBVSlider': {
-      const sh = typeof w.sliderHeight === 'number' ? w.sliderHeight : 150;
-      return { width: 50, height: sh + (vde ? 30 : 0) };
-    }
-    case 'BSBHSlider': {
-      const sw = typeof w.sliderWidth === 'number' ? w.sliderWidth : 150;
-      return { width: sw + (vde ? 50 : 0), height: 30 };
-    }
-    case 'BSBXYController': {
-      const cw = typeof w.width === 'number' ? w.width : 100;
-      const ch = typeof w.height === 'number' ? w.height : 100;
-      return { width: cw + (vde ? 50 : 0), height: ch + (vde ? 30 : 0) };
-    }
-    default:
-      return {
-        width: typeof w.width === 'number' ? w.width : 50,
-        height: typeof w.height === 'number' ? w.height : 24,
-      };
-  }
-}
-
-async function applyProjectEffectEditorPatch(request: EffectEditorPatchRequest) {
-  if (!getCurrentData()) {
-    return null;
-  }
-
-  if (request.ownerType === 'library') {
-    return null;
-  }
-
-  const effectEntry = getProjectEffectEntryByRequest(request);
-  if (!effectEntry || !request.projectRef) {
-    return null;
-  }
-
-  const patch: ProjectDocumentPatch = {
-    mixer: {
-      type: 'updateEffect',
-      channelId: request.projectRef.channelId,
-      chain: request.projectRef.chain,
-      entryId: request.projectRef.entryId,
-      patch: request.patch,
-    },
-  };
-
-  await commitProjectDocumentPatchBatch([patch], {
-    label: request.historyContext?.label ?? 'Update Effect',
-    gestureId: request.historyContext?.gestureId,
-    fieldId: request.historyContext?.fieldId,
-    phase: request.historyContext?.phase,
-    expectedRevision: request.historyContext?.expectedRevision,
-    operationId: request.historyContext?.operationId,
-    contextSequence: request.historyContext?.contextSequence,
-    barrierId: request.historyContext?.barrierId,
-    origin: request.historyContext
-      ? {
-          contextId: request.historyContext.contextId,
-          viewId: request.historyContext.viewId,
-          selection: request.historyContext.selection,
-        }
-      : undefined,
-  });
-
-  const updatedEntry = getProjectEffectEntryByRequest(request);
-  if (!updatedEntry) {
-    return null;
-  }
-
-  if (engineBridge?.isCurrentlyPlaying() && request.patch.bsbInterface) {
-    const params = updatedEntry.entry.getParameters();
-    for (const param of params) {
-      const varName = param.getCompilationVarName();
-      if (varName) {
-        void engineBridge.setChannel(varName, param.getValue(0)).catch(() => {});
-      }
-    }
-  }
-
-  const createSnapshot =
-    request.includeSerializedXml === false
-      ? createEffectEditorViewSnapshot
-      : createEffectEditorSnapshot;
-  return createSnapshot(updatedEntry.entry, updatedEntry.effectId, 'project', {
-    projectRef: request.projectRef,
-    projectUdos: getCurrentData() ? createProjectUdoListSnapshot(getCurrentData()) : [],
-  });
-}
-
-function maybeCloseRemovedProjectEffectEditors(patch: ProjectDocumentPatch): void {
-  if (!patch.mixer || !getCurrentData()) {
-    return;
-  }
-
-  if (patch.mixer.type !== 'removeChainEntry') {
-    return;
-  }
-
-  const channel = getProjectMixerChannelBySnapshotId(patch.mixer.channelId);
-  if (!channel) {
-    return;
-  }
-
-  const chain = patch.mixer.chain === 'pre' ? channel.getPreEffects() : channel.getPostEffects();
-  const { entryId } = patch.mixer;
-  const removed = chain.find((entry) => getMixerEntrySnapshotId(entry) === entryId);
-  if (!removed || !(removed instanceof Effect)) {
-    return;
-  }
-
-  closeEffectEditorWindow({
-    ownerType: 'project',
-    effectId: entryId,
-    projectRef: {
-      channelId: patch.mixer.channelId,
-      chain: patch.mixer.chain,
-      entryId,
-    },
-  });
-}
-
-function maybeCloseRemovedTrackInstrumentEditors(patch: ProjectDocumentPatch): void {
-  const scorePatch = patch.score;
-  if (!scorePatch || !getCurrentData()) return;
-
-  if (scorePatch.type === 'removeLayerGroup') {
-    closeTrackInstrumentEditorWindowsForGroup(scorePatch.groupId);
-    return;
-  }
-
-  if (scorePatch.type === 'clearTrackInstrument' || scorePatch.type === 'replaceTrackInstrument') {
-    closeTrackInstrumentEditorWindowsForTrack(
-      scorePatch.track.rootGroupId,
-      scorePatch.track.trackId,
-    );
-    return;
-  }
-
-  if (scorePatch.type === 'removeLayerRanges') {
-    const removedCountByGroup = new Map<string, number>();
-    for (const r of scorePatch.ranges) {
-      const group = findTrackLayerGroupById(getCurrentData().getScore(), r.groupId);
-      if (group) {
-        const startIndex = Math.max(0, r.startIndex);
-        const endIndex = Math.min(group.length - 1, r.endIndex);
-        for (let i = startIndex; i <= endIndex; i++) {
-          const track = group[i];
-          if (track) {
-            closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
-          }
-        }
-        if (endIndex >= startIndex) {
-          removedCountByGroup.set(
-            r.groupId,
-            (removedCountByGroup.get(r.groupId) ?? 0) + endIndex - startIndex + 1,
-          );
-        }
-      }
-    }
-    if (scorePatch.deleteEmptyLayerGroups) {
-      for (const [groupId, removedCount] of removedCountByGroup) {
-        const group = findTrackLayerGroupById(getCurrentData().getScore(), groupId);
-        if (group && group.length > 0 && removedCount >= group.length) {
-          closeTrackInstrumentEditorWindowsForGroup(groupId);
-        }
-      }
-    }
-    return;
-  }
-
-  if (scorePatch.type !== 'removeLayer') return;
-  const group = findTrackLayerGroupById(getCurrentData().getScore(), scorePatch.groupId);
-  const track = group?.[scorePatch.layerIndex];
-  if (track) {
-    closeTrackInstrumentEditorWindowsForTrack(group.getUniqueId(), track.getUniqueId());
-  }
-}
-
-function findTrackLayerGroupById(
-  groups: readonly unknown[],
-  groupId: string,
-): TrackLayerGroup | null {
-  for (const candidate of groups) {
-    if (candidate instanceof TrackLayerGroup) {
-      const trackGroup = candidate as TrackLayerGroup;
-      if (trackGroup.getUniqueId() === groupId) return trackGroup;
-    }
-    if (candidate instanceof PolyObject) {
-      const nested = findTrackLayerGroupById(candidate as readonly unknown[], groupId);
-      if (nested) return nested;
-    }
-  }
-  return null;
-}
-
-function updateWindowTitle(): void {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    const title = getWindowTitle(getCurrentFilePath(), projectHistory.getSaveState());
-    lastWindowTitle = title;
-    mainWindow.setTitle(title);
-  }
-}
+const {
+  captureSecondaryWindowPublishedSnapshot,
+  getProjectMixerChannelBySnapshotId,
+  getProjectEffectEntryByRequest,
+  getProjectEffectEditorSnapshot,
+  trackInstrumentRequestIsCurrent,
+  getCurrentTrackInstrumentEditorSnapshot,
+  applyTrackInstrumentEditorPatch,
+  computeInterfaceBounds,
+  applyProjectEffectEditorPatch,
+  maybeCloseRemovedProjectEffectEditors,
+  maybeCloseRemovedTrackInstrumentEditors,
+} = secondaryEditorCoordinator;
 
 function updateWindowTitleIfChanged(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -1544,7 +1052,7 @@ function computeApplicationMenuStateKey(): string {
     : undefined;
   return JSON.stringify([
     hasLoadedProject(),
-    activeRenderOperationId !== null,
+    isRenderOperationActive(),
     canAuditionScoreObjects,
     Boolean(getCurrentFilePath()) && projectHistory.getSaveState() === 'modified',
     currentFollowPlaybackEnabled,
@@ -1566,464 +1074,36 @@ function rebuildApplicationMenuIfChanged(): void {
   rebuildApplicationMenu();
 }
 
-// ─── Render/Freeze subprocess seam ───
+// ─── Render/Freeze coordinator ───
 
-/** Output tab name used to stream disk-render Csound subprocess output. */
-const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
+const renderFreezeCoordinator = createRenderFreezeCoordinator({
+  getCurrentData,
+  getCurrentFilePath,
+  getCurrentProjectDirectory,
+  getCurrentProjectSessionId,
+  getCurrentProjectSessionDocumentId,
+  getCurrentProjectRevision,
+  getCurrentProjectDocument,
+  getMainWindow: () => mainWindow,
+  getEngineRuntimeService: () => engineRuntimeService,
+  getJavaScriptSession: () => javaScriptSession,
+  getProjectHistory: () => projectHistory,
+  loadProgramSettings,
+  getConfiguredWorkDirectory,
+  runProjectOnLoad: (data) => runProjectOnLoad(data),
+  transferProjectEditorIdentities,
+  authorizeAudioFilePath,
+  broadcastToWorkbenchWindows,
+  rebuildApplicationMenuIfChanged,
+});
 
-function createCsoundExecutionSeam(
-  cancellationSignal?: { cancelled: boolean },
-  streamOutput?: (text: string, type: 'stdout' | 'stderr') => void,
-  options: { trackRenderProcess?: boolean } = {},
-): RenderExecutionSeam & FreezeExecutionSeam & SoundFontExecutionSeam {
-  const trackRenderProcess = options.trackRenderProcess ?? true;
-
-  return {
-    async runCsound(
-      args: string[],
-      cwd: string,
-      onProgress?: (progress: number) => void,
-      totalDuration?: number,
-      onOutput?: (text: string, type: 'stdout' | 'stderr') => void,
-    ): Promise<{
-      exitCode: number;
-      stderr: string;
-      stdout: string;
-      cancelled?: boolean;
-      errorCode?: string | null;
-    }> {
-      const controller =
-        trackRenderProcess && activeRenderAbortController
-          ? activeRenderAbortController
-          : new AbortController();
-      if (cancellationSignal?.cancelled) controller.abort();
-      let stderrLineBuffer = '';
-      const result = await engineRuntimeService?.executeCsound(
-        {
-          kind: 'performance',
-          operationId: activeRenderOperationId ?? `csound-${Date.now()}`,
-          args,
-          cwd,
-        },
-        {
-          signal: controller.signal,
-          onOutput: (text, source) => {
-            streamOutput?.(text, source);
-            onOutput?.(text, source);
-            if (source !== 'stderr' || !onProgress) return;
-            stderrLineBuffer += text;
-            const lines = stderrLineBuffer.split('\n');
-            stderrLineBuffer = lines.pop() ?? '';
-            for (const line of lines) {
-              const progress = parseCsoundProgressLine(line, totalDuration ?? 0);
-              if (progress !== null) onProgress(progress);
-            }
-          },
-        },
-      );
-      if (!result) {
-        return {
-          exitCode: -1,
-          stderr: 'Blue Engine runtime service is unavailable.',
-          stdout: '',
-          errorCode: 'CSOUND_UNAVAILABLE',
-        };
-      }
-      return {
-        exitCode: result.exitCode ?? -1,
-        stderr: result.stderr || (result.state === 'failed' ? result.message : ''),
-        stdout: result.stdout,
-        cancelled: result.state === 'cancelled',
-        errorCode: result.errorCode,
-      };
-    },
-  };
-}
-
-function finishRenderOperation(operationId: string): void {
-  if (activeRenderOperationId !== operationId) return;
-  activeRenderOperationId = null;
-  activeRenderOperationKind = null;
-  activeRenderAction = null;
-  activeRenderCancellationSignal = null;
-  activeRenderAbortController = null;
-  rebuildApplicationMenuIfChanged();
-}
-
-function launchExternalOutputCommand(
-  template: string,
-  outputPath: string,
-  operationId: string,
-  label: 'Open',
-): void {
-  const command = tokenizeCommand(template).map((token) =>
-    token.replaceAll('$outfile', outputPath),
-  );
-  const executable = command.shift();
-  if (!executable) {
-    broadcastRenderStatus({
-      operationId,
-      kind: 'diskRender',
-      phase: 'failed',
-      message: `${label} command is empty.`,
-      progress: null,
-      outputPath,
-      error: `${label} command is empty.`,
-    });
-    return;
-  }
-
-  const child = spawn(executable, command, { stdio: 'ignore' });
-  let failedToStart = false;
-  child.once('error', (error) => {
-    failedToStart = true;
-    broadcastRenderStatus({
-      operationId,
-      kind: 'diskRender',
-      phase: 'failed',
-      message: `${label} command failed: ${error.message}`,
-      progress: null,
-      outputPath,
-      error: error.message,
-    });
-  });
-  child.once('close', (code) => {
-    if (failedToStart || code === 0) return;
-    const message = `${label} command exited with code ${code ?? -1}.`;
-    broadcastRenderStatus({
-      operationId,
-      kind: 'diskRender',
-      phase: 'failed',
-      message,
-      progress: null,
-      outputPath,
-      error: message,
-    });
-  });
-}
-
-function broadcastRenderStatus(status: RenderOperationStatus): void {
-  const withAction: RenderOperationStatus =
-    activeRenderAction !== null && (status.action === undefined || status.action === null)
-      ? { ...status, action: activeRenderAction }
-      : status;
-
-  if (
-    withAction.kind === 'diskRender' &&
-    withAction.phase === 'completed' &&
-    withAction.action === 'play' &&
-    withAction.outputPath &&
-    !authorizeAudioFilePath(withAction.outputPath)
-  ) {
-    broadcastToWorkbenchWindows(RENDER_OPERATION_STATUS_CHANNEL, {
-      ...withAction,
-      phase: 'failed',
-      message: 'Could not authorize rendered file for in-app playback.',
-      error: 'Could not authorize rendered file for in-app playback.',
-    });
-    return;
-  }
-
-  broadcastToWorkbenchWindows(RENDER_OPERATION_STATUS_CHANNEL, withAction);
-}
-
-// ─── Render to Disk handler ───
-
-async function handleRenderToDisk(
-  action: DiskRenderAction,
-  requestedOperationId?: string,
-): Promise<RenderOperationResult> {
-  if (!getCurrentData()) {
-    return {
-      ok: false,
-      operationId: '',
-      cancelled: false,
-      outputPath: null,
-      error: 'No project loaded.',
-    };
-  }
-
-  if (activeRenderOperationId) {
-    return {
-      ok: false,
-      operationId: '',
-      cancelled: false,
-      outputPath: null,
-      error: 'Another render/freeze operation is already running.',
-    };
-  }
-
-  // One-shot Blue Engine children are isolated from the realtime ZMQ session;
-  // leave active playback/Blue Live untouched while an offline operation runs.
-
-  const projectDirectory = resolveRenderWorkingDirectory(getCurrentFilePath(), app.getPath('temp'));
-
-  const operationId = requestedOperationId ?? `disk-${Date.now()}`;
-  activeRenderOperationId = operationId;
-  activeRenderOperationKind = 'diskRender';
-  activeRenderAction = action;
-  const cancellationSignal = { cancelled: false };
-  activeRenderCancellationSignal = cancellationSignal;
-  activeRenderAbortController = new AbortController();
-  rebuildApplicationMenuIfChanged();
-
-  try {
-    const settings = loadProgramSettings();
-    const props = getCurrentData().getProjectProperties();
-    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
-
-    // Resolve output file
-    let outputFile = props.diskCompleteOverride
-      ? null
-      : resolveOutputFilePath(getCurrentData(), projectDirectory);
-
-    if (!props.diskCompleteOverride && !outputFile) {
-      const defaultName =
-        props.fileName?.trim() ||
-        `${getCurrentFilePath() ? path.basename(getCurrentFilePath(), '.blue') : 'untitled'}.wav`;
-      const dialogDirectory = getCurrentFilePath()
-        ? projectDirectory
-        : (getConfiguredWorkDirectory() ?? projectDirectory);
-      const result = await dialog.showSaveDialog(mainWindow!, {
-        title: 'Render to Disk',
-        defaultPath: path.join(dialogDirectory, defaultName),
-        filters: [
-          { name: 'WAV', extensions: ['wav'] },
-          { name: 'AIFF', extensions: ['aif', 'aiff'] },
-          { name: 'AU', extensions: ['au'] },
-          { name: 'RAW', extensions: ['raw'] },
-          { name: 'IRCAM', extensions: ['ircam'] },
-          { name: 'W64', extensions: ['w64'] },
-          { name: 'WAVEX', extensions: ['wavex'] },
-          { name: 'SD2', extensions: ['sd2'] },
-          { name: 'FLAC', extensions: ['flac'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-      });
-
-      if (result.canceled || !result.filePath) {
-        return { ok: false, operationId, cancelled: true, outputPath: null, error: null };
-      }
-
-      outputFile = result.filePath;
-    }
-
-    // Reset and focus the Csound (Disk) output tab before rendering so the
-    // user sees streamed subprocess output and a fresh buffer each run.
-    broadcastToWorkbenchWindows('engine-output-reset', { tabName: DISK_RENDER_OUTPUT_TAB });
-    broadcastToWorkbenchWindows('engine-output-select', { tabName: DISK_RENDER_OUTPUT_TAB });
-
-    const seam = createCsoundExecutionSeam(cancellationSignal, (text, type) =>
-      broadcastToWorkbenchWindows('engine-output', {
-        tabName: DISK_RENDER_OUTPUT_TAB,
-        text,
-        type,
-      }),
-    );
-
-    const renderResult = await executeRenderToDisk(
-      {
-        data: getCurrentData(),
-        projectDirectory,
-        diskRender: settings.diskRender,
-        general: settings.general,
-        outputFile,
-        isCancelled: () => cancellationSignal.cancelled,
-        javaScriptSession: javaScriptSession ?? undefined,
-        javaRuntimeClient,
-      },
-      action,
-      operationId,
-      broadcastRenderStatus,
-      seam,
-    );
-
-    if (renderResult.ok && renderResult.outputPath) {
-      if (action === 'play') {
-        // The renderer Audio File Player handles in-app playback after the
-        // completed status carries this action and output path.
-      } else if (action === 'open') {
-        const openCmd = settings.diskRender.externalOpenCommand.trim();
-        if (openCmd && openCmd !== 'command $outfile') {
-          launchExternalOutputCommand(openCmd, renderResult.outputPath, operationId, 'Open');
-        } else {
-          shell.showItemInFolder(renderResult.outputPath);
-        }
-      }
-    }
-
-    return renderResult;
-  } finally {
-    finishRenderOperation(operationId);
-  }
-}
-
-// ─── Freeze handler ───
-
-async function handleFreezeScoreObjects(
-  request: FreezeScoreObjectsRequest,
-): Promise<FreezeOperationResult> {
-  if (!getCurrentData()) {
-    return {
-      ok: false,
-      operationId: '',
-      cancelled: false,
-      frozenCount: 0,
-      unfrozenCount: 0,
-      deletedFiles: [],
-      rejectedTargets: [],
-      error: 'No project loaded.',
-      project: null,
-    };
-  }
-
-  if (activeRenderOperationId) {
-    return {
-      ok: false,
-      operationId: '',
-      cancelled: false,
-      frozenCount: 0,
-      unfrozenCount: 0,
-      deletedFiles: [],
-      rejectedTargets: [],
-      error: 'Another render/freeze operation is already running.',
-      project: null,
-    };
-  }
-
-  const projectDirectory = getCurrentProjectDirectory();
-  if (!projectDirectory) {
-    return {
-      ok: false,
-      operationId: '',
-      cancelled: false,
-      frozenCount: 0,
-      unfrozenCount: 0,
-      deletedFiles: [],
-      rejectedTargets: [{ selectionId: '*', reason: 'Project must be saved before freezing.' }],
-      error: 'Project must be saved before freezing.',
-      project: null,
-    };
-  }
-
-  const operationId = request.operationId ?? `freeze-${Date.now()}`;
-  activeRenderOperationId = operationId;
-  activeRenderOperationKind = 'freeze';
-  activeRenderAction = null;
-  const cancellationSignal = { cancelled: false };
-  activeRenderCancellationSignal = cancellationSignal;
-  activeRenderAbortController = new AbortController();
-  rebuildApplicationMenuIfChanged();
-
-  const initialDocumentId = getCurrentProjectSessionDocumentId();
-  const initialSessionId = getCurrentProjectSessionId();
-  const initialRevision = getCurrentProjectRevision();
-  const stagedProject = getCurrentData().historyCopy();
-  transferProjectEditorIdentities(getCurrentData(), stagedProject);
-
-  const pendingArtifacts: { settlement?: FreezeArtifactSettlement } = {};
-  try {
-    const settings = loadProgramSettings();
-    const seam = createCsoundExecutionSeam(cancellationSignal);
-    const javaRuntimeClient = await runProjectOnLoad(getCurrentData());
-
-    const result = await executeFreezeUnfreeze(
-      {
-        // Freeze renders and applies replacements only to this detached
-        // candidate. The live session remains available for edits while the
-        // asynchronous render/Java work is in progress.
-        data: stagedProject,
-        projectDirectory,
-        utility: settings.utility,
-        platform: process.platform,
-        isCancelled: () => cancellationSignal.cancelled,
-        onPreparedArtifacts: (settlement) => {
-          pendingArtifacts.settlement = settlement;
-        },
-        // SPEC 085: a systemic freeze failure aborts every in-flight render
-        // through the shared operation controller. The user-cancellation
-        // signal stays untouched so the outcome is reported as a failure,
-        // not as a cancel.
-        abortInFlight: () => {
-          activeRenderAbortController?.abort();
-        },
-        javaScriptSession: javaScriptSession ?? undefined,
-        javaRuntimeClient,
-      },
-      request.targets,
-      operationId,
-      broadcastRenderStatus,
-      seam,
-      (itemEvent: FreezeItemStatus) => {
-        broadcastToWorkbenchWindows(FREEZE_ITEM_STATUS_CHANNEL, itemEvent);
-      },
-    );
-
-    if (result.ok && (result.frozenCount > 0 || result.unfrozenCount > 0)) {
-      const label =
-        result.frozenCount > 0 && result.unfrozenCount > 0
-          ? 'Freeze/Unfreeze Score Objects'
-          : result.frozenCount > 0
-            ? 'Freeze Score Objects'
-            : 'Unfreeze Score Objects';
-      const receipt = await projectHistory.commitPreparedStructuralMutation({
-        label,
-        candidate: stagedProject,
-        rootFields: ['score', 'sObjLib'],
-        expectedDocumentId: initialDocumentId,
-        expectedSessionId: initialSessionId,
-        expectedRevision: initialRevision,
-        proposalToken: request.historyProposalToken,
-        validateBeforeCommit: ({ filePath }) =>
-          pendingArtifacts.settlement?.validateCommit(filePath),
-        onCommitted: () => {
-          activeRenderCancellationSignal = null;
-          pendingArtifacts.settlement?.accept();
-        },
-      });
-      if (receipt.changed) {
-        result.project = getCurrentProjectDocument();
-      } else {
-        result.ok = false;
-        result.cancelled = cancellationSignal.cancelled;
-        result.frozenCount = 0;
-        result.unfrozenCount = 0;
-        result.error = result.cancelled
-          ? null
-          : (receipt.oversizeProposal?.explanation ??
-            receipt.error ??
-            'Freeze result was not committed to project history.');
-        if (receipt.oversizeProposal) {
-          result.historyOversizeProposal = receipt.oversizeProposal;
-        }
-      }
-    }
-
-    return result;
-  } finally {
-    try {
-      pendingArtifacts.settlement?.discard();
-    } finally {
-      finishRenderOperation(operationId);
-    }
-  }
-}
-
-// ─── Cancel render operation ───
-
-async function handleCancelRenderOperation(
-  request: CancelRenderOperationRequest,
-): Promise<boolean> {
-  if (activeRenderOperationId !== request.operationId || !activeRenderCancellationSignal) {
-    return false;
-  }
-
-  activeRenderCancellationSignal.cancelled = true;
-
-  activeRenderAbortController?.abort();
-
-  return true;
-}
+const {
+  isRenderOperationActive,
+  createCsoundExecutionSeam,
+  handleRenderToDisk,
+  handleFreezeScoreObjects,
+  handleCancelRenderOperation,
+} = renderFreezeCoordinator;
 
 function syncRecentProjectFiles(files: string[]): void {
   recentProjectFiles = [...files];
@@ -2090,7 +1170,7 @@ function setAuditionScoreObjectAvailability(enabled: boolean): void {
 }
 
 async function canReplaceProjectWhileRenderActive(): Promise<boolean> {
-  if (!activeRenderOperationId) return true;
+  if (!isRenderOperationActive()) return true;
   if (mainWindow && !mainWindow.isDestroyed()) {
     await showNativeConfirmation(mainWindow, {
       id: 'render-in-progress-notice',
@@ -2250,7 +1330,7 @@ function rebuildApplicationMenu(): void {
   const menu = Menu.buildFromTemplate(
     buildApplicationMenuTemplate({
       hasLoadedProject: hasLoadedProject(),
-      isRenderOperationActive: activeRenderOperationId !== null,
+      isRenderOperationActive: isRenderOperationActive(),
       canAuditionScoreObjects,
       isDarwin: process.platform === 'darwin',
       recentProjects: getRecentProjectFilesSnapshot(),
@@ -4101,99 +3181,6 @@ function disposeJavaScriptSession(): void {
   lastProjectOnLoadState = null;
 }
 
-const REPL_CONSOLE_PROMPTS: Record<ReplConsoleLanguage, string> = {
-  javascript: 'js> ',
-  python: '>>> ',
-  clojure: 'user=> ',
-};
-
-// Interactive JVM evaluations can legitimately spend longer than the short
-// transport deadline used by score-object/runtime requests, especially while
-// a project dependency or a user expression is being compiled.
-const REPL_CONSOLE_EVALUATION_TIMEOUT_MS = 30_000;
-
-function getReplProjectLabel(data: BlueData | null, filePath: string | null): string {
-  if (data) {
-    const title = data.getProjectProperties().title?.trim();
-    if (title) return title;
-  }
-
-  return filePath ? path.basename(filePath) : data ? 'Untitled' : 'No Project';
-}
-
-function createReplProjectContext(): ReplConsoleProjectContext {
-  return {
-    loaded: getCurrentData() !== null,
-    sessionId: getCurrentProjectSessionId(),
-    label: getReplProjectLabel(getCurrentData(), getCurrentFilePath()),
-    filePath: getCurrentFilePath(),
-    projectDir: getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null,
-  };
-}
-
-function createReplProjectDataSnapshot(): Record<string, unknown> | null {
-  if (!getCurrentData()) return null;
-
-  const properties = getCurrentData().getProjectProperties();
-  const globalOrcSco = getCurrentData().getGlobalOrcSco();
-  return {
-    sessionId: getCurrentProjectSessionId(),
-    filePath: getCurrentFilePath(),
-    projectDir: getCurrentFilePath() ? path.dirname(getCurrentFilePath()) : null,
-    projectProperties: {
-      title: properties.title,
-      author: properties.author,
-      notes: properties.notes,
-      sampleRate: properties.sampleRate,
-      ksmps: properties.ksmps,
-      nchnls: properties.nchnls,
-      useZeroDbFS: properties.useZeroDbFS,
-      zeroDbFS: properties.zeroDbFS,
-      diskSampleRate: properties.diskSampleRate,
-      diskKsmps: properties.diskKsmps,
-    },
-    globalOrc: globalOrcSco.getGlobalOrc(),
-    globalSco: globalOrcSco.getGlobalSco(),
-    tablesText: getCurrentData().getTableSet().getTables(),
-    scratchPad: {
-      text: getCurrentData().getScratchPadData().getScratchText(),
-      wordWrapEnabled: getCurrentData().getScratchPadData().isWordWrapEnabled(),
-    },
-  };
-}
-
-function createReplRuntimeContext(): {
-  project: ReplConsoleProjectContext;
-  projectDir: string;
-  data: Record<string, unknown> | null;
-} {
-  const project = createReplProjectContext();
-  return {
-    project,
-    projectDir: project.projectDir ? `${project.projectDir}${path.sep}` : '',
-    data: createReplProjectDataSnapshot(),
-  };
-}
-
-function createReplOpenResult(
-  language: ReplConsoleLanguage,
-  runtime: ReplConsoleOpenResult['runtime'],
-  error?: string,
-): ReplConsoleOpenResult {
-  return {
-    ok: runtime === 'ready',
-    language,
-    prompt: REPL_CONSOLE_PROMPTS[language],
-    project: createReplProjectContext(),
-    runtime,
-    ...(error ? { error } : {}),
-  };
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 async function ensureJavaScriptConsoleSession(): Promise<JavaScriptSession> {
   if (!javaScriptSession) {
     javaScriptSession = await createJavaScriptSession();
@@ -4201,260 +3188,26 @@ async function ensureJavaScriptConsoleSession(): Promise<JavaScriptSession> {
   return javaScriptSession;
 }
 
-async function reinitializeJavaScriptRuntimeNow(): Promise<void> {
-  const session = await ensureJavaScriptConsoleSession();
-  session.reinitialize();
-}
+const replConsoleCoordinator = createReplConsoleCoordinator({
+  getCurrentData,
+  getCurrentFilePath,
+  getCurrentProjectSessionId,
+  ensureJavaScriptSession: ensureJavaScriptConsoleSession,
+  getJavaRuntimeSessionManager: () => javaRuntimeSessionManager,
+  invalidateProjectOnLoadCache: () => {
+    lastProjectOnLoadState = null;
+  },
+  runProjectOnLoad: (data) => runProjectOnLoad(data),
+});
 
-async function reinitializeJavaScriptRuntime(): Promise<ScriptRuntimeReinitializeResult> {
-  return enqueueReplRuntime(async () => {
-    try {
-      await reinitializeJavaScriptRuntimeNow();
-      if (getCurrentData()) {
-        lastProjectOnLoadState = null;
-        await runProjectOnLoad(getCurrentData());
-      }
-      return { ok: true };
-    } catch (error: unknown) {
-      return { ok: false, error: getErrorMessage(error) };
-    }
-  });
-}
-
-async function reinitializeJythonRuntimeNow(): Promise<void> {
-  if (!getCurrentData()) {
-    throw new Error('No project loaded.');
-  }
-  if (!getCurrentData().usesJavaRuntime()) {
-    throw new Error('Active project does not use the Java runtime.');
-  }
-  if (!javaRuntimeSessionManager) {
-    throw new Error('Java runtime manager is unavailable.');
-  }
-
-  await javaRuntimeSessionManager.reinitializeJython(
-    getCurrentData(),
-    getCurrentProjectSessionId(),
-    getCurrentFilePath(),
-  );
-}
-
-async function reinitializeJythonRuntime(): Promise<ScriptRuntimeReinitializeResult> {
-  return enqueueReplRuntime(async () => {
-    try {
-      await reinitializeJythonRuntimeNow();
-      if (getCurrentData()) {
-        lastProjectOnLoadState = null;
-        await runProjectOnLoad(getCurrentData());
-      }
-      return { ok: true };
-    } catch (error: unknown) {
-      return { ok: false, error: getErrorMessage(error) };
-    }
-  });
-}
-
-async function ensureJavaRuntimeConsoleSession(): Promise<JavaRuntimeClient> {
-  if (!getCurrentData()) {
-    throw new Error('No project loaded.');
-  }
-  if (!javaRuntimeSessionManager) {
-    throw new Error('Java runtime is unavailable.');
-  }
-
-  return javaRuntimeSessionManager.ensureReady(
-    getCurrentData(),
-    getCurrentProjectSessionId(),
-    getCurrentFilePath(),
-  );
-}
-
-async function openReplConsoleNow(language: ReplConsoleLanguage): Promise<ReplConsoleOpenResult> {
-  try {
-    if (language === 'javascript') {
-      await ensureJavaScriptConsoleSession();
-    } else {
-      await ensureJavaRuntimeConsoleSession();
-    }
-    return createReplOpenResult(language, 'ready');
-  } catch (error: unknown) {
-    return createReplOpenResult(
-      language,
-      getCurrentData() ? 'error' : 'unavailable',
-      getErrorMessage(error),
-    );
-  }
-}
-
-function enqueueReplRuntime<T>(operation: () => Promise<T>): Promise<T> {
-  const next = replRuntimeQueue.then(operation, operation);
-  replRuntimeQueue = next.then(
-    () => undefined,
-    () => undefined,
-  );
-  return next;
-}
-
-function openReplConsole(language: ReplConsoleLanguage): Promise<ReplConsoleOpenResult> {
-  return enqueueReplRuntime(() => openReplConsoleNow(language));
-}
-
-function createReplEvaluationFailure(
-  language: ReplConsoleLanguage,
-  message: string,
-  projectSessionId = getCurrentProjectSessionId(),
-): ReplConsoleEvaluateResult {
-  return {
-    ok: false,
-    language,
-    projectSessionId,
-    value: '',
-    stdout: '',
-    stderr: '',
-    elapsedMs: 0,
-    error: { message },
-  };
-}
-
-async function evaluateReplConsoleNow(
-  language: ReplConsoleLanguage,
-  code: string,
-): Promise<ReplConsoleEvaluateResult> {
-  const runtimeContext = createReplRuntimeContext();
-  if (language === 'javascript') {
-    const session = await ensureJavaScriptConsoleSession();
-    return evaluateJavaScriptConsole(
-      session,
-      { code, projectSessionId: runtimeContext.project.sessionId },
-      {
-        projectDir: runtimeContext.projectDir,
-        data: runtimeContext.data,
-        project: runtimeContext.project,
-      },
-    );
-  }
-
-  if (!runtimeContext.project.loaded) {
-    return createReplEvaluationFailure(
-      language,
-      'No project loaded.',
-      runtimeContext.project.sessionId,
-    );
-  }
-
-  const startedAt = Date.now();
-  const client = await ensureJavaRuntimeConsoleSession();
-  const bindings = {
-    blueData: runtimeContext.data,
-    blueProjectDir: runtimeContext.projectDir,
-    blueProject: runtimeContext.project,
-  };
-  const response =
-    language === 'python'
-      ? await client.evaluateJythonScript(
-          { code, bindings },
-          { timeout: REPL_CONSOLE_EVALUATION_TIMEOUT_MS },
-        )
-      : await client.evaluateClojure(
-          { code, bindings, returnVariableName: null },
-          { timeout: REPL_CONSOLE_EVALUATION_TIMEOUT_MS },
-        );
-
-  if (response.ok) {
-    return {
-      ok: true,
-      language,
-      projectSessionId: runtimeContext.project.sessionId,
-      value: response.result.value,
-      stdout: response.stdout,
-      stderr: response.stderr,
-      elapsedMs: response.elapsedMs ?? Date.now() - startedAt,
-    };
-  }
-
-  return {
-    ok: false,
-    language,
-    projectSessionId: runtimeContext.project.sessionId,
-    value: '',
-    stdout: response.stdout,
-    stderr: response.stderr,
-    elapsedMs: response.elapsedMs ?? Date.now() - startedAt,
-    error: {
-      code: response.error.code,
-      message: response.error.message,
-      ...(response.error.stack ? { stack: response.error.stack } : {}),
-      ...(response.error.line !== undefined ? { line: response.error.line } : {}),
-      ...(response.error.column !== undefined ? { column: response.error.column } : {}),
-    },
-  };
-}
-
-async function evaluateReplConsole(
-  request: ReplConsoleEvaluateRequest,
-): Promise<ReplConsoleEvaluateResult> {
-  if (!isReplConsoleLanguage(request?.language)) {
-    return createReplEvaluationFailure('javascript', 'Invalid console language.');
-  }
-  if (typeof request.code !== 'string' || request.code.trim().length === 0) {
-    return createReplEvaluationFailure(request.language, 'Enter code before evaluating.');
-  }
-
-  try {
-    return await enqueueReplRuntime(() => evaluateReplConsoleNow(request.language, request.code));
-  } catch (error: unknown) {
-    return createReplEvaluationFailure(request.language, getErrorMessage(error));
-  }
-}
-
-async function reinitializeReplConsole(
-  request: ReplConsoleReinitializeRequest,
-): Promise<ReplConsoleReinitializeResult> {
-  if (!isReplConsoleLanguage(request?.language)) {
-    return {
-      ...createReplOpenResult('javascript', 'error', 'Invalid console language.'),
-      message: 'Invalid console language.',
-    };
-  }
-
-  return enqueueReplRuntime(async () => {
-    try {
-      if (request.language === 'javascript') {
-        await reinitializeJavaScriptRuntimeNow();
-      } else if (request.language === 'python') {
-        await reinitializeJythonRuntimeNow();
-      } else {
-        if (!javaRuntimeSessionManager || !getCurrentData())
-          throw new Error('Java runtime is unavailable.');
-        await javaRuntimeSessionManager.reinitializeClojure(
-          getCurrentData(),
-          getCurrentProjectSessionId(),
-          getCurrentFilePath(),
-        );
-      }
-
-      if (getCurrentData()) {
-        lastProjectOnLoadState = null;
-        await runProjectOnLoad(getCurrentData());
-      }
-
-      return {
-        ...createReplOpenResult(request.language, 'ready'),
-        message: `${request.language} interpreter reinitialized.`,
-      };
-    } catch (error: unknown) {
-      const message = getErrorMessage(error);
-      return {
-        ...createReplOpenResult(
-          request.language,
-          getCurrentData() ? 'error' : 'unavailable',
-          message,
-        ),
-        message,
-      };
-    }
-  });
-}
+const {
+  createReplOpenResult,
+  openReplConsole,
+  evaluateReplConsole,
+  reinitializeReplConsole,
+  reinitializeJavaScriptRuntime,
+  reinitializeJythonRuntime,
+} = replConsoleCoordinator;
 
 async function disposeJavaRuntimeSession(): Promise<void> {
   lastProjectOnLoadState = null;
@@ -5030,7 +3783,7 @@ async function presentEngineRecoveryFailure(
 async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
   const data = getCurrentData();
   const projectSessionAtStart = getCurrentProjectSessionId();
-  if (!data || !engineBridge || !mainWindow || activeRenderOperationId) return false;
+  if (!data || !engineBridge || !mainWindow || isRenderOperationActive()) return false;
   if (
     !Array.isArray(objectIds) ||
     objectIds.length === 0 ||
@@ -5052,7 +3805,7 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
       return false;
 
     return await auditionSelectedScoreObjects(data, selected, {
-      isRenderOperationActive: activeRenderOperationId !== null,
+      isRenderOperationActive: isRenderOperationActive(),
       isRealtimePlaying: () => engineBridge?.isCurrentlyPlaying() ?? false,
       stopRealtime: stopPlayback,
       startRealtime: async (auditionData) => {

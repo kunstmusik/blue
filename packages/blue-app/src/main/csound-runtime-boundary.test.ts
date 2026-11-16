@@ -10,6 +10,7 @@ describe('managed Csound execution boundary', () => {
       readFile(path.join(__dirname, 'ipc', 'playback-runtime-ipc.ts'), 'utf8'),
       readFile(path.join(__dirname, 'render-to-disk.ts'), 'utf8'),
       readFile(path.join(__dirname, 'freeze-score-objects.ts'), 'utf8'),
+      readFile(path.join(__dirname, 'render-freeze-coordinator.ts'), 'utf8'),
       readFile(path.join(__dirname, 'soundfont-viewer.ts'), 'utf8'),
     ]);
     const production = sources.join('\n');

@@ -63,6 +63,7 @@ function setup(platform: NodeJS.Platform) {
   };
   let rebuildCount = 0;
   let lastApplicationMenuStateKey: string | null = null;
+  let renderOperationActive = false;
   const context = createContext({
     process: { platform },
     mainWindow: null,
@@ -89,7 +90,7 @@ function setup(platform: NodeJS.Platform) {
     hasLoadedProject: () => false,
     getCurrentFilePath: () => null,
     getRecentProjectFilesSnapshot: () => [],
-    activeRenderOperationId: null,
+    isRenderOperationActive: () => renderOperationActive,
     canAuditionScoreObjects: false,
     currentFollowPlaybackEnabled: false,
     currentFollowPlaybackOnStartEnabled: false,
@@ -106,6 +107,9 @@ function setup(platform: NodeJS.Platform) {
     setHistoryUndoLabel: (label: string | null) => {
       historyState.canUndo = label !== null;
       historyState.undoLabel = label;
+    },
+    setRenderOperationActive: (active: boolean) => {
+      renderOperationActive = active;
     },
     getApplicationMenu: () => applicationMenu,
   };
@@ -163,5 +167,19 @@ describe('application menu bar visibility', () => {
     // Same undo label across coalesced keystrokes must not rebuild the menu again.
     app.rebuildIfChanged();
     expect(app.getRebuildCount()).toBe(2);
+
+    app.setRenderOperationActive(true);
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(3);
+
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(3);
+
+    app.setRenderOperationActive(false);
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(4);
+
+    app.rebuildIfChanged();
+    expect(app.getRebuildCount()).toBe(4);
   });
 });
