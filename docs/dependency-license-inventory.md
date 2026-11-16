@@ -1,6 +1,18 @@
 # Blue app production dependency license inventory
 
-Generated from the installed production dependency graph with `pnpm licenses list --json -P --filter @blue/app` on 2026-09-22, then augmented with production dependencies of the workspace packages `@blue/data` and `@blue/engine-client`. The app filter does not report the full dependency graph of those workspace packages. Versions reflect the lockfile installation at generation time. This inventory records package metadata; consult each package license file for full terms. Electron is listed separately because the Electron runtime is packaged from a development dependency.
+Generated on 2026-11-16 from the installed production dependencies. Regenerate
+this inventory when the package graph changes. Use the lockfile and run:
+
+```sh
+pnpm licenses list --json -P --filter @blue/app
+pnpm licenses list --json -P --filter @blue/data
+pnpm licenses list --json -P --filter @blue/engine-client
+```
+
+The app filter needs the workspace-package reports for the full graph. This
+inventory records package metadata. Consult each package's license file for
+its terms. The release operator also checks the notices that ship in each
+installer under the [licensing rules](../LICENSING.md).
 
 ## 0BSD
 
@@ -19,6 +31,7 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `@nextjournal/lang-clojure` 1.0.0
 - `@nextjournal/lezer-clojure` 1.0.0
 - `lucide-react` 0.563.0
+- `saxes` 6.0.0
 
 ## MIT
 
@@ -36,7 +49,7 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `@floating-ui/dom` 1.8.0
 - `@floating-ui/react-dom` 2.1.9
 - `@floating-ui/utils` 0.2.12
-- `@kunstmusik/codemirror-lang-csound` 1.0.2
+- `@kunstmusik/codemirror-lang-csound` 1.0.4
 - `@lezer/common` 1.5.2
 - `@lezer/highlight` 1.2.3
 - `@lezer/javascript` 1.5.5
@@ -78,17 +91,15 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `@react-dnd/asap` 4.0.1
 - `@react-dnd/invariant` 2.0.0
 - `@react-dnd/shallowequal` 2.0.0
+- `@tanstack/query-core` 5.104.4
+- `@tanstack/react-query` 5.104.4
 - `@tanstack/react-table` 8.21.3
 - `@tanstack/table-core` 8.21.3
-- `@types/node` 26.6.2
-- `@types/react` 19.3.0
-- `@types/react-dom` 19.3.0
 - `aria-hidden` 1.2.6
 - `clsx` 2.1.1
 - `cmake-ts` 1.0.2
 - `codemirror` 6.0.2
 - `crelt` 1.0.7
-- `csstype` 3.2.3
 - `detect-node-es` 1.1.0
 - `dnd-core` 14.0.1
 - `dockview` 5.2.0
@@ -113,11 +124,11 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `sonner` 2.0.8
 - `style-mod` 4.1.4
 - `tailwind-merge` 3.7.0
-- `undici-types` 8.9.0
 - `use-callback-ref` 1.3.3
 - `use-sidecar` 1.1.3
 - `use-sync-external-store` 1.7.0
 - `w3c-keyname` 2.2.8
+- `xmlchars` 2.2.0
 - `zustand` 5.0.15
 
 ## MIT AND MPL-2.0
@@ -128,19 +139,27 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 - `@fontsource/roboto` 5.3.0
 
-## Additional production dependencies through `@blue/data`
+## Production dependencies through `@blue/data`
 
 | Package                                   | Version | License |
 | ----------------------------------------- | ------- | ------- |
-| `@rgrove/parse-xml`                       | 4.2.3   | ISC     |
 | `@jitl/quickjs-ffi-types`                 | 0.32.0  | MIT     |
 | `@jitl/quickjs-wasmfile-debug-asyncify`   | 0.32.0  | MIT     |
 | `@jitl/quickjs-wasmfile-debug-sync`       | 0.32.0  | MIT     |
 | `@jitl/quickjs-wasmfile-release-asyncify` | 0.32.0  | MIT     |
 | `@jitl/quickjs-wasmfile-release-sync`     | 0.32.0  | MIT     |
+| `@rgrove/parse-xml`                       | 4.2.3   | ISC     |
 | `quickjs-emscripten`                      | 0.32.0  | MIT     |
 | `quickjs-emscripten-core`                 | 0.32.0  | MIT     |
 
+## Production dependencies through `@blue/engine-client`
+
+| Package          | Version | License         |
+| ---------------- | ------- | --------------- |
+| `cmake-ts`       | 1.0.2   | MIT             |
+| `node-addon-api` | 8.9.2   | MIT             |
+| `zeromq`         | 6.8.0   | MIT AND MPL-2.0 |
+
 ## Electron runtime
 
-- [Electron 44.9.1](https://github.com/electron/electron/tree/v44.9.1) (MIT; Chromium and Node.js runtime); the app package copies its upstream license files to `Resources/licenses/Electron-LICENSE` and `Resources/licenses/Electron-LICENSES.chromium.html`.
+- [Electron 44.9.1](https://github.com/electron/electron/tree/v44.9.1) (MIT, Chromium and Node.js runtime) is packaged from the app's development dependencies. Packaging copies the upstream license files to `Resources/licenses/Electron-LICENSE` and `Resources/licenses/Electron-LICENSES.chromium.html`.

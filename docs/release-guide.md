@@ -37,8 +37,9 @@ Do not create a tagged release from an untagged commit, a branch name, or a tag 
 
 Install the following before any local package build:
 
-- Node.js 22 and pnpm 10 through Corepack.
+- Node.js 22 or newer and the pnpm version pinned in the root `package.json` `packageManager` field.
 - Java 17+ and Maven 3+ so the Java helper can produce `blue-java.jar` and `pythonLib`.
+- Quarto to render the bundled user manual.
 - The platform tools required by `electron-builder` for the current host operating system.
 - For playback testing, a Java runtime and Csound 7. Blue Engine is built from this checkout and bundled.
 - CMake 3.21+ and a supported C/C++ toolchain. The native build bootstraps its
@@ -49,7 +50,6 @@ Use a clean checkout and the lockfile:
 
 ```bash
 corepack enable
-corepack prepare pnpm@10.18.3 --activate
 pnpm install --frozen-lockfile
 pnpm build
 pnpm test
@@ -85,60 +85,28 @@ pnpm verify:package-inputs
 
 ### Diagnosing missing prerequisites
 
-| Symptom                                                                                                     | Likely cause                                                                                   | Corrective action                                                                                                                                         |
-| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verify:package-inputs` reports `[FAIL] Java helper JAR` or `Java helper Python library`                    | `@blue/java-runtime` has not been built                                                        | `pnpm --filter @blue/java-runtime build`, then re-run `verify:package-inputs`.                                                                            |
-| `verify:package-inputs` reports `[FAIL] Externalized workspace package @blue/data` or `@blue/engine-client` | Workspace packages have not been built                                                         | `pnpm --filter @blue/data build` and `pnpm --filter @blue/engine-client build` if present, then re-run.                                                   |
-| `verify:package-inputs` reports a missing Electron main, preload, renderer, or shared runtime output        | `packages/blue-app` build has not completed                                                    | `pnpm --filter @blue/app build`, then re-run.                                                                                                             |
-| `verify:package-inputs` reports `[FAIL] Electron pin mismatch`                                              | `packages/blue-app/package.json` no longer pins `electron` to `35.7.5`                         | Restore the pin before packaging; do not change the Electron/Node/SQLite runtime contract in this release.                                                |
-| `verify:package-inputs` reports `[FAIL] Native ZeroMQ .node binary`                                         | `zeromq` has not been rebuilt for Electron                                                     | `pnpm --filter @blue/app rebuild:native`, then re-run.                                                                                                    |
-| `verify:packaged-app` reports `[FAIL] Java helper JAR not found` from inside the packaged app               | electron-builder did not copy `assets/java/*` to installed `resources/assets/java`             | Inspect the unpacked application's `Resources/assets/java` directory; rebuild after confirming the assets exist in `packages/blue-app/assets/java`.       |
-| The packaged application launches but an engine operation reports Csound unavailable                        | Csound 7 is not installed or cannot be loaded                                                  | Install Csound 7, then use Realtime Render settings to retry the compatibility probe. Blue Engine itself is bundled and must not be installed separately. |
-| A local package unexpectedly attempts signing                                                               | The unsigned builder configuration was changed or signing variables were exported in the shell | Restore `mac.identity: null` in `packages/blue-app/electron-builder.yml` and clear signing variables for the unsigned default path.                       |
+| Symptom                                                                                                     | Likely cause                                                                                                        | Corrective action                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify:package-inputs` reports `[FAIL] Java helper JAR` or `Java helper Python library`                    | `@blue/java-runtime` has not been built                                                                             | `pnpm --filter @blue/java-runtime build`, then re-run `verify:package-inputs`.                                                                            |
+| `verify:package-inputs` reports `[FAIL] Externalized workspace package @blue/data` or `@blue/engine-client` | Workspace packages have not been built                                                                              | `pnpm --filter @blue/data build` and `pnpm --filter @blue/engine-client build` if present, then re-run.                                                   |
+| `verify:package-inputs` reports a missing Electron main, preload, renderer, or shared runtime output        | `packages/blue-app` build has not completed                                                                         | `pnpm --filter @blue/app build`, then re-run.                                                                                                             |
+| `verify:package-inputs` reports an Electron pin mismatch                                                    | The app manifest and the [package-input verifier](../scripts/verify-package-inputs.mjs) disagree on the runtime pin | Align the manifest, verifier, installed Electron, and native addon rebuild before packaging.                                                              |
+| `verify:package-inputs` reports `[FAIL] Native ZeroMQ .node binary`                                         | `zeromq` has not been rebuilt for Electron                                                                          | `pnpm --filter @blue/app rebuild:native`, then re-run.                                                                                                    |
+| `verify:packaged-app` reports `[FAIL] Java helper JAR not found` from inside the packaged app               | electron-builder did not copy `assets/java/*` to installed `resources/assets/java`                                  | Inspect the unpacked application's `Resources/assets/java` directory; rebuild after confirming the assets exist in `packages/blue-app/assets/java`.       |
+| The packaged application launches but an engine operation reports Csound unavailable                        | Csound 7 is not installed or cannot be loaded                                                                       | Install Csound 7, then use Realtime Render settings to retry the compatibility probe. Blue Engine itself is bundled and must not be installed separately. |
+| A local package unexpectedly attempts signing                                                               | The unsigned builder configuration was changed or signing variables were exported in the shell                      | Restore `mac.identity: null` in `packages/blue-app/electron-builder.yml` and clear signing variables for the unsigned default path.                       |
 
-## Future Signing Readiness
+## Publication credentials
 
-Signing is intentionally not active in the current workflows. The following values are documented so a future funded signed-release slice can be prepared without changing contributor, CI, develop-artifact, or current tagged-release unsigned behavior.
-
-`pnpm release:preflight` checks variable presence and shape without printing secret values. It is advisory today:
-
-```bash
-pnpm release:preflight -- --advisory
-pnpm release:preflight -- --scope macos --advisory
-pnpm release:preflight -- --scope windows --advisory
-```
-
-### Current publication tokens
+The active release workflows publish unsigned packages. Use
+`pnpm release:preflight -- --scope publish --advisory` to check local publishing
+readiness without printing credential values. Platform signing configuration is
+documented in the [release feature quickstart](../specs/062-app-release-builds/quickstart.md).
 
 | Variable       | Purpose                                                                                 | Exact expected format                                                                                                                                      | Storage and scope                                                                                                                                                                                                                                 | Consuming workflow or command                                                                                                                                                              |
 | -------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `GITHUB_TOKEN` | Check for an existing release and publish the verified tagged release                   | Opaque job token generated by GitHub Actions; no project-defined value or fixed textual shape                                                              | Generated automatically for each Actions job; never add it as a repository or Environment secret. The validation job receives `contents: read`; only the `publish-release` job in the protected `release` Environment receives `contents: write`. | Current `.github/workflows/release.yml` `validate-version` and `publish-release` jobs                                                                                                      |
 | `GH_TOKEN`     | Authenticate optional local duplicate-release checks or local `gh` publication commands | Non-empty opaque token accepted by GitHub CLI; permissions must match the local operation (`contents: read` for checks, `contents: write` for publication) | Maintainer's local shell environment or GitHub CLI credential store only; never commit it and do not add it to PR or develop workflows                                                                                                            | Current advisory `pnpm release:preflight -- --scope publish`; optional local `gh` commands only. GitHub Actions maps its generated `GITHUB_TOKEN` to `GH_TOKEN` for the publisher command. |
-
-### Future macOS signing
-
-| Variable                      | Purpose                                                             | Exact expected format                                                  | Storage and scope                                                                                 | Future consuming workflow                  |
-| ----------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `CSC_LINK`                    | Supply the Developer ID Application certificate to electron-builder | Non-empty existing P12 file path/URL or base64-encoded PKCS#12 payload | Protected `release` Environment secret; local shell variable may reference a protected local file | Future signed macOS package job            |
-| `CSC_KEY_PASSWORD`            | Unlock the certificate supplied by `CSC_LINK`                       | Non-empty certificate password string                                  | Protected `release` Environment secret or local shell secret                                      | Future signed macOS package job            |
-| `APPLE_ID`                    | Identify the Apple account submitting notarization                  | Apple account email address                                            | Protected `release` Environment secret or local shell secret                                      | Future macOS notarization job              |
-| `APPLE_APP_SPECIFIC_PASSWORD` | Authenticate notarization for `APPLE_ID`                            | Non-empty Apple-generated app-specific password                        | Protected `release` Environment secret or local shell secret                                      | Future macOS notarization job              |
-| `APPLE_TEAM_ID`               | Select the Apple Developer team that owns the certificate           | Exactly 10 uppercase ASCII letters or digits                           | Protected `release` Environment variable or local shell variable                                  | Future macOS signing and notarization jobs |
-
-A future signed macOS workflow should sign, notarize, staple, and perform Gatekeeper assessment before accepting the hosted macOS arm64 artifact.
-
-### Future Windows signing
-
-| Variable                                    | Purpose                                                                                  | Exact expected format                             | Storage and scope                                                                                          | Future consuming workflow              |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| `AZURE_CLIENT_ID`                           | Identify the Azure app or managed identity bound to the GitHub OIDC federated credential | UUID in `8-4-4-4-12` hexadecimal form             | Protected `release` Environment variable or local shell variable; it is an identifier, not a client secret | Future Windows Azure-login/signing job |
-| `AZURE_TENANT_ID`                           | Select the Azure Entra tenant                                                            | UUID in `8-4-4-4-12` hexadecimal form             | Protected `release` Environment variable or local shell variable                                           | Future Windows Azure-login/signing job |
-| `AZURE_SUBSCRIPTION_ID`                     | Select the Azure subscription containing Artifact Signing                                | UUID in `8-4-4-4-12` hexadecimal form             | Protected `release` Environment variable or local shell variable                                           | Future Windows Azure-login/signing job |
-| `AZURE_TRUSTED_SIGNING_ENDPOINT`            | Select the Azure Artifact Signing service endpoint                                       | Absolute `https://` URL with no whitespace        | Protected `release` Environment variable or local shell variable                                           | Future Windows signing job             |
-| `AZURE_TRUSTED_SIGNING_ACCOUNT`             | Select the Artifact Signing account                                                      | Non-empty Azure account resource name             | Protected `release` Environment variable or local shell variable                                           | Future Windows signing job             |
-| `AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE` | Select the Artifact Signing certificate profile                                          | Non-empty Azure certificate-profile resource name | Protected `release` Environment variable or local shell variable                                           | Future Windows signing job             |
-
-A future signed Windows workflow should request GitHub `id-token: write`, authenticate with the configured federated identity, sign the NSIS executable, and verify the Authenticode signature before promotion. Do not use a P12 certificate, an Azure client secret, or repository-wide signing secrets for that future path.
 
 ## GitHub Configuration
 
@@ -148,7 +116,7 @@ Configure it under **Repository Settings → Environments → release**:
 
 1. Leave **Required reviewers** empty while Blue is a one-person project. Requiring another reviewer would make releases impossible, and self-approval would add ceremony without independent review.
 2. Under **Deployment branches and tags**, select **Selected branches and tags**, add a **Tag** rule for `v*.*.*`, and do not add a branch rule. This admits both `vX.Y.Z` and hyphenated prerelease tags such as `v3.0.0-beta.1`.
-3. Do not add current signing secrets. Future signing values belong only in this Environment using the scopes in the tables above, not in repository-wide storage.
+3. Do not add current signing secrets. Scope any future signing values to the protected release Environment.
 
 With no required reviewer, pushing a matching version tag is the deliberate release action. The three unsigned package jobs must succeed before `publish-release` receives `contents: write`; that job then verifies the complete checksummed asset set, stages a draft, marks it as a prerelease when the tag has a suffix, and publishes it. If Blue gains another active maintainer, add a required reviewer and enable **Prevent self-review** as an optional policy hardening step.
 
