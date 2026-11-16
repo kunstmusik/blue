@@ -37,6 +37,7 @@ import {
   restoreGraphEditorMetadata,
 } from '../shared/project-editor/identity';
 import {
+  assignHistoryNodeId,
   getHistoryNodeId,
   transferHistoryNodeIds,
 } from '../shared/project-editor/history-node-identity';
@@ -66,6 +67,7 @@ type IsolatedSectionKey =
   | 'globalOrcSco'
   | 'tables'
   | 'score'
+  | 'soundObjectLibrary'
   | 'liveData'
   | 'scratchPad'
   | 'noteProcessorChainMap'
@@ -460,9 +462,10 @@ function getScorePatchTargets(
 function addIsolatedSectionsForPatch(
   patch: ProjectDocumentPatch,
   sections: Set<IsolatedSectionKey>,
+  rootFields: Set<PropertyKey>,
 ): boolean {
   if (patch.clojureProject !== undefined) {
-    return false;
+    rootFields.add('pluginDataXml');
   }
   if (patch.globalOrc !== undefined || patch.globalSco !== undefined) {
     sections.add('globalOrcSco');
@@ -491,9 +494,18 @@ function addIsolatedSectionsForPatch(
       patch.transport.renderEndTime !== undefined ||
       patch.transport.loopRendering !== undefined
     ) {
-      return false;
+      // Updating the start can implicitly clear the end.
+      rootFields.add('renderStartTime');
+      rootFields.add('renderEndTime');
+      rootFields.add('loopRendering');
     }
-    sections.add('score');
+    if (
+      patch.transport.tempoMap ||
+      patch.transport.tempoMapPatch ||
+      patch.transport.meterMapPatch
+    ) {
+      sections.add('score');
+    }
   }
   if (patch.mixer !== undefined) {
     sections.add('mixer');
@@ -511,27 +523,29 @@ function addIsolatedSectionsForPatch(
   if (patch.score !== undefined) {
     const sp = patch.score;
     if (
-      sp.type === 'addScoreObjects' &&
-      sp.objects.some(
-        (o) => o.objectType === 'Instance' || Boolean(o.serializedXml?.includes('Instance')),
-      )
+      sp.type === 'convertToPolyObject' ||
+      (sp.type === 'addScoreObjects' &&
+        sp.objects.some(
+          (object) =>
+            object.sourceTarget ||
+            object.objectType === 'Instance' ||
+            object.serializedXml?.includes('Instance'),
+        )) ||
+      (sp.type === 'addTrackItem' &&
+        (sp.item.objectType === 'Instance' ||
+          sp.item.type === 'Instance' ||
+          sp.item.serializedXml?.includes('Instance')))
     ) {
-      return false;
-    }
-    if (
-      sp.type === 'addTrackItem' &&
-      (sp.item.objectType === 'Instance' ||
-        sp.item.type === 'Instance' ||
-        Boolean(sp.item.serializedXml?.includes('Instance')))
-    ) {
-      return false;
+      sections.add('soundObjectLibrary');
     }
     const targets = getScorePatchTargets(sp);
+    const changesPlacement =
+      sp.type === 'convertToPolyObject' ||
+      sp.type === 'moveScoreObjects' ||
+      sp.type === 'removeScoreObjects';
     if (
       targets.some(
-        (t) =>
-          t.ownerKind === 'library' &&
-          !(sp.type === 'convertToPolyObject' && t.displayContext === 'instance'),
+        (t) => t.ownerKind === 'library' && !(changesPlacement && t.displayContext === 'instance'),
       )
     ) {
       return false;
@@ -568,21 +582,6 @@ function addIsolatedSectionsForPatch(
   return true;
 }
 
-const SECTION_GETTER_TO_KEY: ReadonlyMap<string | symbol, IsolatedSectionKey> = new Map([
-  ['getArrangement', 'arrangement'],
-  ['getProjectProperties', 'projectProperties'],
-  ['getGlobalOrcSco', 'globalOrcSco'],
-  ['getTableSet', 'tables'],
-  ['getScore', 'score'],
-  ['getLiveData', 'liveData'],
-  ['getScratchPadData', 'scratchPad'],
-  ['getNoteProcessorChainMap', 'noteProcessorChainMap'],
-  ['getMarkersList', 'markersList'],
-  ['getMidiInputProcessor', 'midiInputProcessor'],
-  ['getMixer', 'mixer'],
-  ['getOpcodeList', 'opcodeList'],
-]);
-
 function cloneProjectSection(data: BlueData, key: IsolatedSectionKey): object {
   switch (key) {
     case 'arrangement':
@@ -595,6 +594,8 @@ function cloneProjectSection(data: BlueData, key: IsolatedSectionKey): object {
       return new Tables(data.getTableSet());
     case 'score':
       return new Score(data.getScore(), 'history', true);
+    case 'soundObjectLibrary':
+      return data.getSoundObjectLibrary().forkForInstanceRegistration();
     case 'liveData':
       return data.getLiveData().deepCopy('history');
     case 'scratchPad':
@@ -624,6 +625,8 @@ function getProjectSection(data: BlueData, key: IsolatedSectionKey): object {
       return data.getTableSet();
     case 'score':
       return data.getScore();
+    case 'soundObjectLibrary':
+      return data.getSoundObjectLibrary();
     case 'liveData':
       return data.getLiveData();
     case 'scratchPad':
@@ -647,86 +650,54 @@ function tryPrepareSectionOwnerTransaction(
   context?: ProjectDocumentPatchContext,
 ): PreparedIsolatedStructureResult | null {
   const requiredSections = new Set<IsolatedSectionKey>();
-  const includesGrouping = patches.some((patch) => patch.score?.type === 'convertToPolyObject');
+  const rootFields = new Set<PropertyKey>();
   for (const patch of patches) {
-    if (!addIsolatedSectionsForPatch(patch, requiredSections)) {
-      return null;
-    }
+    if (!addIsolatedSectionsForPatch(patch, requiredSections, rootFields)) return null;
   }
-  if (requiredSections.size === 0) return null;
+  if (requiredSections.size === 0 && rootFields.size === 0) return null;
 
-  const owners = new Map<IsolatedOwner, IsolatedOwner>();
-  const clonedByKey = new Map<IsolatedSectionKey, object>();
+  // The detached root shares read-only project sections with the active project.
+  // Every mutable section is copied before applying any patch.
+  const candidate: BlueData = Object.assign(Object.create(Object.getPrototypeOf(data)), data);
+  assignHistoryNodeId(candidate, getHistoryNodeId(data));
+  restoreGraphEditorMetadata(candidate, readGraphEditorMetadata(data));
   for (const key of requiredSections) {
     const source = getProjectSection(data, key);
+    const field = Reflect.ownKeys(data).find((field) => Reflect.get(data, field) === source);
+    if (field === undefined) return null;
     const copy = cloneProjectSection(data, key);
     transferHistoryNodeIds(source, copy, (a, b) =>
       restoreGraphEditorMetadata(b, readGraphEditorMetadata(a)),
     );
-    clonedByKey.set(key, copy);
-    owners.set(source, copy);
+    Reflect.set(candidate, field, copy);
+    rootFields.add(field);
+  }
+  const copyScoreIds = requiredSections.has('score') || requiredSections.has('liveData');
+  if (copyScoreIds) {
+    copyAssignedScoreObjectIds(data, candidate);
+    // Undoing a removed Instance must still resolve its canonical definition
+    // when this was the only reference in the edited score or Live section.
+    if (data.getSoundObjectLibrary().size() > 0) rootFields.add('sObjLib');
   }
 
-  // Grouping can validate existing links without modifying the canonical library.
-  // Fall back if it would register a new definition or needs another library operation.
-  const needsLibraryCandidate = Symbol('needsLibraryCandidate');
-  const scopedDataView = new Proxy(data, {
-    get(target, prop) {
-      if (includesGrouping && prop === 'getSoundObjectLibrary') {
-        const library = target.getSoundObjectLibrary();
-        return () =>
-          new Proxy(library, {
-            get(library, member) {
-              if (member !== 'checkAndAddInstanceSoundObjects') throw needsLibraryCandidate;
-              return (instances: Instance[]) => {
-                for (const instance of instances) {
-                  const definition = instance.getSoundObject();
-                  if (!definition) continue;
-                  const libraryId = library.findIdForObject(definition);
-                  if (!libraryId) throw needsLibraryCandidate;
-                  instance.setLibraryId(libraryId);
-                }
-              };
-            },
-          });
-      }
-      const sectionKey = SECTION_GETTER_TO_KEY.get(prop);
-      if (sectionKey) {
-        const cloned = clonedByKey.get(sectionKey);
-        if (cloned) return () => cloned;
-      }
-      const value = Reflect.get(target, prop, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-
-  if (requiredSections.has('score') || requiredSections.has('liveData')) {
-    copyAssignedScoreObjectIds(data, scopedDataView);
-  }
-
-  const patchChanged: boolean[] = [];
-  try {
-    for (const patch of patches) {
-      patchChanged.push(
-        isBsbSelectionPatch(patch)
-          ? false
-          : applyProjectDocumentPatch(scopedDataView, patch, context),
-      );
-    }
-  } catch (error) {
-    if (error === needsLibraryCandidate) return null;
-    throw error;
-  }
-
-  const finalized = finalizeOwnerDeltas(data, owners, () => {
-    if (requiredSections.has('score') || requiredSections.has('liveData')) {
-      copyAssignedScoreObjectIds(scopedDataView, data);
-    }
-  });
+  const patchChanged = patches.map((patch) =>
+    isBsbSelectionPatch(patch) ? false : applyProjectDocumentPatch(candidate, patch, context),
+  );
+  const { delta, beforeSnapshot, afterSnapshot } = captureProjectGraphDeltaWithSnapshots(
+    data,
+    candidate,
+    rootFields,
+  );
   return {
-    ...finalized,
+    delta,
+    changed: !isNetZeroProjectGraphDelta(delta),
     patchChanged,
     patchAccepted: patches.map(() => true),
+    apply() {
+      applyProjectGraphDelta(data, delta, 'after', beforeSnapshot);
+      if (copyScoreIds) copyAssignedScoreObjectIds(candidate, data);
+    },
+    getGroupingEndpointSnapshot: () => afterSnapshot,
   };
 }
 

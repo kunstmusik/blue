@@ -157,6 +157,51 @@ describe('project-history-memento', () => {
   });
 
   describe('structural transaction preparation and detached candidate publication', () => {
+    it('undoes root transport and plugin changes with a scoped structural delta', () => {
+      const data = new BlueData();
+      data.setRenderEndTime(4);
+      const library = data.getSoundObjectLibrary();
+      const copies = vi.spyOn(data, 'historyCopy');
+      const prepared = prepareTransaction(data, [
+        {
+          transport: { renderStartTime: 8 },
+          clojureProject: {
+            libraryEntries: [
+              { entryId: 'plugin-entry', dependencyCoordinates: 'example/audio', version: '1' },
+            ],
+          },
+        },
+        { globalOrc: 'sr = 48000' },
+      ]);
+      expect(copies).not.toHaveBeenCalled();
+      expect(data.getRenderStartTime()).toBe(0);
+      expect(data.getRenderEndTime()).toBe(4);
+      expect(data.getClojureProjectData()).toBeNull();
+      expect(prepared.status === 'prepared' && prepared.transaction.kind).toBe('structure');
+      if (prepared.status !== 'prepared' || prepared.transaction.kind !== 'structure') return;
+      const { delta, apply } = prepared.transaction;
+      expect(delta.rootFields).toEqual([
+        'pluginDataXml',
+        'renderStartTime',
+        'renderEndTime',
+        'loopRendering',
+        'globalOrcSco',
+      ]);
+      apply?.();
+      expect(data.getRenderEndTime()).toBe(-1);
+      expect(data.getClojureProjectData()?.getLibraryEntries()).toHaveLength(1);
+      expect(
+        createProjectEditorSnapshot(data, null).clojureProject?.libraryEntries[0]?.entryId,
+      ).toBe('plugin-entry');
+      applyProjectGraphDelta(data, delta, 'before');
+      expect(data.getRenderStartTime()).toBe(0);
+      expect(data.getRenderEndTime()).toBe(4);
+      expect(data.getClojureProjectData()).toBeNull();
+      applyProjectGraphDelta(data, delta, 'after');
+      expect(data.getClojureProjectData()?.getLibraryEntries()).toHaveLength(1);
+      expect(data.getSoundObjectLibrary()).toBe(library);
+    });
+
     it('isolates bounded structural edits without a whole-project copy and uses one copy when forced', () => {
       const data = new BlueData();
       const copies = vi.spyOn(BlueData.prototype, 'historyCopy');

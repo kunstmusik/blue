@@ -126,6 +126,15 @@ export class SoundObjectLibrary implements BlueDataObject {
     return this._idMap.has(object);
   }
 
+  /** Detached registration state. Existing definitions are read-only in this fork. */
+  forkForInstanceRegistration(): SoundObjectLibrary {
+    const copy = new SoundObjectLibrary();
+    copy._objects = this._objects.slice();
+    copy._idMap = new Map(this._idMap);
+    copy._nextId = this._nextId;
+    return copy;
+  }
+
   createFingerprint(object: SoundObject): SoundObjectFingerprint {
     return {
       canonicalHash: hashText(object.saveAsXML().toXml()),

@@ -3534,6 +3534,7 @@ describe('grouping ScoreObjects through project history', () => {
     ['registered', false],
     ['registered', true],
     ['new', false],
+    ['new', true],
   ])(
     'handles linked=%s and a second section=%s through commit, undo and redo',
     async (kind, mixed) => {
@@ -3585,7 +3586,7 @@ describe('grouping ScoreObjects through project history', () => {
       const historyCopy = vi.spyOn(data, 'historyCopy');
       try {
         expect(prepareTransaction(data, patches).status).toBe('prepared');
-        expect(historyCopy).toHaveBeenCalledTimes(kind === 'new' ? 1 : 0);
+        expect(historyCopy).not.toHaveBeenCalled();
         expect(layer[0]).toBe(object);
         expect(data.getSoundObjectLibrary().containsObject(source)).toBe(kind === 'registered');
         expect(liveOrc()).toBe(originalOrc);
@@ -3648,6 +3649,56 @@ describe('grouping ScoreObjects through project history', () => {
 });
 
 describe('linked Instance timing through project history', () => {
+  it('restores the registered definition when undoing removal of its last score placement', async () => {
+    const data = new BlueData();
+    const definition = new GenericScore();
+    const libraryId = data.getSoundObjectLibrary().addObject(definition);
+    const instance = new Instance();
+    instance.setSoundObject(definition);
+    instance.setLibraryId(libraryId);
+    assignExplicitScoreObjectId(instance, 'last-placement');
+    const layer = (data.getScore()[0] as PolyObject)[0]!;
+    layer.push(instance);
+    const session = new ProjectSession();
+    session.replace(data, '/tmp/last-placement.blue');
+    const history = new ProjectHistory({ session });
+    const context = new MockHistoryContext('last-placement');
+    const { documentId } = session.read();
+    const copy = vi.spyOn(data, 'historyCopy');
+    const patch: ProjectDocumentPatch = {
+      score: {
+        type: 'removeScoreObjects',
+        targets: [
+          {
+            ...scoreObjectTarget(data),
+            selectionId: 'last-placement',
+            ownerKind: 'library',
+            displayContext: 'instance',
+            location: undefined,
+            sourceInstanceLocation: scoreObjectTarget(data).location,
+          },
+        ],
+      },
+    };
+
+    expect(
+      (await history.commit(context.nextCommitRequest(documentId!, 0, 'Remove Instance', [patch])))
+        .status,
+    ).toBe('committed');
+    expect(layer).toHaveLength(0);
+    expect(
+      (await history.undo(context.nextUndoRequest(documentId!, session.read().revision))).status,
+    ).toBe('committed');
+    expect((layer[0] as Instance).getSoundObject()).toBe(definition);
+    expect(data.getSoundObjectLibrary().getObjectById(libraryId)).toBe(definition);
+    expect(
+      (await history.redo(context.nextRedoRequest(documentId!, session.read().revision))).status,
+    ).toBe('committed');
+    expect(layer).toHaveLength(0);
+    expect(copy).not.toHaveBeenCalled();
+    copy.mockRestore();
+  });
+
   it('commits, undoes, and redoes placement duration and repeat behavior', async () => {
     const data = new BlueData();
     data.getScore().length = 0;

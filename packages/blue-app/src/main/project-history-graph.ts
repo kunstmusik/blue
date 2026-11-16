@@ -72,6 +72,7 @@ interface MetadataChange {
 }
 export interface ProjectGraphDelta {
   rootId: number;
+  rootFields?: readonly PropertyKey[];
   fields: FieldChange[];
   contents: ContentChange[];
   metadata: MetadataChange[];
@@ -245,7 +246,10 @@ export function applyTextChange(
   return parts.join('');
 }
 
-function snapshot(root: object): { nodes: Map<number, Node>; objects: Map<number, object> } {
+function snapshot(
+  root: object,
+  rootFields?: ReadonlySet<PropertyKey>,
+): { nodes: Map<number, Node>; objects: Map<number, object> } {
   const nodes = new Map<number, Node>(),
     objects = new Map<number, object>();
   const encode = (value: unknown): Value => {
@@ -287,6 +291,7 @@ function snapshot(root: object): { nodes: Map<number, Node>; objects: Map<number
     }
     const fields: Array<[PropertyKey, Field]> = [];
     for (const key of Reflect.ownKeys(value)) {
+      if (value === root && rootFields && !rootFields.has(key)) continue;
       if (kind === 'array' && (key === 'length' || (typeof key === 'string' && /^\d+$/.test(key))))
         continue;
       if ((kind === 'binary' || kind === 'view') && typeof key === 'string' && /^\d+$/.test(key))
@@ -492,9 +497,10 @@ export interface CapturedProjectGraphDelta {
 export function captureProjectGraphDeltaWithSnapshots(
   before: object,
   after: object,
+  rootFields?: ReadonlySet<PropertyKey>,
 ): CapturedProjectGraphDelta {
-  const oldSnapshot = snapshot(before),
-    afterSnapshot = snapshot(after);
+  const oldSnapshot = snapshot(before, rootFields),
+    afterSnapshot = snapshot(after, rootFields);
   alignReplacementNodes(oldSnapshot, afterSnapshot);
   const old = oldSnapshot.nodes,
     next = afterSnapshot.nodes;
@@ -503,6 +509,7 @@ export function captureProjectGraphDeltaWithSnapshots(
     throw new Error('History graph copies must transfer identities before mutation');
   const delta: ProjectGraphDelta = {
     rootId,
+    ...(rootFields && { rootFields: [...rootFields] }),
     fields: [],
     contents: [],
     metadata: [],
@@ -729,6 +736,10 @@ export function mergeProjectGraphDeltas(
     removed = new Set(after.beforeNodes.map((n) => n.id));
   return pruneProjectGraphDelta({
     rootId: before.rootId,
+    ...(before.rootFields &&
+      after.rootFields && {
+        rootFields: [...new Set([...before.rootFields, ...after.rootFields])],
+      }),
     fields: [...fieldMap.values()]
       .flatMap((m) => [...m.values()])
       .filter((c) => !introduced.has(c.id) && !removed.has(c.id)),
@@ -787,7 +798,8 @@ export function applyProjectGraphDelta(
   preCapturedSnapshot?: GraphSnapshot,
 ): void {
   if (getHistoryNodeId(root) !== delta.rootId) throw new Error('History graph owner changed');
-  const { objects, nodes: liveNodes } = preCapturedSnapshot ?? snapshot(root);
+  const { objects, nodes: liveNodes } =
+    preCapturedSnapshot ?? snapshot(root, delta.rootFields && new Set(delta.rootFields));
   const nodes = direction === 'before' ? delta.beforeNodes : delta.afterNodes;
   const fresh = new Set<number>();
   for (const kind of ['ordinary', 'view'])
