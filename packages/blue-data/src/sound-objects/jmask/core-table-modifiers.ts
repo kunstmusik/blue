@@ -1,0 +1,977 @@
+import { Element } from '../../serialization/xml-reader';
+import { XmlLoadContext } from '../../serialization/xml-load';
+import {
+  writeBoolean,
+  writeDouble,
+  writeInt,
+  readBoolean,
+  readDouble,
+  readInt,
+} from '../../utilities/xml';
+import { clamp } from '../../utilities/math-utils';
+import { validateJmaskXml } from './xml-policy';
+
+const TWO_POW_53 = 9007199254740992;
+const JAVA_MULTIPLIER = 0x5deece66dn;
+const JAVA_ADDEND = 0xbn;
+const JAVA_MASK = (1n << 48n) - 1n;
+
+export function roundTo(value: number, digits: number): number {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
+function rescale(
+  value: number,
+  oldMin: number,
+  oldMax: number,
+  newMin: number,
+  newMax: number,
+): number {
+  if (oldMax === oldMin) {
+    return newMin;
+  }
+  const normalized = (value - oldMin) / (oldMax - oldMin);
+  return newMin + normalized * (newMax - newMin);
+}
+
+function wrap(value: number, low: number, high: number): number {
+  const range = high - low;
+  if (range === 0) return low;
+  let shifted = value - low;
+  shifted %= range;
+  if (shifted < 0) shifted += range;
+  return low + shifted;
+}
+
+function mirror(value: number, low: number, high: number): number {
+  const range = high - low;
+  if (range === 0) return low;
+  const period = range * 2;
+  let shifted = (value - low) % period;
+  if (shifted < 0) shifted += period;
+  return low + (shifted > range ? period - shifted : shifted);
+}
+
+export function remainder(value: number, mod: number): number {
+  if (mod === 0) return 0;
+  let shifted = value % mod;
+  if (shifted < 0) shifted += mod;
+  return shifted;
+}
+
+export class JavaRandom {
+  private _seed = 0n;
+
+  constructor(seed: number | bigint = Date.now()) {
+    this.setSeed(seed);
+  }
+
+  setSeed(seed: number | bigint): void {
+    this._seed =
+      ((typeof seed === 'bigint' ? seed : BigInt(Math.trunc(seed))) ^ JAVA_MULTIPLIER) & JAVA_MASK;
+  }
+
+  private next(bits: number): number {
+    this._seed = (this._seed * JAVA_MULTIPLIER + JAVA_ADDEND) & JAVA_MASK;
+    return Number(this._seed >> BigInt(48 - bits));
+  }
+
+  nextDouble(): number {
+    const high = this.next(26);
+    const low = this.next(27);
+    return (high * 134217728 + low) / TWO_POW_53;
+  }
+}
+
+export interface Generator {
+  initialize(duration: number): void;
+  getValue(time: number, rnd: JavaRandom): number;
+  saveAsXML(): Element;
+  deepCopy(): Generator;
+}
+
+export interface Maskable {}
+export interface Quantizable {}
+export interface Accumulatable {}
+
+export interface ProbabilityGenerator extends Generator {
+  getName(): string;
+  deepCopy(): ProbabilityGenerator;
+}
+
+export class TablePoint {
+  time = 0.0;
+  value = 0.5;
+
+  constructor(other?: TablePoint) {
+    if (other) {
+      this.time = other.time;
+      this.value = other.value;
+    }
+  }
+
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): TablePoint {
+    validateJmaskXml(data, 'TablePoint', context);
+    const point = new TablePoint();
+    point.time = parseFloat(data.getAttributeValue('time') ?? '0');
+    point.value = parseFloat(data.getAttributeValue('value') ?? '0.5');
+    return point;
+  }
+
+  saveAsXML(): Element {
+    const elem = new Element('point');
+    elem.setAttribute('time', String(this.time));
+    elem.setAttribute('value', String(this.value));
+    return elem;
+  }
+
+  getTime(): number {
+    return this.time;
+  }
+
+  setTime(time: number): void {
+    this.time = time;
+  }
+
+  getValue(): number {
+    return this.value;
+  }
+
+  setValue(value: number): void {
+    this.value = value;
+  }
+
+  setLocation(time: number, value: number): void {
+    this.time = time;
+    this.value = value;
+  }
+}
+
+interface TableCache {
+  pointsRef: TablePoint[];
+  rawTimes: Float64Array;
+  rawValues: Float64Array;
+  interpolationType: number;
+  interpolation: number;
+  sorted: Array<Readonly<Pick<TablePoint, 'time' | 'value'>>>;
+  prefixPhs: Float64Array;
+}
+
+const tableCaches = new WeakMap<Table, TableCache>();
+const generationTables = new WeakSet<Table>();
+
+export class Table {
+  static readonly OFF = 0;
+  static readonly ON = 1;
+  static readonly COS = 2;
+  static readonly TYPES = ['Off', 'On', 'Cosine'];
+
+  points: TablePoint[] = [];
+  min = 0.0;
+  max = 1.0;
+  interpolationType = Table.ON;
+  interpolation = 0.0;
+
+  constructor(sourceOrInit: boolean | Table = true) {
+    if (sourceOrInit instanceof Table) {
+      this.min = sourceOrInit.min;
+      this.max = sourceOrInit.max;
+      this.interpolationType = sourceOrInit.interpolationType;
+      this.interpolation = sourceOrInit.interpolation;
+      this.points = sourceOrInit.points.map((point) => new TablePoint(point));
+      return;
+    }
+
+    if (sourceOrInit !== false) {
+      const firstPoint = new TablePoint();
+      const secondPoint = new TablePoint();
+      secondPoint.time = 1.0;
+      this.points.push(firstPoint, secondPoint);
+    }
+  }
+
+  /** @internal Render-local view of prepared points, never exposed to editing callers. */
+  prepareForGeneration(timeScale = 1): Table {
+    const view = new Table(false);
+    view.points = this.points;
+    view.interpolationType = this.interpolationType;
+    view.interpolation = this.interpolation;
+    const cache = timeScale === 1 ? this.getOrBuildCache() : view.getOrBuildCache(timeScale);
+    tableCaches.set(view, cache);
+    generationTables.add(view);
+    return view;
+  }
+
+  private getOrBuildCache(timeScale = 1): TableCache {
+    const { points, interpolationType, interpolation } = this;
+    const size = points.length;
+    const cached = tableCaches.get(this);
+
+    if (
+      cached !== undefined &&
+      cached.pointsRef === points &&
+      cached.rawTimes.length === size &&
+      cached.interpolationType === interpolationType &&
+      Object.is(cached.interpolation, interpolation)
+    ) {
+      if (generationTables.has(this)) return cached;
+      let valid = true;
+      for (let i = 0; i < size; i += 1) {
+        const pt = points[i]!;
+        if (!Object.is(pt.time, cached.rawTimes[i]) || !Object.is(pt.value, cached.rawValues[i])) {
+          valid = false;
+          break;
+        }
+      }
+      if (valid) {
+        return cached;
+      }
+    }
+
+    const rawTimes = new Float64Array(size);
+    const rawValues = new Float64Array(size);
+    let alreadySorted = true;
+    for (let i = 0; i < size; i += 1) {
+      const pt = points[i]!;
+      rawTimes[i] = pt.time;
+      rawValues[i] = pt.value;
+      if (i > 0 && pt.time * timeScale < rawTimes[i - 1]! * timeScale) {
+        alreadySorted = false;
+      }
+    }
+
+    const sorted = points.map(({ time, value }) => ({ time: time * timeScale, value }));
+    if (!alreadySorted) sorted.sort((left, right) => left.time - right.time);
+
+    const prefixPhs = new Float64Array(Math.max(1, size));
+    let running = 0.0;
+    if (interpolationType !== Table.OFF) {
+      const pw2 = Math.pow(2, interpolation);
+      for (let k = 0; k < size - 1; k += 1) {
+        const p0 = sorted[k]!;
+        const p1 = sorted[k + 1]!;
+        const dx = p1.time - p0.time;
+        running += this.integrateSegment(dx, dx, p0.value, p1.value, pw2);
+        prefixPhs[k + 1] = running;
+      }
+    } else {
+      for (let k = 0; k < size - 1; k += 1) {
+        const p0 = sorted[k]!;
+        const p1 = sorted[k + 1]!;
+        running += p1.time * p0.value - p0.time * p0.value;
+        prefixPhs[k + 1] = running;
+      }
+    }
+
+    const nextCache: TableCache = {
+      pointsRef: points,
+      rawTimes,
+      rawValues,
+      interpolationType,
+      interpolation,
+      sorted,
+      prefixPhs,
+    };
+    tableCaches.set(this, nextCache);
+    return nextCache;
+  }
+
+  private interpolateValue(ex: number, r: number, a: number, b: number): number {
+    if (ex === 0.0) {
+      return a + r * (b - a);
+    }
+    if (ex > 0.0 && b >= a) {
+      return a + Math.pow(r, ex + 1.0) * (b - a);
+    }
+    if (ex > 0.0 && b < a) {
+      return b + Math.pow(1.0 - r, ex + 1.0) * (a - b);
+    }
+    if (ex < 0.0 && b >= a) {
+      return b + Math.pow(1.0 - r, Math.abs(ex) + 1.0) * (a - b);
+    }
+    return a + Math.pow(r, Math.abs(ex) + 1.0) * (b - a);
+  }
+
+  private interpolateCosine(r: number, a: number, b: number): number {
+    const cx = Math.cos(Math.PI * r + Math.PI) / 2.0 + 0.5;
+    return a + cx * (b - a);
+  }
+
+  private integrateSegment(
+    x1: number,
+    xe: number,
+    y1: number,
+    y2: number,
+    pw2 = Math.pow(2, this.interpolation),
+  ): number {
+    return x1 * y1 + (Math.pow(x1, 1.0 + pw2) * (y2 - y1)) / ((1.0 + pw2) * Math.pow(xe, pw2));
+  }
+
+  getPoint(index: number): TablePoint {
+    return this.points[index]!;
+  }
+
+  getTablePoint(index: number): TablePoint {
+    return this.getPoint(index);
+  }
+
+  addPoint(index: number, point: TablePoint): void {
+    this.points.splice(index, 0, point);
+  }
+
+  removePoint(index: number): void {
+    if (index >= 0 && index < this.points.length) {
+      this.points.splice(index, 1);
+    }
+  }
+
+  removePointByPoint(selectedPoint: TablePoint): void {
+    this.removePoint(this.points.indexOf(selectedPoint));
+  }
+
+  getRowCount(): number {
+    return this.points.length;
+  }
+
+  getColumnCount(): number {
+    return 2;
+  }
+
+  getColumnName(columnIndex: number): string {
+    return columnIndex === 0 ? 'Time' : 'Value';
+  }
+
+  getValueAt(rowIndex: number, columnIndex: number): number {
+    const point = this.getPoint(rowIndex);
+    return columnIndex === 0 ? point.time : point.value;
+  }
+
+  setValueAt(aValue: unknown, rowIndex: number, columnIndex: number): void {
+    if (typeof aValue !== 'number') {
+      return;
+    }
+
+    const point = this.getPoint(rowIndex);
+
+    if (columnIndex === 0) {
+      if (rowIndex === 0 || rowIndex === this.points.length - 1) {
+        return;
+      }
+
+      const previous = this.getPoint(rowIndex - 1)!;
+      const next = this.getPoint(rowIndex + 1)!;
+      let val = aValue;
+
+      if (val < previous.time) {
+        val = previous.time;
+      }
+      if (val > next.time) {
+        val = next.time;
+      }
+
+      point.time = val;
+      return;
+    }
+
+    point.value = aValue;
+  }
+
+  getInterpolation(): number {
+    return this.interpolation;
+  }
+
+  setInterpolation(interpolation: number): void {
+    this.interpolation = interpolation;
+  }
+
+  getInterpolationType(): number {
+    return this.interpolationType;
+  }
+
+  setInterpolationType(interpolationType: number): void {
+    this.interpolationType = interpolationType;
+  }
+
+  getMin(): number {
+    return this.min;
+  }
+
+  setMin(min: number, truncate: boolean): void {
+    if (this.min === min) {
+      return;
+    }
+
+    const oldMin = this.min;
+    this.min = min;
+
+    for (const point of this.points) {
+      const nextValue = truncate
+        ? clamp(point.value, this.min, this.max)
+        : rescale(point.value, oldMin, this.max, this.min, this.max);
+      point.setLocation(point.time, nextValue);
+    }
+  }
+
+  getMax(): number {
+    return this.max;
+  }
+
+  setMax(max: number, truncate: boolean): void {
+    if (this.max === max) {
+      return;
+    }
+
+    const oldMax = this.max;
+    this.max = max;
+
+    for (const point of this.points) {
+      const nextValue = truncate
+        ? clamp(point.value, this.min, this.max)
+        : rescale(point.value, this.min, oldMax, this.min, this.max);
+      point.setLocation(point.time, nextValue);
+    }
+  }
+
+  getValue(time: number): number {
+    const { sorted } = this.getOrBuildCache();
+    const size = sorted.length;
+    if (size === 0) {
+      return 0.0;
+    }
+
+    if (size === 1 || time <= 0.0) {
+      return sorted[0]!.value;
+    }
+
+    let lo = 0;
+    let hi = size;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sorted[mid]!.time <= time) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+
+    if (lo >= 2 && sorted[lo - 1]!.time === time) {
+      return sorted[lo - 1]!.value;
+    }
+    if (lo === size) {
+      return sorted[size - 1]!.value;
+    }
+
+    const segIdx = lo === 0 ? 0 : lo - 1;
+    const a = sorted[segIdx]!;
+    const b = sorted[segIdx + 1]!;
+    const r = (time - a.time) / (b.time - a.time);
+
+    switch (this.interpolationType) {
+      case Table.OFF:
+        return a.value;
+      case Table.COS:
+        return this.interpolateCosine(r, a.value, b.value);
+      case Table.ON:
+      default:
+        return this.interpolateValue(this.interpolation, r, a.value, b.value);
+    }
+  }
+
+  getphs(xt: number): number {
+    const xtr = roundTo(xt, 10);
+    const { sorted, prefixPhs } = this.getOrBuildCache();
+    const pointsSize = sorted.length;
+
+    if (pointsSize === 0) {
+      return 0.0;
+    }
+    if (pointsSize === 1) {
+      return xtr * sorted[0]!.value;
+    }
+    if (xtr <= sorted[0]!.time) {
+      const y0 = sorted[0]!.value;
+      return sorted[0]!.time * y0 - xtr * y0;
+    }
+
+    let lo = 1;
+    let hi = pointsSize;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (sorted[mid]!.time < xtr) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    const index = lo;
+    let phsum = prefixPhs[index - 1]!;
+
+    if (this.interpolationType !== Table.OFF) {
+      const pw2 = Math.pow(2, this.interpolation);
+      const last = sorted[pointsSize - 1]!;
+      if (xtr >= last.time) {
+        phsum += xtr * last.value - last.time * last.value;
+      } else {
+        const prev = sorted[index - 1]!;
+        const curr = sorted[index]!;
+        phsum += this.integrateSegment(
+          xtr - prev.time,
+          curr.time - prev.time,
+          prev.value,
+          curr.value,
+          pw2,
+        );
+      }
+      return phsum;
+    }
+
+    const prev = sorted[index - 1]!;
+    phsum += xtr * prev.value - prev.time * prev.value;
+    return phsum;
+  }
+
+  saveAsXML(): Element {
+    const retVal = new Element('table');
+    retVal.addElement(writeDouble('min', this.getMin()));
+    retVal.addElement(writeDouble('max', this.getMax()));
+    retVal.addElement(writeInt('interpolationType', this.getInterpolationType()));
+    retVal.addElement(writeDouble('interpolation', this.interpolation));
+
+    const pointsNode = new Element('points');
+    for (const point of this.points) {
+      pointsNode.addElement(point.saveAsXML());
+    }
+    retVal.addElement(pointsNode);
+    return retVal;
+  }
+
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Table {
+    validateJmaskXml(data, 'Table', context);
+    const table = new Table(false);
+    const nodes = data.getElements();
+
+    while (nodes.hasMoreElements()) {
+      const node = nodes.next();
+      switch (node.getName()) {
+        case 'min':
+          table.min = readDouble(node);
+          break;
+        case 'max':
+          table.max = readDouble(node);
+          break;
+        case 'interpolationType':
+          table.interpolationType = readInt(node);
+          break;
+        case 'interpolation':
+          table.interpolation = readDouble(node);
+          break;
+        case 'points': {
+          const pointNodes = node.getElements();
+          while (pointNodes.hasMoreElements()) {
+            const pointNode = pointNodes.next();
+            if (pointNode.getName() === 'point') {
+              table.points.push(TablePoint.loadFromXML(pointNode));
+            }
+          }
+          break;
+        }
+        case 'point':
+          table.points.push(TablePoint.loadFromXML(node));
+          break;
+      }
+    }
+
+    return table;
+  }
+}
+
+export class DoubleOrTable {
+  value = 0.0;
+  table: Table;
+  tableEnabled = false;
+
+  constructor(defaultVal = 0.0) {
+    this.value = defaultVal;
+    this.table = new Table();
+  }
+
+  getValue(time: number): number {
+    return this.tableEnabled ? this.table.getValue(time) : this.value;
+  }
+}
+
+export class Mask {
+  high = 1.0;
+  low = 0.0;
+  mapValue = 0.0;
+  highTableEnabled = false;
+  lowTableEnabled = false;
+  highTable = new Table();
+  lowTable = new Table();
+  enabled = false;
+  duration = 1.0;
+
+  constructor(other?: Mask) {
+    if (other) {
+      this.high = other.high;
+      this.low = other.low;
+      this.mapValue = other.mapValue;
+      this.highTableEnabled = other.highTableEnabled;
+      this.lowTableEnabled = other.lowTableEnabled;
+      this.highTable = new Table(other.highTable);
+      this.lowTable = new Table(other.lowTable);
+      this.enabled = other.enabled;
+      this.duration = other.duration;
+    }
+  }
+
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Mask {
+    validateJmaskXml(data, 'Mask', context);
+    const mask = new Mask();
+    const nodes = data.getElements();
+
+    while (nodes.hasMoreElements()) {
+      const node = nodes.next();
+      switch (node.getName()) {
+        case 'table': {
+          const table = Table.loadFromXML(node);
+          const tableId = node.getAttributeValue('tableId');
+          if (tableId === 'highTable') {
+            mask.highTable = table;
+          } else if (tableId === 'lowTable') {
+            mask.lowTable = table;
+          }
+          break;
+        }
+        case 'highTableEnabled':
+          mask.highTableEnabled = readBoolean(node);
+          break;
+        case 'lowTableEnabled':
+          mask.lowTableEnabled = readBoolean(node);
+          break;
+        case 'low':
+          mask.low = readDouble(node);
+          break;
+        case 'high':
+          mask.high = readDouble(node);
+          break;
+        case 'mapValue':
+          mask.mapValue = readDouble(node);
+          break;
+        case 'enabled':
+          mask.enabled = readBoolean(node);
+          break;
+      }
+    }
+
+    return mask;
+  }
+
+  saveAsXML(): Element {
+    const retVal = new Element('mask');
+    retVal.addElement(writeBoolean('highTableEnabled', this.highTableEnabled));
+    retVal.addElement(writeBoolean('lowTableEnabled', this.lowTableEnabled));
+    retVal.addElement(writeDouble('low', this.low));
+    retVal.addElement(writeDouble('high', this.high));
+    retVal.addElement(writeDouble('mapValue', this.mapValue));
+    retVal.addElement(writeBoolean('enabled', this.enabled));
+
+    const highTableNode = this.highTable.saveAsXML();
+    highTableNode.setAttribute('tableId', 'highTable');
+    retVal.addElement(highTableNode);
+
+    const lowTableNode = this.lowTable.saveAsXML();
+    lowTableNode.setAttribute('tableId', 'lowTable');
+    retVal.addElement(lowTableNode);
+    return retVal;
+  }
+
+  private mapValueToRange(value: number): number {
+    return this.mapValue === 0.0 ? value : Math.pow(value, this.mapValue);
+  }
+
+  getValue(time: number, value: number): number {
+    if (!this.enabled) {
+      return value;
+    }
+
+    const localTime = this.duration !== 0 ? time / this.duration : 0;
+    const localHigh = this.highTableEnabled ? this.highTable.getValue(localTime) : this.high;
+    const localLow = this.lowTableEnabled ? this.lowTable.getValue(localTime) : this.low;
+    return localLow + (localHigh - localLow) * this.mapValueToRange(value);
+  }
+}
+
+export class Quantizer {
+  gridSize = 1.0;
+  strength = 1.0;
+  offset = 0.0;
+  gridSizeTableEnabled = false;
+  strengthTableEnabled = false;
+  offsetTableEnabled = false;
+  gridSizeTable = new Table();
+  strengthTable = new Table();
+  offsetTable = new Table();
+  enabled = false;
+  duration = 1.0;
+
+  constructor(other?: Quantizer) {
+    if (other) {
+      this.gridSize = other.gridSize;
+      this.strength = other.strength;
+      this.offset = other.offset;
+      this.gridSizeTableEnabled = other.gridSizeTableEnabled;
+      this.strengthTableEnabled = other.strengthTableEnabled;
+      this.offsetTableEnabled = other.offsetTableEnabled;
+      this.gridSizeTable = new Table(other.gridSizeTable);
+      this.strengthTable = new Table(other.strengthTable);
+      this.offsetTable = new Table(other.offsetTable);
+      this.enabled = other.enabled;
+      this.duration = other.duration;
+      return;
+    }
+
+    this.gridSizeTable.getPoint(0).setValue(1.0);
+    this.gridSizeTable.getPoint(0).setValue(1.0);
+    this.gridSizeTable.setMin(Number.MIN_VALUE, true);
+
+    this.strengthTable.getPoint(0).setValue(1.0);
+    this.strengthTable.getPoint(0).setValue(1.0);
+
+    this.offsetTable.getPoint(0).setValue(0.0);
+    this.offsetTable.getPoint(0).setValue(0.0);
+  }
+
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Quantizer {
+    validateJmaskXml(data, 'Quantizer', context);
+    const quantizer = new Quantizer();
+    const nodes = data.getElements();
+
+    while (nodes.hasMoreElements()) {
+      const node = nodes.next();
+      switch (node.getName()) {
+        case 'gridSize':
+          quantizer.gridSize = readDouble(node);
+          break;
+        case 'strength':
+          quantizer.strength = readDouble(node);
+          break;
+        case 'offset':
+          quantizer.offset = readDouble(node);
+          break;
+        case 'gridSizeTableEnabled':
+          quantizer.gridSizeTableEnabled = readBoolean(node);
+          break;
+        case 'strengthTableEnabled':
+          quantizer.strengthTableEnabled = readBoolean(node);
+          break;
+        case 'offsetTableEnabled':
+          quantizer.offsetTableEnabled = readBoolean(node);
+          break;
+        case 'enabled':
+          quantizer.enabled = readBoolean(node);
+          break;
+        case 'table': {
+          const table = Table.loadFromXML(node);
+          const tableId = node.getAttributeValue('tableId');
+          if (tableId === 'gridSizeTable') {
+            quantizer.gridSizeTable = table;
+          } else if (tableId === 'strengthTable') {
+            quantizer.strengthTable = table;
+          } else if (tableId === 'offsetTable') {
+            quantizer.offsetTable = table;
+          }
+          break;
+        }
+      }
+    }
+
+    return quantizer;
+  }
+
+  saveAsXML(): Element {
+    const retVal = new Element('quantizer');
+    retVal.addElement(writeDouble('gridSize', this.gridSize));
+    retVal.addElement(writeDouble('strength', this.strength));
+    retVal.addElement(writeDouble('offset', this.offset));
+    retVal.addElement(writeBoolean('gridSizeTableEnabled', this.gridSizeTableEnabled));
+    retVal.addElement(writeBoolean('strengthTableEnabled', this.strengthTableEnabled));
+    retVal.addElement(writeBoolean('offsetTableEnabled', this.offsetTableEnabled));
+    retVal.addElement(writeBoolean('enabled', this.enabled));
+
+    const gridSizeTableNode = this.gridSizeTable.saveAsXML();
+    gridSizeTableNode.setAttribute('tableId', 'gridSizeTable');
+    retVal.addElement(gridSizeTableNode);
+
+    const strengthTableNode = this.strengthTable.saveAsXML();
+    strengthTableNode.setAttribute('tableId', 'strengthTable');
+    retVal.addElement(strengthTableNode);
+
+    const offsetTableNode = this.offsetTable.saveAsXML();
+    offsetTableNode.setAttribute('tableId', 'offsetTable');
+    retVal.addElement(offsetTableNode);
+    return retVal;
+  }
+
+  getValue(time: number, value: number): number {
+    if (!this.enabled) {
+      return value;
+    }
+
+    const localTime = this.duration !== 0 ? time / this.duration : 0;
+    const localGridSize = this.gridSizeTableEnabled
+      ? this.gridSizeTable.getValue(localTime)
+      : this.gridSize;
+    const localStrength = this.strengthTableEnabled
+      ? this.strengthTable.getValue(localTime)
+      : this.strength;
+    const localOffset = this.offsetTableEnabled
+      ? this.offsetTable.getValue(localTime)
+      : this.offset;
+
+    if (localGridSize === 0) {
+      return value;
+    }
+
+    const d = value - localOffset;
+    const r = Math.floor((d + localGridSize / 2.0) / localGridSize);
+    const err = d / localGridSize - r;
+    return localOffset + (r + err * (1 - localStrength)) * localGridSize;
+  }
+}
+
+export class Accumulator {
+  static readonly ON = 0;
+  static readonly LIMIT = 1;
+  static readonly MIRROR = 2;
+  static readonly WRAP = 3;
+  static readonly MODES = ['On', 'Limit', 'Mirror', 'Wrap'];
+
+  highTable = new Table();
+  lowTable = new Table();
+  highTableEnabled = false;
+  lowTableEnabled = false;
+  mode = Accumulator.ON;
+  low = 0.0;
+  high = 1.0;
+  initialValue = 0.0;
+  enabled = false;
+  runningValue = 0.0;
+  firstTime = true;
+  duration = 1.0;
+
+  constructor(other?: Accumulator) {
+    if (other) {
+      this.highTable = new Table(other.highTable);
+      this.lowTable = new Table(other.lowTable);
+      this.highTableEnabled = other.highTableEnabled;
+      this.lowTableEnabled = other.lowTableEnabled;
+      this.mode = other.mode;
+      this.low = other.low;
+      this.high = other.high;
+      this.initialValue = other.initialValue;
+      this.enabled = other.enabled;
+    }
+  }
+
+  static loadFromXML(data: Element, context = new XmlLoadContext(data)): Accumulator {
+    validateJmaskXml(data, 'Accumulator', context);
+    const accumulator = new Accumulator();
+    const nodes = data.getElements();
+
+    while (nodes.hasMoreElements()) {
+      const node = nodes.next();
+      switch (node.getName()) {
+        case 'table': {
+          const table = Table.loadFromXML(node);
+          const tableId = node.getAttributeValue('tableId');
+          if (tableId === 'highTable') {
+            accumulator.highTable = table;
+          } else if (tableId === 'lowTable') {
+            accumulator.lowTable = table;
+          }
+          break;
+        }
+        case 'highTableEnabled':
+          accumulator.highTableEnabled = readBoolean(node);
+          break;
+        case 'lowTableEnabled':
+          accumulator.lowTableEnabled = readBoolean(node);
+          break;
+        case 'mode':
+          accumulator.mode = readInt(node);
+          break;
+        case 'low':
+          accumulator.low = readDouble(node);
+          break;
+        case 'high':
+          accumulator.high = readDouble(node);
+          break;
+        case 'initialValue':
+          accumulator.initialValue = readDouble(node);
+          break;
+        case 'enabled':
+          accumulator.enabled = readBoolean(node);
+          break;
+      }
+    }
+
+    return accumulator;
+  }
+
+  saveAsXML(): Element {
+    const retVal = new Element('accumulator');
+
+    const highTableNode = this.highTable.saveAsXML();
+    highTableNode.setAttribute('tableId', 'highTable');
+    retVal.addElement(highTableNode);
+
+    const lowTableNode = this.lowTable.saveAsXML();
+    lowTableNode.setAttribute('tableId', 'lowTable');
+    retVal.addElement(lowTableNode);
+
+    retVal.addElement(writeBoolean('highTableEnabled', this.highTableEnabled));
+    retVal.addElement(writeBoolean('lowTableEnabled', this.lowTableEnabled));
+    retVal.addElement(writeInt('mode', this.mode));
+    retVal.addElement(writeDouble('low', this.low));
+    retVal.addElement(writeDouble('high', this.high));
+    retVal.addElement(writeDouble('initialValue', this.initialValue));
+    retVal.addElement(writeBoolean('enabled', this.enabled));
+    return retVal;
+  }
+
+  getValue(time: number, value: number): number {
+    if (!this.enabled) {
+      return value;
+    }
+
+    if (this.firstTime) {
+      this.firstTime = false;
+      this.runningValue = this.initialValue;
+    }
+
+    this.runningValue += value;
+
+    const localTime = this.duration !== 0 ? time / this.duration : 0;
+    const lowerBound = this.lowTableEnabled ? this.lowTable.getValue(localTime) : this.low;
+    const upperBound = this.highTableEnabled ? this.highTable.getValue(localTime) : this.high;
+
+    switch (this.mode) {
+      case Accumulator.LIMIT:
+        this.runningValue = clamp(this.runningValue, lowerBound, upperBound);
+        break;
+      case Accumulator.MIRROR:
+        this.runningValue = mirror(this.runningValue, lowerBound, upperBound);
+        break;
+      case Accumulator.WRAP:
+        this.runningValue = wrap(this.runningValue, lowerBound, upperBound);
+        break;
+      case Accumulator.ON:
+      default:
+        break;
+    }
+
+    return this.runningValue;
+  }
+}
