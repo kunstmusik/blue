@@ -3,6 +3,43 @@ import type { EngineOutputChunk, OutputLine, OutputTab } from '../../shared/io-p
 
 /** Maximum number of lines kept per tab. Oldest lines are discarded when exceeded. */
 export const MAX_LINES = 10_000;
+const LINE_PAGE_SIZE = 128;
+
+export function getOutputLinePageId(line: OutputLine): number {
+  return Math.floor((line.id - 1) / LINE_PAGE_SIZE);
+}
+
+function withOutputLines(tab: Omit<OutputTab, 'lines'>): OutputTab {
+  // Materialize the flat array only for callers that need the entire log.
+  let lines: OutputLine[] | undefined;
+  return Object.defineProperty(tab, 'lines', {
+    get: () => (lines ??= tab.linePages.flat()),
+  }) as OutputTab;
+}
+
+export function countOutputLines(tab: OutputTab | null): number {
+  return tab ? Math.min(tab.lineCounter, MAX_LINES) + Number(!!tab.pendingText) : 0;
+}
+
+export function sliceOutputLines(tab: OutputTab | null, start: number, end: number): OutputLine[] {
+  if (!tab || end <= start) return [];
+  const lines: OutputLine[] = [];
+  let offset = 0;
+  for (const page of tab.linePages) {
+    const next = offset + page.length;
+    if (start < next) lines.push(...page.slice(Math.max(0, start - offset), end - offset));
+    if (end <= next) return lines;
+    offset = next;
+  }
+  if (tab.pendingText && start <= offset) {
+    lines.push({
+      id: tab.lineCounter + 1,
+      text: tab.pendingText,
+      type: tab.pendingType ?? 'stdout',
+    });
+  }
+  return lines;
+}
 
 export interface OutputWindowState {
   tabs: Record<string, OutputTab>;
@@ -18,16 +55,17 @@ export interface OutputWindowState {
 
 function ensureTab(state: OutputWindowState, name: string): OutputTab {
   return (
-    state.tabs[name] ?? {
+    state.tabs[name] ??
+    withOutputLines({
       id: name,
       name,
-      lines: [],
+      linePages: [],
       lineCounter: 0,
       colorOverrides: {},
       isClosed: false,
       pendingText: '',
       pendingType: null,
-    }
+    })
   );
 }
 
@@ -65,27 +103,47 @@ function applyChunksToTab(
     return {
       tabs: {
         ...state.tabs,
-        [name]: {
+        [name]: withOutputLines({
           ...tab,
           pendingText,
           pendingType,
-        },
+        }),
       },
       tabOrder,
       activeTabId: state.activeTabId ?? name,
     };
   }
-  let allLines = [...tab.lines, ...newLines];
-  if (allLines.length > MAX_LINES) {
-    allLines = allLines.slice(allLines.length - MAX_LINES);
+  let drop = Math.max(0, Math.min(tab.lineCounter, MAX_LINES) + newLines.length - MAX_LINES);
+  const linePages: (readonly OutputLine[])[] = [];
+  for (const page of tab.linePages) {
+    if (drop >= page.length) {
+      drop -= page.length;
+      continue;
+    }
+    linePages.push(drop ? page.slice(drop) : page);
+    drop = 0;
   }
-  const updated: OutputTab = {
+  const tail = linePages.at(-1);
+  const lastId = tail?.at(-1)?.id;
+  const remaining =
+    lastId === undefined ? 0 : (LINE_PAGE_SIZE - (lastId % LINE_PAGE_SIZE)) % LINE_PAGE_SIZE;
+  if (tail && remaining > 0) {
+    const fill = Math.min(remaining, newLines.length - drop);
+    linePages[linePages.length - 1] = [...tail, ...newLines.slice(drop, drop + fill)];
+    drop += fill;
+  }
+  for (let i = drop; i < newLines.length;) {
+    const end = i + LINE_PAGE_SIZE - ((newLines[i]!.id - 1) % LINE_PAGE_SIZE);
+    linePages.push(newLines.slice(i, end));
+    i = end;
+  }
+  const updated = withOutputLines({
     ...tab,
-    lines: allLines,
+    linePages,
     lineCounter: counter,
     pendingText,
     pendingType,
-  };
+  });
   return {
     tabs: { ...state.tabs, [name]: updated },
     tabOrder,
@@ -106,16 +164,16 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
         tab = existing;
         return state;
       }
-      tab = {
+      tab = withOutputLines({
         id: name,
         name,
-        lines: [],
+        linePages: [],
         lineCounter: 0,
         colorOverrides: existing?.colorOverrides ?? {},
         isClosed: false,
         pendingText: '',
         pendingType: null,
-      };
+      });
       const tabOrder = state.tabOrder.includes(name) ? state.tabOrder : [...state.tabOrder, name];
       return {
         tabs: { ...state.tabs, [name]: tab },
@@ -141,7 +199,13 @@ export const useOutputStore = create<OutputWindowState>((set) => ({
       return {
         tabs: {
           ...state.tabs,
-          [name]: { ...tab, lines: [], lineCounter: 0, pendingText: '', pendingType: null },
+          [name]: withOutputLines({
+            ...tab,
+            linePages: [],
+            lineCounter: 0,
+            pendingText: '',
+            pendingType: null,
+          }),
         },
       };
     });

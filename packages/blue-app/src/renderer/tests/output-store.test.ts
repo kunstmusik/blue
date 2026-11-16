@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useOutputStore, MAX_LINES } from '../stores/output-store';
+import { useOutputStore, MAX_LINES, sliceOutputLines } from '../stores/output-store';
 import { buildBatchedEngineOutputPayload } from '../../shared/io-provider';
 
 describe('output-store', () => {
@@ -179,6 +179,26 @@ describe('output-store', () => {
   });
 
   describe('MAX_LINES trimming', () => {
+    it('shares retained pages and reads across the page and pending-line boundaries', () => {
+      const store = useOutputStore.getState();
+      store.appendToTab('Csound', Array.from({ length: MAX_LINES }, (_, i) => `${i}\n`).join(''));
+      const before = useOutputStore.getState().tabs.Csound!;
+      store.appendToTab('Csound', 'new\npartial', 'stderr');
+      const after = useOutputStore.getState().tabs.Csound!;
+      expect(after.linePages[1]).toBe(before.linePages[1]);
+      expect(before.lines[0]?.text).toBe('0');
+      expect(after.lines[0]?.text).toBe('1');
+      expect(sliceOutputLines(after, 126, 129).map((line) => line.text)).toEqual([
+        '127',
+        '128',
+        '129',
+      ]);
+      expect(sliceOutputLines(after, MAX_LINES - 1, MAX_LINES + 1)).toEqual([
+        { id: MAX_LINES + 1, text: 'new', type: 'stderr' },
+        { id: MAX_LINES + 2, text: 'partial', type: 'stderr' },
+      ]);
+    });
+
     it('trims oldest lines when exceeding MAX_LINES', () => {
       const store = useOutputStore.getState();
       // Build a text block with MAX_LINES + 50 lines

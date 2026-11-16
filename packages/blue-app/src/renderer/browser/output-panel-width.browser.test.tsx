@@ -4,6 +4,7 @@ import { expect, it } from 'vitest';
 import OutputPanel from '../components/workbench/panels/output/OutputPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';
+import { PROJECT_MESSAGES_TAB } from '../../shared/xml-diagnostics';
 import '../styles/index.css';
 
 (
@@ -99,6 +100,59 @@ it('keeps a native selection across virtual windows and reculls rows when it cle
     });
     expect(rows().length).toBeLessThan(lines.length);
     expect(firstText.isConnected).toBe(false);
+  } finally {
+    selection.removeAllRanges();
+    await act(async () => root.unmount());
+    host.remove();
+    useOutputStore.setState({ tabs: {}, tabOrder: [], activeTabId: null });
+  }
+});
+
+it('defers offscreen wrapped diagnostics and preserves selection across pages', async () => {
+  const host = document.createElement('div');
+  host.style.width = '320px';
+  host.style.height = '250px';
+  document.body.append(host);
+  const root = createRoot(host);
+  const selection = document.getSelection()!;
+  const lines = Array.from(
+    { length: 300 },
+    (_, i) => `Diagnostic ${i}: ${'long message '.repeat(9)}!`,
+  );
+  try {
+    useOutputStore.getState().appendToTab(PROJECT_MESSAGES_TAB, lines.join('\n') + '\n');
+    await act(async () =>
+      root.render(
+        <HostDocumentContext.Provider value={document}>
+          <OutputPanel />
+        </HostDocumentContext.Provider>,
+      ),
+    );
+    const scroll = host.querySelector<HTMLElement>('.output-panel__scroll')!;
+    const rows = scroll.querySelectorAll('.output-panel__line span');
+    expect(rows).toHaveLength(lines.length);
+    expect(getComputedStyle(rows[0]!.parentElement!.parentElement!).contentVisibility).toBe(
+      'visible',
+    );
+    expect(getComputedStyle(rows[299]!.parentElement!.parentElement!).contentVisibility).toBe(
+      'auto',
+    );
+    await act(async () => {
+      scroll.scrollTop = 600;
+      scroll.dispatchEvent(new Event('scroll'));
+      useOutputStore.getState().appendToTab(PROJECT_MESSAGES_TAB, 'more output\n');
+    });
+    expect(scroll.scrollTop).toBe(600);
+    await act(async () => {
+      selection.setBaseAndExtent(
+        rows[0]!.firstChild!,
+        0,
+        rows[299]!.firstChild!,
+        lines[299]!.length,
+      );
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    expect(selection.toString().split('\n')).toEqual(lines);
   } finally {
     selection.removeAllRanges();
     await act(async () => root.unmount());

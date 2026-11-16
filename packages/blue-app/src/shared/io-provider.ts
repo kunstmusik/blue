@@ -9,7 +9,8 @@ export interface OutputLine {
 export interface OutputTab {
   id: string;
   name: string;
-  lines: OutputLine[];
+  readonly lines: readonly OutputLine[];
+  readonly linePages: readonly (readonly OutputLine[])[];
   lineCounter: number;
   colorOverrides: Partial<Record<OutputType, string>>;
   isClosed: boolean;

@@ -128,6 +128,6 @@ describe('OutputPanel popout selection actions', () => {
     scroll.scrollTop = 120;
     act(() => useOutputStore.getState().selectTab('Project Messages'));
     expect(scroll.scrollTop).toBe(0);
-    expect(scroll.firstElementChild?.textContent).toBe('First warning');
+    expect(scroll.querySelector('.output-panel__line')?.textContent).toBe('First warning');
   });
 });

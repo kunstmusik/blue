@@ -1,16 +1,43 @@
-import { useRef, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { memo, useRef, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Clipboard, MousePointerClick, Trash2 } from 'lucide-react';
-import { useOutputStore } from '../../../../stores/output-store';
+import {
+  countOutputLines,
+  getOutputLinePageId,
+  sliceOutputLines,
+  useOutputStore,
+} from '../../../../stores/output-store';
 import { PopoutContextMenuPortal } from '../../../../hooks/host-portals';
 import { useHostDocument } from '../../../../hooks/use-host-document';
 import { cn } from '../../../../lib/cn';
 import { PROJECT_MESSAGES_TAB } from '../../../../../shared/xml-diagnostics';
+import type { OutputLine } from '../../../../../shared/io-provider';
 
 const OUTPUT_VIRTUALIZE_THRESHOLD = 100;
 const OUTPUT_DEFAULT_LINE_HEIGHT = 18;
 const OUTPUT_FALLBACK_VIEWPORT_LINES = 30;
 const OUTPUT_OVERSCAN_LINES = 20;
+
+const OutputRows = memo(function OutputRows({
+  lines,
+  wrapped,
+  errorColor,
+  outputColor,
+}: {
+  lines: readonly OutputLine[];
+  wrapped: boolean;
+  errorColor: string;
+  outputColor: string;
+}) {
+  return lines.map((line) => (
+    <div
+      key={line.id}
+      className={cn('output-panel__line min-h-lh', wrapped && 'whitespace-pre-wrap! wrap-anywhere')}
+    >
+      <span style={{ color: line.type === 'stderr' ? errorColor : outputColor }}>{line.text}</span>
+    </div>
+  ));
+});
 
 function measureLogLine(text: string, measure: (text: string) => number, tabWidth: number): number {
   if (!text.includes('\t')) return measure(text);
@@ -53,31 +80,13 @@ export default function OutputPanel() {
     tabSize: string;
     context: CanvasRenderingContext2D | null;
     widths: WeakMap<object, number>;
+    widestByPage: WeakMap<readonly OutputLine[], { text: string; width: number }>;
   } | null>(null);
 
-  const lines = useMemo(() => {
-    if (!activeTab) {
-      return [];
-    }
+  const lineCount = countOutputLines(activeTab);
+  const wrappedDiagnostics = activeTabId === PROJECT_MESSAGES_TAB;
 
-    if (!activeTab.pendingText) {
-      return activeTab.lines;
-    }
-
-    return [
-      ...activeTab.lines,
-      {
-        id: activeTab.lineCounter + 1,
-        text: activeTab.pendingText,
-        type: activeTab.pendingType ?? 'stdout',
-      },
-    ];
-  }, [activeTab]);
-
-  // Project Messages uses wrapping multi-line rows (variable heights), so only
-  // uniform-height log tabs use fixed-row virtualization.
-  const isVirtualized =
-    activeTabId !== PROJECT_MESSAGES_TAB && lines.length > OUTPUT_VIRTUALIZE_THRESHOLD;
+  const isVirtualized = !wrappedDiagnostics && lineCount > OUTPUT_VIRTUALIZE_THRESHOLD;
   // Native selection needs the selected text nodes and any rows the range can extend into.
   const cullRows = isVirtualized && selectionMode !== 'manual';
   const lineHeight = measuredLineHeight > 0 ? measuredLineHeight : OUTPUT_DEFAULT_LINE_HEIGHT;
@@ -88,28 +97,38 @@ export default function OutputPanel() {
     if (!cullRows) {
       return {
         startIndex: 0,
-        endIndex: lines.length,
+        endIndex: lineCount,
         topSpacerHeight: 0,
         bottomSpacerHeight: 0,
       };
     }
-    const maxScrollTop = Math.max(0, lines.length * lineHeight - effectiveViewportHeight);
+    const maxScrollTop = Math.max(0, lineCount * lineHeight - effectiveViewportHeight);
     const clampedScrollTop = Math.max(0, Math.min(scrollTopState, maxScrollTop));
     const start = Math.max(0, Math.floor(clampedScrollTop / lineHeight) - OUTPUT_OVERSCAN_LINES);
     const visibleCount =
       Math.ceil(effectiveViewportHeight / lineHeight) + OUTPUT_OVERSCAN_LINES * 2;
-    const end = Math.min(lines.length, start + visibleCount);
+    const end = Math.min(lineCount, start + visibleCount);
     return {
       startIndex: start,
       endIndex: end,
       topSpacerHeight: start * lineHeight,
-      bottomSpacerHeight: Math.max(0, (lines.length - end) * lineHeight),
+      bottomSpacerHeight: Math.max(0, (lineCount - end) * lineHeight),
     };
-  }, [cullRows, lines.length, lineHeight, effectiveViewportHeight, scrollTopState]);
+  }, [cullRows, lineCount, lineHeight, effectiveViewportHeight, scrollTopState]);
 
   const visibleLines = useMemo(
-    () => (cullRows ? lines.slice(startIndex, endIndex) : lines),
-    [cullRows, lines, startIndex, endIndex],
+    () =>
+      wrappedDiagnostics
+        ? sliceOutputLines(activeTab, lineCount - Number(!!activeTab?.pendingText), lineCount)
+        : sliceOutputLines(activeTab, startIndex, endIndex),
+    [activeTab, startIndex, endIndex, lineCount, wrappedDiagnostics],
+  );
+  const copyAllText = useCallback(
+    () =>
+      sliceOutputLines(activeTab, 0, lineCount)
+        .map((line) => line.text)
+        .join('\n'),
+    [activeTab, lineCount],
   );
 
   // Preserve scrollWidth when long log lines scroll out of the virtualized
@@ -132,10 +151,17 @@ export default function OutputPanel() {
           ? doc.createElement('canvas').getContext('2d')
           : null;
       if (context) context.font = font;
-      cache = { document: doc, font, tabSize, context, widths: new WeakMap() };
+      cache = {
+        document: doc,
+        font,
+        tabSize,
+        context,
+        widths: new WeakMap(),
+        widestByPage: new WeakMap(),
+      };
       widthMeasurements.current = cache;
     }
-    const { context, widths } = cache;
+    const { context, widths, widestByPage } = cache;
     const measure = (value: string) => context?.measureText(value).width ?? value.length;
     const tabSizeValue = Number.parseFloat(tabSize);
     const tabWidth = Number.isFinite(tabSizeValue)
@@ -145,19 +171,33 @@ export default function OutputPanel() {
       : 8 * measure(' ');
     let maxText = '';
     let maxWidth = 0;
-    for (const line of lines) {
-      let width = widths.get(line);
-      if (width === undefined) {
-        width = measureLogLine(line.text, measure, tabWidth);
-        widths.set(line, width);
-      }
+    const considerLine = (text: string, width: number) => {
       if (width > maxWidth) {
         maxWidth = width;
-        maxText = line.text;
+        maxText = text;
       }
+    };
+    for (const page of activeTab?.linePages ?? []) {
+      let widest = widestByPage.get(page);
+      if (!widest) {
+        widest = { text: '', width: 0 };
+        for (const line of page) {
+          let width = widths.get(line);
+          if (width === undefined) {
+            width = measureLogLine(line.text, measure, tabWidth);
+            widths.set(line, width);
+          }
+          if (width > widest.width) widest = { text: line.text, width };
+        }
+        widestByPage.set(page, widest);
+      }
+      considerLine(widest.text, widest.width);
+    }
+    if (activeTab?.pendingText) {
+      considerLine(activeTab.pendingText, measureLogLine(activeTab.pendingText, measure, tabWidth));
     }
     setLongestLineText(maxText);
-  }, [hostDocument, isVirtualized, lines]);
+  }, [activeTab, hostDocument, isVirtualized]);
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -184,7 +224,7 @@ export default function OutputPanel() {
     const observer = new ResizeObserver(updateMeasurements);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [activeTabId, lines.length]);
+  }, [activeTabId, isVirtualized, hostDocument]);
 
   // Track document selection state for auto-scroll pausing and Copy enable/disable
   const handleSelectionChange = useCallback(() => {
@@ -222,6 +262,7 @@ export default function OutputPanel() {
     autoScrollRef.current = activeTabId !== PROJECT_MESSAGES_TAB;
     if (scrollRef.current) {
       scrollRef.current.scrollLeft = 0;
+      scrollRef.current.scrollTop = 0;
     }
     setScrollTopState(0);
   }, [activeTabId, hostDocument]);
@@ -231,17 +272,24 @@ export default function OutputPanel() {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || hasSelectionRef.current) return;
-    if (activeTabId === PROJECT_MESSAGES_TAB || lines.length === 0) {
+    if (lineCount === 0) {
       el.scrollTop = 0;
       setScrollTopState(0);
-    } else if (autoScrollRef.current) {
+    } else if (!wrappedDiagnostics && autoScrollRef.current) {
       const targetScrollTop = isVirtualized
-        ? Math.max(0, lines.length * lineHeight - effectiveViewportHeight)
+        ? Math.max(0, lineCount * lineHeight - effectiveViewportHeight)
         : el.scrollHeight;
       el.scrollTop = targetScrollTop;
       setScrollTopState(el.scrollTop);
     }
-  }, [activeTab, activeTabId, isVirtualized, lines.length, lineHeight, effectiveViewportHeight]);
+  }, [
+    activeTab,
+    wrappedDiagnostics,
+    isVirtualized,
+    lineCount,
+    lineHeight,
+    effectiveViewportHeight,
+  ]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -264,17 +312,15 @@ export default function OutputPanel() {
   // Context menu actions
   const handleCopy = useCallback(() => {
     const sel = hostDocument?.getSelection();
-    if (!(isVirtualized && allLinesSelectedRef.current) && (!sel || sel.isCollapsed)) return;
-    const text =
-      isVirtualized && allLinesSelectedRef.current
-        ? lines.map((line) => line.text).join('\n')
-        : (sel?.toString() ?? '');
+    const copyOffscreenLines = isVirtualized && allLinesSelectedRef.current;
+    if (!copyOffscreenLines && (!sel || sel.isCollapsed)) return;
+    const text = copyOffscreenLines ? copyAllText() : (sel?.toString() ?? '');
     if (typeof window !== 'undefined' && window.blueAPI?.writeClipboardText) {
       void window.blueAPI.writeClipboardText(text);
     } else if (navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(text);
     }
-  }, [hostDocument, isVirtualized, lines]);
+  }, [copyAllText, hostDocument, isVirtualized]);
 
   const handleSelectAll = useCallback(() => {
     const scrollEl = scrollRef.current;
@@ -302,10 +348,10 @@ export default function OutputPanel() {
     (e: React.ClipboardEvent<HTMLDivElement>) => {
       if (isVirtualized && allLinesSelectedRef.current && e.clipboardData) {
         e.preventDefault();
-        e.clipboardData.setData('text/plain', lines.map((line) => line.text).join('\n'));
+        e.clipboardData.setData('text/plain', copyAllText());
       }
     },
-    [isVirtualized, lines],
+    [copyAllText, isVirtualized],
   );
 
   const handleClear = useCallback(() => {
@@ -388,30 +434,40 @@ export default function OutputPanel() {
             className="output-panel__scroll"
             tabIndex={0}
           >
-            {lines.length === 0 ? (
+            {lineCount === 0 ? (
               <div className="output-panel__empty">No output.</div>
             ) : (
               <>
                 {topSpacerHeight > 0 && (
                   <div style={{ height: topSpacerHeight }} aria-hidden="true" />
                 )}
-                {visibleLines.map((line) => (
-                  <div
-                    key={line.id}
-                    className={cn(
-                      'output-panel__line min-h-lh',
-                      activeTabId === PROJECT_MESSAGES_TAB && 'whitespace-pre-wrap! wrap-anywhere',
-                    )}
-                  >
-                    <span
-                      style={{
-                        color: line.type === 'stderr' ? errorColor : outputColor,
-                      }}
+                {wrappedDiagnostics &&
+                  activeTab?.linePages.map((page, index) => (
+                    <div
+                      key={getOutputLinePageId(page[0]!)}
+                      style={
+                        index > 0 && selectionMode === null
+                          ? {
+                              contentVisibility: 'auto',
+                              containIntrinsicBlockSize: `auto ${page.length * lineHeight}px`,
+                            }
+                          : undefined
+                      }
                     >
-                      {line.text}
-                    </span>
-                  </div>
-                ))}
+                      <OutputRows
+                        lines={page}
+                        wrapped
+                        errorColor={errorColor}
+                        outputColor={outputColor}
+                      />
+                    </div>
+                  ))}
+                <OutputRows
+                  lines={visibleLines}
+                  wrapped={wrappedDiagnostics}
+                  errorColor={errorColor}
+                  outputColor={outputColor}
+                />
                 {bottomSpacerHeight > 0 && (
                   <div style={{ height: bottomSpacerHeight }} aria-hidden="true" />
                 )}

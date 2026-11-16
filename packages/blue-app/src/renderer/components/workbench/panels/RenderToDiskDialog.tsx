@@ -63,7 +63,9 @@ export default function RenderToDiskDialog(): React.ReactElement | null {
     if (open && terminal) okButtonRef.current?.focus();
   }, [open, terminal]);
 
-  const outputTab = useOutputStore((state) => state.tabs[DISK_RENDER_OUTPUT_TAB]);
+  const outputTab = useOutputStore((state) =>
+    open && outputExpanded ? state.tabs[DISK_RENDER_OUTPUT_TAB] : undefined,
+  );
   const consoleText = useMemo(() => {
     if (!outputTab) return '';
     const parts = outputTab.lines.map((line) => line.text);
