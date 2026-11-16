@@ -31,6 +31,7 @@ import {
   registerHistoryEditorSettlement,
 } from '../../../../../lib/history-scope-router';
 import { getProjectDocumentId, useProjectStore } from '../../../../../stores/project-store';
+import { useHostDocument } from '../../../../../hooks/use-host-document';
 
 interface Props {
   automation: ScoreLayerAutomationSnapshot;
@@ -113,6 +114,22 @@ function AutomationLayerOverlay({
     [tempoMap, smpteFrameRate, tempo],
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const hostDocument = useHostDocument();
+  const hasParameters = automation.parameters.length > 0;
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!hasParameters || !element) return;
+    const ResizeObserverCtor =
+      element.ownerDocument.defaultView?.ResizeObserver ?? globalThis.ResizeObserver;
+    const observer = new ResizeObserverCtor(([entry]) => {
+      if (entry) setHeight(entry.contentRect.height);
+    });
+    setHeight(element.getBoundingClientRect().height);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasParameters, hostDocument]);
   const [dragState, setDragState] = useState<DragState>({ kind: 'none' });
   /**
    * Index of the point currently under the cursor on the active parameter
@@ -949,7 +966,7 @@ function AutomationLayerOverlay({
     [automation.layerId, selectedPoint],
   );
 
-  if (automation.parameters.length === 0) return null;
+  if (!hasParameters) return null;
 
   const interactive = mode === 'singleLine';
 
@@ -975,6 +992,7 @@ function AutomationLayerOverlay({
         return (
           <AutomationLineView
             key={param.parameterId}
+            height={height}
             parameter={override ? { ...param, points: override } : param}
             pixelsPerBeat={pixelsPerBeat}
             visibleStartBeats={visibleStartBeats}
@@ -993,6 +1011,7 @@ function AutomationLayerOverlay({
       })}
       {mode === 'singleLine' && selectedParam && (
         <AutomationLineView
+          height={height}
           parameter={
             preview?.parameterId === selectedParam.parameterId
               ? { ...selectedParam, points: preview.points }

@@ -33,7 +33,7 @@ import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
 import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import { attachHostGesture } from '../../../../../lib/host-gesture';
-import type { ScoreLayerSnapshot, ScoreRowObjectSnapshot } from '../types';
+import type { ScoreLayerSnapshot, ScoreObjectDoubleClick, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { createFrameSnapContext, snapBeatToGrid } from '../snap-grid-utils';
 import { useScoreViewportBounds } from '../score-viewport-scroll';
@@ -92,7 +92,7 @@ interface Props {
   tempoMap: TempoMapSnapshot;
   smpteFrameRate: number;
   meterMap: MeterMapSnapshot;
-  onDoubleClickObject?: (objectId: string) => void;
+  onDoubleClickObject?: ScoreObjectDoubleClick;
 }
 
 type GestureMode =
@@ -1797,12 +1797,12 @@ export default function TrackLayerGroupCanvas({
       );
       if (!hit) return;
       if (hit.item.isContainer && onDoubleClickObject) {
-        onDoubleClickObject(hit.item.objectId);
+        onDoubleClickObject(hit.item, hit.layer.layerId, group);
       } else {
         openPanel('ScoreObjectEditorTopComponent');
       }
     },
-    [group.layers, onDoubleClickObject, openPanel, pixelsPerBeat, toLocalXY],
+    [group, onDoubleClickObject, openPanel, pixelsPerBeat, toLocalXY],
   );
 
   const handleKeyDown = useCallback(

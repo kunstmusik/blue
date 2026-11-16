@@ -8,6 +8,7 @@ import type {
   PolyObjectLayerGroupSnapshot,
   ScoreLayerGroupSnapshot,
   ScoreLayerSnapshot,
+  ScoreObjectDoubleClick,
   ScoreRowObjectSnapshot,
 } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
@@ -100,7 +101,7 @@ interface Props {
   tempoMap?: TempoMapSnapshot;
   smpteFrameRate: number;
   meterMap: MeterMapSnapshot;
-  onDoubleClickObject?: (objectId: string) => void;
+  onDoubleClickObject?: ScoreObjectDoubleClick;
 }
 
 function argbToRGB(argb: number): number {
@@ -1453,9 +1454,7 @@ export default function ScoreTimeCanvas({
       if (item.isContainer) {
         // Java Blue: double-clicking a PolyObject drills one layer down via
         // ScoreController.editLayerGroup() instead of opening the object editor.
-        if (onDoubleClickObject) {
-          onDoubleClickObject(item.objectId);
-        }
+        onDoubleClickObject?.(item, hit.layer.layerId, group);
         return;
       }
       // Java Blue: ScoreObjectSelectionListener.editScoreObject() opens (or
@@ -1466,7 +1465,7 @@ export default function ScoreTimeCanvas({
         openPanel('ScoreObjectEditorTopComponent');
       }
     },
-    [toLocalXY, pixelsPerBeat, group.layers, onDoubleClickObject, openPanel, selectedObjectIds],
+    [toLocalXY, pixelsPerBeat, group, onDoubleClickObject, openPanel, selectedObjectIds],
   );
 
   const getSelectedEntries = useCallback((): ScoreObjectClipboardEntry[] => {

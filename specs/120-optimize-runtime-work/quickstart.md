@@ -120,3 +120,8 @@ Vitest files afterwards; do not touch the user's unrelated probe. Initial work-c
 replay, lifetime, query-count, mount-count and exact-output tests remain in ordinary CI.
 Existing opt-in three-round product suites and budgets are unchanged, not replaced by
 these temporary diagnostics.
+
+### Renderer follow-up
+
+The automation row owns its resize measurement. It disconnects its observer when the last
+line is removed, the row unmounts, or the host document changes. Each line uses the shared height.

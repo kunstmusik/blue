@@ -196,19 +196,6 @@ describe('AutomationLineView point rendering', () => {
     const parent = document.createElement('div');
     container.appendChild(parent);
 
-    // Mock getBoundingClientRect on the parent so AutomationLineView gets dimensions
-    parent.getBoundingClientRect = () => ({
-      width: 400,
-      height: 44,
-      top: 0,
-      left: 0,
-      bottom: 44,
-      right: 400,
-      x: 0,
-      y: 0,
-      toJSON: () => {},
-    });
-
     const root: Root = createRoot(parent);
 
     const testParam: AutomationParameterSnapshot = {
@@ -236,6 +223,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={44}
           parameter={testParam}
           pixelsPerBeat={100}
           active={true}
@@ -266,9 +254,6 @@ describe('AutomationLineView point rendering', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const parent = document.createElement('div');
-    Object.defineProperty(parent, 'clientHeight', { value: 100, configurable: true });
-    parent.getBoundingClientRect = () =>
-      ({ width: 500, height: 100, top: 0, left: 0, right: 500, bottom: 100 }) as DOMRect;
     container.appendChild(parent);
 
     const root = createRoot(parent);
@@ -292,6 +277,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={100}
           parameter={testParam}
           pixelsPerBeat={10}
           visibleStartBeats={20}
@@ -332,6 +318,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={100}
           parameter={quantizedParam}
           pixelsPerBeat={10}
           visibleStartBeats={1000}
@@ -361,6 +348,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={100}
           parameter={unsortedPreviewParam}
           pixelsPerBeat={10}
           visibleStartBeats={0}
@@ -391,6 +379,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={100}
           parameter={stepParam}
           pixelsPerBeat={20}
           visibleStartBeats={5.005}
@@ -412,6 +401,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={100}
           parameter={singleDelayedPoint}
           pixelsPerBeat={10}
           visibleStartBeats={0}
@@ -439,6 +429,7 @@ describe('AutomationLineView point rendering', () => {
     act(() => {
       root.render(
         <AutomationLineView
+          height={100}
           parameter={quantizedWithOffscreenSteps}
           pixelsPerBeat={100}
           visibleStartBeats={7}

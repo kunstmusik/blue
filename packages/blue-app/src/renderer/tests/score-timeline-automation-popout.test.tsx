@@ -175,13 +175,19 @@ describe('AutomationTargetMenu in a floated panel', () => {
 });
 
 const resizeObservers = new Map<Element, ResizeObserverCallback>();
+const observeResize = vi.fn();
 class MockResizeObserver {
   constructor(private callback: ResizeObserverCallback) {}
   observe(target: Element): void {
+    observeResize(target);
     resizeObservers.set(target, this.callback);
   }
   unobserve(): void {}
-  disconnect(): void {}
+  disconnect(): void {
+    for (const [target, callback] of resizeObservers) {
+      if (callback === this.callback) resizeObservers.delete(target);
+    }
+  }
 }
 (globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
   MockResizeObserver;
@@ -232,6 +238,7 @@ describe('AutomationLineView point readout (spec 090)', () => {
             style={{ overflow: 'hidden', width: 240, height: 40 }}
           >
             <AutomationLineView
+              height={40}
               parameter={parameter}
               pixelsPerBeat={40}
               active
@@ -370,7 +377,7 @@ describe('AutomationLayerOverlay hosted gestures and regressions (T007, T017)', 
     });
   });
 
-  function renderOverlay(onPatch = vi.fn(), layerId = 'layer-1') {
+  function renderOverlay(onPatch = vi.fn(), layerId = 'layer-1', parameterCount = 1) {
     const param: AutomationParameterSnapshot = {
       parameterId: 'p-freq',
       name: 'Frequency',
@@ -384,12 +391,15 @@ describe('AutomationLayerOverlay hosted gestures and regressions (T007, T017)', 
       ],
     };
 
+    const parameters = Array.from({ length: parameterCount }, (_, index) =>
+      index === 0 ? param : { ...param, parameterId: `extra-${index}` },
+    );
     const autoSnap: ScoreLayerAutomationSnapshot = {
       layerId,
       layerKind: 'soundObject',
-      parameterIds: ['p-freq'],
+      parameterIds: parameters.map((parameter) => parameter.parameterId),
       selectedParameterId: 'p-freq',
-      parameters: [param],
+      parameters,
       targetGroups: [],
       missingParameterIds: [],
     };
@@ -435,6 +445,32 @@ describe('AutomationLayerOverlay hosted gestures and regressions (T007, T017)', 
     );
     return { overlay, onPatch };
   }
+
+  it('observes the row once and shares resized height across its lines', () => {
+    observeResize.mockClear();
+    const { overlay } = renderOverlay(vi.fn(), 'layer-1', 3);
+    const observedRows = observeResize.mock.calls.filter(([target]) => target === overlay);
+    expect(observedRows).toHaveLength(1);
+    expect([...overlay.querySelectorAll('svg')].map((svg) => svg.style.height)).toEqual([
+      '80px',
+      '80px',
+      '80px',
+    ]);
+    const callback = resizeObservers.get(overlay)!;
+    act(() =>
+      callback(
+        [{ target: overlay, contentRect: { height: 120 } } as ResizeObserverEntry],
+        {} as ResizeObserver,
+      ),
+    );
+    expect([...overlay.querySelectorAll('svg')].map((svg) => svg.style.height)).toEqual([
+      '120px',
+      '120px',
+      '120px',
+    ]);
+    act(() => root.render(null));
+    expect(resizeObservers.has(overlay)).toBe(false);
+  });
 
   it.each(['mouseup', 'Escape', 'blur'])(
     'owns rendered-circle movement and %s termination (T049)',

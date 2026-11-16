@@ -1,6 +1,10 @@
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { GROUP_SPACER } from './types';
-import type { ScoreLayerGroupSnapshot, ScoreObjectLocationRef } from './types';
+import type {
+  ScoreLayerGroupSnapshot,
+  ScoreObjectDoubleClick,
+  ScoreObjectLocationRef,
+} from './types';
 import type { SnapValueName } from '@blue/data';
 import type { MeterMapSnapshot, TempoMapSnapshot } from '../../../../../shared/project-editor';
 import type { ScoreInsertionLocation } from '../../../../../shared/unified-library';
@@ -11,6 +15,7 @@ import TrackLayerGroupCanvas from './layer-groups/TrackLayerGroupCanvas';
 import MultiLineOverlay from './automation/MultiLineOverlay';
 
 type ScoreMode = 'score' | 'singleLine' | 'multiLine';
+const ROOT_CONTAINER_PATH: ScoreInsertionLocation['containerPath'] = [];
 
 interface Props {
   layerGroups: ScoreLayerGroupSnapshot[];
@@ -45,7 +50,7 @@ export default memo(function LayerPanel({
   projectSessionId,
   projectRevision,
   scoreRootGroupId,
-  scoreContainerPath = [],
+  scoreContainerPath = ROOT_CONTAINER_PATH,
   mode = 'score',
   pixelsPerBeat,
   totalBeats,
@@ -57,6 +62,21 @@ export default memo(function LayerPanel({
   meterMap,
 }: Props) {
   const visibleGroups = layerGroups;
+  const containerPath = scoreRootGroupId ? scoreContainerPath : ROOT_CONTAINER_PATH;
+  const handleDoubleClickObject = useCallback<ScoreObjectDoubleClick>(
+    (item, layerId, group) => {
+      const location = item.editorTarget?.location;
+      if (!location) return;
+      onOpenNested(item.objectId, item.name, location, {
+        rootGroupId: scoreRootGroupId ?? group.groupId,
+        containerPath:
+          group.groupType === 'polyObject'
+            ? [...containerPath, { layerId, objectIdentity: item.objectId }]
+            : containerPath,
+      });
+    },
+    [containerPath, onOpenNested, scoreRootGroupId],
+  );
 
   if (visibleGroups.length === 0) {
     return (
@@ -102,7 +122,7 @@ export default memo(function LayerPanel({
                   projectSessionId={projectSessionId}
                   projectRevision={projectRevision}
                   scoreRootGroupId={scoreRootGroupId ?? group.groupId}
-                  scoreContainerPath={scoreRootGroupId ? scoreContainerPath : []}
+                  scoreContainerPath={containerPath}
                   mode={mode}
                   totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
@@ -112,27 +132,7 @@ export default memo(function LayerPanel({
                   tempoMap={tempoMap}
                   smpteFrameRate={smpteFrameRate}
                   meterMap={meterMap}
-                  onDoubleClickObject={(objectId) => {
-                    let containerName = group.name;
-                    let itemLocation: ScoreObjectLocationRef | undefined;
-                    for (const layer of group.layers) {
-                      const found = layer.items.find((it) => it.objectId === objectId);
-                      if (found) {
-                        containerName = found.name;
-                        itemLocation = found.editorTarget?.location;
-                        if (itemLocation) {
-                          onOpenNested(objectId, containerName, itemLocation, {
-                            rootGroupId: scoreRootGroupId ?? group.groupId,
-                            containerPath: [
-                              ...(scoreRootGroupId ? scoreContainerPath : []),
-                              { layerId: layer.layerId, objectIdentity: found.objectId },
-                            ],
-                          });
-                        }
-                        break;
-                      }
-                    }
-                  }}
+                  onDoubleClickObject={handleDoubleClickObject}
                 />
                 {spacer}
               </div>
@@ -166,7 +166,7 @@ export default memo(function LayerPanel({
                   projectSessionId={projectSessionId}
                   projectRevision={projectRevision}
                   scoreRootGroupId={scoreRootGroupId ?? group.groupId}
-                  scoreContainerPath={scoreRootGroupId ? scoreContainerPath : []}
+                  scoreContainerPath={containerPath}
                   mode={mode}
                   totalBeats={totalBeats}
                   pixelsPerBeat={pixelsPerBeat}
@@ -176,16 +176,7 @@ export default memo(function LayerPanel({
                   tempoMap={tempoMap}
                   smpteFrameRate={smpteFrameRate}
                   meterMap={meterMap}
-                  onDoubleClickObject={(objectId) => {
-                    const item = group.layers
-                      .flatMap((layer) => layer.items)
-                      .find((candidate) => candidate.objectId === objectId);
-                    if (!item?.editorTarget?.location) return;
-                    onOpenNested(objectId, item.name, item.editorTarget.location, {
-                      rootGroupId: scoreRootGroupId ?? group.groupId,
-                      containerPath: scoreRootGroupId ? scoreContainerPath : [],
-                    });
-                  }}
+                  onDoubleClickObject={handleDoubleClickObject}
                 />
                 {spacer}
               </div>

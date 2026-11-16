@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState, type MouseEvent } from 'react';
+import { useMemo, useRef, type MouseEvent } from 'react';
 import type { AutomationParameterSnapshot } from '../../../../../../shared/project-editor';
 import { beatToX, valueToY, formatAutomationDouble } from './automation-line-utils';
 import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
@@ -7,6 +7,7 @@ import { useScoreViewportBounds } from '../score-viewport-scroll';
 
 interface Props {
   parameter: AutomationParameterSnapshot;
+  height: number;
   pixelsPerBeat: number;
   visibleStartBeats?: number;
   visibleEndBeats?: number;
@@ -22,6 +23,7 @@ interface Props {
 
 export default function AutomationLineView({
   parameter,
+  height,
   pixelsPerBeat,
   visibleStartBeats: propVisibleStartBeats,
   visibleEndBeats: propVisibleEndBeats,
@@ -34,22 +36,7 @@ export default function AutomationLineView({
   onPointMouseDown,
   onPointContextMenu,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [height, setHeight] = useState(0);
-
-  useEffect(() => {
-    const el = containerRef.current?.parentElement;
-    if (!el) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setHeight(entry.contentRect.height);
-      }
-    });
-    observer.observe(el);
-    setHeight(el.getBoundingClientRect().height);
-    return () => observer.disconnect();
-  }, []);
 
   const points = parameter.points;
   const { minimum, maximum } = parameter;
@@ -157,7 +144,7 @@ export default function AutomationLineView({
   }
 
   return (
-    <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+    <div className="absolute inset-0 pointer-events-none">
       {height > 0 && (
         <svg ref={svgRef} style={{ width: '100%', height, overflow: 'visible' }}>
           {pathD && <path d={pathD} fill="none" stroke={lineColor} strokeWidth={2} />}

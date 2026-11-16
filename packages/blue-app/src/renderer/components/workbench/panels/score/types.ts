@@ -1,3 +1,8 @@
+import type {
+  ScoreLayerGroupSnapshot,
+  ScoreRowObjectSnapshot,
+} from '../../../../../shared/project-editor';
+
 export type {
   ScoreDocumentSnapshot,
   ScoreTimeStateSnapshot,
@@ -30,6 +35,12 @@ export type {
 } from '../../../../../shared/project-editor';
 
 export type { ScorePathSegment } from './useScorePathState';
+
+export type ScoreObjectDoubleClick = (
+  item: ScoreRowObjectSnapshot,
+  layerId: string,
+  group: ScoreLayerGroupSnapshot,
+) => void;
 
 export const DEFAULT_ROW_HEIGHT = 44;
 export const HEADER_WIDTH = 160;

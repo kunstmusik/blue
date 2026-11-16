@@ -4,6 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import LayerPanel from '../components/workbench/panels/score/LayerPanel';
 import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/ScoreTimeCanvas';
 import type {
   PolyObjectLayerGroupSnapshot,
@@ -197,13 +198,51 @@ describe('ScoreTimeCanvas double-click editor parity', () => {
   });
 
   it('drills into a PolyObject one layer down instead of opening the editor', () => {
-    render(polyObjectItem('poly1', 0, 0));
+    const item = polyObjectItem('poly1', 0, 0);
+    render(item);
 
     dispatchAt(surface, 'mousedown', 10, 10);
     dispatchAt(surface, 'dblclick', 10, 10);
 
-    expect(onDoubleClickObject).toHaveBeenCalledWith('poly1');
+    expect(onDoubleClickObject).toHaveBeenCalledWith(item, 'g1-layer-0', makeGroup(item));
     expect(openPanel).not.toHaveBeenCalled();
+  });
+
+  it('extends the active score path with the layer and container that were hit', () => {
+    const item = polyObjectItem('poly1', 0, 0);
+    render(item);
+    const onOpenNested = vi.fn();
+    const parentSegment = { layerId: 'parent-layer', objectIdentity: 'parent' };
+    act(() => {
+      root.render(
+        <LayerPanel
+          layerGroups={[makeGroup(item)]}
+          onOpenNested={onOpenNested}
+          projectSessionId={1}
+          projectRevision={1}
+          scoreRootGroupId="root"
+          scoreContainerPath={[parentSegment]}
+          totalBeats={16}
+          pixelsPerBeat={50}
+          snapEnabled={false}
+          snapValue="BEAT"
+          tempo={120}
+          tempoMap={{ enabled: false, visible: false, points: [] }}
+          smpteFrameRate={30}
+          meterMap={{ entries: [{ measure: 0, numBeats: 4, beatLength: 4, startBeat: 0 }] }}
+        />,
+      );
+    });
+    dispatchAt(container.querySelector('[data-group-id="g1"]')!, 'dblclick', 10, 10);
+    expect(onOpenNested).toHaveBeenCalledWith(
+      item.objectId,
+      item.name,
+      item.editorTarget!.location,
+      {
+        rootGroupId: 'root',
+        containerPath: [parentSegment, { layerId: 'g1-layer-0', objectIdentity: 'poly1' }],
+      },
+    );
   });
 
   it('does not open the editor when multiple objects are selected', () => {
