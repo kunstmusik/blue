@@ -86,7 +86,7 @@ jobs:
       matrix:
         include:
           - arch: arm64
-            runner: macos-14
+            runner: macos-15
             package-script: package:macos-arm64
     steps:
       - name: Checkout

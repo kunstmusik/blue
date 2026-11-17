@@ -28,7 +28,7 @@ jobs:
       matrix:
         include:
           - target-id: macos-arm64
-            runs-on: macos-14
+            runs-on: macos-15
             package-script: package:macos-arm64
           - target-id: windows-x64
             runs-on: windows-2022
