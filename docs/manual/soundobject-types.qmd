@@ -45,6 +45,16 @@ and press **Test** to inspect the resulting score. Enable
 **Seed** and set a value when you need repeatable random output. An
 unseeded pattern may change on each generation.
 
+The **Mode 1** or **Mode 2** button beside **Test** opens the generation
+settings for this object. **Mode 1 (Legacy)** keeps whole-number instrument IDs
+and the timing used by earlier versions of Blue. **Mode 2 (Corrected)** keeps
+fractional instrument IDs and stops the generator before the object's end.
+Note processors and time behavior can still shift the resulting events.
+Existing JMask objects without a saved mode open in Mode 1. New JMask objects
+start in Mode 2. Use **Apply** to save the choice on the object, then use
+**Test** to inspect the result. Changing the mode can affect instrument choice
+and timing, including when **Scale** is enabled.
+
 ### TrackerObject
 
 **TrackerObject** is a step grid with multiple tracks. Use **+ TRACK**,

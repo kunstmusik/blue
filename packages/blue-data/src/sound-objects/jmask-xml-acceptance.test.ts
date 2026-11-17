@@ -58,6 +58,22 @@ describe('JMask nested XML acceptance', () => {
       );
     }
   });
+  it.each(['1', '2', '3', '2.0', ''])(
+    'validates the generation mode in standalone XML: %s',
+    (token) => {
+      const xml = `<soundObject type="blue.soundObject.JMask"><generationMode>${token}</generationMode></soundObject>`;
+      const report = readResourceXml('soundObject', xml, {
+        kind: 'soundObject',
+        label: 'mode.jmask',
+      });
+      if (token === '1' || token === '2') {
+        expect(report.ok).toBe(true);
+        if (report.ok) expect((report.value as JMask).getGenerationMode()).toBe(Number(token));
+      } else {
+        expect(report.ok).toBe(false);
+      }
+    },
+  );
   it('preserves JMask seed digits', () => {
     const xml = new JMask().saveAsXML();
     xml.getElement('seed')!.setText('-9223372036854775808');

@@ -10,6 +10,7 @@ import type {
   ScoreObjectEditorTargetSnapshot,
   ScoreRowObjectSnapshot,
 } from '../../shared/project-editor';
+import { setProjectHistoryProjection } from '../hooks/use-project-history';
 import ScoreObjectEditorPanel from '../components/workbench/panels/ScoreObjectEditorPanel';
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
@@ -125,6 +126,7 @@ describe('ScoreObjectEditorPanel selection loading', () => {
     act(() => root.unmount());
     container.remove();
     window.blueAPI = originalBlueAPI;
+    setProjectHistoryProjection(null);
     useScoreSelectionStore.getState().clearSelection();
     useProjectStore.setState({
       loaded: originalProjectState.loaded,
@@ -133,6 +135,76 @@ describe('ScoreObjectEditorPanel selection loading', () => {
       applyProjectDocumentPatch: originalProjectState.applyProjectDocumentPatch,
       flushPendingPatches: originalProjectState.flushPendingPatches,
     } as Partial<ReturnType<typeof useProjectStore.getState>>);
+  });
+
+  it('refreshes the selected JMask on history changes and retires its controls when selection changes', async () => {
+    const jmaskTarget = {
+      ...target('jmask', 0),
+      selectedObjectType: 'JMask',
+      editorObjectType: 'JMask',
+    };
+    const nextTarget = target('next', 1);
+    let mode: 1 | 2 = 2;
+    let resolveNext!: (value: ScoreObjectEditorDocumentSnapshot) => void;
+    window.blueAPI = {
+      getScoreObjectEditorDocument: vi.fn(({ target: requestedTarget }) =>
+        requestedTarget.selectionId === jmaskTarget.selectionId
+          ? Promise.resolve({
+              ...editorDocument(jmaskTarget, 'JMask'),
+              editor: {
+                kind: 'structured',
+                target: jmaskTarget,
+                editorFamily: 'JMask',
+                payloadSummary: '',
+                payload: {
+                  generationMode: mode,
+                  seedUsed: false,
+                  seed: '0',
+                  field: { parameters: [] },
+                },
+              },
+            })
+          : new Promise<ScoreObjectEditorDocumentSnapshot>((resolve) => {
+              resolveNext = resolve;
+            }),
+      ),
+    } as typeof window.blueAPI;
+    useScoreSelectionStore
+      .getState()
+      .setSelection([{ objectId: 'jmask', editorTarget: jmaskTarget }]);
+
+    await act(async () => root.render(<ScoreObjectEditorPanel />));
+    expect(container.querySelector('[aria-label="Generation mode, Mode 2"]')).toBeTruthy();
+
+    await act(async () => {
+      mode = 1;
+      useProjectStore.setState({
+        flushPendingPatches: vi.fn().mockRejectedValue(new Error('History settlement in progress')),
+      });
+      setProjectHistoryProjection({
+        canUndo: false,
+        canRedo: true,
+        undoLabel: null,
+        redoLabel: 'Set JMask Generation Mode',
+        cursor: 0,
+        length: 1,
+        retainedBytes: 0,
+        stateId: 'undo',
+        savedStateId: 'undo',
+        revision: 2,
+      });
+    });
+    expect(container.querySelector('[aria-label="Generation mode, Mode 1"]')).toBeTruthy();
+
+    await act(async () => {
+      useScoreSelectionStore
+        .getState()
+        .setSelection([{ objectId: 'next', editorTarget: nextTarget }]);
+    });
+    expect(container.querySelector('[aria-label^="Generation mode"]')).toBeNull();
+    expect(container.textContent).toContain('Loading...');
+    await act(async () => resolveNext(editorDocument(nextTarget, 'Next editor')));
+    expect(container.textContent).toContain('Next editor');
   });
 
   it('keeps the current same-type editor mounted while the next selection loads', async () => {

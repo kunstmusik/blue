@@ -86,6 +86,7 @@ import {
   TrackerNote,
   Column,
   JMask,
+  type JMaskGenerationMode,
   loadFieldFromSnapshot,
   Sound,
   createSoundObject,
@@ -704,6 +705,7 @@ export type TypeSpecificScoreObjectEditorSnapshot =
     };
 
 export interface JMaskEditorPayload extends Record<string, unknown> {
+  generationMode: JMaskGenerationMode;
   seedUsed: boolean;
   seed: string;
   field: Record<string, unknown>;

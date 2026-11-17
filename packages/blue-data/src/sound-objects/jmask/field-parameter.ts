@@ -315,6 +315,8 @@ function prepareGenerator(generator: Generator, duration: number): Generator {
   }
 }
 
+export type JMaskGenerationMode = 1 | 2;
+
 export class Field {
   parameters: Parameter[] = [];
 
@@ -403,7 +405,11 @@ export class Field {
   }
 
   /** Generate on an isolated copy because generators retain per-run state. */
-  generateNotesFromCopy(duration: number, rnd: JavaRandom): NoteList {
+  generateNotesFromCopy(
+    duration: number,
+    rnd: JavaRandom,
+    mode: JMaskGenerationMode = 1,
+  ): NoteList {
     const field = new Field(false);
     if (
       this.parameters.every(
@@ -430,10 +436,10 @@ export class Field {
       // Custom generators still own their copy and initialization semantics.
       field.parameters = this.parameters.map((parameter) => new Parameter(parameter, true));
     }
-    return field.generateNotes(duration, rnd);
+    return field.generateNotes(duration, rnd, mode);
   }
 
-  generateNotes(duration: number, rnd: JavaRandom): NoteList {
+  generateNotes(duration: number, rnd: JavaRandom, mode: JMaskGenerationMode = 1): NoteList {
     const noteList = new NoteList();
     if (this.parameters.length === 0) {
       return noteList;
@@ -449,15 +455,23 @@ export class Field {
     }
 
     let xt = 0.0;
+    let stepError = 0;
     const numFields = this.parameters.length;
 
     while (xt < duration) {
-      const note = Note.createNote(numFields);
+      const start = formatBlueNumber(xt);
+      // Accumulated step error can put xt below the end even when p2 rounds to it.
+      if (mode === 2 && Number(start) >= duration) break;
 
-      let p1 = this.getParameter(0).getValue(xt, rnd);
-      p1 = p1 < 1.0 ? 1.0 : roundTo(p1, 0);
-      note.setPField(formatBlueNumber(p1), 1);
-      note.setPField(formatBlueNumber(xt), 2);
+      const note = Note.createNote(numFields);
+      const p1 = Math.max(1, this.getParameter(0).getValue(xt, rnd));
+      const instrument = mode === 1 ? roundTo(p1, 0) : p1;
+      const instrumentText =
+        Number.isFinite(instrument) && !Number.isInteger(instrument)
+          ? String(instrument)
+          : formatBlueNumber(instrument);
+      note.setPField(instrumentText, 1);
+      note.setPField(start, 2);
 
       for (let index = 3; index < numFields + 1; index += 1) {
         const value = this.getParameter(index - 1).getValue(xt, rnd);
@@ -475,7 +489,15 @@ export class Field {
         break;
       }
 
-      xt += p2;
+      if (mode === 2) {
+        // Compensate for rounding across steps so an exact end stays at the boundary.
+        const adjustedStep = p2 - stepError;
+        const nextStart = xt + adjustedStep;
+        stepError = nextStart - xt - adjustedStep;
+        xt = nextStart;
+      } else {
+        xt += p2;
+      }
       noteList.add(note);
     }
 

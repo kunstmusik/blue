@@ -416,6 +416,7 @@ function snapshotJMaskValue(value: unknown): unknown {
 
 export function createJMaskEditorPayload(jmask: JMask): JMaskEditorPayload {
   return {
+    generationMode: jmask.getGenerationMode(),
     seedUsed: jmask.isSeedUsed(),
     seed: jmask.getSeed(),
     field: snapshotJMaskValue(jmask.getField()) as Record<string, unknown>,

@@ -1595,6 +1595,12 @@ export function applyScoreObjectLeafPatch(
       if (sObj instanceof JMask) {
         const jm = sObj as JMask;
         const p = patch.patch;
+        if (p.generationMode !== undefined) {
+          if (p.generationMode !== 1 && p.generationMode !== 2) {
+            throw new Error('JMask generation mode must be 1 or 2.');
+          }
+          jm.setGenerationMode(p.generationMode);
+        }
         if (p.seedUsed !== undefined) jm.setSeedUsed(p.seedUsed as boolean);
         if (p.seed !== undefined) jm.setSeed(p.seed as number | string);
         if (p.field !== undefined) {

@@ -137,6 +137,60 @@ describe('Project history canonical writer audit (T014)', () => {
       expect(applyOperation).not.toHaveBeenCalled();
     });
 
+    it('commits, undoes, and redoes a JMask generation mode with runtime reconciliation', async () => {
+      const source = new JMask();
+      source.setGenerationMode(1);
+      assignExplicitScoreObjectId(source, 'mode-jmask');
+      const reconciliation = new ProjectRuntimeReconciliation();
+      const applyOperation = vi.fn(async () => ({ status: 'applied' as const }));
+      reconciliation.registerPerformance('timeline', 7, { applyOperation });
+      const { session, history, context } = setupTest({ soundObject: source, reconciliation });
+      history.checkpointSave();
+      const documentId = session.read().documentId!;
+      const current = () => (session.read().data!.getScore()[0] as TrackLayerGroup)[0][0] as JMask;
+      const target = {
+        selectionId: 'mode-jmask',
+        selectedObjectType: 'JMask',
+        editorObjectType: 'JMask',
+        ownerKind: 'timeline' as const,
+        displayContext: 'timeline' as const,
+        supportsTimeBehavior: true,
+        supportsRepeatPoint: true,
+        supportsNoteProcessorChain: true,
+        location: { rootGroupIndex: 0, containerPath: [], layerIndex: 0, objectIndex: 0 },
+      };
+      const label = 'Set JMask Generation Mode';
+      const commit = await history.commit(
+        context.nextCommitRequest(documentId, 0, label, [
+          {
+            score: { type: 'updateTypeSpecificEditor', target, patch: { generationMode: 2 } },
+          },
+        ]),
+      );
+      expect(commit).toMatchObject({
+        status: 'committed',
+        runtimeOutcomes: expect.arrayContaining([
+          expect.objectContaining({
+            status: 'restart-required',
+            generation: 7,
+          }),
+        ]),
+      });
+      expect(history.read().undoLabel).toBe(label);
+      expect(current().getGenerationMode()).toBe(2);
+      expect(getScoreObjectId(current())).toBe('mode-jmask');
+      expect(history.isDirty()).toBe(true);
+      expect((await history.undo(context.nextUndoRequest(documentId, 1))).status).toBe('committed');
+      expect(current().getGenerationMode()).toBe(1);
+      expect(getScoreObjectId(current())).toBe('mode-jmask');
+      expect(history.isDirty()).toBe(false);
+      expect((await history.redo(context.nextRedoRequest(documentId, 2))).status).toBe('committed');
+      expect(current().getGenerationMode()).toBe(2);
+      expect(getScoreObjectId(current())).toBe('mode-jmask');
+      expect(history.isDirty()).toBe(true);
+      expect(applyOperation).not.toHaveBeenCalled();
+    });
+
     it('inserts an accepted instrument through the labeled direct mutation adapter and restores assignment identity', async () => {
       const source = new GenericInstrument();
       source.setName('Accepted Instrument');

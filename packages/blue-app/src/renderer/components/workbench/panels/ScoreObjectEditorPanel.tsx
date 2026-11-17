@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScoreSelectionStore } from '../../../stores/score-selection-store';
 import { useProjectStore } from '../../../stores/project-store';
+import { useProjectHistory } from '../../../hooks/use-project-history';
 import { useLibraryEditorStore } from '../../../stores/library-editor-store';
 import type {
   ScoreObjectEditorDocumentSnapshot,
@@ -30,6 +31,8 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
   const selectedObjectTarget = useScoreSelectionStore((s) => s.selectedObjectTarget);
   const [document, setDocument] = useState<ScoreObjectEditorDocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
+  const { revision: historyRevision } = useProjectHistory();
+  const localPatchVersion = useRef(0);
 
   const selectedObjectId = useMemo(() => {
     if (selectedObjectIds.size !== 1) return null;
@@ -55,6 +58,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     return selectedObjectTarget;
   }, [selectedObjectTarget, selectedRow]);
   const editorTargetKey = editorTarget ? JSON.stringify(editorTarget) : null;
+  const jmaskRevision = editorTarget?.editorObjectType === 'JMask' ? historyRevision : null;
   const libraryEditorSession = useLibraryEditorStore((state) => {
     const libraryId = editorTarget?.library?.libraryId;
     if (!libraryId) return undefined;
@@ -82,24 +86,30 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     }
     let cancelled = false;
     setLoading(true);
-    window.blueAPI
-      .getScoreObjectEditorDocument({ target: editorTarget })
-      .then((doc) => {
-        if (!cancelled) {
+    const patchVersion = localPatchVersion.current;
+    void (async () => {
+      try {
+        // Undo and redo can publish while the patch queue is still paused.
+        const doc = await window.blueAPI.getScoreObjectEditorDocument({ target: editorTarget });
+        if (!cancelled && (jmaskRevision === null || localPatchVersion.current === patchVersion)) {
           setDocument(doc);
-          setLoading(false);
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
-          setDocument(null);
-          setLoading(false);
+          setDocument((current) =>
+            jmaskRevision !== null && current && JSON.stringify(current.target) === editorTargetKey
+              ? current
+              : null,
+          );
         }
-      });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [loaded, selectedObjectId, editorTargetKey]);
+  }, [loaded, selectedObjectId, editorTargetKey, jmaskRevision]);
 
   useEffect(() => {
     if (document?.editor.kind !== 'polyObject') return;
@@ -176,6 +186,7 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
 
   const handlePatch = useCallback(
     (patch: ScorePatch, metadata?: ProjectDocumentCommitMetadata): void => {
+      localPatchVersion.current += 1;
       applyProjectDocumentPatch({ score: patch }, metadata);
       setDocument((current) => (current ? applyPatchToDocument(current, patch) : current));
     },
@@ -194,7 +205,12 @@ export default function ScoreObjectEditorPanel(): React.ReactElement {
     return <EmptyState message="Multiple objects selected" />;
   }
 
-  if (loading && !document) {
+  if (
+    (loading && !document) ||
+    (document?.editor.kind === 'structured' &&
+      document.editor.editorFamily === 'JMask' &&
+      JSON.stringify(document.target) !== editorTargetKey)
+  ) {
     return <EmptyState message="Loading..." />;
   }
 

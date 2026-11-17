@@ -551,6 +551,11 @@ export function applyJMaskPatchToPayload(
       continue;
     }
 
+    if (key === 'generationMode') {
+      if (value === 1 || value === 2) nextPayload.generationMode = value;
+      continue;
+    }
+
     if (key === 'seedUsed' || key === 'seed') {
       nextPayload[key] = value as never;
       continue;

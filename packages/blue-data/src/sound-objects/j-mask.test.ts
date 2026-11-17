@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BlueData } from '../blue-data';
+import { TrackLayerGroup } from '../score/track/track-layer-group';
 import { Element } from '../serialization/xml-reader';
 import { TimeContext } from '../time/time-context';
 import { TimeDuration } from '../time/time-duration';
@@ -111,6 +112,86 @@ describe('JMask support model', () => {
     const second = buildSeededJMask(9876).generateNotes(context).toScoreText();
 
     expect(first).not.toBe(second);
+  });
+
+  it.each([
+    [1.1, '1.1'],
+    [1.9, '1.9'],
+    [1.99999999999, '1.99999999999'],
+    [0.9, '1'],
+  ])('generates instrument ID %s as %s', (value, expected) => {
+    const jmask = buildSeededJMask(1234);
+    (jmask.getField().getParameter(0).getGenerator() as Constant).value = value;
+
+    const notes = [...jmask.generateNotes(new TimeContext())];
+    expect(notes.length).toBeGreaterThan(0);
+    expect(notes.map((note) => note.getPField(1))).toEqual(notes.map(() => expected));
+  });
+
+  it.each([
+    [0.1, 20],
+    [0.2, 10],
+    [0.3, 7],
+  ])('keeps starts inside a two-beat JMask with %s-beat steps', (step, count) => {
+    const jmask = buildSeededJMask(1234);
+    jmask.setSubjectiveDuration(TimeDuration.beats(2));
+    const generator = new Constant();
+    generator.value = step;
+    jmask.getField().getParameter(1).setGenerator(generator);
+
+    const notes = [...jmask.generateNotes(new TimeContext())];
+    expect(notes.map((note) => note.getStartTime())).toEqual(
+      Array.from({ length: count }, (_, i) => 1.5 + Number((i * step).toFixed(10))),
+    );
+  });
+
+  it('keeps the exclusive end after many fractional steps in Mode 2', () => {
+    const jmask = buildSeededJMask(1234);
+    jmask.setSubjectiveDuration(TimeDuration.beats(2057));
+    const step = new Constant();
+    step.value = 1.1;
+    jmask.getField().getParameter(1).setGenerator(step);
+
+    const notes = [...jmask.generateNotes(new TimeContext())];
+    expect(notes).toHaveLength(1870);
+    expect(notes.at(-1)?.getStartTime()).toBe(2057.4);
+  });
+
+  it('preserves legacy score output across project loading, saving, and copying', () => {
+    const jmask = buildSeededJMask(1234);
+    expect(jmask.getGenerationMode()).toBe(2);
+    jmask.setGenerationMode(1);
+    jmask.setStartTime(TimePosition.beats(0));
+    jmask.setSubjectiveDuration(TimeDuration.beats(2));
+    (jmask.getField().getParameter(0).getGenerator() as Constant).value = 1.9;
+    const step = new Constant();
+    step.value = 0.2;
+    jmask.getField().getParameter(1).setGenerator(step);
+
+    const data = new BlueData();
+    const group = new TrackLayerGroup();
+    group.newLayerAt(0).push(jmask);
+    data.getScore().length = 0;
+    data.getScore().push(group);
+    const xml = data.saveToString();
+    expect(xml).not.toContain('generationMode');
+    const loaded = (BlueData.loadFromString(xml).getScore()[0] as TrackLayerGroup)[0]![0] as JMask;
+    const context = new TimeContext();
+    expect(loaded.getGenerationMode()).toBe(1);
+    expect(loaded.deepCopy().getGenerationMode()).toBe(1);
+    const legacyNotes = [...loaded.generateNotes(context)];
+    expect(legacyNotes).toHaveLength(11);
+    expect(legacyNotes.at(-1)?.getStartTime()).toBe(2);
+    expect(legacyNotes[0]?.getPField(1)).toBe('2');
+
+    loaded.setGenerationMode(2);
+    const upgraded = JMask.loadFromXML(Element.parse(loaded.saveAsXML().toXml()));
+    expect(upgraded.getGenerationMode()).toBe(2);
+    expect(upgraded.deepCopy().getGenerationMode()).toBe(2);
+    const correctedNotes = [...upgraded.generateNotes(context)];
+    expect(correctedNotes).toHaveLength(10);
+    expect(correctedNotes.at(-1)?.getStartTime()).toBe(1.8);
+    expect(correctedNotes[0]?.getPField(1)).toBe('1.9');
   });
 
   it('creates the expected helper modules for supported generators', () => {

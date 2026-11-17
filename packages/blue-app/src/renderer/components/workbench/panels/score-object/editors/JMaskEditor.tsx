@@ -7,6 +7,7 @@ import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/pro
 import type { FieldSnapshot, ParameterSnapshot } from './jmask/jmask-utils';
 import { getParameters, cloneField } from './jmask/jmask-utils';
 import ParameterRow from './jmask/ParameterRow';
+import GenerationModeControl from './jmask/GenerationModeControl';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
 import {
@@ -189,6 +190,13 @@ export default function JMaskEditor({
             className="w-24 rounded border border-blue-border bg-blue-bg px-1.5 py-0.5 text-role-body text-gray-100 focus:border-blue-accent focus:outline-none"
           />
         )}
+        <GenerationModeControl
+          key={`mode:${JSON.stringify(document.target)}`}
+          mode={payload.generationMode}
+          onApply={(generationMode) =>
+            patch({ generationMode }, { label: 'Set JMask Generation Mode', phase: 'single' })
+          }
+        />
         <button
           type="button"
           className="rounded border border-blue-border px-2 py-0.5 text-role-body text-gray-300 hover:border-blue-accent"

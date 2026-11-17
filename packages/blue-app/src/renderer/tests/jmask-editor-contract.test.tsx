@@ -127,6 +127,7 @@ describe('JMask editor contract and renderer helpers', () => {
     const { doc } = makeJMaskDocument();
     const payload = doc.editor.payload as JMaskEditorPayload;
 
+    expect(payload.generationMode).toBe(2);
     expect(payload.seedUsed).toBe(false);
     expect(payload.seed).toBe('0');
     expect(payload.field.kind).toBe('Field');
@@ -233,6 +234,88 @@ describe('JMask editor contract and renderer helpers', () => {
     } finally {
       await act(async () => root.unmount());
       frame.remove();
+    }
+  });
+
+  it('shows both generation modes and commits only when Apply is selected', () => {
+    const { data, jmask, target } = makeJMaskDocument();
+    jmask.setGenerationMode(1);
+    const doc = createScoreObjectEditorDocument(data, { target })!;
+    const onPatch = vi.fn();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const prototype = HTMLDialogElement.prototype;
+    const showModal = Object.getOwnPropertyDescriptor(prototype, 'showModal');
+    const close = Object.getOwnPropertyDescriptor(prototype, 'close');
+    Object.defineProperties(prototype, {
+      showModal: {
+        configurable: true,
+        value(this: HTMLDialogElement) {
+          this.open = true;
+        },
+      },
+      close: {
+        configurable: true,
+        value(this: HTMLDialogElement) {
+          this.open = false;
+          this.dispatchEvent(new Event('close'));
+        },
+      },
+    });
+
+    try {
+      act(() => root.render(<JMaskEditor document={doc} onPatch={onPatch} />));
+      const trigger = container.querySelector<HTMLButtonElement>('[aria-haspopup="dialog"]')!;
+      expect(trigger.textContent?.trim()).toBe('Mode 1');
+      const openDialog = () => {
+        act(() => trigger.click());
+        return document.body.querySelector<HTMLDialogElement>('dialog[open]')!;
+      };
+      const dialog = openDialog();
+      expect(dialog.textContent).toContain('Rounds instrument IDs to whole numbers');
+      expect(dialog.textContent).toContain('Preserves fractional instrument IDs');
+      act(() => dialog.querySelectorAll<HTMLInputElement>('input[type="radio"]')[1]!.click());
+      act(() => dialog.querySelector<HTMLButtonElement>('button[type="button"]')!.click());
+      expect(onPatch).not.toHaveBeenCalled();
+
+      const interrupted = openDialog();
+      act(() => interrupted.querySelectorAll<HTMLInputElement>('input[type="radio"]')[1]!.click());
+      const updated = applyPatchToDocument(doc, {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { generationMode: 2 },
+      });
+      act(() => root.render(<JMaskEditor document={updated} onPatch={onPatch} />));
+      act(() => root.render(<JMaskEditor document={doc} onPatch={onPatch} />));
+      expect(interrupted.querySelector<HTMLInputElement>('input[type="radio"]')!.checked).toBe(
+        true,
+      );
+      act(() => interrupted.querySelector<HTMLButtonElement>('button[type="submit"]')!.click());
+      expect(onPatch).not.toHaveBeenCalled();
+
+      const reopened = openDialog();
+      const radios = reopened.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+      expect(radios[0]?.checked).toBe(true);
+      act(() => radios[1]!.click());
+      act(() => reopened.querySelector<HTMLButtonElement>('button[type="submit"]')!.click());
+      const patch = {
+        type: 'updateTypeSpecificEditor',
+        target,
+        patch: { generationMode: 2 },
+      } as const;
+      expect(onPatch).toHaveBeenCalledExactlyOnceWith(patch, {
+        label: 'Set JMask Generation Mode',
+        phase: 'single',
+      });
+      expect(applyPatchToDocument(doc, patch).editor.payload).toMatchObject({ generationMode: 2 });
+    } finally {
+      act(() => root.unmount());
+      container.remove();
+      for (const [method, descriptor] of Object.entries({ showModal, close })) {
+        if (descriptor) Object.defineProperty(prototype, method, descriptor);
+        else Reflect.deleteProperty(prototype, method);
+      }
     }
   });
 

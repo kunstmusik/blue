@@ -1,5 +1,5 @@
 import { XmlLoadContext } from '../serialization/xml-load';
-import { checkShape, readText, parseXmlBoolean } from '../utilities/xml';
+import { checkShape, readEnum, readText, parseXmlBoolean } from '../utilities/xml';
 import { canonicalSeed, readSeed } from '../note-processors/xml-policy';
 /**
  * JMask — generates notes using a mask-based random pattern system.
@@ -13,7 +13,6 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { SoundObject } from './sound-object';
 import {
   initBasicFromXML,
   getBasicXML,
@@ -25,9 +24,10 @@ import {
   applyTimeBehavior,
   setScoreStart,
 } from '../utilities/score';
-import { Field, JavaRandom } from './jmask-support';
+import { Field, JavaRandom, type JMaskGenerationMode } from './jmask-support';
 
 export class JMask extends AbstractSoundObject {
+  private _generationMode: JMaskGenerationMode = 2;
   private _seedUsed = false;
   private _seed = '0';
   private _field = new Field();
@@ -37,10 +37,19 @@ export class JMask extends AbstractSoundObject {
     this.setName('JMask');
     if (other) {
       this.copyFrom(other);
+      this._generationMode = other._generationMode;
       this._seedUsed = other._seedUsed;
       this._seed = other._seed;
       this._field = other._field.deepCopy();
     }
+  }
+
+  getGenerationMode(): JMaskGenerationMode {
+    return this._generationMode;
+  }
+
+  setGenerationMode(mode: JMaskGenerationMode): void {
+    this._generationMode = mode;
   }
 
   isSeedUsed(): boolean {
@@ -67,7 +76,7 @@ export class JMask extends AbstractSoundObject {
   private generateRawNotes(context: TimeContext): { notes: NoteList; duration: number } {
     const rnd = this._seedUsed ? new JavaRandom(BigInt(this._seed)) : new JavaRandom();
     const duration = this.getSubjectiveDuration().toBeats(context);
-    const notes = this._field.generateNotesFromCopy(duration, rnd);
+    const notes = this._field.generateNotesFromCopy(duration, rnd, this._generationMode);
     return { notes, duration };
   }
 
@@ -121,6 +130,7 @@ export class JMask extends AbstractSoundObject {
 
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = getBasicXML(this, 'blue.soundObject.JMask');
+    if (this._generationMode === 2) elem.addElement('generationMode').setText('2');
     elem.addElement('seedUsed').setText(this._seedUsed.toString());
     elem.addElement('seed').setText(this._seed.toString());
     elem.addElement(this._field.saveAsXML());
@@ -145,11 +155,14 @@ export class JMask extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, 'seed', 'seedUsed', 'field'],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'seed', 'seedUsed', 'field', 'generationMode'],
       context,
     );
     const obj = new JMask();
     initBasicFromXML(obj, data, context);
+
+    const mode = data.getElement('generationMode');
+    obj._generationMode = mode && readEnum(mode, ['1', '2'], context) === '2' ? 2 : 1;
 
     const seedUsed = data.getTextString('seedUsed');
     if (seedUsed !== null)
@@ -169,7 +182,7 @@ export class JMask extends AbstractSoundObject {
     return obj;
   }
 
-  override deepCopy(): SoundObject {
+  override deepCopy(): JMask {
     return new JMask(this);
   }
 }

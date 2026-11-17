@@ -87,3 +87,58 @@
 The implementation completed the planned model-port path rather than deferring preview. The shipped subset includes the six Java registry generator families (`Constant`, `Item List`, `Segment`, `Random`, `Probability`, `Oscillator`), probability subtypes (`Uniform`, `Linear`, `Triangle`, `Exponential`, `Gaussian`, `Cauchy`, `Beta`, `Weibull`), mask/quantizer/accumulator sections where Java exposes them, table editing for generator and modifier tables, and a read-only generated-score preview.
 
 The final renderer contract snapshots the canonical `Field` tree instead of maintaining separate normalized `visibilityMenu` and `parameters` arrays. That keeps unsupported nested data reload-safe because the same snapshot path is used for XML save/load, optimistic renderer updates, and canonical project patches.
+
+## JMask note generation corrections
+
+Java Blue's `Field.generateNotes()` at revision `3ca3f40579c48a023299a68130d8ab6b9e950974`
+rounds instrument IDs to integers and checks only the unformatted accumulated start
+against the object duration. TypeScript Mode 2 preserves fractional instrument IDs
+while retaining the minimum ID of 1. It compensates for accumulated step error and
+checks the formatted start against the exclusive end of the generation window
+before note processing and time behavior. For a two-beat JMask with a constant step
+of 0.2 beats, this produces ten starts from 0 through 1.8 beats before the score offset
+is applied. Focused tests in `j-mask.test.ts` cover both changes.
+
+- [Fractional instrument IDs, issue #779](https://github.com/kunstmusik/blue/issues/779)
+- [Extra event at the end of JMask, issue #525](https://github.com/kunstmusik/blue/issues/525)
+
+### Compatibility assessment
+
+Both corrections can change playback for the same saved object and seed. A continuous
+instrument generator that produced 1.9 previously selected instrument 2. Preserving
+1.9 selects an instance of instrument 1 and can also change tied-note matching.
+Dropping an end-boundary event changes the note list passed to processors. With Scale
+or a repeat interval derived from the note list, it can also change the timing of
+earlier events when the dropped event previously determined the generated duration.
+See the [Csound score event reference](https://csound.com/docs/manual/i.html).
+
+Each JMask owns its generation mode. The normal creation path starts in Mode 2.
+The JMask loader accepts modes `1` and `2`, and an omitted value loads as Mode 1
+for existing project, library, and standalone objects. Saves write
+`<generationMode>2</generationMode>` for Mode 2 and omit the field for Mode 1,
+preserving the historical XML form. Copies preserve the mode. Older Java Blue
+ignores this extension and generates notes using its historical rules.
+
+The toolbar shows the active mode and opens a host-window dialog. The dialog
+owns the draft. Apply closes the dialog and commits a changed choice through the
+existing project history patch. Cancel and Escape discard the draft. Changing
+the selected object or closing its editor unmounts the dialog and discards the
+draft. When the canonical mode changes while the dialog is open, the draft
+displays the new mode before the user can apply another choice. The browser
+manages modal focus and dismissal in the window hosting the panel.
+
+Regression coverage checks both generation algorithms, legacy project loading,
+standalone XML validation, copy and save/reload, and a mode change through
+commit, undo, redo, and playback reconciliation. The implementation uses
+original code within the existing MIT data and GPL application scopes.
+
+The JMask visibility menu uses the shared checkbox menu in the panel's host
+window. The menu owns its open state and closes on dismissal or editor target
+replacement. In floated editors, the menu resolves its starting and directional
+focus against the host document. Each toggle uses the existing field patch, and hidden rows still
+participate in generation.
+
+The editor refreshes the selected JMask on project history revisions. A selection
+change cancels its pending read, and a later local patch supersedes a response
+that was already in flight. If a canonical update changes the mode while the
+configuration dialog is open, the dialog starts a fresh draft from that mode.
