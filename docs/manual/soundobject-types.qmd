@@ -39,8 +39,9 @@ command, or widget names.
 ## Pattern generators
 
 **JMask** generates notes from parameter generators and modifiers. In
-its editor, choose which parameters are visible, configure their
-generators, and press **Test** to inspect the resulting score. Enable
+its editor, click the arrow beside **JMask** to show or hide parameter
+rows. Hidden parameters still generate values. Configure the generators
+and press **Test** to inspect the resulting score. Enable
 **Seed** and set a value when you need repeatable random output. An
 unseeded pattern may change on each generation.
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Check, ChevronDown } from 'lucide-react';
 import type { JMaskEditorPayload } from '../../../../../../shared/project-editor';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
@@ -8,8 +9,39 @@ import { getParameters, cloneField } from './jmask/jmask-utils';
 import ParameterRow from './jmask/ParameterRow';
 import GeneratedScoreModal from './GeneratedScoreModal';
 import { useScoreObjectTest } from './useScoreObjectTest';
-import { HostSurfacePortal } from '../../../../host-surface/HostSurfacePortal';
-import { useHostSurface } from '../../../../host-surface/use-host-surface';
+import {
+  PopoutDropdownMenuPortal,
+  portalEventIsolationProps,
+} from '../../../../../hooks/host-portals';
+
+// Radix uses the main document for keyboard focus checks, even inside a popout.
+const VISIBILITY_ITEM = '[role="menuitemcheckbox"]';
+
+function focusPopoutVisibilityMenu(event: React.FocusEvent<HTMLDivElement>): void {
+  const menu = event.currentTarget;
+  if (event.target !== menu || menu.ownerDocument === globalThis.document) return;
+  event.preventDefault();
+  menu.querySelector<HTMLElement>(VISIBILITY_ITEM)?.focus({ preventScroll: true });
+}
+
+function navigatePopoutVisibilityMenu(event: React.KeyboardEvent<HTMLDivElement>): void {
+  const menu = event.currentTarget;
+  if (menu.ownerDocument === globalThis.document) return;
+  const { key } = event;
+  if (key !== 'ArrowUp' && key !== 'ArrowDown' && key !== 'Home' && key !== 'End') return;
+
+  const items = [...menu.querySelectorAll<HTMLElement>(VISIBILITY_ITEM)];
+  const index = items.findIndex((item) => item === menu.ownerDocument.activeElement);
+  let next: number;
+  if (key === 'Home') next = 0;
+  else if (key === 'End') next = items.length - 1;
+  else if (key === 'ArrowDown') next = index + 1;
+  else next = index < 0 ? items.length - 1 : index - 1;
+
+  event.preventDefault();
+  event.stopPropagation();
+  items[next]?.focus();
+}
 
 export default function JMaskEditor({
   document,
@@ -22,21 +54,6 @@ export default function JMaskEditor({
   const field = payload.field as FieldSnapshot;
   const parameters = useMemo(() => getParameters(field), [field]);
   const duration = document.shared.subjectiveDuration.value;
-  const [showVisibilityPopup, setShowVisibilityPopup] = useState(false);
-  const [visibilityButton, setVisibilityButton] = useState<HTMLButtonElement | null>(null);
-  // Parameter-visibility popup on the shared host-surface policy (spec 090):
-  // portaled into the hosting window with host-bound dismissal, which this
-  // popup previously lacked entirely.
-  const visibilityAnchor =
-    showVisibilityPopup && visibilityButton
-      ? { type: 'element' as const, element: visibilityButton }
-      : null;
-  const visibilitySurface = useHostSurface(visibilityAnchor, {
-    kind: 'menu',
-    gap: 4,
-    onDismiss: () => setShowVisibilityPopup(false),
-  });
-
   const { testing, testOutput, testError, runTest, clearTestOutput, clearTestError } =
     useScoreObjectTest(document.target);
 
@@ -114,43 +131,47 @@ export default function JMaskEditor({
     <div ref={testRef} className="flex h-full flex-col bg-blue-bg" tabIndex={-1}>
       <div className="flex shrink-0 items-center gap-2 border-b border-app-border bg-app-surface-strong px-2 py-1">
         <span className="text-role-headline font-bold text-app-text">JMask</span>
-        <div>
-          <button
-            ref={setVisibilityButton}
-            type="button"
-            className="flex h-4 w-4 items-center justify-center rounded text-role-callout text-app-text-muted hover:bg-blue-border"
-            onClick={() => setShowVisibilityPopup((open) => !open)}
-            title="Parameter Visibility"
-            aria-label="Parameter Visibility"
-          >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-          <HostSurfacePortal
-            session={visibilitySurface}
-            role="menu"
-            className="z-50 min-w-[200px] rounded border border-blue-border bg-app-menu py-1 shadow-xl"
-          >
-            {parameters.map((p, i) => {
-              const pName = typeof p.name === 'string' && p.name ? p.name : '';
-              const itemLabel = pName ? `Parameter ${i + 1} - ${pName}` : `Parameter ${i + 1}`;
-              const isVisible = p.visible !== false;
-              return (
-                <label
-                  key={i}
-                  className="flex cursor-pointer items-center gap-2 px-3 py-0.5 text-role-body text-app-text hover:bg-blue-accent/20"
-                >
-                  <input
-                    type="checkbox"
-                    checked={isVisible}
-                    onChange={() => handleVisibilityToggle(i, !isVisible)}
-                    className="rounded border border-blue-border"
-                  />
-                  {itemLabel}
-                </label>
-              );
-            })}
-          </HostSurfacePortal>
-        </div>
+        <DropdownMenu.Root key={`visibility:${JSON.stringify(document.target)}`} modal={false}>
+          <DropdownMenu.Trigger asChild>
+            <button
+              type="button"
+              className="flex h-5 w-5 items-center justify-center rounded text-role-callout text-app-text-muted hover:bg-app-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-app-focus"
+              title="Show or hide JMask parameter rows"
+              aria-label="Parameter Visibility"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenu.Trigger>
+          <PopoutDropdownMenuPortal>
+            <DropdownMenu.Content
+              {...portalEventIsolationProps}
+              className="editor-context-menu"
+              onFocus={focusPopoutVisibilityMenu}
+              onKeyDownCapture={navigatePopoutVisibilityMenu}
+              align="start"
+              sideOffset={4}
+            >
+              {parameters.map((p, i) => {
+                const name = p.name ? ` - ${p.name}` : '';
+                return (
+                  <DropdownMenu.CheckboxItem
+                    key={i}
+                    checked={p.visible !== false}
+                    className="editor-context-menu__item"
+                    onSelect={(event) => event.preventDefault()}
+                    onCheckedChange={(visible) => handleVisibilityToggle(i, visible)}
+                  >
+                    Parameter {i + 1}
+                    {name}
+                    <DropdownMenu.ItemIndicator className="editor-context-menu__item-indicator">
+                      <Check size={12} strokeWidth={2.5} />
+                    </DropdownMenu.ItemIndicator>
+                  </DropdownMenu.CheckboxItem>
+                );
+              })}
+            </DropdownMenu.Content>
+          </PopoutDropdownMenuPortal>
+        </DropdownMenu.Root>
         <div className="flex-1" />
         <label className="flex items-center gap-1 text-role-body text-gray-300">
           <input

@@ -13,6 +13,7 @@ import {
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
 import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
+import { HostDocumentContext } from '../hooks/use-host-document';
 import { useProjectStore } from '../stores/project-store';
 import JMaskEditor from '../components/workbench/panels/score-object/editors/JMaskEditor';
 import TableEditor from '../components/workbench/panels/score-object/editors/jmask/TableEditor';
@@ -144,6 +145,95 @@ describe('JMask editor contract and renderer helpers', () => {
     expect(html).toContain('p2 - Start');
     expect(html).toContain('p3 - Duration');
     expect(html).toContain('Constant');
+  });
+
+  it('opens parameter visibility from the keyboard and hides only the editor row', async () => {
+    const { doc, target } = makeJMaskDocument();
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const onPatch = vi.fn((patch: Parameters<typeof applyPatchToDocument>[1]) => {
+      root.render(<JMaskEditor document={applyPatchToDocument(doc, patch)} onPatch={onPatch} />);
+    });
+
+    try {
+      act(() => root.render(<JMaskEditor document={doc} onPatch={onPatch} />));
+      const trigger = container.querySelector('[aria-label="Parameter Visibility"]')!;
+      await act(async () => {
+        trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      });
+
+      const menu = document.body.querySelector('[role="menu"]')!;
+      const item = menu.querySelector<HTMLElement>('[role="menuitemcheckbox"]')!;
+      expect(item.textContent).toContain('Instrument ID');
+      expect(item.getAttribute('aria-checked')).toBe('true');
+      act(() => item.click());
+      expect(onPatch).toHaveBeenCalledWith(
+        {
+          type: 'updateTypeSpecificEditor',
+          target,
+          patch: expect.objectContaining({
+            field: expect.objectContaining({
+              parameters: expect.arrayContaining([
+                expect.objectContaining({ name: 'Instrument ID', visible: false }),
+              ]),
+            }),
+          }),
+        },
+        undefined,
+      );
+      expect(item.getAttribute('aria-checked')).toBe('false');
+      expect(container.textContent).not.toContain('p1 - Instrument ID');
+      expect(container.textContent).toContain('p2 - Start');
+    } finally {
+      act(() => root.unmount());
+      container.remove();
+    }
+  });
+
+  it('focuses and toggles the correct visibility item in a floated editor', async () => {
+    const { doc } = makeJMaskDocument();
+    const frame = document.createElement('iframe');
+    document.body.appendChild(frame);
+    const host = frame.contentDocument!;
+    const container = host.body.appendChild(host.createElement('div'));
+    const root = createRoot(container);
+    const onPatch = vi.fn();
+    const press = async (key: string) => {
+      await act(async () => {
+        host.activeElement!.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      });
+    };
+
+    try {
+      await act(async () =>
+        root.render(
+          <HostDocumentContext.Provider value={host}>
+            <JMaskEditor document={doc} onPatch={onPatch} />
+          </HostDocumentContext.Provider>,
+        ),
+      );
+      container.querySelector<HTMLButtonElement>('[aria-label="Parameter Visibility"]')!.focus();
+      await press('ArrowDown');
+      expect(host.activeElement?.textContent).toContain('Instrument ID');
+      await press('ArrowDown');
+      expect(host.activeElement?.textContent).toContain('Parameter 2');
+      await press('Enter');
+      expect(onPatch).toHaveBeenCalledOnce();
+      const patch = onPatch.mock.calls[0]![0];
+      expect(
+        patch.patch.field.parameters.map((parameter: ParameterSnapshot) => parameter.visible),
+      ).toEqual([true, false, true]);
+    } finally {
+      await act(async () => root.unmount());
+      frame.remove();
+    }
   });
 
   it('applies JMask optimistic field patches without dropping nested modifier defaults', () => {

@@ -140,27 +140,32 @@ describe('follow-up host-surface migrations (spec 090, T026-T028)', () => {
     expect(surface()).toBeNull();
   });
 
-  it('JMaskEditor parameter-visibility popup portals into the host document and dismisses outside', async () => {
+  it('portals JMask parameter visibility into the host document and dismisses outside', async () => {
     renderTree(<JMaskEditor document={makeJMaskDocument()} onPatch={vi.fn()} />);
-    const visibilityButton = host.querySelector<HTMLButtonElement>(
+    const trigger = host.querySelector<HTMLButtonElement>(
       'button[aria-label="Parameter Visibility"]',
     )!;
-    expect(visibilityButton).toBeTruthy();
-    click(visibilityButton);
+    const menu = () => popoutDoc.body.querySelector('[role="menu"]');
+    expect(trigger).toBeTruthy();
+    act(() => {
+      trigger.dispatchEvent(
+        new PopoutMouseEvent('pointerdown', { bubbles: true, cancelable: true }),
+      );
+    });
     await flushFrame();
 
-    expect(surface()).toBeTruthy();
-    expect(surface()!.getAttribute('role')).toBe('menu');
+    expect(menu()).toBeTruthy();
+    expect(document.body.querySelector('[role="menu"]')).toBeNull();
 
     // Main-window input is foreign; host-document outside press dismisses.
     act(() => {
-      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
     });
-    expect(surface()).toBeTruthy();
+    expect(menu()).toBeTruthy();
     act(() => {
-      popoutDoc.body.dispatchEvent(new PopoutMouseEvent('mousedown', { bubbles: true }));
+      popoutDoc.body.dispatchEvent(new PopoutMouseEvent('pointerdown', { bubbles: true }));
     });
-    expect(surface()).toBeNull();
+    expect(menu()).toBeNull();
   });
 
   it('keeps the FontChooser open while the filter confirms an IME candidate', async () => {
