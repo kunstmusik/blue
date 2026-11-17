@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { BlueData } from '../blue-data';
 import { Element } from '../serialization/xml-reader';
 import { TimeContext } from '../time/time-context';
 import { TimeDuration } from '../time/time-duration';
@@ -77,6 +80,15 @@ function buildSeededJMask(seed: number): JMask {
 }
 
 describe('JMask support model', () => {
+  it('opens the all-generators project fixture', () => {
+    const xml = readFileSync(
+      join(__dirname, '../../../../fixtures/jmask-all-generators.blue'),
+      'utf8',
+    );
+    const data = BlueData.loadFromString(xml);
+    expect(data.getProjectProperties().title).toBe('JMask Generator Test');
+  });
+
   it('generates repeatable notes for the same seed and survives XML round-trip', () => {
     const jmask = buildSeededJMask(1234);
     const context = new TimeContext();
