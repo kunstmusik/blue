@@ -32,7 +32,8 @@ choose **File → Open Example Project…** to explore a bundled composition.
 ### Downloads and runtime requirements
 
 Find published packages on the
-[Releases page](https://github.com/kunstmusik/blue/releases).
+[Releases page](https://github.com/kunstmusik/blue/releases) and see the
+[changelog](CHANGELOG.md) for what's changed.
 Development builds are available as artifacts from the
 [Develop workflow](https://github.com/kunstmusik/blue/actions/workflows/develop.yml).
 The release targets are macOS arm64, Windows x64, and Linux x64, with DMG,

@@ -151,7 +151,7 @@ This procedure covers both prereleases and stable releases. Beta and release-can
 
 Every hyphenated version is published as a GitHub prerelease. Release tags use a SemVer core plus dot-separated prerelease identifiers; build metadata after a `+` is intentionally not used for publication tags. There is no special CI branch for beta versus RC, and a published tag is immutable: move to the next identifier instead of reusing a tag.
 
-1. Update `@blue/app` to the intended version and prepare release notes. For example, set `packages/blue-app/package.json` to `3.0.0-beta.1`.
+1. Update `@blue/app` to the intended version and add its changelog entry following [Maintaining the changelog](changelog.md). For example, set `packages/blue-app/package.json` to `3.0.0-beta.1` and add the matching dated entry.
 2. Run the clean local validation commands, including an unsigned host package and packaged-app smoke check.
 3. Confirm the candidate commit has passed the cross-platform develop workflow and any required pull-request checks.
 4. Locally verify the tag/version agreement before pushing:
@@ -172,7 +172,7 @@ Every hyphenated version is published as a GitHub prerelease. Release tags use a
 7. No approval prompt is expected for the current single-maintainer policy; after all package jobs succeed, confirm that the `publish-release` job starts automatically in the `release` Environment.
 8. The final publisher downloads and validates exactly `blue-macos-arm64-X.Y.Z[-prerelease].dmg`, `blue-windows-x64-X.Y.Z[-prerelease].exe`, `blue-linux-x64-X.Y.Z[-prerelease].AppImage`, and `blue-linux-x64-X.Y.Z[-prerelease].deb`.
 9. The publisher requires verified checksums, matching version/source metadata, and no missing, duplicate, or unexpected package. It then creates a draft GitHub Release with the native-package filenames, `checksums-sha256.txt`, and `release-manifest.json`. A hyphenated version is marked as a prerelease; a plain `X.Y.Z` version is published as stable.
-10. Inspect the published release from a clean machine for each supported platform before announcing it. If testing finds a defect, fix it and publish a new tag such as `v3.0.0-beta.2` or `v3.0.0-rc.2`; do not overwrite `v3.0.0-beta.1`. After the final candidate is accepted, publish a fresh stable tag `v3.0.0`.
+10. Add the matching [changelog entry](changelog.md#publishing-on-github) to the GitHub release body. Inspect the published release from a clean machine for each supported platform before announcing it. If testing finds a defect, fix it and publish a new tag such as `v3.0.0-beta.2` or `v3.0.0-rc.2`; do not overwrite `v3.0.0-beta.1`. After the final candidate is accepted, publish a fresh stable tag `v3.0.0`.
 
 The final publisher is the only workflow job allowed to create or publish a tagged GitHub Release. It validates the exact expected artifact manifest, stages the release as a draft with all native packages, checksums, and manifest metadata attached, then publishes it. No individual platform job may publish a release asset by itself.
 
