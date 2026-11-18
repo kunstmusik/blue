@@ -20,7 +20,6 @@ import {
 import AudioClipScoreObjectEditor from '../components/workbench/panels/score-object/editors/AudioClipScoreObjectEditor';
 import { applyPatchToDocument } from '../components/workbench/panels/score-object/score-object-document-reducer';
 
-
 function setInputValue(input: HTMLInputElement, value: string) {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,

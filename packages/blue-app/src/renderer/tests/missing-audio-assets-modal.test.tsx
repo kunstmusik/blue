@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MissingAudioAssetsModal from '../components/workbench/panels/MissingAudioAssetsModal';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
-
 interface MockProjectState {
   missingAudioSession: MissingAudioAssetsSession | null;
   setMissingAudioSession: (session: MissingAudioAssetsSession | null) => void;

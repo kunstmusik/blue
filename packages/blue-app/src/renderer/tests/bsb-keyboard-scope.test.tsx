@@ -11,7 +11,6 @@ import type {
 import BSBInterfaceCanvas from '../components/workbench/panels/orchestra/bsb/BSBInterfaceCanvas';
 import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 
-
 function makeWidgetNode(overrides: Partial<BsbWidgetNodeSnapshot> = {}): BsbWidgetNodeSnapshot {
   return {
     id: 'w1',

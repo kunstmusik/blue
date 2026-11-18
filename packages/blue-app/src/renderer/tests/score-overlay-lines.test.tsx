@@ -6,7 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import ScoreOverlayLines from '../components/workbench/panels/score/ScoreOverlayLines';
 
-
 function renderOverlay(overrides?: Partial<Parameters<typeof ScoreOverlayLines>[0]>) {
   const container = document.createElement('div');
   document.body.appendChild(container);

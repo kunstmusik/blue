@@ -8,7 +8,6 @@ import { JSDOM } from 'jsdom';
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 const initialLines = [
   {
     varName: 'line0',

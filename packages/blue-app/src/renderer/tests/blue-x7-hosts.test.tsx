@@ -17,7 +17,6 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-
 function setInputValue(input: HTMLInputElement, value: string): void {
   const tracker = (
     input as HTMLInputElement & { _valueTracker?: { setValue: (next: string) => void } }

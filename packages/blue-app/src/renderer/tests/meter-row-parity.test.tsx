@@ -13,7 +13,6 @@ import {
   findRegionAtBeat,
 } from '../components/workbench/panels/score/meter-map-utils';
 
-
 const mountedRoots: Root[] = [];
 
 const DEFAULT_METER_MAP: MeterMapSnapshot = {

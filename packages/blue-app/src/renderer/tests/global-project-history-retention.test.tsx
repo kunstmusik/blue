@@ -9,7 +9,6 @@ import { OversizeProposalDialog } from '../components/dialogs/OversizeProposalDi
 import { useProjectStore } from '../stores/project-store';
 import type { InAppConfirmationAction } from '../../shared/confirmation-dialog';
 
-
 interface OversizeProposalState {
   open: boolean;
   documentId: string;

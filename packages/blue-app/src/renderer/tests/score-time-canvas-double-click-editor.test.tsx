@@ -14,7 +14,6 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-
 const originalProjectState = useProjectStore.getState();
 const originalWorkbenchState = useWorkbenchStore.getState();
 

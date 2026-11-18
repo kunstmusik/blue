@@ -28,7 +28,6 @@ vi.mock('../lib/history-scope-router', async (importOriginal) => {
   };
 });
 
-
 const ENTRY_TIMES = {
   one: new Date(2026, 8, 11, 12, 5, 9).getTime(),
   two: new Date(2026, 8, 11, 12, 6, 3).getTime(),

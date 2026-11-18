@@ -15,7 +15,6 @@ import {
 } from '../components/workbench/auxiliary-drag';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-
 const capturedErrors: string[] = [];
 
 function recordError(event: ErrorEvent | PromiseRejectionEvent) {

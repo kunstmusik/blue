@@ -10,7 +10,6 @@ import ScoreObjectColorPicker, {
   type ScoreObjectColorPickerHandle,
 } from '../components/workbench/panels/score/layer-groups/ScoreObjectColorPicker';
 
-
 describe('ScoreObjectColorPicker', () => {
   let host: HTMLDivElement;
   let root: Root;

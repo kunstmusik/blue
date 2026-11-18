@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectInformationTab from '../components/workbench/panels/project-properties/ProjectInformationTab';
 import { useProjectStore } from '../stores/project-store';
 
-
 function mountTab(): {
   host: HTMLDivElement;
   updateSpy: ReturnType<typeof vi.fn>;

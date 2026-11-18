@@ -9,7 +9,6 @@ import FileBackedScoreObjectEditor, {
 } from '../components/workbench/panels/score-object/editors/FileBackedScoreObjectEditor';
 import type { ScoreObjectEditorDocumentSnapshot } from '../../shared/project-editor';
 
-
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   default: ({
     value,

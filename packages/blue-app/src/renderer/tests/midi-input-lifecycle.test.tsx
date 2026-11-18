@@ -12,7 +12,6 @@ import { useProjectStore } from '../stores/project-store';
 import { routeVirtualKeyboardNote, useMidiInputService } from '../hooks/use-midi-input-service';
 import { FakeMidiAccess } from './helpers/fake-midi-access';
 
-
 function MidiInputHost(): null {
   useMidiInputService();
   return null;

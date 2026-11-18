@@ -8,7 +8,6 @@ import type { GenericInstrumentSnapshot } from '../../shared/project-editor';
 import InstrumentEditorPanel from '../components/workbench/panels/orchestra/InstrumentEditorPanel';
 import InstrumentCommentsPanel from '../components/workbench/panels/orchestra/InstrumentCommentsPanel';
 
-
 const GENERIC_INSTRUMENT: GenericInstrumentSnapshot = {
   assignmentId: '1',
   type: 'generic',

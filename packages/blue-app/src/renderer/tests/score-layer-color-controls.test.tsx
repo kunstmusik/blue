@@ -14,7 +14,6 @@ import {
   createMockPatternLayerSnapshot,
 } from '../../shared/project-editor-layer-color-test-utils';
 
-
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}

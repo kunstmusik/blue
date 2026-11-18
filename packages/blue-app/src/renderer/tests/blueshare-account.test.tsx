@@ -11,7 +11,6 @@ import type { ResourceSummary, AccountSessionSnapshot } from '../../shared/blues
 // Keep Query observer notifications inside React's async act boundary.
 notifyManager.setScheduler(queueMicrotask);
 
-
 const mockOwnedResources: readonly ResourceSummary[] = [
   {
     kind: 'instrument',

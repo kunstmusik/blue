@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainDialog from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainDialog';
 
-
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     applyProjectDocumentPatch: vi.fn(),

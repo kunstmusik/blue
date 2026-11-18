@@ -10,7 +10,6 @@ import { useLibraryEditorStore } from '../stores/library-editor-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useProjectStore } from '../stores/project-store';
 
-
 const originalProjectState = useProjectStore.getState();
 
 const sharedNode: LibraryBrowseNode = {

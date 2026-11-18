@@ -8,7 +8,6 @@ import { LibraryActionsMenu } from '../components/libraries/LibraryActionsMenu';
 import { LibraryImportDialog } from '../components/libraries/LibraryImportDialog';
 import { chooseAppSelectOption } from './app-select-test-utils';
 
-
 describe('library interchange UI', () => {
   it('offers import and Export Current/All without migration or history commands', () => {
     const actions = {

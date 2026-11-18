@@ -35,7 +35,6 @@ vi.mock('../components/workbench/panels/mixer/ChannelStrip', async () => {
 
 import MixerPanel from '../components/workbench/panels/MixerPanel';
 
-
 describe('MixerPanel ChannelStrip subscription isolation', () => {
   const originalBlueAPI = window.blueAPI;
 

@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import MidiImportStreamTable from '../components/workbench/panels/MidiImportStreamTable';
 import type { MidiImportPreview, MidiImportSettings } from '../../shared/midi-import';
 
-
 describe('MidiImportStreamTable typography', () => {
   let container: HTMLDivElement;
   let root: Root;

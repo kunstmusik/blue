@@ -10,7 +10,6 @@ import { DISK_RENDER_OUTPUT_TAB, useRenderToDiskStore } from '../stores/render-t
 import { useOutputStore } from '../stores/output-store';
 import type { RenderOperationStatus } from '../../shared/render-freeze-contract';
 
-
 function diskStatus(overrides: Partial<RenderOperationStatus>): RenderOperationStatus {
   return {
     operationId: 'disk-1',

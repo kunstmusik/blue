@@ -55,7 +55,6 @@ import {
   useProjectStore,
 } from '../stores/project-store';
 
-
 let mounted: { root: Root; container: HTMLDivElement } | undefined;
 const originalApi = window.blueAPI;
 

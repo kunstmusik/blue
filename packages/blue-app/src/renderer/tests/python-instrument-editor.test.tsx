@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PythonInstrumentSnapshot, UdoDefinitionSnapshot } from '../../shared/project-editor';
 import PythonInstrumentEditor from '../components/workbench/panels/orchestra/PythonInstrumentEditor';
 
-
 function udoSnapshot(name: string): UdoDefinitionSnapshot {
   return {
     name,

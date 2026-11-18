@@ -15,7 +15,6 @@ import {
   createProjectEditorSnapshot,
 } from '../../shared/project-editor';
 
-
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}

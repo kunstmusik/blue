@@ -22,7 +22,6 @@ declare global {
   }
 }
 
-
 class MockResizeObserver {
   observe() {}
   unobserve() {}

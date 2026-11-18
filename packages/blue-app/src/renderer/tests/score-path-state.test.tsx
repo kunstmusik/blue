@@ -6,7 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useScorePathState } from '../components/workbench/panels/score/useScorePathState';
 
-
 interface Captured {
   session: ReturnType<typeof useScorePathState>['session'];
   navigateToGroup: ReturnType<typeof useScorePathState>['navigateToGroup'];

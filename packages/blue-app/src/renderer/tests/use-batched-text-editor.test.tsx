@@ -14,7 +14,6 @@ import { settleHistoryEditors } from '../lib/history-scope-router';
 import InstrumentCommentsPanel from '../components/workbench/panels/orchestra/InstrumentCommentsPanel';
 import { InputBase } from '../components/workbench/panels/project-properties/ProjectPropertyFields';
 
-
 describe('detectTextOperation', () => {
   it('detects none for identical strings', () => {
     expect(detectTextOperation('abc', 'abc')).toEqual({ kind: 'none' });

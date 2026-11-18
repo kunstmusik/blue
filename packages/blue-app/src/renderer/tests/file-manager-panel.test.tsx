@@ -18,7 +18,6 @@ import { subscribePendingAudioFile } from '../components/workbench/panels/audio-
 import { subscribePendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-
 function makeRoots(): FileManagerRootSnapshot[] {
   return [
     { id: '/', path: '/', label: 'Root', kind: 'static', available: true, isDirectory: true },

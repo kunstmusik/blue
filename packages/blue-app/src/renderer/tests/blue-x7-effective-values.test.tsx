@@ -11,7 +11,6 @@ import type { BlueX7Voice } from '@blue/data';
 import { createDefaultBlueX7Voice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, BlueX7Patch } from '../../shared/project-editor';
 
-
 type ProbeProps = Parameters<typeof useBlueX7EffectiveValues>[0];
 
 function HookProbe(props: ProbeProps): React.ReactElement {

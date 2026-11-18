@@ -15,7 +15,6 @@ import {
   settleHistoryEditors,
 } from '../lib/history-scope-router';
 
-
 describe('SelectedCodeEditor history and scope integration', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

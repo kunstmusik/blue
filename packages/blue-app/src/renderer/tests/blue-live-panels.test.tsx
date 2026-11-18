@@ -23,7 +23,6 @@ import { useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 function makeBlueLiveSnapshot(): BlueLiveProjectSnapshot {
   const scoreXml = new GenericScore().saveAsXML().toXml();
   return {

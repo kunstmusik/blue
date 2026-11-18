@@ -23,7 +23,6 @@ declare global {
   }
 }
 
-
 interface MockProjectState {
   loaded: boolean;
   mixer: MixerSnapshot;

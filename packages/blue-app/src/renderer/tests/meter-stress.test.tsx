@@ -12,7 +12,6 @@ import {
 } from '../../shared/project-editor';
 import type { MeterBindingMapPayload } from '../../shared/meter-types';
 
-
 describe('Mounted 64-strip metering and fader interactions (FR-013)', () => {
   let host: HTMLDivElement;
   let root: Root;

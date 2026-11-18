@@ -11,7 +11,6 @@ import {
 } from '../components/workbench/panels/score-object/editors/TrackerScoreObjectEditor';
 import { cn } from '../lib/cn';
 
-
 describe('Tracker editor field conflict resolution (US2)', () => {
   let container: HTMLDivElement;
   let root: Root;

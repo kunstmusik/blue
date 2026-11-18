@@ -12,7 +12,6 @@ import type {
 } from '../../shared/project-editor';
 import ScoreObjectPropertiesForm from '../components/workbench/panels/score-object/ScoreObjectPropertiesForm';
 
-
 const DEFAULT_TIME_CONTEXT: TimeConversionContext = {
   meterEntries: [{ measure: 1, numBeats: 4, beatLength: 4 }],
   tempoEnabled: false,

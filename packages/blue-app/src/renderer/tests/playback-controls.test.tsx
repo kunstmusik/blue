@@ -9,7 +9,6 @@ import PlaybackControls from '../components/menu-bar/PlaybackControls';
 import { usePlaybackStore } from '../stores/playback-store';
 import { useProjectStore } from '../stores/project-store';
 
-
 function renderControls(): { container: HTMLDivElement; root: Root } {
   const container = document.createElement('div');
   document.body.appendChild(container);

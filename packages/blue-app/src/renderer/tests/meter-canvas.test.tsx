@@ -18,7 +18,6 @@ import {
 } from '../components/workbench/panels/mixer/meter-profiles';
 import { METER_PROFILE_KEYS } from '@blue/data';
 
-
 describe('MeterCanvas', () => {
   let host: HTMLDivElement;
   let root: Root;

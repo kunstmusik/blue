@@ -8,7 +8,6 @@ import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';
 import { PROJECT_MESSAGES_TAB } from '../../shared/xml-diagnostics';
 
-
 describe('OutputPanel virtualization', () => {
   let host: HTMLDivElement;
   let root: Root;

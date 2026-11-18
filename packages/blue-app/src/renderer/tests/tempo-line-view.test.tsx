@@ -12,7 +12,6 @@ import {
 } from '../components/workbench/panels/score/tempo-map-utils';
 import { useProjectStore } from '../stores/project-store';
 
-
 const { mockFinishProjectGesture } = vi.hoisted(() => ({
   mockFinishProjectGesture: vi.fn(async () => ({
     status: 'committed',

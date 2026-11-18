@@ -10,7 +10,6 @@ import {
   type ScoreDocumentSnapshot,
 } from '../../shared/project-editor';
 
-
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     applyProjectDocumentPatch: vi.fn(),

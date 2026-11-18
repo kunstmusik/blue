@@ -10,7 +10,6 @@ import NoteProcessorChainEditor from '../components/workbench/panels/score-objec
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { getNoteProcessorCatalog } from '@blue/data';
 
-
 const CATALOG = getNoteProcessorCatalog();
 
 const CHAIN: NoteProcessorChainSnapshot = {

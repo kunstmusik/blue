@@ -31,7 +31,6 @@ import type {
 } from '../../shared/project-history';
 import type { ProjectDocumentPatch, ProjectEditorSnapshot } from '../../shared/project-editor';
 
-
 type DocumentUpdatedListener = (event: ProjectDocumentUpdatedEvent) => void;
 
 const documentUpdatedListeners = new Set<DocumentUpdatedListener>();

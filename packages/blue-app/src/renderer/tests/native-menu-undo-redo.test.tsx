@@ -15,7 +15,6 @@ import {
 import { useWorkbenchStore } from '../stores/workbench-store';
 import { useProjectStore } from '../stores/project-store';
 
-
 describe('native menu undo/redo and scope routing (US4, T048/T051)', () => {
   let container: HTMLDivElement;
   let root: Root;

@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MidiSettings from '../components/settings/MidiSettings';
 import { useMidiInputStore } from '../stores/midi-input-store';
 
-
 declare global {
   interface Window {
     blueAPI?: {

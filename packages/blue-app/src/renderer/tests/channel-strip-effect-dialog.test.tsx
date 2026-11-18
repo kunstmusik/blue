@@ -29,7 +29,6 @@ declare global {
   }
 }
 
-
 vi.mock('../components/workbench/panels/mixer/EffectsChainContextMenu', () => ({
   default: ({
     children,

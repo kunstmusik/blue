@@ -12,7 +12,6 @@ import type {
 import TempoMapEditorDialog from '../components/workbench/panels/score/TempoMapEditorDialog';
 import { chooseAppSelectOption } from './app-select-test-utils';
 
-
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
   visible: true,

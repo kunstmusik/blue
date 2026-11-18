@@ -9,7 +9,6 @@ import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-
 // The workbench-store is no longer imported by ToolbarBlueLive (SPEC 058 removed
 // the MIDI Input toolbar button). This mock remains so any unrelated consumer
 // in this test file continues to provide a stub.

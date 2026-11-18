@@ -11,7 +11,6 @@ import {
   usePortalContainer,
 } from '../hooks/use-host-document';
 
-
 describe('useHostDocument', () => {
   let host: HTMLDivElement;
   let root: Root;

@@ -29,7 +29,6 @@ declare global {
   }
 }
 
-
 vi.mock('../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor', () => ({
   default: ({ instrument }: { instrument: { name: string } }) => (
     <div data-testid="bsb-interface-editor">{instrument.name}</div>

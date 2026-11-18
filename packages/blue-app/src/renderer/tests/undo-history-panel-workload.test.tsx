@@ -25,7 +25,6 @@ vi.mock('../lib/history-scope-router', async (importOriginal) => {
   };
 });
 
-
 const WORKLOAD_SIZE = 100;
 const BASE_TIMESTAMP = new Date(2026, 8, 11, 12, 0, 0).getTime();
 

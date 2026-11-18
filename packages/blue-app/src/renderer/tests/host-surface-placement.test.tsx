@@ -14,7 +14,6 @@ import type {
   HostSurfaceKind,
 } from '../components/host-surface/host-surface-options';
 
-
 // The "popout window": a second JSDOM realm hosting the floated panel
 // content. Its viewport is deliberately smaller than the main window's so
 // clamping against the wrong realm is detectable (spec FR-004).

@@ -19,7 +19,6 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
 
 import { BlueX7TabList, type BlueX7TabItem } from '../components/instruments/blue-x7/tab-list';
 
-
 describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

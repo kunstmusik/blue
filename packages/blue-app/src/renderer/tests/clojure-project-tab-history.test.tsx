@@ -34,7 +34,6 @@ import {
 import { setProjectHistoryProjection } from '../hooks/use-project-history';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 function createClojureModel(): ClojureProjectData {
   const projectData = new ClojureProjectData();
   for (let index = 0; index < 2; index += 1) {

@@ -14,7 +14,6 @@ import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { ProgramSettingsSaveResult } from '../../shared/program-settings';
 
-
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}

@@ -24,7 +24,6 @@ const widgetRenderCounts = vi.hoisted(() => ({
   value: 0,
 }));
 
-
 vi.mock('../components/workbench/panels/orchestra/ArrangementPanel', () => ({
   default: React.memo((props: any) => {
     panelRenderCounts.arrangement += 1;

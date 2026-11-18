@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TempoMapPatch, TempoMapSnapshot } from '../../shared/project-editor';
 import TempoRegionBar from '../components/workbench/panels/score/TempoRegionBar';
 
-
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
   visible: false,

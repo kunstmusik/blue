@@ -11,7 +11,6 @@ import type {
   PresetGroupSnapshot,
 } from '../../shared/project-editor';
 
-
 beforeAll(() => {
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;

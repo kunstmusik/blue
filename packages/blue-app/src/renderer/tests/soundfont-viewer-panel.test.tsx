@@ -8,7 +8,6 @@ import SoundFontViewerPanel from '../components/workbench/panels/tools/SoundFont
 import { emitPendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../shared/window-layout-settings';
 
-
 describe('SoundFont Viewer panel', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

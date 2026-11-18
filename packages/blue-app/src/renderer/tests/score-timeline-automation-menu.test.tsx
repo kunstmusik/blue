@@ -12,7 +12,6 @@ import type {
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 
-
 // Radix DropdownMenu relies on pointer-capture APIs that jsdom does not implement.
 beforeAll(() => {
   if (!Element.prototype.hasPointerCapture) {

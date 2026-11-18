@@ -9,7 +9,6 @@ import OutputPanel from '../components/workbench/panels/output/OutputPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';
 
-
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
 });

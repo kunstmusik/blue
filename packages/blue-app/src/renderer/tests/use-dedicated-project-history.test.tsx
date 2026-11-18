@@ -25,7 +25,6 @@ import { BlueData } from '@blue/data';
 import { ProjectHistory } from '../../main/project-history';
 import { ProjectSession } from '../../main/project-session';
 
-
 function projection(
   revision: number,
   canUndo: boolean,

@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WelcomeScreen from '../components/welcome/WelcomeScreen';
 import { useSettingsStore } from '../stores/settings-store';
 
-
 describe('WelcomeScreen', () => {
   let container: HTMLDivElement;
   let root: Root;

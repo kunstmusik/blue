@@ -14,7 +14,6 @@ const formatterCallCounts = vi.hoisted(() => ({
   selection: 0,
 }));
 
-
 vi.mock('../components/menu-bar/toolbar-formatters', async () => {
   const actual = await vi.importActual<any>('../components/menu-bar/toolbar-formatters');
 

@@ -50,7 +50,6 @@ import {
   type WindowLayoutUpdateRequest,
 } from '../../shared/window-layout-settings';
 
-
 type ListenerMap = Map<string, Set<(...args: unknown[]) => void>>;
 
 function createListenerBucket(): ListenerMap {

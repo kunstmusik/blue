@@ -11,7 +11,6 @@ import type { MixerChannelSnapshot, MixerSnapshot } from '../../shared/project-e
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { createTestDataTransfer, dispatchDragEvent } from './library-interaction-test-helpers';
 
-
 const effect = new Effect();
 effect.setName('Existing');
 const existingEffect = {

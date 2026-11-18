@@ -10,7 +10,6 @@ import FontChooserDialog, {
   type FontChoice,
 } from '../components/workbench/panels/orchestra/bsb/FontChooserDialog';
 
-
 function setInputValue(input: HTMLInputElement, value: string): void {
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));

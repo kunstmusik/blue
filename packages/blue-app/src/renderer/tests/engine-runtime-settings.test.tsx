@@ -11,7 +11,6 @@ import {
 import RealtimeRenderSettings from '../components/settings/RealtimeRenderSettings';
 import { getAppSelectOptionLabels } from './app-select-test-utils';
 
-
 let container: HTMLDivElement;
 let root: Root;
 const probeEngineRuntime = vi.fn();

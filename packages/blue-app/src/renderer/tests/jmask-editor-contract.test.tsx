@@ -25,7 +25,6 @@ import {
   type TableSnapshot,
 } from '../components/workbench/panels/score-object/editors/jmask/jmask-utils';
 
-
 class MockResizeObserver {
   constructor(private readonly callback: ResizeObserverCallback) {}
   observe() {

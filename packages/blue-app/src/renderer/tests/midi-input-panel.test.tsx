@@ -11,7 +11,6 @@ import {
   type MidiInputProcessorSnapshot,
 } from '../../shared/project-editor';
 
-
 function seedLoadedProject(midiInput: MidiInputProcessorSnapshot): void {
   const snapshot = createEmptyProjectEditorSnapshot();
   useProjectStore.getState().setProjectInfo({

@@ -8,7 +8,6 @@ import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import type { InAppConfirmationAction } from '../../shared/confirmation-dialog';
 
-
 describe('ConfirmationDialog component', () => {
   let container: HTMLDivElement;
   let root: Root;

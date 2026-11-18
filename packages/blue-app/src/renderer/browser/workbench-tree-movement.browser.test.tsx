@@ -23,7 +23,6 @@ import type {
 } from '../../../shared/file-manager';
 import type { LibraryBrowseNode } from '../../../shared/unified-library';
 
-
 const LIBRARY_NODES: LibraryBrowseNode[] = [
   {
     key: null,

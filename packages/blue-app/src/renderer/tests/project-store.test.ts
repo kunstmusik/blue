@@ -18,7 +18,6 @@ import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { MixerChainClipboardPayload } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
-
 function createFocusSnapshot(sessionId: number) {
   const snapshot = createEmptyProjectEditorSnapshot();
   snapshot.loaded = true;

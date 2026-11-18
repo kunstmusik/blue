@@ -13,7 +13,6 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import type { ProjectDocumentPatch } from '../../shared/project-editor';
 
-
 const ROW_HEIGHT = 44;
 const PPB = 20;
 const capturedPatches: ProjectDocumentPatch[] = [];

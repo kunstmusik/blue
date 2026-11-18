@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import ColorPickerButton from '../components/ColorPicker';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 describe('Score Layer Color Popout & Host Placement (T046)', () => {
   let host: HTMLDivElement;
   let root: Root;

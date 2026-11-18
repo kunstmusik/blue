@@ -27,7 +27,6 @@ vi.mock('../components/workbench/panels/ScratchPadPanel', () => ({
   default: () => React.createElement('div', { 'data-testid': 'scratch-pad-panel' }),
 }));
 
-
 function renderRoot(element: React.ReactElement): {
   container: HTMLDivElement;
   root: Root;

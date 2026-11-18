@@ -34,7 +34,6 @@ import {
   useKeyboardShortcuts,
 } from '../hooks/use-keyboard-shortcuts';
 
-
 // Mock window.blueAPI
 const mockBlueAPI = {
   openFile: vi.fn(),

@@ -48,7 +48,6 @@ vi.mock('../stores/midi-routing-store', () => {
   return { useMidiRoutingStore };
 });
 
-
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
 });

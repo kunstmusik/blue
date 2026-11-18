@@ -23,7 +23,6 @@ import {
 import { useProjectStore, acceptProjectDocumentRevision } from '../stores/project-store';
 import { settleHistoryEditors } from '../lib/history-scope-router';
 
-
 function makeTestLayerGroups(): ScoreLayerGroupSnapshot[] {
   return [
     {

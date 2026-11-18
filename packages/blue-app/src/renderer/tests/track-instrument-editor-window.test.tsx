@@ -71,7 +71,6 @@ vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => 
 
 import TrackInstrumentEditorPage from '../components/track-instrument-editor/TrackInstrumentEditorPage';
 
-
 function makeSnapshot(): TrackInstrumentEditorSnapshot {
   return {
     track: {

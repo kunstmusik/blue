@@ -13,7 +13,6 @@ import {
 } from '../components/workbench/panels/score/layer-selection-utils';
 import type { ScoreLayerSnapshot } from '../components/workbench/panels/score/types';
 
-
 function setInputValue(input: HTMLInputElement, value: string) {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,

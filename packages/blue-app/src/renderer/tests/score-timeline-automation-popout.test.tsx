@@ -20,7 +20,6 @@ import type {
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 
-
 const { mockFinishProjectGesture, mockRegisterHistoryEditorSettlement } = vi.hoisted(() => ({
   mockRegisterHistoryEditorSettlement: vi.fn((_doc: Document, _settle: () => Promise<unknown>) =>
     vi.fn(),

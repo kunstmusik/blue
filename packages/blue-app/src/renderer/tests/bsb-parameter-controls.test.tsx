@@ -23,7 +23,6 @@ import {
   formatValue,
 } from '../components/workbench/panels/orchestra/bsb/widgets/ValuePanel';
 
-
 beforeAll(() => {
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;

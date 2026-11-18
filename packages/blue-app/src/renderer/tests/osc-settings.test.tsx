@@ -6,7 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import OscSettings from '../components/settings/OscSettings';
 
-
 const roots: Array<{ root: Root; container: HTMLDivElement }> = [];
 
 afterEach(() => {

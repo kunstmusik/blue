@@ -13,7 +13,6 @@ import {
   setElementRect,
 } from './library-interaction-test-helpers';
 
-
 const previewLibraryTransfer = vi.fn(async (request) => ({
   ok: true as const,
   value: {

@@ -12,7 +12,6 @@ import { useCodeRepositoryStore } from '../stores/code-repository-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 
-
 /**
  * Regression coverage for the cursor-reset bug fixed by reconfiguring the
  * autocompletion extension through a Compartment instead of destroying and

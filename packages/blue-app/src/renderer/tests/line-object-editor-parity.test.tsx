@@ -10,7 +10,6 @@ import ZakLineObjectEditor from '../components/workbench/panels/score-object/edi
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 class MockResizeObserver {
   constructor(private readonly callback: ResizeObserverCallback) {}
 

@@ -10,7 +10,6 @@ import {
 import { SOUND_LAYER_HEIGHT } from '../components/workbench/panels/score/types';
 import type { ScoreRowObjectSnapshot } from '../components/workbench/panels/score/types';
 
-
 describe('batched piano-roll thumbnail geometry', () => {
   it.each(['NONE', 'SCALE', 'REPEAT', 'REPEAT_CLASSIC'])(
     'preserves %s geometry in a single path across resize and selection',

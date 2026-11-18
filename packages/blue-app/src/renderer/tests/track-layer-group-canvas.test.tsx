@@ -24,7 +24,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-
 function makeItem(
   objectId: string,
   startBeats: number,

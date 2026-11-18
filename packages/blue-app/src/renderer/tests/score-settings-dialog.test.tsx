@@ -10,7 +10,6 @@ import {
 } from '../../shared/project-editor';
 import ScoreSettingsDialog from '../components/workbench/panels/score/ScoreSettingsDialog';
 
-
 function renderDialog(
   overrides: Partial<{
     score: ScoreDocumentSnapshot;

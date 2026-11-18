@@ -8,7 +8,6 @@ import { createPortal } from 'react-dom';
 import { HostDocumentContext, usePortalContainer } from '../hooks/use-host-document';
 import { useDialogFocus } from '../components/dialogs/use-dialog-focus';
 
-
 // Create a secondary JSDOM realm simulating a popout window document.
 const popout = new JSDOM('<!doctype html><html><body><div id="popout-root"></div></body></html>', {
   url: 'https://popout.test',

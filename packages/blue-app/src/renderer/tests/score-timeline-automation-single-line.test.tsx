@@ -22,7 +22,6 @@ import {
   findPointNear,
 } from '../components/workbench/panels/score/automation/automation-line-utils';
 
-
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}

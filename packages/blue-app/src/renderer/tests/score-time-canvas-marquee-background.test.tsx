@@ -13,7 +13,6 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 
-
 const originalProjectState = useProjectStore.getState();
 
 function soundItem(

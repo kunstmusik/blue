@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
 import type { EngineRecoveryStatus } from '../../shared/engine-recovery';
 
-
 vi.mock('sonner', () => ({
   toast: {
     loading: vi.fn(),

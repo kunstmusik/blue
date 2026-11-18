@@ -7,7 +7,6 @@ import { useOutputStore } from '../stores/output-store';
 import { PROJECT_MESSAGES_TAB } from '../../shared/xml-diagnostics';
 import '../styles/index.css';
 
-
 it('preserves horizontal scroll when the widest log line leaves the virtual window', async () => {
   const host = document.createElement('div');
   host.style.width = '400px';

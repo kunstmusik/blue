@@ -12,7 +12,6 @@ import {
   ScoreViewportScrollProvider,
 } from '../components/workbench/panels/score/score-viewport-scroll';
 
-
 it('paints the waveform in a viewport-sized canvas and repaints after scrolling', async () => {
   const host = document.createElement('div');
   document.body.append(host);

@@ -16,7 +16,6 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-
 function setInputValue(input: HTMLElement, value: string) {
   const descriptor = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
   descriptor?.set?.call(input, value);

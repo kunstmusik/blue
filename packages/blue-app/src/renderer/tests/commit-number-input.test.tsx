@@ -10,7 +10,6 @@ import CommitNumberInput, {
   LiveNumberInput,
 } from '../components/CommitNumberInput';
 
-
 function changeInputValue(input: HTMLInputElement, value: string): void {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,

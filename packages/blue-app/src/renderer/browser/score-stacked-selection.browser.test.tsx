@@ -11,7 +11,6 @@ import type {
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-
 const originalScore = useProjectStore.getState().score;
 
 function createItem(objectId: string, rootGroupIndex: number): ScoreRowObjectSnapshot {

@@ -24,7 +24,6 @@ import type {
   FileManagerRootSnapshot,
 } from '../../../shared/file-manager';
 
-
 interface SimpleNode {
   id: string;
   name: string;

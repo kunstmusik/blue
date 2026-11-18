@@ -14,7 +14,6 @@ import {
   setElementRect,
 } from './library-interaction-test-helpers';
 
-
 const group: PolyObjectLayerGroupSnapshot = {
   groupId: 'nested-group',
   groupType: 'polyObject',

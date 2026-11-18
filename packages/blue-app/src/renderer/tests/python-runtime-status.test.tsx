@@ -6,7 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import JythonRuntimeStatusIndicator from '../components/workbench/panels/score-object/editors/JythonRuntimeStatusIndicator';
 
-
 let container: HTMLDivElement;
 let root: Root;
 

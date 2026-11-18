@@ -25,7 +25,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useFreezeOperationStore } from '../stores/freeze-operation-store';
 
-
 const originalProjectState = useProjectStore.getState();
 
 function groupWithObject(): PolyObjectLayerGroupSnapshot {

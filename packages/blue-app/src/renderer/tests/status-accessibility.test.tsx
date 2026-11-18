@@ -15,7 +15,6 @@ import { useProjectStore } from '../stores/project-store';
 import { createDefaultRealtimeRenderSettings } from '../../shared/program-settings';
 import type { PatternLayerSnapshot } from '../../shared/project-editor';
 
-
 describe('Status Accessibility & Non-Color Cues (US4)', () => {
   let container: HTMLDivElement;
   let root: Root;

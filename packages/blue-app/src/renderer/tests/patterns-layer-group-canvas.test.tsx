@@ -23,7 +23,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import ScoreOverlayLines from '../components/workbench/panels/score/ScoreOverlayLines';
 
-
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {
     applyProjectDocumentPatch: vi.fn(async () => undefined),

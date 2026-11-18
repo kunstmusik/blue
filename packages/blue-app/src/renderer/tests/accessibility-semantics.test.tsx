@@ -21,7 +21,6 @@ import BSBXYControllerWidget from '../components/workbench/panels/orchestra/bsb/
 import type { BSBWidgetPatchComponentProps } from '../components/workbench/panels/orchestra/bsb/widgets/widget-component-props';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 
-
 describe('Accessibility Semantics (T031)', () => {
   let container: HTMLDivElement;
   let root: Root;

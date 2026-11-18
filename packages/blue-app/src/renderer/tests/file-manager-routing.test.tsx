@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FileManagerRootSnapshot } from '../../shared/file-manager';
 import WorkbenchPanelContent from '../components/workbench/WorkbenchPanelContent';
 
-
 describe('File Manager panel routing', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

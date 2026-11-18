@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CommitNumberInput, { DraftNumberInput } from '../components/CommitNumberInput';
 
-
 describe('CommitNumberInput Browser Native & Popout Tests (T006, T010)', () => {
   let container: HTMLDivElement;
   let root: Root;

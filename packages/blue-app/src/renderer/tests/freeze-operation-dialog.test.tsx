@@ -11,7 +11,6 @@ import { useFreezeOperationStore } from '../stores/freeze-operation-store';
 import { useProjectStore } from '../stores/project-store';
 import type { FreezeItemStatus, RenderOperationStatus } from '../../shared/render-freeze-contract';
 
-
 const originalProjectState = useProjectStore.getState();
 
 function entry(overrides: {

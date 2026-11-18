@@ -10,7 +10,6 @@ import type {
   PianoRollPayload,
 } from '../components/workbench/panels/score-object/editors/pianoroll/types';
 
-
 function createPayload(): PianoRollPayload {
   return {
     instrumentId: '1',

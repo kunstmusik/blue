@@ -6,7 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ClojureObjectEditor from '../components/workbench/panels/score-object/editors/ClojureObjectEditor';
 
-
 const useScoreObjectTestMock = vi.fn(() => ({
   testing: false,
   testOutput: null,

@@ -24,7 +24,6 @@ import BSBHSliderBankWidget from '../components/workbench/panels/orchestra/bsb/w
 import BSBVSliderBankWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderBankWidget';
 import BSBXYControllerWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBXYControllerWidget';
 
-
 function makeSnapshot(
   overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string },
 ): BsbWidgetNodeSnapshot {

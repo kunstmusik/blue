@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 /**
  * T059: a floated panel containing a code editor painted as a blank window.
  * CodeMirror appends its themed tooltip container to the hosting body; the

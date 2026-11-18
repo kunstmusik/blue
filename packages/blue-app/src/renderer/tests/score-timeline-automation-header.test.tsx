@@ -11,7 +11,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { AutomationParameterSnapshot } from '../../shared/project-editor';
 
-
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}

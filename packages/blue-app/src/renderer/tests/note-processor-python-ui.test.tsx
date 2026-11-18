@@ -8,7 +8,6 @@ import NoteProcessorChainEditor from '../components/workbench/panels/score-objec
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';
 
-
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   default: ({
     value,

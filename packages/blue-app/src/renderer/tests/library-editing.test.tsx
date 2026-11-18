@@ -34,7 +34,6 @@ import type {
   UdoDefinitionSnapshot,
 } from '../../shared/project-editor';
 
-
 const session: LibraryEditorSessionSnapshot = {
   sessionId: 'session-1',
   key: { scope: 'user', libraryType: 'instrument', nodeId: 'node-1' },

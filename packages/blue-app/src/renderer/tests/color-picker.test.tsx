@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import ColorPickerButton, { ColorPickerPopover } from '../components/ColorPicker';
 
-
 describe('ColorPicker', () => {
   let host: HTMLDivElement;
   let root: Root;

@@ -6,7 +6,6 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import ArrangementPanel from '../components/workbench/panels/orchestra/ArrangementPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 let container: HTMLDivElement;
 let root: Root;
 

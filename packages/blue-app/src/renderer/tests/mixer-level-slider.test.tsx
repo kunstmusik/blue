@@ -6,7 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MixerLevelSlider } from '../components/workbench/panels/mixer/MixerLevelSlider';
 
-
 describe('MixerLevelSlider interaction and accessibility', () => {
   let container: HTMLDivElement;
   let root: Root;

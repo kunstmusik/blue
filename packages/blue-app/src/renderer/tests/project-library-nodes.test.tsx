@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDeferred } from '../../main/project-history-test-support';
 import { useProjectLibraryNodes } from '../components/libraries/use-project-library-nodes';
 
-
 function Probe({ session = 1, revision = 0 }: { session?: number; revision?: number }) {
   const nodes = useProjectLibraryNodes('projectOwned', 'effect', session, revision);
   return <span>{nodes.map((node) => node.nodeId).join(',')}</span>;

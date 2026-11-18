@@ -15,7 +15,6 @@ import ScoreObjectEditorPanel from '../components/workbench/panels/ScoreObjectEd
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-
 const originalProjectState = useProjectStore.getState();
 const originalBlueAPI = window.blueAPI;
 

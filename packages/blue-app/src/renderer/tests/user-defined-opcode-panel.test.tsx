@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import UserDefinedOpcodePanel from '../components/workbench/panels/UserDefinedOpcodePanel';
 import { useProjectStore } from '../stores/project-store';
 
-
 const originalProjectState = useProjectStore.getState();
 
 vi.mock('../components/workbench/panels/udo/UdoWorkspacePanel', () => ({

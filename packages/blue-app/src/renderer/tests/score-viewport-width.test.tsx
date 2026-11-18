@@ -12,7 +12,6 @@ import { deriveTempoRegions } from '../components/workbench/panels/score/tempo-m
 import { deriveMeterRegions } from '../components/workbench/panels/score/meter-map-utils';
 import { __testOnly } from '../components/workbench/panels/score/ColumnHeader';
 
-
 type ResizeCallback = (entries: Array<{ contentRect: { width: number; height: number } }>) => void;
 let resizeObserverCallback: ResizeCallback | null = null;
 let observedElements: HTMLElement[] = [];

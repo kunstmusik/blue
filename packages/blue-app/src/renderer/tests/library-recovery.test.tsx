@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { LibraryRecoveryPanel } from '../components/libraries/LibraryRecoveryPanel';
 
-
 describe('library recovery UI', () => {
   it('offers explicit recovery choices without blocking unrelated project work', () => {
     const onRetry = vi.fn();

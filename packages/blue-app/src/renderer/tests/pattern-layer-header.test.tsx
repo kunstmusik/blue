@@ -11,7 +11,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-
 const originalProjectState = useProjectStore.getState();
 
 function makeLayer(): PatternLayerSnapshot {

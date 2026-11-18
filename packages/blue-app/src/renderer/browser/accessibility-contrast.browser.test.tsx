@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import WelcomeScreen from '../components/welcome/WelcomeScreen';
 import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 
-
 function parseRgb(colorStr: string): { r: number; g: number; b: number; a: number } {
   const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
   if (!match) {

@@ -41,7 +41,6 @@ const baseWidgetProps = {
   onWidgetAction: () => {},
 };
 
-
 describe('Accessibility Value Controls Browser Tests (T021)', () => {
   let container: HTMLDivElement;
   let root: Root;

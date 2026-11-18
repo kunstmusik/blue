@@ -13,7 +13,6 @@ import PresetsManagerDialog, {
 import { applyBsbInterfacePatchToSnapshot } from '../stores/project-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-
 function createPresetGroup(): PresetGroupSnapshot {
   return {
     name: 'Presets',

@@ -9,7 +9,6 @@ import { acquireTreeDndManager, hasActiveTreeDrag } from '../components/tree/tre
 import { NativeTypes } from 'react-dnd-html5-backend';
 import { BlueTree } from '../components/tree/BlueTree';
 
-
 interface TestNode {
   id: string;
   name: string;

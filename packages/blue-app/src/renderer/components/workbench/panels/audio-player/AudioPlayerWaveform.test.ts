@@ -8,7 +8,6 @@ import AudioPlayerWaveform, {
   drawWaveformEnvelope,
 } from './AudioPlayerWaveform';
 
-
 describe('buildWaveformEnvelope', () => {
   it('builds one ordered envelope spanning the canvas', () => {
     const points = buildWaveformEnvelope(

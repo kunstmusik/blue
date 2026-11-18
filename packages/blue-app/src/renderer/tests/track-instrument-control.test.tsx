@@ -62,7 +62,6 @@ vi.mock('../components/libraries/use-library-drop-target', () => ({
   useLibraryDropTarget: () => mocks.libraryDrop,
 }));
 
-
 function makeInstrument(): TrackInstrumentSummary {
   return {
     trackId: 'control-track',

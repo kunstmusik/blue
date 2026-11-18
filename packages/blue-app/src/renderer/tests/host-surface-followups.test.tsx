@@ -16,7 +16,6 @@ import {
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
 
-
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
 const popoutDoc = popout.window.document;
 const PopoutMouseEvent = popout.window.MouseEvent;

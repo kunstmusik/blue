@@ -29,7 +29,6 @@ declare global {
   }
 }
 
-
 vi.mock('../components/workbench/panels/orchestra/bsb/BSBInterfaceEditor', () => ({
   default: ({
     instrument,

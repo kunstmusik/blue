@@ -16,7 +16,6 @@ vi.mock('../../../../stores/workbench-store', () => ({
 import { useRenderAndPlayInterceptor } from './use-render-and-play';
 import { subscribePendingAudioFile } from './audio-player-bus';
 
-
 interface StatusShape {
   operationId: string;
   kind: 'diskRender' | 'freeze';

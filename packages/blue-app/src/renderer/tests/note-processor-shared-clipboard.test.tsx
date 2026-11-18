@@ -7,7 +7,6 @@ import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainEditor from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';
 
-
 function makeChain(
   id: string,
   processorType: 'AddProcessor' | 'MultiplyProcessor',

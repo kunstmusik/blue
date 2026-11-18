@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarkerSnapshot } from '../../shared/project-editor';
 import MarkersBar from '../components/workbench/panels/score/MarkersBar';
 
-
 interface MockProjectState {
   applyProjectDocumentPatch: ReturnType<typeof vi.fn>;
   sessionId: number;
