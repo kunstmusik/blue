@@ -57,6 +57,7 @@ export default defineConfig({
       '**/*.log',
       '**/.env*',
     ],
+    options: { reportUnusedDisableDirectives: 'error', respectEslintDisableDirectives: true },
     jsPlugins: ['./scripts/blue-lint-plugin.mjs'],
     overrides: [
       {

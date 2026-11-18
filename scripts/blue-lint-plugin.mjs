@@ -10,6 +10,32 @@ const DIALOG_GLOBAL_MESSAGES = {
 
 const MESSAGE_BOX_METHODS = new Set(['showMessageBox', 'showMessageBoxSync']);
 
+function staticPropertyName(key, computed) {
+  if (key.type === 'Identifier' && !computed) return key.name;
+  if (key.type === 'Literal') return key.value;
+  if (key.type === 'TemplateLiteral' && key.expressions.length === 0) {
+    return key.quasis[0].value.cooked;
+  }
+}
+
+function calledMemberName(node) {
+  return node.property.type === 'Identifier'
+    ? node.property.name
+    : staticPropertyName(node.property, node.computed);
+}
+
+function destructuredProperties(report) {
+  return (node) => {
+    const source = node.parent.type === 'VariableDeclarator' ? node.parent.init : node.parent.right;
+    if (source?.type !== 'Identifier') return;
+    for (const property of node.properties) {
+      if (property.type === 'Property') {
+        report(property, source.name, staticPropertyName(property.key, property.computed));
+      }
+    }
+  };
+}
+
 function containsJoinCall(node) {
   if (!node || typeof node !== 'object') {
     return false;
@@ -17,9 +43,7 @@ function containsJoinCall(node) {
   if (
     node.type === 'CallExpression' &&
     node.callee?.type === 'MemberExpression' &&
-    !node.callee.computed &&
-    node.callee.property?.type === 'Identifier' &&
-    node.callee.property.name === 'join'
+    calledMemberName(node.callee) === 'join'
   ) {
     return true;
   }
@@ -51,25 +75,23 @@ const noBrowserDialogs = defineRule({
     },
   },
   create(context) {
-    return {
-      MemberExpression(node) {
-        if (
-          node.computed ||
-          node.object?.type !== 'Identifier' ||
-          (node.object.name !== 'window' && node.object.name !== 'globalThis') ||
-          node.property?.type !== 'Identifier' ||
-          !DIALOG_GLOBALS.has(node.property.name)
-        ) {
-          return;
-        }
+    function report(node, object, property) {
+      if ((object === 'window' || object === 'globalThis') && DIALOG_GLOBALS.has(property)) {
         context.report({
           node,
           messageId: 'restrictedProperty',
-          data: {
-            message: DIALOG_GLOBAL_MESSAGES[node.property.name],
-          },
+          data: { message: DIALOG_GLOBAL_MESSAGES[property] },
         });
+      }
+    }
+
+    return {
+      MemberExpression(node) {
+        if (node.object.type === 'Identifier') {
+          report(node, node.object.name, staticPropertyName(node.property, node.computed));
+        }
       },
+      ObjectPattern: destructuredProperties(report),
     };
   },
 });
@@ -86,28 +108,32 @@ const noDirectShowMessageBox = defineRule({
     },
   },
   create(context) {
+    function report(node, method) {
+      context.report({ node, messageId: 'directCall', data: { method } });
+    }
+
     return {
-      CallExpression(node) {
-        const callee = node.callee;
+      MemberExpression(node) {
+        const property = staticPropertyName(node.property, node.computed);
         if (
-          callee?.type !== 'MemberExpression' ||
-          callee.computed ||
-          callee.property?.type !== 'Identifier' ||
-          !MESSAGE_BOX_METHODS.has(callee.property.name)
+          node.object.type === 'Identifier' &&
+          node.object.name === 'dialog' &&
+          MESSAGE_BOX_METHODS.has(property)
         ) {
+          report(node, `dialog.${property}`);
           return;
         }
-        context.report({
-          node,
-          messageId: 'directCall',
-          data: {
-            method:
-              callee.object?.type === 'Identifier' && callee.object.name === 'dialog'
-                ? `dialog.${callee.property.name}`
-                : `calling ${callee.property.name}`,
-          },
-        });
+
+        if (node.parent?.type === 'CallExpression' && node.parent.callee === node) {
+          const method = calledMemberName(node);
+          if (MESSAGE_BOX_METHODS.has(method)) report(node, method);
+        }
       },
+      ObjectPattern: destructuredProperties((node, object, method) => {
+        if (object === 'dialog' && MESSAGE_BOX_METHODS.has(method)) {
+          report(node, `dialog.${method}`);
+        }
+      }),
     };
   },
 });
