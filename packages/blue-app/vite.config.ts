@@ -30,7 +30,7 @@ export default defineConfig(({ command }) => ({
         vite: {
           build: {
             outDir: resolve(projectRoot, 'dist/main'),
-            rollupOptions: {
+            rolldownOptions: {
               external: ['node:sqlite', 'zeromq', '@blue/engine-client', '@blue/data'],
             },
           },
