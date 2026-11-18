@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 import tailwindcss from '@tailwindcss/vite';
 import { playwright } from '@vitest/browser-playwright';
-import { testTags } from './test-tags';
+import { testTags } from './test-tags.mts';
 
 export default defineConfig({
   plugins: [tailwindcss()],
@@ -33,7 +33,7 @@ export default defineConfig({
   resolve: {
     dedupe: ['react', 'react-dom'],
     alias: {
-      '@': resolve(__dirname, 'src/renderer'),
+      '@': resolve(import.meta.dirname, 'src/renderer'),
     },
   },
 });

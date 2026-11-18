@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import base from './vitest.browser.config';
+import base from './vitest.browser.config.mts';
 import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({

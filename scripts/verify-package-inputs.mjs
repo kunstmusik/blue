@@ -570,12 +570,12 @@ function checkViteExternalizationContract() {
   // node:sqlite, zeromq, @blue/engine-client, and @blue/data external so the
   // packaged application can resolve them as runtime dependencies rather than
   // embedding a stale copy.
-  const viteConfigPath = join(appRoot, 'vite.config.ts');
+  const viteConfigPath = join(appRoot, 'vite.config.mts');
   if (!existsSync(viteConfigPath)) {
     return {
       ok: false,
       code: 'VITE_CONFIG_MISSING',
-      message: `vite.config.ts is missing at ${viteConfigPath}`,
+      message: `vite.config.mts is missing at ${viteConfigPath}`,
     };
   }
 
@@ -586,7 +586,7 @@ function checkViteExternalizationContract() {
     return {
       ok: false,
       code: 'VITE_EXTERNALS_MISSING',
-      message: `vite.config.ts main rollupOptions.external is missing entries: ${missing.join(', ')}`,
+      message: `vite.config.mts main rolldownOptions.external is missing entries: ${missing.join(', ')}`,
       detail: missing,
     };
   }

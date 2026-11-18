@@ -11,10 +11,10 @@ import { fileURLToPath } from 'node:url';
 
 const repositoryRoot = fileURLToPath(new URL('../', import.meta.url));
 const suites = {
-  node: { directory: 'blue-app', config: 'vitest.performance.config.ts', cases: 8 },
-  browser: { directory: 'blue-app', config: 'vitest.performance.browser.config.ts', cases: 4 },
-  engine: { directory: 'blue-app', config: 'vitest.performance.engine.config.ts', cases: 5 },
-  data: { directory: 'blue-data', config: 'vitest.performance.config.ts', cases: 4 },
+  node: { directory: 'blue-app', config: 'vitest.performance.config.mts', cases: 8 },
+  browser: { directory: 'blue-app', config: 'vitest.performance.browser.config.mts', cases: 4 },
+  engine: { directory: 'blue-app', config: 'vitest.performance.engine.config.mts', cases: 5 },
+  data: { directory: 'blue-data', config: 'vitest.performance.config.mts', cases: 4 },
 };
 
 export function readPerformanceResult(report, output, suite) {

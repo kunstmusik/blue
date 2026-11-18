@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import base from './vitest.config';
+import base from './vitest.config.mts';
 
 export default defineConfig({
   ...base,

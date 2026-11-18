@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config';
 import { GithubActionsReporter } from 'vitest/node';
 import { resolve } from 'path';
-import { createPackageReporterConfig } from '../../scripts/vitest-package-reporters';
-import { testTags } from './test-tags';
+import { createPackageReporterConfig } from '../../scripts/vitest-package-reporters.mts';
+import { testTags } from './test-tags.mts';
 
 export default defineConfig({
   test: {
@@ -21,7 +21,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src/renderer'),
+      '@': resolve(import.meta.dirname, 'src/renderer'),
     },
   },
 });

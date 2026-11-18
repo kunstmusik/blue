@@ -8,7 +8,7 @@ import { resolve } from 'path';
 // The Electron plugin bundles main/preload in every mode. In development it
 // also provides HMR + hot restart; in production the single-file preload is
 // required because sandboxed preload scripts cannot require local modules.
-const projectRoot = resolve(__dirname);
+const projectRoot = resolve(import.meta.dirname);
 
 export default defineConfig(({ command }) => ({
   plugins: [
@@ -52,7 +52,7 @@ export default defineConfig(({ command }) => ({
   build: {
     outDir: resolve(projectRoot, 'dist/renderer'),
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: resolve(projectRoot, 'src/renderer/index.html'),
         settings: resolve(projectRoot, 'src/renderer/settings.html'),

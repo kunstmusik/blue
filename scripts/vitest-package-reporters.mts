@@ -24,14 +24,25 @@ interface GithubActionsReporterConstructor {
 
 class PackageGithubActionsReporter implements Reporter {
   private context: Vitest | undefined;
+  private readonly packageName: string;
+  private readonly summaryPath: string | undefined;
+  private readonly temporaryDirectory: string | undefined;
+  private readonly temporarySummaryPath: string | undefined;
+  private readonly reporter: Reporter;
 
   constructor(
-    private readonly packageName: string,
-    private readonly summaryPath: string | undefined,
-    private readonly temporaryDirectory: string | undefined,
-    private readonly temporarySummaryPath: string | undefined,
-    private readonly reporter: Reporter,
-  ) {}
+    packageName: string,
+    summaryPath: string | undefined,
+    temporaryDirectory: string | undefined,
+    temporarySummaryPath: string | undefined,
+    reporter: Reporter,
+  ) {
+    this.packageName = packageName;
+    this.summaryPath = summaryPath;
+    this.temporaryDirectory = temporaryDirectory;
+    this.temporarySummaryPath = temporarySummaryPath;
+    this.reporter = reporter;
+  }
 
   onInit(context: Vitest): void {
     this.context = context;
