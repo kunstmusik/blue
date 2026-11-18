@@ -106,4 +106,33 @@ export default defineConfig({
       },
     ],
   },
+  run: {
+    tasks: {
+      'lint:vp': {
+        command: 'vp lint',
+      },
+      'lint:workspace': {
+        command: 'node -e ""',
+        dependsOn: [
+          'audit:renderer-typography',
+          'lint:vp',
+          'format:check',
+          '@blue/engine-native#lint',
+          '@blue/java-runtime#lint',
+        ],
+      },
+      'test:workspace': {
+        command: 'node -e ""',
+        dependsOn: [
+          'test:scripts',
+          '@blue/data#test',
+          '@blue/engine-client#test',
+          '@blue/app#test',
+          'blue-cli#test',
+          '@blue/java-runtime#test',
+          '@blue/engine-native#test',
+        ],
+      },
+    },
+  },
 });

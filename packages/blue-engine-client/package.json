@@ -43,7 +43,7 @@
   "scripts": {
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build": "vp run build:esm && vp run build:cjs",
+    "build": "vp run build:all",
     "test": "vp test run"
   },
   "dependencies": {

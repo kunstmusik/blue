@@ -24,7 +24,7 @@ export default defineConfig(({ command }) => ({
     electron({
       main: {
         onstart({ startup }) {
-          startup(['.', '--no-sandbox'], { cwd: projectRoot });
+          startup([projectRoot, '--no-sandbox'], { cwd: projectRoot });
         },
         entry: {
           main: resolve(projectRoot, 'src/main/main.ts'),
@@ -47,6 +47,11 @@ export default defineConfig(({ command }) => ({
         },
       },
       preload: {
+        onstart({ reload }) {
+          if (process.electronApp) {
+            reload();
+          }
+        },
         input: resolve(projectRoot, 'src/preload/preload.ts'),
         vite: {
           build: {
@@ -76,6 +81,34 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       '@': resolve(projectRoot, 'src/renderer'),
+    },
+  },
+  run: {
+    tasks: {
+      'build:deps': {
+        command: 'node -e ""',
+        dependsOn: ['engine:stage', '@blue/data#build', '@blue/engine-client#build'],
+      },
+      'build:ts:main': {
+        command: 'tsc -p tsconfig.main.json',
+        dependsOn: ['build:deps'],
+      },
+      'build:ts:preload': {
+        command: 'tsc -p tsconfig.preload.json',
+        dependsOn: ['build:deps'],
+      },
+      'build:ts:renderer': {
+        command: 'tsc -p tsconfig.renderer.json',
+        dependsOn: ['build:deps'],
+      },
+      'build:bundle': {
+        command: 'vp build',
+        dependsOn: ['build:deps'],
+      },
+      'build:all': {
+        command: 'node -e ""',
+        dependsOn: ['build:ts:main', 'build:ts:preload', 'build:ts:renderer', 'build:bundle'],
+      },
     },
   },
 }));

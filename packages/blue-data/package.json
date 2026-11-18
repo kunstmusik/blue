@@ -59,7 +59,7 @@
   "scripts": {
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && vp run build:esm && vp run build:cjs",
+    "build": "vp run build:all",
     "generate:blue-x7": "node scripts/generate-blue-x7-modern-orchestra.mjs",
     "test": "vp test run",
     "test:performance": "node ../../scripts/run-performance-tests.mjs data",

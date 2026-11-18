@@ -14,7 +14,7 @@
     "engine:build": "vp run --filter @blue/engine-native build",
     "engine:stage": "node scripts/stage-blue-engine.mjs",
     "engine:prepare": "vp run engine:build && vp run engine:stage",
-    "build": "vp run engine:stage && vp run --filter @blue/data build && vp run --filter @blue/engine-client build && vp run build:main && vp run build:preload && vp run build:renderer",
+    "build": "vp run build:all",
     "dev": "vp run engine:prepare && vp dev",
     "osc:send": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON ./scripts/send-osc.mjs",
     "start": "electron .",
