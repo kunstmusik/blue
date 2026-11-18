@@ -87,7 +87,9 @@ export interface MidiInputShutdownCommand {
 }
 
 export type MidiInputServiceCommand =
-  MidiInputReconcileCommand | MidiInputRescanCommand | MidiInputShutdownCommand;
+  | MidiInputReconcileCommand
+  | MidiInputRescanCommand
+  | MidiInputShutdownCommand;
 
 export interface MidiInputServiceInitialization {
   preferences: MidiInputPreferences;

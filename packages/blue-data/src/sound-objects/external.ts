@@ -185,7 +185,7 @@ export class External extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['text', 'commandLine', 'syntaxType']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'text', 'commandLine', 'syntaxType'],
       context,
     );
     const object = new External();

@@ -11,7 +11,7 @@ import {
   TimeContext,
   UDOStyle,
 } from '@blue/data';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 
 function projectData(): BlueData {

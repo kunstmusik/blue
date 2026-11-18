@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BlueData,
   GenericScore,
@@ -6,7 +6,6 @@ import {
   SoundLayer,
   Instance,
   SoundObjectLibrary,
-  AudioClip,
   AudioFile,
   FrozenSoundObject,
 } from '@blue/data';

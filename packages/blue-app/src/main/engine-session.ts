@@ -5,7 +5,6 @@ import * as path from 'path';
 import {
   EngineClient,
   type EngineClientOptions,
-  type EngineStateSnapshot,
   type EngineStateListener,
 } from '@blue/engine-client';
 import type {
@@ -230,7 +229,7 @@ export function classifyProcessError(
 export function sanitizeDiagnosticText(text: string): string {
   if (!text) return '';
   let sanitized = text
-    .replace(/(?:\/Users\/[^\s\/\\]+|\/home\/[^\s\/\\]+|C:\\Users\\[^\s\/\\]+)/gi, '<user-dir>')
+    .replace(/(?:\/Users\/[^\s/\\]+|\/home\/[^\s/\\]+|C:\\Users\\[^\s/\\]+)/gi, '<user-dir>')
     .replace(/<CsoundSynthesizer>[\s\S]*?<\/CsoundSynthesizer>/gi, '<csd-content-redacted>')
     .replace(/<CsInstruments>[\s\S]*?<\/CsInstruments>/gi, '<orchestra-redacted>')
     .replace(/<CsScore>[\s\S]*?<\/CsScore>/gi, '<score-redacted>');

@@ -1,7 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { BlueData } from './blue-data';
 import { PolyObject } from './sound-objects/poly-object';
-import { Element } from './serialization/xml-reader';
 import { ClojureProjectData } from './plugins/clojure-project-data';
 
 describe('BlueData root XML compatibility', () => {

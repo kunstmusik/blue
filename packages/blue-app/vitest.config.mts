@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config';
-import { GithubActionsReporter } from 'vitest/node';
+import { defineConfig } from 'vite-plus';
+import { GithubActionsReporter } from 'vite-plus/test/node';
 import { resolve } from 'path';
 import { createPackageReporterConfig } from '../../scripts/vitest-package-reporters.mts';
 import { testTags } from './test-tags.mts';

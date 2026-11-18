@@ -313,7 +313,7 @@ function makeComparison({
       reports: candidateValues.map((value) =>
         makeNativeReport({
           csdSha256: 'b'.repeat(64),
-          ...(candidateOverrides ?? {}),
+          ...candidateOverrides,
           trials: [{ performKsmpsAvgUs: value, measuredCycles: 65536 }],
         }),
       ),
@@ -325,7 +325,7 @@ function makeComparison({
       reports: baselineValues.map((value) =>
         makeNativeReport({
           csdSha256: 'c'.repeat(64),
-          ...(baselineOverrides ?? {}),
+          ...baselineOverrides,
           trials: [{ performKsmpsAvgUs: value, measuredCycles: 65536 }],
         }),
       ),

@@ -3,7 +3,7 @@
 import React, { StrictMode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MidiNoteRouter } from '../services/midi-note-router';
 import { useMidiInputStore } from '../stores/midi-input-store';
 import { useBlueLiveStore } from '../stores/blue-live-store';
@@ -89,7 +89,8 @@ describe('MIDI service hook lifecycle', () => {
 
   it('does not install a stale command subscription after StrictMode cleanup', async () => {
     let resolveFirst:
-      ((value: { preferences: { devices: [] }; cachedSnapshot: null }) => void) | null = null;
+      | ((value: { preferences: { devices: [] }; cachedSnapshot: null }) => void)
+      | null = null;
     const first = new Promise<{ preferences: { devices: [] }; cachedSnapshot: null }>((resolve) => {
       resolveFirst = resolve;
     });

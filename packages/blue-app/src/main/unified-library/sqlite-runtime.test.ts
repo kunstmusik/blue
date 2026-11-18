@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import electronPath from 'electron';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const EXPECTED_ELECTRON_VERSION = '44.9.1';
 const EXPECTED_NODE_VERSION = '24.22.0';

@@ -12,7 +12,7 @@ import {
   UDOStyle,
   loadInstrumentFromXML,
 } from '@blue/data';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createInstrumentSnapshot, type InstrumentSnapshot } from '../../shared/project-editor';
 import type { LibraryTransferSourceReference } from '../../shared/unified-library';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';

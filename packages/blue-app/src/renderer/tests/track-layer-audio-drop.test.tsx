@@ -3,12 +3,9 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { ScoreLayerGroupSnapshot, TrackLayerGroupSnapshot } from '../../shared/project-editor';
-import type {
-  ScoreLayerSnapshot,
-  ScoreRowObjectSnapshot,
-} from '../components/workbench/panels/score/types';
+import type { ScoreLayerSnapshot } from '../components/workbench/panels/score/types';
 import TrackLayerGroupCanvas from '../components/workbench/panels/score/layer-groups/TrackLayerGroupCanvas';
 import { useProjectStore } from '../stores/project-store';
 import { useLibraryStore } from '../stores/library-store';

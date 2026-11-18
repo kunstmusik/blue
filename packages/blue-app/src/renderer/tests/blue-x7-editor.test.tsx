@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createDefaultBlueX7Voice, decodeSingleVoice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, InstrumentPatch } from '../../shared/project-editor';
 import BlueX7Editor from '../components/workbench/panels/orchestra/BlueX7Editor';
@@ -463,17 +463,22 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
     expect(onInstrumentPatch).toHaveBeenCalledTimes(1);
     expect(lastPatch?.blueX7).toEqual({ type: 'replaceVoice', voice: importedVoice });
     expect(
-      (container?.querySelector('input[aria-label="Feedback"]') as HTMLInputElement).value,
+      (container?.querySelector('input[aria-label="Feedback"]') as HTMLInputElement | null)?.value,
     ).toBe(String(importedVoice.common.feedback));
     expect(
-      (container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement).value,
+      (container?.querySelector('input[aria-label="Frequency Coarse"]') as HTMLInputElement | null)
+        ?.value,
     ).toBe(String(importedVoice.operators[0].freqCoarse));
     expect(
-      (container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value,
+      (container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement | null)
+        ?.value,
     ).toBe(String(importedVoice.pitchEnvelope[0].rate));
     expect(
-      (container?.querySelector('textarea[aria-label="Csound Post Code"]') as HTMLTextAreaElement)
-        .value,
+      (
+        container?.querySelector(
+          'textarea[aria-label="Csound Post Code"]',
+        ) as HTMLTextAreaElement | null
+      )?.value,
     ).toBe(importedVoice.csoundPostCode);
 
     for (const testId of ['tab-operators', 'tab-pitch', 'tab-csound', 'tab-global']) {
@@ -568,7 +573,8 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
 
   it('discards an import result when the editor target changes while reading', async () => {
     let resolveRead:
-      ((value: import('../../shared/blue-x7-sysex').BlueX7SysexReadResult) => void) | undefined;
+      | ((value: import('../../shared/blue-x7-sysex').BlueX7SysexReadResult) => void)
+      | undefined;
     const pendingRead = new Promise<import('../../shared/blue-x7-sysex').BlueX7SysexReadResult>(
       (resolve) => {
         resolveRead = resolve;
@@ -1168,10 +1174,12 @@ describe('BlueX7Editor — Complete UI & Patch Dispatch', () => {
         parameterIds: ['pitch-rate-1', 'pitch-level-1'],
       });
       expect(
-        (container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement).value,
+        (container?.querySelector('input[aria-label="Pitch Rate 1"]') as HTMLInputElement | null)
+          ?.value,
       ).toBe('77');
       expect(
-        (container?.querySelector('input[aria-label="Pitch Level 1"]') as HTMLInputElement).value,
+        (container?.querySelector('input[aria-label="Pitch Level 1"]') as HTMLInputElement | null)
+          ?.value,
       ).toBe('88');
       expect(onInstrumentPatch).not.toHaveBeenCalled();
     });

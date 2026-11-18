@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { decideMidiPermission, isSameApplicationLocation } from './midi-permission';
 
 describe('MIDI permission policy', () => {

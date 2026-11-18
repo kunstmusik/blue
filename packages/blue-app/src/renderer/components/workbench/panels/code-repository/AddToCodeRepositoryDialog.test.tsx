@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { chooseAppSelectOption } from '../../../../tests/app-select-test-utils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import AddToCodeRepositoryDialog from './AddToCodeRepositoryDialog';
 

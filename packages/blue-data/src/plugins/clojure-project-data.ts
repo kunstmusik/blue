@@ -92,7 +92,7 @@ export class ClojureProjectData implements BlueDataObject {
     builder += "(add-dependencies :coordinates '[";
 
     for (const entry of filtered) {
-      builder += `[${entry.getDependencyCoordinates()} \"${entry.getVersion()}\" :exclusions [org.clojure/clojure]]\n`;
+      builder += `[${entry.getDependencyCoordinates()} "${entry.getVersion()}" :exclusions [org.clojure/clojure]]\n`;
     }
 
     builder += '] :repositories (merge ';

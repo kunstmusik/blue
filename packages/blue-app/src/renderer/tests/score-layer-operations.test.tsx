@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
 import ScoreManagerDialog from '../components/workbench/panels/score/ScoreManagerDialog';
 import { flushProjectDocumentPatches, useProjectStore } from '../stores/project-store';

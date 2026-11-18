@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { PatternObject } from '../../src/sound-objects/pattern-object';
 import { Pattern } from '../../src/sound-objects/pattern/pattern';
 import { TimeBehavior } from '../../src/sound-objects/time-behavior';

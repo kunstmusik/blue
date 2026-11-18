@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import RenderToDiskDialog from '../components/workbench/panels/RenderToDiskDialog';
 import { DISK_RENDER_OUTPUT_TAB, useRenderToDiskStore } from '../stores/render-to-disk-store';

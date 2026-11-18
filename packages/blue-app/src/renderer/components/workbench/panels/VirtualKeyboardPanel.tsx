@@ -4,7 +4,7 @@ import { useBlueLiveStore } from '../../../stores/blue-live-store';
 import { useMidiRoutingStore } from '../../../stores/midi-routing-store';
 import { getMidiNoteFromComputerKey } from './virtual-keyboard/keyboard-mapping';
 import { useVirtualKeyboardState } from './virtual-keyboard/useVirtualKeyboardState';
-import { PianoCanvas, KEY_OFFSET, isWhiteKey } from './virtual-keyboard/PianoCanvas';
+import { PianoCanvas, KEY_OFFSET } from './virtual-keyboard/PianoCanvas';
 import {
   releaseAllVirtualKeyboardSources,
   routeVirtualKeyboardNote,

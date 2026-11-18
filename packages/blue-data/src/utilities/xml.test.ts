@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Element } from '../serialization/xml-reader';
 import { checkShape, readEnum, readInt, readDouble, readBoolean, writeDouble } from './xml';
 import { XmlLoadContext, XmlLoadError } from '../serialization/xml-load';

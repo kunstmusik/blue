@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import type { GeneratorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';

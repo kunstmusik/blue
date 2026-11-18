@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { isLibraryEditorDocument, isLibraryEditorDocumentPatch } from './library-editor-document';
 
 describe('Library editor document contracts', () => {

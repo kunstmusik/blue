@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus';
 import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron/simple';
 import electronRenderer from 'vite-plugin-electron-renderer';
@@ -11,11 +11,21 @@ import { resolve } from 'path';
 const projectRoot = resolve(import.meta.dirname);
 
 export default defineConfig(({ command }) => ({
+  test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
+  },
   plugins: [
     tailwindcss(),
     react(),
     electron({
       main: {
+        onstart({ startup }) {
+          startup([projectRoot, '--no-sandbox'], { cwd: projectRoot });
+        },
         entry: {
           main: resolve(projectRoot, 'src/main/main.ts'),
           'repository-worker': resolve(
@@ -37,6 +47,11 @@ export default defineConfig(({ command }) => ({
         },
       },
       preload: {
+        onstart({ reload }) {
+          if (process.electronApp) {
+            reload();
+          }
+        },
         input: resolve(projectRoot, 'src/preload/preload.ts'),
         vite: {
           build: {
@@ -66,6 +81,33 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       '@': resolve(projectRoot, 'src/renderer'),
+    },
+  },
+  run: {
+    tasks: {
+      'build:deps': {
+        command: 'node -e ""',
+        dependsOn: ['engine:stage', '@blue/data#build', '@blue/engine-client#build'],
+      },
+      'build:electron': {
+        // Both TypeScript projects emit shared files. Bundle last so the app
+        // starts with the sandbox-compatible preload on cold and warm builds.
+        command: 'tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && vp build',
+        cache: false,
+        dependsOn: ['build:deps'],
+      },
+      'build:ts:host-tests': {
+        command: 'tsc -p tsconfig.host-tests.json',
+        dependsOn: ['build:deps'],
+      },
+      'build:ts:renderer': {
+        command: 'tsc -p tsconfig.renderer.json',
+        dependsOn: ['build:deps'],
+      },
+      'build:all': {
+        command: 'node -e ""',
+        dependsOn: ['build:electron', 'build:ts:host-tests', 'build:ts:renderer'],
+      },
     },
   },
 }));

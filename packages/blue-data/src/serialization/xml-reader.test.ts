@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { Element, Elements } from '../serialization/xml-reader';
+import { describe, it, expect } from 'vite-plus/test';
+import { Element } from '../serialization/xml-reader';
 
 describe('Element', () => {
   describe('creation', () => {

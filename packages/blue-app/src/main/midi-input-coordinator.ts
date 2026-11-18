@@ -23,7 +23,6 @@ import {
   MIDI_INPUT_SNAPSHOT_CHANGED_CHANNEL,
   normalizeMidiInputPreferences,
   type MidiInputCommandAck,
-  type MidiInputPreferences,
   type MidiInputServiceCommand,
   type MidiInputServiceInitialization,
   type MidiInputServiceSnapshot,

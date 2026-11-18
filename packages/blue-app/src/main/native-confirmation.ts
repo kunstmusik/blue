@@ -1,7 +1,6 @@
 import { BrowserWindow, dialog, MessageBoxOptions, MessageBoxReturnValue } from 'electron';
 import {
   createSafeCancellationResult,
-  NativeConfirmationRequest,
   NativeConfirmationResult,
   validateNativeConfirmationRequest,
 } from '../shared/confirmation-dialog';
@@ -80,7 +79,7 @@ export async function showNativeConfirmation(
     }
 
     return confirmationResult;
-  } catch (_err) {
+  } catch {
     return createSafeCancellationResult(request, 'failed');
   }
 }

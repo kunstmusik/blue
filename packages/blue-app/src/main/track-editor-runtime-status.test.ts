@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { TrackInstrumentEditorRequest } from '../shared/project-editor';
 import { TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL } from '../shared/track-instrument-editor-contract';
 import { createTrackEditorRuntimeStatusCoordinator } from './track-editor-runtime-status';

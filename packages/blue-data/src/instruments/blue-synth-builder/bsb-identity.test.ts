@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { BSBGroup } from './bsb-group';
 import { BSBHSliderBank } from './bsb-hslider-bank';

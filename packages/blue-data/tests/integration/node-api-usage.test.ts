@@ -8,7 +8,7 @@
  * 4. Save to XML string
  * 5. Inspect data programmatically
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { BlueData } from '../../src/blue-data';
 import { ProjectProperties } from '../../src/project-properties';
 import { GenericScore } from '../../src/sound-objects/generic-score';
@@ -32,7 +32,6 @@ import { ScratchPadData } from '../../src/scratch-pad-data';
 import { LiveData } from '../../src/live-data';
 import { NoteProcessorChainMap } from '../../src/note-processors/note-processor-chain-map';
 import { NoteProcessorChain } from '../../src/note-processors/note-processor-chain';
-import { BLUE_VERSION } from '../../src/blue-constants';
 import { UpgradeManager } from '../../src/migration/upgrade-manager';
 import { ProjectVersion } from '../../src/migration/project-version';
 import { PLAYBACK_INSTRUMENT_ORC } from '../../src/score/audio/playback-instrument-orc';

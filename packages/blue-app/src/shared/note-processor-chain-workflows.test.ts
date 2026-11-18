@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BlueData,
   PolyObject,
@@ -114,7 +114,7 @@ describe('note-processor-chain-workflows', () => {
     it('applies replaceNoteProcessorChain and reflects in score object editor document', () => {
       const data = createDataWithAllScopes();
       const fullSnap = createProjectEditorSnapshot(data, null);
-      const item = fullSnap.score?.layerGroups[0]?.layers[1]?.items[0]!;
+      const item = fullSnap.score?.layerGroups[0]?.layers[1]?.items[0];
       const target = item.editorTarget;
 
       const newChain = makeChainSnapshot('AddProcessor', '77');

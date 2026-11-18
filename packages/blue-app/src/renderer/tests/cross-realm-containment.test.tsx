@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import { isEditableShortcutTarget } from '../components/workbench/panels/blue-live/LiveSpaceTab';
 import { isEditableTarget } from '../components/workbench/panels/score-object/editors/PianoRollEditor';

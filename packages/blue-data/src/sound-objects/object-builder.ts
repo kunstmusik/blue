@@ -7,14 +7,7 @@ import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import {
-  checkShape,
-  readText,
-  readInt,
-  readBoolean,
-  readEnum,
-  parseXmlBoolean,
-} from '../utilities/xml';
+import { checkShape, readText, readBoolean, readEnum, parseXmlBoolean } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefLoadMap, ObjRefSaveMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
@@ -300,16 +293,14 @@ export class ObjectBuilder extends AbstractSoundObject {
       ['type', 'editEnabled'],
       [
         ...BASIC_SOUND_OBJECT_CHILDREN,
-        ...[
-          'code',
-          'commandLine',
-          'graphicInterface',
-          'presetGroup',
-          'comment',
-          'languageType',
-          'isExternal',
-          'syntaxType',
-        ],
+        'code',
+        'commandLine',
+        'graphicInterface',
+        'presetGroup',
+        'comment',
+        'languageType',
+        'isExternal',
+        'syntaxType',
       ],
       ctx,
     );

@@ -16,7 +16,6 @@ import {
   createStoredWorkbenchLayout,
   captureAuxiliaryDockedSizesFromApi,
   dockAuxiliaryPanel as dockAuxiliaryPanelLayout,
-  getAuxiliarySeedGroupIdForPanel,
   getGroupInstanceForPanel,
   hideAllAuxiliarySlideouts as hideAllAuxiliarySlideoutsLayout,
   hideAuxiliarySlideout as hideAuxiliarySlideoutLayout,
@@ -54,12 +53,7 @@ import type {
   WorkbenchRestoreDirection,
 } from '../../shared/workbench-window-contract';
 import type { DisplayWorkArea } from '../../shared/window-layout-settings';
-import {
-  getDefaultEditorPanels,
-  getPanel,
-  getPanelsByMode,
-  PANEL_REGISTRY,
-} from '../components/workbench/panel-registry';
+import { getPanel, getPanelsByMode, PANEL_REGISTRY } from '../components/workbench/panel-registry';
 import { buildPlayheadDisplayState } from '../components/menu-bar/toolbar-formatters';
 import type { NativeMenuCommand } from '../../shared/workbench-menu';
 import { dispatchHistoryAction } from '../lib/history-scope-router';
@@ -457,9 +451,9 @@ export function enforcePopoutPanelIntent(
   expectedPopoutPanelIds: ReadonlySet<string>,
 ): void {
   const target = api.groups.find((group) => group.api.location.type !== 'popout');
-  for (const group of [...api.groups]) {
+  for (const group of Array.from(api.groups)) {
     if (group.api.location.type !== 'popout') continue;
-    for (const panel of [...group.panels]) {
+    for (const panel of Array.from(group.panels)) {
       if (expectedPopoutPanelIds.has(panel.id)) continue;
       if (!target || target === group) continue;
       try {
@@ -484,7 +478,7 @@ export function enforcePopoutPanelIntent(
 export function clearDockviewSafely(
   api: Pick<DockviewApi, 'groups' | 'clear' | 'removeGroup'>,
 ): void {
-  for (const group of [...api.groups]) {
+  for (const group of Array.from(api.groups)) {
     if (group.api.location.type === 'popout') {
       try {
         group.api.close();
@@ -496,7 +490,7 @@ export function clearDockviewSafely(
   try {
     api.clear();
   } catch {
-    for (const group of [...api.groups]) {
+    for (const group of Array.from(api.groups)) {
       try {
         api.removeGroup(group);
       } catch {
@@ -860,7 +854,7 @@ function cleanupEmptyFloatingGroup(
 }
 
 function cleanupEmptyPopoutGroups(api: DockviewApi): void {
-  for (const group of [...api.groups]) {
+  for (const group of Array.from(api.groups)) {
     // A newly-created Dockview popout deliberately leaves its source group
     // empty and hidden in the grid as the dock-back reference. Only remove
     // empty groups that are themselves popouts.
@@ -1241,7 +1235,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     }
     set({ closedPanelOrigins: nextClosedPanelOrigins });
 
-    for (const candidate of [...group.panels]) {
+    for (const candidate of Array.from(group.panels)) {
       if (!isPanelClosable(candidate.id)) {
         continue;
       }
@@ -1805,7 +1799,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
 
         // Keep the source group alive until cleanup so Dockview cannot
         // auto-return an empty group to the grid as a splitter.
-        for (const p of [...group.panels]) {
+        for (const p of Array.from(group.panels)) {
           try {
             removePanelKeepingSourceGroup(api, p);
           } catch {
@@ -1904,7 +1898,7 @@ export const useWorkbenchStore = create<WorkbenchState & WorkbenchActions>()((se
     if (!targetGroup) return;
 
     let targetIndex = targetGroup.panels.length;
-    for (const candidate of [...sourceGroup.panels]) {
+    for (const candidate of Array.from(sourceGroup.panels)) {
       if (!isEditorPanel(candidate.id)) {
         continue;
       }

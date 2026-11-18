@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { UNSAFE_EXTERNAL_ENTITY_FIXTURE } from './fixtures/legacy-library-corpus';
 import { parseLegacyLibraryDocument } from './legacy-library-codec';
 import { findRawXmlElements, parseRawXmlDocument } from './raw-xml-document';

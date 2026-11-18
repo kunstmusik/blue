@@ -1,8 +1,8 @@
 import { ProjectHistory } from './project-history';
 import { buildLiveTraceFixtures } from './mixer-optimization-test-support';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { BlueData } from '@blue/data';
-import { ProjectSession, createDocumentLifetimeId, createHistoryStateId } from './project-session';
+import { ProjectSession } from './project-session';
 
 const data = { id: 'orig-data' } as unknown as BlueData;
 const candidateData = { id: 'cand-data' } as unknown as BlueData;

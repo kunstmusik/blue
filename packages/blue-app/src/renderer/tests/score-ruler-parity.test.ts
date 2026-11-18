@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { TimeBase } from '@blue/data';
 import type { MeterSnapshot, TempoMapSnapshot } from '../../shared/project-editor';
 import { __testOnly } from '../components/workbench/panels/score/ColumnHeader';

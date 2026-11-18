@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import AutomationTargetMenu from '../components/workbench/panels/score/automation/AutomationTargetMenu';
 import AutomationLineView from '../components/workbench/panels/score/automation/AutomationLineView';
@@ -16,7 +16,6 @@ import type {
   AutomationTargetGroupSnapshot,
   AutomationTargetSnapshot,
   ScoreAutomationLayerRef,
-  ScoreAutomationPatch,
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 

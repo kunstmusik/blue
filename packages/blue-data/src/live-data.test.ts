@@ -1,9 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { LiveData } from './live-data';
 import { LiveObject } from './live/live-object';
 import { LiveObjectBins } from './live/live-object-bins';
-import { LiveObjectSet } from './live/live-object-set';
-import { LiveObjectSetList } from './live/live-object-set-list';
 import { Element } from './serialization/xml-reader';
 
 describe('LiveData XML round-trip', () => {

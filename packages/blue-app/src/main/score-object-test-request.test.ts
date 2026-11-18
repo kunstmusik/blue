@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData } from '@blue/data';
 import type { ScoreObjectEditorRequest, ScoreObjectTestResult } from '../shared/project-editor';
 import { createDeferred } from './project-history-test-support';

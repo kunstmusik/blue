@@ -16,7 +16,7 @@ import { Element } from '../../serialization/xml-reader';
 const BLOCK_SIZE = 16;
 
 export class PatternData {
-  private _patterns: boolean[] = new Array(BLOCK_SIZE).fill(false);
+  private _patterns: boolean[] = Array.from({ length: BLOCK_SIZE }, () => false);
   private _maxSelected = -1;
 
   constructor(other?: PatternData) {
@@ -90,7 +90,7 @@ export class PatternData {
       return;
     }
 
-    const newPatterns = new Array(newSize).fill(false);
+    const newPatterns = Array.from({ length: newSize }, () => false);
     const length = Math.min(this._patterns.length, newPatterns.length);
     for (let i = 0; i < length; i++) {
       newPatterns[i] = this._patterns[i];
@@ -129,7 +129,7 @@ export class PatternData {
         recovery: 'Supply only 0 and 1 characters.',
       });
 
-    patternData._patterns = new Array(valStr.length).fill(false);
+    patternData._patterns = Array.from({ length: valStr.length }, () => false);
 
     for (let i = 0; i < valStr.length; i++) {
       patternData._patterns[i] = valStr.charAt(i) === '1';

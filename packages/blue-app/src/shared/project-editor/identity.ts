@@ -491,7 +491,7 @@ export function readGraphEditorMetadata(value: object): GraphEditorMetadata {
     const id = GRAPH_EDITOR_ID_MAPS[i]!.get(value);
     if (id !== undefined) {
       if (!ids) {
-        ids = new Array<string | undefined>(GRAPH_EDITOR_ID_MAPS.length).fill(undefined);
+        ids = Array.from<string | undefined>({ length: GRAPH_EDITOR_ID_MAPS.length });
       }
       ids[i] = id;
     }

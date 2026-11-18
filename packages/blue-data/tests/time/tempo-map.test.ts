@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { TempoMap } from '../../src/time/tempo-map';
 import { CurveType } from '../../src/time/curve-type';
 import { TempoPoint } from '../../src/time/tempo-point';

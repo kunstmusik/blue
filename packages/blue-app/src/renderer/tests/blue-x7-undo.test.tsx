@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createDefaultBlueX7Voice, decodeSingleVoice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, InstrumentPatch } from '../../shared/project-editor';
 import { chooseAppSelectOption } from './app-select-test-utils';
@@ -237,8 +237,11 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
       setInputValue(feedbackInput, '2');
     });
     expect(
-      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
-        .disabled,
+      (
+        container?.querySelector(
+          'button[aria-label="Undo BlueX7 edit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
     ).toBe(false);
 
     const replacement = createDefaultBlueX7Voice();
@@ -246,12 +249,18 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     renderEditor({ ...instrument1, voice: replacement });
 
     expect(
-      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
-        .disabled,
+      (
+        container?.querySelector(
+          'button[aria-label="Undo BlueX7 edit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
     ).toBe(true);
     expect(
-      (container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement)
-        .disabled,
+      (
+        container?.querySelector(
+          'button[aria-label="Redo BlueX7 edit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
     ).toBe(true);
   });
 
@@ -283,12 +292,18 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     });
 
     expect(
-      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
-        .disabled,
+      (
+        container?.querySelector(
+          'button[aria-label="Undo BlueX7 edit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
     ).toBe(true);
     expect(
-      (container?.querySelector('button[aria-label="Redo BlueX7 edit"]') as HTMLButtonElement)
-        .disabled,
+      (
+        container?.querySelector(
+          'button[aria-label="Redo BlueX7 edit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
     ).toBe(true);
   });
 
@@ -415,8 +430,11 @@ describe('BlueX7 — Editor-Local Undo / Redo History', () => {
     expect(dispatchedPatches[1].blueX7).toEqual({ type: 'replaceVoice', voice });
     // A second undo must be impossible: the import was one step
     expect(
-      (container?.querySelector('button[aria-label="Undo BlueX7 edit"]') as HTMLButtonElement)
-        .disabled,
+      (
+        container?.querySelector(
+          'button[aria-label="Undo BlueX7 edit"]',
+        ) as HTMLButtonElement | null
+      )?.disabled,
     ).toBe(true);
 
     // Redo reapplies the same complete imported voice as one patch.

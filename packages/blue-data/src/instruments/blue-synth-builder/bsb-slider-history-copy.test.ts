@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { BSBCheckBox } from './bsb-check-box';
 import { BSBDropdown } from './bsb-dropdown';

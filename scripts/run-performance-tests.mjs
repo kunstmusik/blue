@@ -52,6 +52,9 @@ async function run() {
   if (!Object.hasOwn(suites, suite)) throw new Error('Choose node, browser, engine, or data');
   const selected = suites[suite];
   const packageRoot = path.join(repositoryRoot, 'packages', selected.directory);
+  const vitestManifestUrl = import.meta.resolve('vitest/package.json');
+  const vitestPackage = JSON.parse(readFileSync(new URL(vitestManifestUrl), 'utf8'));
+  const vitestCli = fileURLToPath(new URL(vitestPackage.bin.vitest, vitestManifestUrl));
   const rounds = Number(process.env.BLUE_PERFORMANCE_ROUNDS ?? 3);
   if (!Number.isInteger(rounds) || rounds < 1 || rounds > 10)
     throw new Error('BLUE_PERFORMANCE_ROUNDS must be an integer from 1 to 10');
@@ -68,8 +71,7 @@ async function run() {
     osRelease: os.release(),
     cpu: os.cpus()[0]?.model,
     node: process.version,
-    vitest: JSON.parse(readFileSync(path.join(packageRoot, 'node_modules/vitest/package.json')))
-      .version,
+    vitest: vitestPackage.version,
     rounds,
     workingTreeDirty: Boolean(
       execFileSync('git', ['status', '--porcelain'], { cwd: packageRoot, encoding: 'utf8' }).trim(),
@@ -117,7 +119,7 @@ async function run() {
     const result = spawnSync(
       process.execPath,
       [
-        path.join(packageRoot, 'node_modules/vitest/vitest.mjs'),
+        vitestCli,
         'run',
         '--config',
         selected.config,

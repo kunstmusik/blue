@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 import { createSourceFile, isFunctionDeclaration, ScriptTarget, transpileModule } from 'typescript';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { buildApplicationMenuTemplate } from './application-menu';
 
 // Exercise the actual menu installation without starting Electron's other services.

@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { EditorView } from 'codemirror';
 import { history, defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   dispatchHistoryAction,
   registerHostDocument,

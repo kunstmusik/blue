@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, GenericInstrument, TrackLayerGroup } from '@blue/data';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 

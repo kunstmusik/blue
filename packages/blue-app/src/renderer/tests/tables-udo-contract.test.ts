@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
   createProjectEditorSnapshot,
   createEffectEditorSnapshot,
@@ -6,7 +6,7 @@ import {
   isEmptyProjectDocumentPatch,
   udoToSnapshot,
 } from '../../shared/project-editor';
-import { BlueData, Effect, OpcodeDefinition, UDOStyle, Tables } from '@blue/data';
+import { BlueData, Effect, OpcodeDefinition, UDOStyle } from '@blue/data';
 
 function makeTestProject(): BlueData {
   const data = new BlueData();

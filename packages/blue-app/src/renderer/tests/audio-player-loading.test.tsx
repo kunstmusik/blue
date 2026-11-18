@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import AudioPlayerPanel from '../components/workbench/panels/audio-player/AudioPlayerPanel';
 import { emitPendingAudioFile } from '../components/workbench/panels/audio-player/audio-player-bus';
 import WaveformBody from '../components/workbench/panels/score/bar-renderers/WaveformBody';

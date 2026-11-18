@@ -9,7 +9,7 @@ import {
   ScriptTarget,
   transpileModule,
 } from 'typescript';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData } from '@blue/data';
 import { ProjectSession } from './project-session';
 import { ProjectHistory } from './project-history';

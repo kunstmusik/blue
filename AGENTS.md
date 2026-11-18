@@ -19,9 +19,13 @@ guidance and where to record feature decisions and evidence.
 
 ## Validation
 
-Run commands from the repository root with `pnpm`.
+Run commands from the repository root with `pnpm`. The JavaScript and TypeScript
+tooling uses the workspace-local Vite+ installation. Use `pnpm exec vp` for direct tool access.
+`pnpm lint` runs the workspace lint and format checks. For formatting only, use
+`pnpm format:check` or `pnpm exec vp fmt --check <paths>`.
 
 - Start with the affected package: `pnpm --filter @blue/app test` or the relevant package test.
+- Import Vitest APIs from `vite-plus/test` and browser helpers from `vite-plus/test/browser`.
 - For main-process changes, run `pnpm --filter @blue/app build:main`.
 - Before handoff, run `pnpm test` and `pnpm lint` when the change spans packages or shared behavior.
 - Run `git diff --check` for whitespace errors.

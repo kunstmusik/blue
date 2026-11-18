@@ -1,7 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import type { TimeConversionContext } from '../time/time-unit-logic';
 import {
-  DEFAULT_PPQ,
   beatsToSeconds,
   secondsToBeats,
   beatsToBBTInternal,
@@ -9,11 +8,7 @@ import {
   formatForBase,
   parseForBase,
   formatBeatsValue,
-  formatBBT,
-  formatBBST,
-  formatBBF,
   formatTime,
-  formatSeconds,
   formatSMPTE,
   totalSecondsToTime,
   measureStartBeats,

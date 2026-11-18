@@ -30,7 +30,7 @@ export function buildBlueX7VoiceTransport(
   voice: BlueX7Voice,
   operatorEnabled: readonly boolean[],
 ): BlueX7VoiceTransport {
-  const transport = new Array<number>(155).fill(0);
+  const transport = Array.from({ length: 155 }, () => 0);
 
   for (const descriptor of BLUE_X7_PARAMETER_DESCRIPTORS) {
     if (descriptor.transport.kind !== 'voice') {

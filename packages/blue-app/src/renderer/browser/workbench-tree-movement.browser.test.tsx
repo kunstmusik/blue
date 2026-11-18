@@ -2,7 +2,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { DockviewReact, type DockviewApi, type IDockviewPanelProps } from 'dockview';
 import 'dockview/dist/styles/dockview.css';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
   applyAuxiliaryLayout,
   createDefaultAuxiliaryLayoutState,
@@ -595,7 +595,8 @@ describe('unaffected auxiliary session preservation', () => {
 
         const active = document.activeElement;
         const librariesGroupElement = api.getPanel('LibrariesTopComponent')?.group.element as
-          HTMLElement | undefined;
+          | HTMLElement
+          | undefined;
         const fileManagerGroupElement = api.getPanel('BlueFileManagerTopComponent')?.group
           .element as HTMLElement | undefined;
         expect(

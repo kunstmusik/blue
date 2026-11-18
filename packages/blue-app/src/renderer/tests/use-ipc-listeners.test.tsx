@@ -3,7 +3,7 @@
 import React, { StrictMode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { toast } from 'sonner';
 
 vi.mock('sonner', () => ({
@@ -26,11 +26,7 @@ import {
   setProjectHistoryProjection,
 } from '../hooks/use-project-history';
 import UndoHistoryPanel from '../components/workbench/panels/UndoHistoryPanel';
-import {
-  getProjectDocumentRevision,
-  getProjectHistoryParticipantContextId,
-  useProjectStore,
-} from '../stores/project-store';
+import { getProjectDocumentRevision, useProjectStore } from '../stores/project-store';
 import { usePlaybackStore } from '../stores/playback-store';
 import { meterStore } from '../stores/meter-store';
 import { useUIStore } from '../stores/ui-store';

@@ -10,7 +10,6 @@ import { getProjectDocumentRevision, useProjectStore } from '../../../stores/pro
 import type {
   ScoreDocumentSnapshot,
   ScoreLayerGroupSnapshot,
-  ScoreLayerSnapshot,
   ScoreRowObjectSnapshot,
   PolyObjectLayerGroupSnapshot,
 } from './score/types';
@@ -76,10 +75,7 @@ import {
   getPushDisabledReasonLabel,
   type LayerRemovalPlan,
   type VisibleLayerRef,
-  SOUND_LAYER_PRESET_HEIGHTS,
-  TRACK_PRESET_HEIGHTS,
   getLayerHeightStatus,
-  resolveLayerHeightTargets,
 } from './score/layer-selection-utils';
 import { LayerHeightResizeHandle } from './score/LayerHeightResizeHandle';
 import {

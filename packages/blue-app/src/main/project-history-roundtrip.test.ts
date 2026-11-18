@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   AddProcessor,
   getProjectParameterCatalog,
@@ -48,7 +48,6 @@ import {
   assignLayerSelectionId,
   assignPatternLayerId,
   getMixerChannelSnapshotId,
-  getMixerEntrySnapshotId,
   getScoreObjectId,
   recordScoreObjectIdForData,
 } from '../shared/project-editor/identity';

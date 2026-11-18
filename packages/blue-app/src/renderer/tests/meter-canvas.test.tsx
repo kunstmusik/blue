@@ -3,12 +3,12 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import { MeterCanvas } from '../components/workbench/panels/mixer/MeterCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { meterStore } from '../stores/meter-store';
-import type { MeterBindingMapPayload, MeterFramePayload } from '../../shared/meter-types';
+import type { MeterBindingMapPayload } from '../../shared/meter-types';
 import {
   METER_PROFILES,
   getMeterProfile,
@@ -404,8 +404,8 @@ describe('MeterCanvas', () => {
       };
 
       // Feed active levels across all channels
-      const rms = new Array(nchnls).fill(0.5);
-      const peak = new Array(nchnls).fill(0.8);
+      const rms = Array.from({ length: nchnls }, () => 0.5);
+      const peak = Array.from({ length: nchnls }, () => 0.8);
       meterStore.processMeterFrame(
         {
           sequence: nchnls,

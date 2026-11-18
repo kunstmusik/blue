@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { BrowserWindow, MessageBoxOptions, MessageBoxReturnValue } from 'electron';
 import { showEngineRecoveryFailureDialog } from './engine-recovery-dialog';
 import type { NativeConfirmationDialogSeam } from './native-confirmation';

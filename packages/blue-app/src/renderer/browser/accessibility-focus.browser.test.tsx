@@ -1,6 +1,6 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { AppSelect } from '../components/AppSelect';
 import CommitNumberInput from '../components/CommitNumberInput';
@@ -12,7 +12,6 @@ import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerS
 import { MeterCanvas } from '../components/workbench/panels/mixer/MeterCanvas';
 import { MeterScaleRuler } from '../components/workbench/panels/mixer/MeterScaleRuler';
 import { PeakReadout } from '../components/workbench/panels/mixer/ChannelStrip';
-import { meterStore } from '../stores/meter-store';
 import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
 describe('Accessibility Focus Traversal Browser Tests (T020)', () => {

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../../blue-data';
 import { PianoRoll } from '../../sound-objects/piano-roll';
 import { TrackLayerGroup } from '../../score/track/track-layer-group';

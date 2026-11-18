@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { PROJECT_DOCUMENT_IPC_CHANNELS, registerProjectDocumentIpc } from './project-document-ipc';
 import {
   createHandlerRecord,

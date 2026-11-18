@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach } from 'vite-plus/test';
 import {
   hasAuditionEligibleSelection,
   projectScoreLayerGroupsWithGesture,

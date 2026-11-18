@@ -4,7 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { PythonInstrumentSnapshot, UdoDefinitionSnapshot } from '../../shared/project-editor';
 import PythonInstrumentEditor from '../components/workbench/panels/orchestra/PythonInstrumentEditor';
 

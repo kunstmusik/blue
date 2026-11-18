@@ -1,4 +1,4 @@
-import { beforeAll, describe, it, expect, vi } from 'vitest';
+import { beforeAll, describe, it, expect, vi } from 'vite-plus/test';
 import { Instance } from './instance';
 import { GenericScore } from './generic-score';
 import { AudioFile } from './audio-file';

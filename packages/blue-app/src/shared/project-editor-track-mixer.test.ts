@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, Channel, Effect, Send, TrackLayer, TrackLayerGroup } from '@blue/data';
 import {
   applyProjectDocumentPatch,

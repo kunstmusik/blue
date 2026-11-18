@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { AudioFile } from './audio-file';
 import { BlueData } from '../blue-data';
 import { PolyObject } from './poly-object';

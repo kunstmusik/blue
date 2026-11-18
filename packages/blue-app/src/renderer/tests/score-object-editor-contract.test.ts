@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { formatForBase, parseForBase } from '../time/time-unit-logic';
@@ -8,8 +8,6 @@ import {
   AudioClip,
   PianoRoll,
   TimeBehavior,
-  TimeDuration,
-  TimePosition,
   PolyObject,
   SoundLayer,
   TrackLayerGroup,
@@ -33,7 +31,6 @@ import {
   createFallbackEditorDocument,
   createProjectEditorSnapshot,
   applyProjectDocumentPatch,
-  type ScoreObjectEditorRequest,
   type ScoreObjectEditorTargetSnapshot,
 } from '../../shared/project-editor';
 import { assignExplicitScoreObjectId } from '../../shared/project-editor/identity';

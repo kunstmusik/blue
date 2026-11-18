@@ -12,7 +12,7 @@ import { TimeDuration } from '../../time/time-duration';
 import { TimeContext } from '../../time/time-context';
 import { beatsToDuration } from '../../time/time-unit-math';
 import { beatsToTimePosition } from '../../time/time-utilities';
-import { FadeType, fadeTypeFromString, fadeTypeToCsound } from './fade-type';
+import { FadeType, fadeTypeFromString } from './fade-type';
 import { Element } from '../../serialization/xml-reader';
 import { checkRoot, checkShape, parseXmlNumber, readText, readBoolean } from '../../utilities/xml';
 import {

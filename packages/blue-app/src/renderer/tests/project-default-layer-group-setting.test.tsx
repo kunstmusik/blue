@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import ProjectDefaultsSettings from '../components/settings/ProjectDefaultsSettings';
 import { createDefaultProjectDefaultsSettings } from '../../shared/program-settings';
 import { chooseAppSelectOption, getAppSelectOptionLabels } from './app-select-test-utils';

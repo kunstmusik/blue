@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 import {

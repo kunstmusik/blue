@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vite-plus/test';
 import * as os from 'os';
 import * as path from 'path';
 import { BlueData, PolyObject, SoundLayer, AudioFile, GenericScore } from '@blue/data';

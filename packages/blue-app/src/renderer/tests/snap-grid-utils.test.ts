@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import { secondsToSmpteFrame } from '@blue/data';
 import { beatsToSeconds } from '../time/time-unit-logic';
 import {
@@ -68,7 +68,7 @@ it('snaps to rational physical frames through a tempo change in either counting 
     const format = { ...context, smpteDropFrame: dropFrame };
     expect(snapBeatToGrid(90.13, 'floor', 'FRAME', 1, undefined, format)).toBeCloseTo(90.12, 12);
     expect(snapBeatToGrid(90.17, 'nearest', 'FRAME', 1, undefined, format)).toBeCloseTo(
-      90.18673333333333,
+      90.18673333333334,
       12,
     );
     expect(snapBeatToGrid(10.02, 'floor', 'FRAME', 1, undefined, format)).toBeCloseTo(10.01, 12);

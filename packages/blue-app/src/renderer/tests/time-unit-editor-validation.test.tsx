@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { expect, it, vi } from 'vitest';
+import { expect, it, vi } from 'vite-plus/test';
 import TimeUnitEditor from '../components/workbench/panels/score-object/TimeUnitEditor';
 
 it('keeps a skipped DF label visible with feedback and no durable commit', () => {

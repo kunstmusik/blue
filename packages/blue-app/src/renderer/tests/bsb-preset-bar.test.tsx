@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import BSBPresetBar from '../components/workbench/panels/orchestra/bsb/BSBPresetBar';
 import type {
   BlueSynthBuilderInstrumentSnapshot,

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   applyLegacyLayoutMigration,
   createDefaultWindowLayoutSettings,

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getProjectDocumentRevision, useProjectStore } from '../../../stores/project-store';
 import ArrangementPanel from './orchestra/ArrangementPanel';
 import InstrumentEditorPanel from './orchestra/InstrumentEditorPanel';

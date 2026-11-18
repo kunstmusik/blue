@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   BlueData,
   Channel,
@@ -34,7 +34,7 @@ const meterBroadcastCapture = vi.hoisted(() => {
   const listeners: Array<(channel: string, payload: unknown) => void> = [];
   const broadcastToWorkbenchWindows = (channel: string, payload: unknown): void => {
     calls.push({ channel, payload, at: performance.now() });
-    for (const listener of [...listeners]) {
+    for (const listener of Array.from(listeners)) {
       listener(channel, payload);
     }
   };

@@ -1,6 +1,6 @@
 import { net, session } from 'electron';
 import { EventEmitter } from 'node:events';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   BlueShareTransport,
   BlueShareNotDispatchedError,

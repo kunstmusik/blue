@@ -29,7 +29,6 @@ import {
   setScoreStart,
 } from '../utilities/score';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { Layer } from '../score/layers/layer';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
 import {
   checkRoot,
@@ -44,7 +43,6 @@ import {
   getBasicXML,
   initBasicFromXML,
 } from './sound-object-utilities';
-import { loadSoundObjectFromXML } from './sound-object-registry';
 import { PythonObject } from './python-object';
 import { ClojureObject } from './clojure-object';
 import { JavaScriptObject } from './javascript-object';

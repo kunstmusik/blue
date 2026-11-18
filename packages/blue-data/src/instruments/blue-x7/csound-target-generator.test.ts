@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createDefaultBlueX7Voice } from '../blue-x7';
 import { BLUE_X7_PARAMETER_DESCRIPTORS } from './parameter-catalog';
 import { buildBlueX7VoiceTransport } from './voice-transport';

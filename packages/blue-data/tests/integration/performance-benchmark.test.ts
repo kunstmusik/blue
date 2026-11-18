@@ -3,7 +3,7 @@
  * Correctness: pnpm --filter @blue/data test tests/integration/performance-benchmark.test.ts
  * Measurements: pnpm --filter @blue/data test:performance
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { BlueData } from '../../src/blue-data';
 import { TrackLayerGroup } from '../../src/score/track/track-layer-group';
 import { AudioClip } from '../../src/score/audio/audio-clip';

@@ -18,7 +18,7 @@ export class Pattern {
   solo = false;
 
   constructor(numSteps: number) {
-    this.values = new Array(numSteps).fill(false);
+    this.values = Array.from({ length: numSteps }, () => false);
   }
 
   static copyFrom(other: Pattern): Pattern {
@@ -56,7 +56,7 @@ export class Pattern {
     let score = '';
     let muted = false;
     let solo = false;
-    let values = new Array(16).fill(false);
+    let values = Array.from({ length: 16 }, () => false);
 
     const nodes = data.getElements();
     while (nodes.hasMoreElements()) {
@@ -84,7 +84,7 @@ export class Pattern {
               message: 'Pattern values must be a binary vector.',
               recovery: 'Use only zero and one step values.',
             });
-          values = new Array(valStr.length).fill(false);
+          values = Array.from({ length: valStr.length }, () => false);
           for (let i = 0; i < valStr.length; i++) {
             values[i] = valStr[i] === '1';
           }

@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { useBlueX7EffectiveValues } from '../components/instruments/blue-x7/use-blue-x7-effective-values';
 import { NextNoteBadge } from '../components/instruments/blue-x7/next-note-badge';
 import { CommonPanel } from '../components/instruments/blue-x7/common-panel';
@@ -536,7 +536,9 @@ describe('useBlueX7EffectiveValues (Spec 092 FR-014)', () => {
       await Promise.resolve();
     });
 
-    expect((container?.querySelector('#bluex7-feedback') as HTMLInputElement).value).toBe('6');
+    expect((container?.querySelector('#bluex7-feedback') as HTMLInputElement | null)?.value).toBe(
+      '6',
+    );
     expect(onInstrumentPatch).not.toHaveBeenCalled();
   });
 

@@ -27,7 +27,12 @@ import type { EngineControlTrafficObservation } from './engine-bridge';
 import type { MixerGateEngineIO } from './mixer-mute-solo-runtime';
 
 export type BlueLiveEngineStatus =
-  'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
+  | 'idle'
+  | 'starting'
+  | 'running'
+  | 'stopping'
+  | 'stopped'
+  | 'error';
 
 export type BlueLiveStateChangeCallback = (running: boolean) => void;
 
@@ -453,7 +458,7 @@ export class BlueLiveEngineSession {
       for (const opt of liveOptions) {
         try {
           await client.setOption(opt);
-        } catch (err) {
+        } catch {
           console.warn(`[BlueLive] setOption skipped: ${opt}`);
         }
         if (await this.stopCancelledStart(lifecycleGeneration)) {

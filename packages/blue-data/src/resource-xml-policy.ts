@@ -13,7 +13,12 @@ import { checkRoot } from './utilities/xml';
 
 export type XmlResourceKind = 'instrument' | 'effect' | 'soundObject' | 'udo' | 'preset';
 export type XmlResource =
-  Instrument | Effect | SoundObject | OpcodeDefinition | Preset | PresetGroup;
+  | Instrument
+  | Effect
+  | SoundObject
+  | OpcodeDefinition
+  | Preset
+  | PresetGroup;
 
 /** Disk, library and BlueShare-shaped resources use local owners without project migrations. */
 export function readResourceXml(

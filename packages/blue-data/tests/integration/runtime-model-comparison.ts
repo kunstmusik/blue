@@ -1,4 +1,4 @@
-import { expect } from 'vitest';
+import { expect } from 'vite-plus/test';
 import { Element } from '../../src/serialization/xml-reader';
 
 export function normalizeXml(xml: string): string {

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { LibraryMigrationStateStore } from './migration-state-store';
 import { UnifiedLibraryImportExportService } from './import-export-service';

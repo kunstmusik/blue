@@ -66,7 +66,7 @@ export function buildWavBytes(
   const fmtChunkSize = 16;
   const fileSize = 4 + (8 + fmtChunkSize) + (8 + dataByteLength);
 
-  const buf = new Array(44 + dataByteLength).fill(0);
+  const buf = Array.from({ length: 44 + dataByteLength }, () => 0);
   writeFourCCBE(buf, 0, 'RIFF');
   writeUint32LE(buf, 4, fileSize);
   writeFourCCBE(buf, 8, 'WAVE');
@@ -103,7 +103,7 @@ export function buildAiffBytes(
   const commChunkSize = 18;
   const formSize = 4 + (8 + commChunkSize);
 
-  const buf = new Array(12 + 8 + commChunkSize).fill(0);
+  const buf = Array.from({ length: 12 + 8 + commChunkSize }, () => 0);
   writeFourCCBE(buf, 0, 'FORM');
   writeUint32BE(buf, 4, formSize);
   writeFourCCBE(buf, 8, 'AIFF');
@@ -133,7 +133,7 @@ export function buildAifcBytes(
   const commChunkSize = 22;
   const formSize = 4 + (8 + commChunkSize);
 
-  const buf = new Array(12 + 8 + commChunkSize).fill(0);
+  const buf = Array.from({ length: 12 + 8 + commChunkSize }, () => 0);
   writeFourCCBE(buf, 0, 'FORM');
   writeUint32BE(buf, 4, formSize);
   writeFourCCBE(buf, 8, 'AIFC');

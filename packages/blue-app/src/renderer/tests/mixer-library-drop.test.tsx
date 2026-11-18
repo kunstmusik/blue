@@ -4,7 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { Effect } from '@blue/data';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ChannelStrip from '../components/workbench/panels/mixer/ChannelStrip';
 import { useLibraryStore } from '../stores/library-store';
 import type { MixerChannelSnapshot, MixerSnapshot } from '../../shared/project-editor';

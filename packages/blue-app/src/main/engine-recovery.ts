@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import {
   ENGINE_RECOVERY_STATUS_CHANNEL,
-  type EngineRecoveryAction,
   type EngineRecoveryFailureCategory,
   type EngineRecoverySessionKind,
   type EngineRecoveryStatus,
@@ -114,7 +113,7 @@ export function sanitizeEngineDiagnostics(raw: string): string {
 
   for (const line of lines) {
     // Exclude XML / CSD tag contents
-    if (/<[a-zA-Z0-9_\-]+>|<\/[a-zA-Z0-9_\-]+>/.test(line)) {
+    if (/<[a-zA-Z0-9_-]+>|<\/[a-zA-Z0-9_-]+>/.test(line)) {
       continue;
     }
 

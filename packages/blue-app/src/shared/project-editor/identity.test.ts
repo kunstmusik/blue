@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BlueData,
   Channel,
@@ -8,7 +8,6 @@ import {
   ScoreTrack,
   PolyObject,
   AudioClip,
-  GenericInstrument,
   BlueSynthBuilder,
   BSBKnob,
   BSBDropdown,
@@ -19,7 +18,6 @@ import {
 import {
   getArrangementInstrumentOwnerIdentity,
   getTrackInstrumentOwnerIdentity,
-  assignMixerSnapshotId,
   getMixerChannelSnapshotId,
   assignExplicitMixerChannelSnapshotId,
   getKnownMixerChannelSnapshotId,

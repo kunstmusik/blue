@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { JavaRuntimeClientContract } from '@blue/data';
 import { testPythonInstrument } from './python-instrument-test';
 

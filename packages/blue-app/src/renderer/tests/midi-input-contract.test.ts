@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import './mock-blueapi';
 import { MIDI_INPUT_INITIALIZE_CHANNEL } from '../../shared/midi-input';
 

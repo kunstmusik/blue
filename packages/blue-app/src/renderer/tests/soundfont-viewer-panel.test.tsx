@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import SoundFontViewerPanel from '../components/workbench/panels/tools/SoundFontViewerPanel';
 import { emitPendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 import { DEFAULT_SPLIT_SIZE_PX } from '../../shared/window-layout-settings';

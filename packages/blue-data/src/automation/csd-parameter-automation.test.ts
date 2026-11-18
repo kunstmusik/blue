@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import {
   appendParameterScoreJava,
@@ -8,7 +8,6 @@ import {
 import { AutomationCurve, Parameter } from './parameter';
 import {
   assertManifestInvariants,
-  bitsToDouble,
   doubleToBits,
   loadJavaParityManifest,
   loadOfflineFixtureCases,

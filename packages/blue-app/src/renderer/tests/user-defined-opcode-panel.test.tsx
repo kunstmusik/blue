@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import UserDefinedOpcodePanel from '../components/workbench/panels/UserDefinedOpcodePanel';
 import { useProjectStore } from '../stores/project-store';
 

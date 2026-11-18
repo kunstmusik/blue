@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, CurveType, Element, TempoMap, TempoPoint, TimeBase } from '@blue/data';
 import {
   applyProjectDocumentPatch,

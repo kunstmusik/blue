@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueShareService, type MinimalWebContents } from './service';
 import { BlueShareTransport } from './transport';
 import { FakeBlueShareServer } from './test-helpers';

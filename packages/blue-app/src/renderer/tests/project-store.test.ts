@@ -2,7 +2,7 @@
 
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   __testAwaitPendingPatches,
   __testClearPendingPatches,
@@ -540,7 +540,7 @@ describe('project-store — generation settlement barrier', () => {
 
       useProjectStore.setState({ flushPendingPatches: flush });
       window.blueAPI = {
-        ...(previousBlueAPI ?? {}),
+        ...previousBlueAPI,
         [api]: generate,
       } as typeof window.blueAPI;
 

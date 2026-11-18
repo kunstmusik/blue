@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Preset } from './preset';
 import { PresetGroup } from './preset-group';
 import { BSBGraphicInterface } from './bsb-graphic-interface';

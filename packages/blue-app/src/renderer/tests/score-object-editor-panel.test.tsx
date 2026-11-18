@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BlueData,
   GenericScore,
@@ -15,21 +15,11 @@ import {
   SoundLayer,
   Instance,
   SoundObjectLibrary,
-  PatternObject,
-  Sound,
-  AudioFile,
-  FrozenSoundObject,
-  LineObject,
-  ZakLineObject,
   PianoRoll,
   PianoNote,
-  TrackerObject,
-  JMask,
   FadeType,
   TimeBase,
   TimeBehavior,
-  TimeDuration,
-  NoteProcessorChain,
 } from '@blue/data';
 import {
   createScoreObjectEditorDocument,

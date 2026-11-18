@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test';
 import {
   PROJECT_HISTORY_COMMIT_CHANNEL,
   PROJECT_HISTORY_UNDO_CHANNEL,

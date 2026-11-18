@@ -19,7 +19,7 @@ import {
   stripTypeAnnotations,
 } from './udo-type-utils';
 
-const MODERN_UDO_REGEX = /^([^\(]+)\((.*)\)\s*:\s*(.+)$/s;
+const MODERN_UDO_REGEX = /^([^(]+)\((.*)\)\s*:\s*(.+)$/s;
 
 /**
  * Parse Csound UDO text into an OpcodeList.

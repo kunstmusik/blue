@@ -1,8 +1,7 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 import { BlueData } from './blue-data';
 import { Arrangement } from './arrangement';
 import { Channel } from './mixer/channel';
-import { getStereoPanGains } from './mixer/channel-pan';
 import { GenericInstrument } from './instruments/generic-instrument';
 import { BlueSynthBuilder } from './instruments/blue-synth-builder';
 import { OpcodeDefinition } from './opcodes/opcode-definition';

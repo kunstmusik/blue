@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vite-plus/test';
 import { TimePosition } from '../../src/time/time-position';
-import { TimeDuration } from '../../src/time/time-duration';
 import { TimeBase } from '../../src/time/time-base';
 import { TimeContext } from '../../src/time/time-context';
-import { MeterMap } from '../../src/time/meter-map';
 import { Meter } from '../../src/time/meter';
 import { MeasureMeterPair } from '../../src/time/measure-meter-pair';
 import {

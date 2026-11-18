@@ -22,10 +22,6 @@ import {
   isRequestId,
   MAX_RESOURCE_ID,
   type BlueShareResult,
-  type BlueShareError,
-  type ResourceKind,
-  type ResourceKey,
-  type PublishResourceRequest,
 } from '../../shared/blueshare';
 import { registerIpcTransaction } from '../ipc/ipc-registration';
 import { BlueShareService } from './service';

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { AudioClip, BlueData, ScoreTrack, TrackLayerGroup } from '@blue/data';
 import { buildWavBytes } from '@blue/data/test-support/audio-fixtures';
 import { preflightAudioLayout, type AudioLayoutPreflightDeps } from './audio-layout-preflight';

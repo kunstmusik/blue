@@ -1,5 +1,5 @@
 import { reportPerformance } from '../../test-support/performance';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { LegacyLibraryDocumentPlan } from '@blue/data';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryService } from './service';

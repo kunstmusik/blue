@@ -1,10 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   getMeterTrackGeometry,
   getProfileLabelCenterY,
   selectVisibleMeterLabels,
   METER_TRACK_TOP,
-  METER_TRACK_BOTTOM_INSET,
 } from '../components/workbench/panels/mixer/meter-layout';
 import {
   METER_PROFILES,

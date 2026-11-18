@@ -37,7 +37,8 @@ Do not create a tagged release from an untagged commit, a branch name, or a tag 
 
 Install the following before any local package build:
 
-- Node.js 22 or newer and the pnpm version pinned in the root `package.json` `packageManager` field.
+- A Node.js version supported by the [workspace toolchain](../README.md#prerequisites)
+  and the pnpm version pinned in the root `package.json` `packageManager` field.
 - Java 17+ and Maven 3+ so the Java helper can produce `blue-java.jar` and `pythonLib`.
 - Quarto to render the bundled user manual.
 - The platform tools required by `electron-builder` for the current host operating system.
@@ -46,10 +47,10 @@ Install the following before any local package build:
   pinned vcpkg checkout automatically unless `VCPKG_ROOT` selects an existing
   bootstrapped checkout.
 
-Use a clean checkout and the lockfile:
+Use a clean checkout and the lockfile. The install supplies the project-local
+Vite+ CLI used by the build, test, and lint scripts.
 
 ```bash
-corepack enable
 pnpm install --frozen-lockfile
 pnpm build
 pnpm test

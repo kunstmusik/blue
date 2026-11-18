@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vite-plus/test';
 import { initializeJavaScriptRuntime, JavaScriptSession } from '@blue/data';
 import { evaluateJavaScriptConsole } from './repl-console-runtime';
 

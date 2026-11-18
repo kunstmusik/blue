@@ -9,7 +9,7 @@ import {
 } from '@blue/data';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { UnifiedLibraryProjectAdapter } from './project-adapter';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { ProjectHistory } from '../project-history';
@@ -147,7 +147,9 @@ describe('project library item editing', () => {
     ).toHaveLength(0);
     const bins = data.getLiveData().getLiveObjectBins();
     expect(bins.getLiveObject(0, 0)).toBeNull();
-    expect((bins.getLiveObject(0, 1)?.getSoundObject() as PolyObject)[0]).toHaveLength(0);
+    expect(
+      (bins.getLiveObject(0, 1)?.getSoundObject() as PolyObject | undefined)?.[0],
+    ).toHaveLength(0);
   });
 
   it('restores a deleted project definition and linked instances through history', async () => {
@@ -165,7 +167,7 @@ describe('project library item editing', () => {
         ...score,
         nested[0]![0],
         bins.getLiveObject(0, 0)?.getSoundObject(),
-        (bins.getLiveObject(0, 1)?.getSoundObject() as PolyObject)[0]![0],
+        (bins.getLiveObject(0, 1)?.getSoundObject() as PolyObject | undefined)?.[0]![0],
       ].map((instance) => (instance as Instance).getSoundObject());
     };
     history.markClean();

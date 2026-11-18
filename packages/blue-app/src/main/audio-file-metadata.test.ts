@@ -2,7 +2,7 @@ import { open } from 'node:fs/promises';
 import path from 'node:path';
 import { parseAudioFileMetadata } from '@blue/data';
 import { buildWavBytes, buildAiffBytes } from '@blue/data/test-support/audio-fixtures';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { readAudioFileMetadataHeader } from './audio-file-metadata';
 
 vi.mock('node:fs/promises', () => ({ open: vi.fn() }));

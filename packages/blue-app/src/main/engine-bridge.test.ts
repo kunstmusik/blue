@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { EngineStateSnapshot } from '@blue/engine-client';
 import { Parameter } from '@blue/data';
 import { EngineBridge } from './engine-bridge';

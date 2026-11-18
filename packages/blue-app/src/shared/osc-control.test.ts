@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   OSC_COMMAND_REGISTRY,
   OSC_DEFAULT_PREFERRED_PORT,

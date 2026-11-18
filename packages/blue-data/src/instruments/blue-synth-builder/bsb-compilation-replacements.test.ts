@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Parameter } from '../../automation/parameter';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { BSBCheckBox } from './bsb-check-box';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BLUE_FILE_MANAGER_DRAG_MIME,
   CSOUND_AUDIO_SOURCE_EXTENSIONS,

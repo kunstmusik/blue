@@ -13,15 +13,7 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import {
-  checkRoot,
-  checkShape,
-  readText,
-  readInt,
-  readBoolean,
-  readEnum,
-  parseXmlBoolean,
-} from '../utilities/xml';
+import { checkRoot, checkShape, readText, readInt } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
@@ -246,7 +238,7 @@ export class FrozenSoundObject extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['numChannels', 'frozenWaveFileName', 'soundObject']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'numChannels', 'frozenWaveFileName', 'soundObject'],
       ctx,
     );
     const obj = new FrozenSoundObject();

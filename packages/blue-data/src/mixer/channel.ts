@@ -20,20 +20,16 @@ import { Parameter } from '../automation/parameter';
 import type { CopyMode } from '../deep-copyable';
 import { writeDouble, writeBoolean } from '../utilities/xml';
 import {
-  clampPan,
   isValidPan,
   DEFAULT_PAN,
   type StereoPanMode,
   DEFAULT_STEREO_PAN_MODE,
   isValidStereoPanMode,
-  clampStereoPanMode,
   DEFAULT_PAN_WIDTH,
   isValidPanWidth,
-  clampPanWidth,
   DEFAULT_DUAL_PAN_LEFT,
   DEFAULT_DUAL_PAN_RIGHT,
   isValidDualPan,
-  clampDualPan,
   PARAM_PAN,
   PARAM_WIDTH,
   PARAM_DUAL_LEFT,

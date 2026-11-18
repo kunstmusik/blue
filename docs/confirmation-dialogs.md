@@ -73,7 +73,15 @@ Callers declare semantic action IDs (e.g., `proceed`, `discard`, `save`, `cancel
 
 - Use inline or modal React text inputs with validation for naming and other input prompts.
 - Disable unavailable commands in their owning menu or control. Use the appropriate native or in-app surface for actionable acknowledgements.
-- **Static Lint Enforcement**: Flat ESLint rules prevent bare, `window.*`, and `globalThis.*` `confirm`/`prompt`/`alert` calls in production renderer code, plus direct `showMessageBox` and `showMessageBoxSync` calls outside `packages/blue-app/src/main/native-confirmation.ts`. Test files and explicitly named fixture/generated/user-content directories are excluded. Unused ESLint disables are errors; any future inline exception must carry a nearby rationale comment and be added to the inventory below.
+- [The Vite+ lint configuration](../vite.config.mts) and
+  [Blue's Oxlint rules](../scripts/blue-lint-plugin.mjs) enforce this policy.
+  They reject bare browser dialog globals and access to `confirm`, `prompt`,
+  or `alert` through `window` or `globalThis` in production app code.
+  Use `showNativeConfirmation` for Electron message boxes outside the native
+  adapter. Test files and the documented fixture, generated, and user-content
+  directories are excluded. Unused Oxlint and ESLint suppression directives
+  are errors. Document the reason for any inline exception beside the
+  directive and add it to the inventory below.
 
 ---
 

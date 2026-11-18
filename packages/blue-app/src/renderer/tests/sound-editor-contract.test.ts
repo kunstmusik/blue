@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, PolyObject, SoundLayer, Sound } from '@blue/data';
 import {
   createProjectEditorSnapshot,
@@ -6,7 +6,6 @@ import {
   applyProjectDocumentPatch,
   type ScoreObjectEditorTargetSnapshot,
   type SoundEditorPayload,
-  type SoundAutomationParameterSnapshot,
 } from '../../shared/project-editor';
 import { assignExplicitScoreObjectId } from '../../shared/project-editor/identity';
 

@@ -13,7 +13,14 @@ import {
 } from '../shared/project-editor/history-node-identity';
 
 type Atom =
-  undefined | null | boolean | number | string | bigint | symbol | ((...args: never[]) => unknown);
+  | undefined
+  | null
+  | boolean
+  | number
+  | string
+  | bigint
+  | symbol
+  | ((...args: never[]) => unknown);
 type Value = Atom | { ref: number } | { immutable: object };
 interface Field {
   value?: Value;
@@ -343,7 +350,7 @@ function contentChange(
     offset += start;
     if (!a.length && !b.length) return;
     if (a.length && b.length && depth < 32) {
-      for (const middle of [...new Set([Math.floor(a.length / 2), 0, a.length - 1])]) {
+      for (const middle of new Set([Math.floor(a.length / 2), 0, a.length - 1])) {
         const expected = Math.min(b.length - 1, Math.floor((middle * b.length) / a.length));
         let match = sameValue(a[middle], b[expected])
           ? expected
@@ -968,13 +975,15 @@ export function applyProjectGraphDelta(
         )
           throw new Error('History array element is no longer writable');
       }
-    } else if (!(
-      target instanceof Map ||
-      target instanceof Set ||
-      target instanceof Date ||
-      target instanceof ArrayBuffer ||
-      ArrayBuffer.isView(target)
-    ))
+    } else if (
+      !(
+        target instanceof Map ||
+        target instanceof Set ||
+        target instanceof Date ||
+        target instanceof ArrayBuffer ||
+        ArrayBuffer.isView(target)
+      )
+    )
       throw new Error('History collection kind changed');
     if (
       (target instanceof ArrayBuffer || ArrayBuffer.isView(target)) &&

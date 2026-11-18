@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   PLAYBACK_INSTRUMENT_ORC,
   PLAYBACK_INSTRUMENT_ORC_PANNING,

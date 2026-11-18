@@ -5,6 +5,7 @@ Use this index when changing Blue. Start with the repository's [agent guidance](
 
 | When changing                                                                  | Read                                                                                                             |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Workspace tooling, builds, lint, formatting, or test commands                  | [Build from source](../README.md#build-from-source) and [contributing](../README.md#contributing)                |
 | Module boundaries, project ownership, history, IPC, or asynchronous lifecycles | [Modularization and ownership](modularization.md)                                                                |
 | Renderer typography, color, or contrast                                        | [Typography](typography.md), [color accessibility](color-accessibility.md), and [design guidance](../DESIGN.md)  |
 | Confirmation decisions or workbench popups                                     | [Confirmation dialogs](confirmation-dialogs.md) and [popout popup conventions](popout-popup-conventions.md)      |

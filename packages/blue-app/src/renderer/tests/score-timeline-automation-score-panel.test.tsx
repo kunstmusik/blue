@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import type { AutomationTargetGroupSnapshot } from '../../shared/project-editor';
 import ScorePanel from '../components/workbench/panels/ScorePanel';

@@ -5,7 +5,6 @@ import {
   type WindowLayoutSettingsSnapshot,
 } from './window-layout-settings';
 import {
-  compareMidiInputDevicePreference,
   createDefaultMidiInputPreferences,
   normalizeMidiInputPreferences,
   type MidiInputPreferences,

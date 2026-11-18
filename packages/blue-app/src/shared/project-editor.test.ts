@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   BlueData,
   AudioClip,
@@ -147,7 +147,7 @@ describe('Lazy XML omission for project snapshots', () => {
         ? lightweight.score!.layerGroups[0]!.layers[0]!.items[0]!
         : null;
     expect(trackItem?.serializedXml).toBeUndefined();
-    const liveCell = lightweight.blueLive?.bins.cells[0]![0]!;
+    const liveCell = lightweight.blueLive?.bins.cells[0]![0];
     expect(liveCell.serializedXml).toBeUndefined();
     const preEntry = lightweight.mixer!.master.preChain[0]!;
     expect(preEntry.kind).toBe('effect');
@@ -323,7 +323,7 @@ describe('Lazy XML omission for project snapshots', () => {
     });
     const groupSnap = snapshot.score!.layerGroups[0]!;
     const layerSnap = groupSnap.groupType === 'track' ? groupSnap.layers[0]! : null;
-    const firstItem = layerSnap?.items[0]!;
+    const firstItem = layerSnap?.items[0];
     expect(firstItem).toBeTruthy();
 
     track.splice(0, 1);

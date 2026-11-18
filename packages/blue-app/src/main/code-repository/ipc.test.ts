@@ -1,5 +1,5 @@
 import type { IpcMain } from 'electron';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {

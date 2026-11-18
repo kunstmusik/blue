@@ -3,7 +3,7 @@
 import { createElement, act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test';
 import { BlueData, Effect, PolyObject, SoundLayer } from '@blue/data';
 import {
   useProjectStore,
@@ -75,7 +75,11 @@ const mockLocalStorage: Storage = {
 beforeEach(() => {
   vi.useRealTimers();
   (window as unknown as { blueAPI: unknown }).blueAPI = mockBlueAPI;
-  (window as unknown as { localStorage: unknown }).localStorage = mockLocalStorage;
+  Object.defineProperty(window, 'localStorage', {
+    value: mockLocalStorage,
+    configurable: true,
+    writable: true,
+  });
   // Reset all stores
   useProjectStore.getState().clearProject();
   usePlaybackStore.getState().reset();

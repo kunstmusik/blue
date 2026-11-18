@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type {
   BlueX7RealtimeControlUpdate,
   BlueX7RuntimeTarget,
@@ -7,7 +7,6 @@ import type {
 import {
   applyBlueX7CompleteVoiceBatch,
   applyBlueX7LiveUpdate,
-  planBlueX7CompleteVoiceBatch,
   planBlueX7LiveWrite,
   requestBlueX7EffectiveValues,
   type BlueX7RuntimeEnvironment,

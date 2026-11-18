@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { Element } from '../../src/serialization/xml-reader';
 import { GlobalOrcSco } from '../../src/global-orc-sco';
 import { BlueData } from '../../src/blue-data';

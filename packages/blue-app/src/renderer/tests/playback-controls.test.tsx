@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import PlaybackControls from '../components/menu-bar/PlaybackControls';
 import { usePlaybackStore } from '../stores/playback-store';

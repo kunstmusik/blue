@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import '../sound-objects/register-sound-object-types';
 import { Element } from '../serialization/xml-reader';
 import { PolyObject } from '../sound-objects/poly-object';
 import { SoundLayer } from '../sound-objects/sound-layer';
 import { Track } from './track/track';
 import { PatternLayer } from './patterns/pattern-layer';
-import { DEFAULT_LAYER_COLOR, normalizeLayerColor } from './layers/layer-color';
+import { DEFAULT_LAYER_COLOR } from './layers/layer-color';
 
 describe('Layer Color XML Serialization (US4)', () => {
   describe('SoundLayer / PolyObject XML', () => {

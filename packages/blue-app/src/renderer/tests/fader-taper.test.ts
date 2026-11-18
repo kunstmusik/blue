@@ -1,9 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   gainDbToFraction,
   fractionToGainDb,
-  MIN_GAIN_DB,
-  MAX_GAIN_DB,
   UNITY_GAIN_DB,
   UNITY_TRAVEL_FRACTION,
 } from '../components/workbench/panels/mixer/fader-taper';

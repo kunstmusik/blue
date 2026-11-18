@@ -3,7 +3,7 @@ import { reportPerformance, percentile } from '../../test-support/performance';
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { toast } from 'sonner';
 import { useIPCListeners } from '../hooks/use-ipc-listeners';
 import ProjectPropertiesPanel from '../components/workbench/panels/ProjectPropertiesPanel';

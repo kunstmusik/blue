@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 import { CompileData } from '../compile-data';
 import { Arrangement } from '../arrangement';
 import { BlueData } from '../blue-data';

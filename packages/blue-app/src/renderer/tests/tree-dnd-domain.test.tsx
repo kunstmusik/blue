@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import type { NodeRendererProps } from 'react-arborist';
 import * as treeDndDomain from '../components/tree/tree-dnd-domain';
 import { acquireTreeDndManager, hasActiveTreeDrag } from '../components/tree/tree-dnd-domain';

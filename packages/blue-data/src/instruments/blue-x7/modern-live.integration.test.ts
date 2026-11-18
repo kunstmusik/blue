@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createDefaultBlueX7Voice } from '../blue-x7';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 import { buildBlueX7VoiceTransport } from './voice-transport';

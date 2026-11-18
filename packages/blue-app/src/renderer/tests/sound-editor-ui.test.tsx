@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import SoundEditor from '../components/workbench/panels/score-object/editors/SoundEditor';
 import type { ScoreObjectEditorDocumentSnapshot } from '../../shared/project-editor';
 

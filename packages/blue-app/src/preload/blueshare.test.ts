@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { BLUESHARE_CHANNELS } from '../shared/blueshare';
 
 const invoke = vi.hoisted(() => vi.fn());
@@ -13,15 +13,15 @@ vi.mock('electron', () => ({
   webUtils: { getPathForFile: vi.fn(() => '') },
 }));
 
-describe('BlueShare Preload API bridge', () => {
-  beforeEach(() => {
-    invoke.mockReset();
-    on.mockReset();
-    removeListener.mockReset();
-    expose.mockClear();
-    vi.resetModules();
-  });
+beforeEach(() => {
+  invoke.mockReset();
+  on.mockReset();
+  removeListener.mockReset();
+  expose.mockClear();
+  vi.resetModules();
+});
 
+describe('BlueShare Preload API bridge', () => {
   it('exposes typed BlueShare methods and forwards calls to ipcRenderer', async () => {
     await import('./preload');
     const blueAPI = expose.mock.calls.find(([name]) => name === 'blueAPI')![1] as any;

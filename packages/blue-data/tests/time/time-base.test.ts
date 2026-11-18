@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { TimeBase, isBeatBased } from '../../src/time/time-base';
 
 describe('TimeBase', () => {

@@ -14,7 +14,7 @@ import { BSBCompilationUnit } from './blue-synth-builder/bsb-compilation-unit';
 import { BSBGraphicInterface, GridSettingsData } from './blue-synth-builder/bsb-graphic-interface';
 import { BSBGroup } from './blue-synth-builder/bsb-group';
 import { BSBWidget } from './blue-synth-builder/bsb-widget';
-import { Parameter, AutomationCurve } from '../automation/parameter';
+import { Parameter } from '../automation/parameter';
 import { clamp } from '../utilities/math-utils';
 import { JavaDecimal, parseJavaDecimal, snapToResolutionJava } from '../automation/java-decimal';
 import { BSBCheckBox } from './blue-synth-builder/bsb-check-box';
@@ -28,7 +28,6 @@ import { BSBValue } from './blue-synth-builder/bsb-value';
 import { BSBVSlider } from './blue-synth-builder/bsb-vslider';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { PresetGroup } from './blue-synth-builder/preset-group';
-import { Preset } from './blue-synth-builder/preset';
 import { OpcodeDefinition } from '../opcodes/opcode-definition';
 import { UDOStyle } from '../opcodes/udo-style';
 import {

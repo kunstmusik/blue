@@ -1,8 +1,8 @@
 import '../styles/index.css';
 
 import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRoot } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createDefaultBlueX7Voice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot } from '../../shared/project-editor';
 import { BlueX7Editor } from '../components/instruments/blue-x7-editor';

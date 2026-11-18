@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   applyAuxiliaryLayout,
   createDefaultAuxiliaryLayoutState,
@@ -1093,7 +1093,7 @@ describe('workbench store native menu commands', () => {
 
     useProjectStore.setState({ flushPendingPatches: flush });
     window.blueAPI = {
-      ...(previousBlueAPI ?? {}),
+      ...previousBlueAPI,
       renderToDisk,
     } as typeof window.blueAPI;
 

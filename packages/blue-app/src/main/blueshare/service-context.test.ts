@@ -1,6 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueShareService, type MinimalWebContents } from './service';
-import { BlueShareTransport } from './transport';
 
 function createMockSender(id = 1): MinimalWebContents {
   let destroyed = false;

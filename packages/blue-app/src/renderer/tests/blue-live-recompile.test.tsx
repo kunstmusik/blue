@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BlueData, LiveData, GenericInstrument } from '@blue/data';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import { BlueData, GenericInstrument } from '@blue/data';
 import { BlueLiveEngineSession } from '../../main/blue-live-engine';
 
 class MockWebContents {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import type { ScoreObjectEditorComponentProps } from '../editor-registry';
 import GeneratedScoreModal from './GeneratedScoreModal';

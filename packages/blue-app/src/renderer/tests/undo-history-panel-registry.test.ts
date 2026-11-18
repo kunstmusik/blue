@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getPanel, getPanelsByMode } from '../../shared/workbench-menu';
 import {
   AUXILIARY_SEED_DEFINITIONS,

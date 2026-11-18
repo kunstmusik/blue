@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vite-plus/test';
 import { TimePosition } from '../../src/time/time-position';
 import { TimeBase } from '../../src/time/time-base';
 import { TimeContext } from '../../src/time/time-context';

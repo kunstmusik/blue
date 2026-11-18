@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '@blue/data';
 import { Channel } from '@blue/data';
 import { Send } from '@blue/data';
@@ -65,7 +65,6 @@ describe('mixer mute/solo contract boundary (Spec 111)', () => {
 
     it('project XML never contains runtime gate symbols or route masks', () => {
       const data = createProjectWithMasterSolo();
-      data.getMixer().getChannels()[0] ?? data.getMixer().getMaster();
       const xml = data.saveToString();
       expect(xml).not.toContain('gk_blue_mixgate_');
       expect(xml).not.toContain('routeMask');

@@ -14,7 +14,7 @@
  * These tests lock in that invariant so a future refactor cannot silently
  * reintroduce the Java-style coupling.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueSynthBuilder } from '../blue-synth-builder';
 import { BSBGroup } from './bsb-group';
 import { BSBKnob } from './bsb-knob';

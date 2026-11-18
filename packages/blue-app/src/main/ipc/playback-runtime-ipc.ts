@@ -41,7 +41,8 @@ export const PLAYBACK_RUNTIME_IPC_CHANNELS = [
 
 export type PlaybackRuntimeIpcChannel = (typeof PLAYBACK_RUNTIME_IPC_CHANNELS)[number];
 export type PlaybackRuntimeListenerChannel =
-  'sync-audition-score-object-availability' | 'sync-follow-playback-state';
+  | 'sync-audition-score-object-availability'
+  | 'sync-follow-playback-state';
 
 export interface PlaybackRuntimeIpcOptions {
   readonly ipcMain: IpcMainLike;

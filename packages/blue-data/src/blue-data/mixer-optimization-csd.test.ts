@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../blue-data';
 import { Channel } from '../mixer/channel';
 import { Send } from '../mixer/send';
@@ -98,7 +98,7 @@ describe('mixer optimization: local combined send gain (Spec 118 T013/T015)', ()
     );
     const lines = result.csdText.split('\n').map((line) => line.trim());
     const productIndexes = lines
-      .map((line, index) => (/^kMixSendGain = /.test(line) ? index : -1))
+      .map((line, index) => (line.startsWith('kMixSendGain = ') ? index : -1))
       .filter((index) => index >= 0);
     expect(productIndexes.length).toBe(2);
     for (const index of productIndexes) {

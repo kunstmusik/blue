@@ -1,11 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   getNoteProcessorCatalog,
   getNoteProcessorDefinition,
   isAddableProcessor,
 } from './note-processor-catalog';
-import { AddProcessor } from './add-processor';
-import { MultiplyProcessor } from './multiply-processor';
 import { PythonProcessor } from './python-processor';
 
 describe('Note processor catalog', () => {

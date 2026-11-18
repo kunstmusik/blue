@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { TempoMapSnapshot, TempoMapPatch } from '../../shared/project-editor';
 import TempoPointDialog from '../components/workbench/panels/score/TempoPointDialog';
 import ShiftObjectsDialog from '../components/workbench/panels/score/ShiftObjectsDialog';

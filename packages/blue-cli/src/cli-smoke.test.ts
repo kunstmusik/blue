@@ -5,7 +5,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, ObjectBuilder, PythonInstrument, SoundLayer, TimeDuration } from '@blue/data';
 
 const execFileAsync = promisify(execFile);

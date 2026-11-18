@@ -15,7 +15,7 @@
  * - SECONDS (SecondsValue): totalSeconds
  * - FRAME (FrameValue): frameNumber — via sampleRate
  */
-import { TimeBase, isBeatBased } from './time-base';
+import { TimeBase } from './time-base';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext } from '../serialization/xml-load';
 import { checkShape } from '../utilities/xml';

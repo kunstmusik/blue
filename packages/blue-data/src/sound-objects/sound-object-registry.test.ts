@@ -1,10 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
   getAllSoundObjectTypeDescriptors,
   getTrackPlacementForSoundObject,
   loadSoundObjectFromXML,
   normalizeClassName,
-  registerSoundObjectType,
 } from './sound-object-registry';
 import { Element } from '../serialization/xml-reader';
 import './register-sound-object-types';

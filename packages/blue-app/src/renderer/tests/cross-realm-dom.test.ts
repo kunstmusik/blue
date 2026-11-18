@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import { containsNode, isEventInsidePortalPopup, isNodeLike } from '../utils/cross-realm-dom';
 

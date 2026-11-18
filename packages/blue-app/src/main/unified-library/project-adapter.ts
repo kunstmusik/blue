@@ -36,8 +36,6 @@ import {
   copySoundObjectForProject,
   copyUdoForProject,
   createSharedSoundObjectInstance,
-  loadInstrumentFromXML,
-  loadSoundObjectFromXML,
 } from '@blue/data';
 import {
   applyProjectDocumentPatch,

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData, BlueSynthBuilder, BSBHSlider, GenericInstrument } from '@blue/data';
 import {
   transferProjectEditorIdentities,
@@ -87,7 +87,8 @@ describe('isolated project graph deltas', () => {
   it('preserves sparse arrays, reorders references and restores the same live objects', () => {
     const first = { name: 'first' },
       last = { name: 'last' };
-    const items = [first, , last];
+    const items = [first];
+    items[2] = last;
     const before = { items };
     const after = copy(before);
     after.items.reverse();

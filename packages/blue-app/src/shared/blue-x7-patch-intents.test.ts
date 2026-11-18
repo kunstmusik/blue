@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { blueX7PatchToRuntimeIntent } from './blue-x7-patch-intents';
 
 describe('BlueX7 patch runtime intents', () => {

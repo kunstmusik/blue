@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 describe('managed Csound execution boundary', () => {
   it('does not launch a configured Csound executable or shell -U from trusted callers', async () => {

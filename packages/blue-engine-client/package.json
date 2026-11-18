@@ -43,15 +43,14 @@
   "scripts": {
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build": "pnpm build:esm && pnpm build:cjs",
-    "test": "vitest run"
+    "build": "vp run build:all",
+    "test": "vp test run"
   },
   "dependencies": {
     "zeromq": "^6.1.0"
   },
   "devDependencies": {
     "typescript": "^5.8.0",
-    "vite": "^8.3.7",
-    "vitest": "^4.1.11"
+    "vite": "catalog:"
   }
 }

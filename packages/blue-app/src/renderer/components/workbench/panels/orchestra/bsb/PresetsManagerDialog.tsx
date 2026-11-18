@@ -34,7 +34,6 @@ import {
   PopoutContextMenuPortal,
   portalEventIsolationProps,
 } from '../../../../../hooks/host-portals';
-import { useHostDocument } from '../../../../../hooks/use-host-document';
 
 export interface PresetsManagerDialogProps {
   presetGroup: PresetGroupSnapshot;
@@ -52,7 +51,8 @@ export interface PresetTreeNode {
 }
 
 type PresetClipboard =
-  { kind: 'preset'; item: PresetSnapshot } | { kind: 'group'; item: PresetGroupSnapshot };
+  | { kind: 'preset'; item: PresetSnapshot }
+  | { kind: 'group'; item: PresetGroupSnapshot };
 
 let presetClipboard: PresetClipboard | null = null;
 

@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { TempoMapPatch, TempoMapSnapshot } from '../../shared/project-editor';
 import TempoRegionBar from '../components/workbench/panels/score/TempoRegionBar';
 

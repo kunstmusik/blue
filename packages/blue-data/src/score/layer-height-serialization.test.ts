@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { Element } from '../serialization/xml-reader';
 import { PolyObject } from '../sound-objects/poly-object';
 import { SoundLayer } from '../sound-objects/sound-layer';
@@ -6,12 +6,9 @@ import { Track } from './track/track';
 import { TrackLayerGroup } from './track/track-layer-group';
 import {
   parseCustomHeight,
-  resolveEffectiveHeight,
   resolveExplicitHeight,
   calculateNearestHeightIndex,
   isPresetHeight,
-  LAYER_HEIGHT_MIN,
-  LAYER_HEIGHT_MAX,
 } from './layer-height-policy';
 import { GenericScore } from '../sound-objects/generic-score';
 import { TimeContext } from '../time/time-context';

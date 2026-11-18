@@ -13,7 +13,6 @@ import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
 import { CompileData } from '../../compile-data';
-import { ScoreGenerationException } from '../../score/score-generation-exception';
 import {
   XmlLoadContext,
   requireXmlValue,

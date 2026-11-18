@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vite-plus/test';
 import { MeterStore } from '../stores/meter-store';
 import type { MeterBindingMapPayload, MeterFramePayload } from '../../shared/meter-types';
 

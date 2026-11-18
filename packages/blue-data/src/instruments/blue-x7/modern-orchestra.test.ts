@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -75,7 +75,7 @@ describe('modern BlueX7 orchestra artifact', () => {
     for (const text of [script, generated, orc]) {
       expect(text).not.toContain('/csound/');
       expect(text).not.toContain('~/work/');
-      expect(text).not.toMatch(/dx7-emulation[\/"]/);
+      expect(text).not.toMatch(/dx7-emulation[/"]/);
     }
   });
 

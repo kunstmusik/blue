@@ -2,8 +2,17 @@
   "name": "blue-cli",
   "version": "0.0.1",
   "description": "Node CLI for compiling Blue projects to Csound CSD output.",
-  "type": "commonjs",
-  "main": "./dist/blue-cli.cjs",
+  "keywords": [
+    "blue",
+    "cli",
+    "csound"
+  ],
+  "license": "SEE LICENSE IN THIRD_PARTY_NOTICES.md",
+  "author": "Steven Yi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kunstmusik/blue"
+  },
   "bin": {
     "blue-cli": "./dist/blue-cli.cjs"
   },
@@ -13,35 +22,26 @@
     "LICENSES",
     "THIRD_PARTY_NOTICES.md"
   ],
+  "type": "commonjs",
+  "main": "./dist/blue-cli.cjs",
   "scripts": {
     "build": "node ./scripts/build.mjs",
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
-    "prepack": "pnpm build",
-    "test": "pnpm build && pnpm exec vitest run"
+    "prepack": "vp run build",
+    "test": "vp run build && vp test run"
+  },
+  "dependencies": {
+    "quickjs-emscripten": "^0.32.0",
+    "zeromq": "^6.8.0"
+  },
+  "devDependencies": {
+    "@blue/data": "workspace:*",
+    "@blue/java-runtime": "workspace:*",
+    "commander": "^14.0.3",
+    "esbuild": "^0.28.2"
   },
   "engines": {
     "node": ">=20"
   },
-  "keywords": [
-    "blue",
-    "csound",
-    "cli"
-  ],
-  "author": "Steven Yi",
-  "license": "SEE LICENSE IN THIRD_PARTY_NOTICES.md",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kunstmusik/blue"
-  },
-  "devDependencies": {
-    "commander": "^14.0.3",
-    "esbuild": "^0.28.2",
-    "@blue/java-runtime": "workspace:*",
-    "@blue/data": "workspace:*"
-  },
-  "//": "The bundled CLI externalizes quickjs-emscripten and zeromq. Both must remain runtime dependencies for standalone installations.",
-  "dependencies": {
-    "quickjs-emscripten": "^0.32.0",
-    "zeromq": "^6.8.0"
-  }
+  "//": "The bundled CLI externalizes quickjs-emscripten and zeromq. Both must remain runtime dependencies for standalone installations."
 }

@@ -1,6 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '@blue/data';
-import { Element } from '@blue/data';
 import { createTestProjectWithLayers } from './project-editor-layer-color-test-utils';
 import { createScoreDocumentSnapshot } from './project-editor/snapshot-score';
 

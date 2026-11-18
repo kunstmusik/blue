@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import AutomationLineView from '../components/workbench/panels/score/automation/AutomationLineView';
 import type { AutomationParameterSnapshot } from '../../shared/project-editor';
 import {

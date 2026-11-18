@@ -76,3 +76,4 @@ node_modules
 .worktrees
 packages/blue-app/performance-results/
 packages/blue-data/performance-results/
+.vitest/

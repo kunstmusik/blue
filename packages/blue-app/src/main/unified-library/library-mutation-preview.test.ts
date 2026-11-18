@@ -1,5 +1,5 @@
 import { GenericInstrument } from '@blue/data';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { UnifiedLibraryService } from './service';
 

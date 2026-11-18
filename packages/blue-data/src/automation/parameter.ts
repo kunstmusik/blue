@@ -42,7 +42,8 @@ function isPointsAscendingByTime(points: readonly AutomationPoint[]): boolean {
 }
 
 type ParameterSegmentResult =
-  { kind: 'exact'; value: number } | { kind: 'segment'; a: AutomationPoint; b: AutomationPoint };
+  | { kind: 'exact'; value: number }
+  | { kind: 'segment'; a: AutomationPoint; b: AutomationPoint };
 
 function resolveParameterSegment(
   points: readonly AutomationPoint[],

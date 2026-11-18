@@ -21,7 +21,6 @@ import { ClojureObject } from '../sound-objects/clojure-object';
 import { PythonObject } from '../sound-objects/python-object';
 import { JavaScriptObject } from '../sound-objects/javascript-object';
 import { ObjectBuilder } from '../sound-objects/object-builder';
-import { SoundObjectLibrary } from '../sound-objects/sound-object-library';
 import { Instance } from '../sound-objects/instance';
 import { SoundObject } from '../sound-objects/sound-object';
 import { TimeBehavior } from '../sound-objects/time-behavior';

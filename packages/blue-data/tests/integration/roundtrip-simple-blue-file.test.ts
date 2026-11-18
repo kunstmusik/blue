@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { Element } from '../../src/serialization/xml-reader';
 import { BlueData } from '../../src/blue-data';
 import { ProjectProperties } from '../../src/project-properties';
@@ -14,11 +14,9 @@ import { TimeBehavior } from '../../src/sound-objects/time-behavior';
 import { TimePosition } from '../../src/time/time-position';
 import { TimeDuration } from '../../src/time/time-duration';
 import { MarkersList } from '../../src/markers-list';
-import { MidiInputProcessor } from '../../src/midi/midi-input-processor';
 import { ScratchPadData } from '../../src/scratch-pad-data';
 import { LiveData } from '../../src/live-data';
 import { NoteProcessorChainMap } from '../../src/note-processors/note-processor-chain-map';
-import { SoundObjectLibrary } from '../../src/sound-objects/sound-object-library';
 
 /**
  * Build a complete BlueData project for testing round-trip serialization.

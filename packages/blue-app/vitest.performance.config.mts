@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 import base from './vitest.config.mts';
 
 // Explicit files avoid importing the rest of the app suite during measurements.

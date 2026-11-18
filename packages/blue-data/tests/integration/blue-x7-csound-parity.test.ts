@@ -1,12 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../../src/blue-data';
 import { Channel } from '../../src/mixer/channel';
 import { Arrangement } from '../../src/arrangement';
 import { Element } from '../../src/serialization/xml-reader';
 import { BlueX7 } from '../../src/instruments/blue-x7';
-import { BLUE_X7_PARAMETER_DESCRIPTORS } from '../../src/instruments/blue-x7/parameter-catalog';
 
 /**
  * Modern-renderer multi-instance CSD regression against the checked-in

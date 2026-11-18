@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { TimeBase } from './time-base';
 import { TimeContext } from './time-context';
 import { beatsToDuration } from './time-unit-math';

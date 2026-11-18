@@ -1,8 +1,8 @@
 import { forkProjectGraph } from '../project-history-graph';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BlueData, Channel, GenericInstrument, GenericScore, Effect, PolyObject } from '@blue/data';
+import { BlueData, Channel, GenericInstrument, Effect, PolyObject } from '@blue/data';
 import { UnifiedLibraryService } from './service';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { createUnifiedLibraryTestDirectory } from './test-helpers';
@@ -23,7 +23,6 @@ import {
   TEST_USERS,
 } from '../blueshare/test-helpers';
 import { BlueShareService } from '../blueshare/service';
-import { BlueShareTransport } from '../blueshare/transport';
 
 function createConnectedProject() {
   const data = new BlueData();

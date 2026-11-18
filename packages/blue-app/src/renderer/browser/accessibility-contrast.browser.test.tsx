@@ -2,7 +2,7 @@ import '../styles/index.css';
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import WelcomeScreen from '../components/welcome/WelcomeScreen';
 import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 

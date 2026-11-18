@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Channel } from '../../mixer/channel';
 import { CompileData } from '../../compile-data';
 import { Mixer } from '../../mixer/mixer';
@@ -6,10 +6,7 @@ import { AudioClip } from '../audio/audio-clip';
 import { TimeDuration } from '../../time/time-duration';
 import { TimePosition } from '../../time/time-position';
 import { TimeContext } from '../../time/time-context';
-import {
-  generateTrackAudioPlaybackNotes,
-  ensureTrackAudioPlaybackInstrument,
-} from './track-audio-playback';
+import { generateTrackAudioPlaybackNotes } from './track-audio-playback';
 import { createAudioLayoutManifest, AudioLayoutCompileError } from '../audio/audio-layout';
 
 function makeClip(path = '/fixtures/test.wav'): AudioClip {

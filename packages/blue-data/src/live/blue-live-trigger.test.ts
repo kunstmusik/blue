@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../blue-data';
 import { NoteList } from '../sound-objects/note-list';
 import { Note } from '../sound-objects/note';
@@ -17,7 +17,6 @@ import {
 } from './blue-live-trigger';
 import {
   createModernProject,
-  createModernLiveData,
   createSparseGridLiveData,
   createMultiEnabledLiveData,
   createLibraryInstanceLiveData,
@@ -27,7 +26,6 @@ import {
   MULTI_ENABLED_TARGET_ORDER,
   TEMPO_SCALING_CASES,
   INVALID_TEMPO_VALUES,
-  attachSavedSet,
 } from './blue-live-trigger-fixtures';
 
 describe('blue-live-trigger target selection', () => {

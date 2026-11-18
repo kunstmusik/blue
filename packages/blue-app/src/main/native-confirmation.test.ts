@@ -1,5 +1,5 @@
 import { BrowserWindow, MessageBoxOptions, MessageBoxReturnValue } from 'electron';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { NativeConfirmationRequest } from '../shared/confirmation-dialog';
 import { NativeConfirmationDialogSeam, showNativeConfirmation } from './native-confirmation';
 

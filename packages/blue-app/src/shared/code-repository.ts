@@ -5,7 +5,7 @@
 // main-process canonical repository and the renderer. Mirrors the contract in
 // specs/069-code-repository/contracts/code-repository-ipc.md.
 
-import type { CodeRepositoryNode, CodeRepositoryNodeKind } from '@blue/data';
+import type { CodeRepositoryNode } from '@blue/data';
 import {
   CODE_REPOSITORY_ROOT_ID,
   isCodeRepositoryNode as isPortableCodeRepositoryNode,

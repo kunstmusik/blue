@@ -1,15 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Element } from './serialization/xml-reader';
 import { ClojureProjectData, ClojureLibraryEntry } from './plugins/clojure-project-data';
 import { BlueData } from './blue-data';
-import { LiveData } from './live-data';
 import { LiveObject } from './live/live-object';
 import { LiveObjectBins } from './live/live-object-bins';
 import { GenericScore } from './sound-objects/generic-score';
 import { Instance } from './sound-objects/instance';
-import { SoundObjectLibrary } from './sound-objects/sound-object-library';
 import { Sound } from './sound-objects/sound';
 import { ObjectBuilder } from './sound-objects/object-builder';
 import { FrozenSoundObject } from './sound-objects/frozen-sound-object';

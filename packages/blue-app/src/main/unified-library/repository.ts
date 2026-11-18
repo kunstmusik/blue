@@ -136,9 +136,17 @@ function normalizeSearchName(value: string): string {
   return value.normalize('NFKC').toLocaleLowerCase();
 }
 
+function hasControlChars(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) return true;
+  }
+  return false;
+}
+
 function validateDisplayName(value: string): string {
   const trimmed = value.trim();
-  if (trimmed.length === 0 || /[\u0000-\u001f\u007f]/.test(trimmed)) {
+  if (trimmed.length === 0 || hasControlChars(trimmed)) {
     throw new Error('Invalid library node name');
   }
   return trimmed;

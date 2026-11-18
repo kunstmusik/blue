@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { appendParameterScoreJava, buildParameterInitStatementJava, Parameter } from '@blue/data';
 import { EngineBridge } from './engine-bridge';
 

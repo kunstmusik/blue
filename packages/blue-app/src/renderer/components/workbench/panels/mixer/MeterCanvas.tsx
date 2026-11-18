@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHostDocument } from '../../../../hooks/use-host-document';
-import { meterStore, MIN_DB, MAX_DB, type MeterCanvasState } from '../../../../stores/meter-store';
+import { meterStore, type MeterCanvasState } from '../../../../stores/meter-store';
 import { cn } from '../../../../lib/cn';
 import type { MeterProfileKey } from '@blue/data';
 import { getMeterProfile } from './meter-profiles';

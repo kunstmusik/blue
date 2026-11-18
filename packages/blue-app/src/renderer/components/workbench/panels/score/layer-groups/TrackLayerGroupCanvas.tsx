@@ -33,7 +33,7 @@ import AutomationLayerOverlay from '../automation/AutomationLayerOverlay';
 import type { ScoreAutomationPatch } from '../../../../../../shared/project-editor';
 import type { ProjectDocumentCommitMetadata } from '../../../../../../shared/project-history';
 import { attachHostGesture } from '../../../../../lib/host-gesture';
-import type { ScoreLayerSnapshot, ScoreObjectDoubleClick, ScoreRowObjectSnapshot } from '../types';
+import type { ScoreObjectDoubleClick, ScoreRowObjectSnapshot } from '../types';
 import { DEFAULT_ROW_HEIGHT, GROUP_SPACER } from '../types';
 import { createFrameSnapContext, snapBeatToGrid } from '../snap-grid-utils';
 import { useScoreViewportBounds } from '../score-viewport-scroll';
@@ -96,7 +96,13 @@ interface Props {
 }
 
 type GestureMode =
-  'marquee' | 'move' | 'resizeLeft' | 'resizeRight' | 'fadeIn' | 'fadeOut' | 'slideFileStart';
+  | 'marquee'
+  | 'move'
+  | 'resizeLeft'
+  | 'resizeRight'
+  | 'fadeIn'
+  | 'fadeOut'
+  | 'slideFileStart';
 
 interface TrackPreview {
   startBeats: number;

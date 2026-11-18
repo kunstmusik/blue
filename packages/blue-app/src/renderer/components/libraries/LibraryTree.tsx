@@ -50,11 +50,18 @@ interface VisibleTreeNode {
 
 const EMPTY_EXPANDED_NODE_IDS: readonly string[] = [];
 
+function hasControlChars(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    if (value.charCodeAt(i) <= 0x1f) return true;
+  }
+  return false;
+}
+
 export function validateLibraryNodeName(name: string): string | null {
   const normalized = name.normalize('NFKC').trim();
   if (!normalized) return 'A name is required.';
   if (normalized.length > 255) return 'Names must be 255 characters or fewer.';
-  if (/[/\\\u0000-\u001f]/u.test(normalized))
+  if (normalized.includes('/') || normalized.includes('\\') || hasControlChars(normalized))
     return 'Names cannot contain slashes or control characters.';
   return null;
 }

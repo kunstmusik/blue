@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type {
   ProjectHistoryStateProjection,
   ProjectDocumentUpdatedEvent,

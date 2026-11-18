@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
 import { createSourceFile, isFunctionDeclaration, ScriptTarget, transpileModule } from 'typescript';
 import { BlueData } from '@blue/data';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   formatProjectXmlDiagnostics,
   prepareProjectXml,

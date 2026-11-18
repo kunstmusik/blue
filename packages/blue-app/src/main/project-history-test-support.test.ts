@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { MockHistoryContext, generate100ActionWorkload } from './project-history-test-support';
 
 describe('project-history-test-support', () => {

@@ -1,7 +1,6 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { BlueData, PolyObject, SoundLayer, JMask, TimePosition, TimeDuration } from '../src/index';
 import {
-  Field,
   Parameter,
   Constant,
   Random,
@@ -9,8 +8,6 @@ import {
   Segment,
   Oscillator,
   Probability,
-  Mask,
-  Quantizer,
   Accumulator,
   Table,
   TablePoint,

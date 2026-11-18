@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData, BlueX7, Channel, PolyObject, TrackLayerGroup } from '@blue/data';
 import { AutomationCurveCode } from '@blue/engine-client';
 import type { ProjectRuntimeReconciliation } from './project-runtime-reconciliation';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { OpcodeDefinition } from '../opcodes/opcode-definition';
 import { OpcodeList } from '../opcodes/opcode-list';
 import { UDOStyle } from '../opcodes/udo-style';

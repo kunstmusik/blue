@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Note } from '../../src/sound-objects/note';
 import { formatBlueNumber, formatJavaDouble } from '../../src/utilities/number-format';
 

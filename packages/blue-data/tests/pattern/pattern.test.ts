@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { Pattern } from '../../src/sound-objects/pattern/pattern';
 import { Element } from '../../src/serialization/xml-reader';
 

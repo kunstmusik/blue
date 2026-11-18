@@ -38,29 +38,12 @@ export interface PublishCommittedDocumentOptions {
   readonly invalidateSession?: boolean;
 }
 
-export interface ProjectSession {
-  read(): Readonly<ProjectSessionSnapshot>;
-  replace(
-    data: BlueData,
-    filePath?: string | null,
-    options?: ReplaceProjectOptions,
-  ): Readonly<ProjectSessionSnapshot>;
-  publishCommittedDocument(
-    data: BlueData,
-    options?: PublishCommittedDocumentOptions,
-  ): Readonly<ProjectSessionSnapshot>;
-  close(): Readonly<ProjectSessionSnapshot>;
-  publishPath(filePath: string | null): Readonly<ProjectSessionSnapshot>;
-  recordMutation(change: RecordProjectMutation): ProjectDocumentCommitReceipt;
-  resetForShutdown(): void;
-}
-
 /**
  * Owns project identity and document lifetime only. Runtime managers, windows,
  * caches, and file operations remain outside this boundary and coordinate
  * through these semantic transitions.
  */
-export class ProjectSession implements ProjectSession {
+export class ProjectSession {
   private data: BlueData | null = null;
   private filePath: string | null = null;
   private revision = 0;

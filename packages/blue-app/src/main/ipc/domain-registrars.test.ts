@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { registerApplicationIpc, APPLICATION_IPC_CHANNELS } from './application-ipc';
 import { registerPlaybackRuntimeIpc, PLAYBACK_RUNTIME_IPC_CHANNELS } from './playback-runtime-ipc';
 import {

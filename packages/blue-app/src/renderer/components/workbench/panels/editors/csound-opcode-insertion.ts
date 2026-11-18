@@ -4,7 +4,6 @@ import type { RichOpcodeCatalogEntry } from '@kunstmusik/codemirror-lang-csound/
 
 import type {
   NormalizedOpcodeMetadata,
-  OpcodeInsertionForm,
   OpcodeInsertionPlan,
   OpcodeKind,
 } from './editor-adapter-types';
@@ -133,7 +132,7 @@ function parseModernLine(
     value
       .trim()
       .replace(/:[a-zA-Z0-9_]+/g, '')
-      .replace(/[^a-zA-Z0-9_\[\]]/g, '');
+      .replace(/[^a-zA-Z0-9_[\]]/g, '');
 
   let outputs: string[] = [];
   const eqIdx = beforeCall.indexOf('=');
@@ -226,7 +225,7 @@ function parseSignatureHints(
   }
 
   if (inTypes && inTypes !== '(null)' && inTypes !== '0') {
-    const reqCount = inTypes.replace(/[opj\[\]]/g, '').length;
+    const reqCount = inTypes.replace(/[opj[\]]/g, '').length;
     requiredInputs = Array.from({ length: reqCount }, (_, i) => `xarg${i + 1}`);
   }
 
@@ -322,7 +321,7 @@ function detectInsertionContext(documentText: string, from: number): InsertionCo
     else if (ch === ')') openParenCount--;
   }
 
-  if (openParenCount > 0 || /[,+\-*\/%^&|~\[]\s*$/.test(lineBefore)) {
+  if (openParenCount > 0 || /[,+\-*/%^&|~[]\s*$/.test(lineBefore)) {
     return 'expression';
   }
 

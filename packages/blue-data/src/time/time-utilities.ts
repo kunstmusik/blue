@@ -3,7 +3,6 @@
  * Mirrors the Java TimeUtilities class.
  */
 import { TimePosition } from './time-position';
-import { TimeDuration } from './time-duration';
 import { TimeBase } from './time-base';
 import { TimeContext } from './time-context';
 

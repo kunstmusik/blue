@@ -12,14 +12,7 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import {
-  checkShape,
-  readText,
-  readInt,
-  readBoolean,
-  readEnum,
-  parseXmlBoolean,
-} from '../utilities/xml';
+import { checkShape, readText } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
@@ -226,7 +219,7 @@ export class AudioFile extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['soundFileName', 'csoundPostCode']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'soundFileName', 'csoundPostCode'],
       ctx,
     );
     const obj = new AudioFile();

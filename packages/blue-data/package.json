@@ -2,6 +2,25 @@
   "name": "@blue/data",
   "version": "0.0.1",
   "description": "Core data model for Blue — portable TypeScript data classes with XML serialization compatible with Java .blue files",
+  "keywords": [
+    "audio",
+    "blue",
+    "composition",
+    "csound",
+    "music"
+  ],
+  "license": "MIT AND Apache-2.0",
+  "author": "Steven Yi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kunstmusik/blue"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "LICENSES",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -37,41 +56,21 @@
       }
     }
   },
-  "files": [
-    "dist",
-    "LICENSE",
-    "LICENSES",
-    "THIRD_PARTY_NOTICES.md"
-  ],
   "scripts": {
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && pnpm build:esm && pnpm build:cjs",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && vp run build:all",
     "generate:blue-x7": "node scripts/generate-blue-x7-modern-orchestra.mjs",
-    "test": "vitest run",
+    "test": "vp test run",
     "test:performance": "node ../../scripts/run-performance-tests.mjs data",
-    "prepublishOnly": "pnpm build"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.0",
-    "vite": "^8.3.7",
-    "vitest": "^4.1.11"
+    "prepublishOnly": "vp run build"
   },
   "dependencies": {
     "@rgrove/parse-xml": "^4.2.0",
     "quickjs-emscripten": "^0.32.0"
   },
-  "keywords": [
-    "csound",
-    "music",
-    "composition",
-    "blue",
-    "audio"
-  ],
-  "author": "Steven Yi",
-  "license": "MIT AND Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kunstmusik/blue"
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vite": "catalog:"
   }
 }
