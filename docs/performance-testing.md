@@ -62,8 +62,9 @@ pnpm --filter @blue/app test:performance:engine
 pnpm --filter @blue/data test:performance
 ```
 
-The performance commands run **three fresh Vitest processes**, in sequence, even
-when an earlier round fails. Test, setup, and collection errors fail the command.
+The performance runner resolves the pinned Vitest version from the workspace
+installation. It runs **three fresh Vitest processes** in sequence, even when an
+earlier round fails. Test, setup, and collection errors fail the command.
 The meter comparison is evaluated once across all fixed pairs, while the other
 performance cases retain their existing assertion semantics. Set
 `BLUE_PERFORMANCE_ROUNDS=1` for a local diagnostic run; manual CI uses the default three.

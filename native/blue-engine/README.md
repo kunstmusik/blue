@@ -25,7 +25,7 @@ provide the Csound 7 API; Csound 6 remains unsupported. `--csound-library` and
 
 ## Build Dependencies
 
-- Node.js 22 and pnpm 10
+- Node.js and pnpm as listed in the [workspace prerequisites](../../README.md#prerequisites)
 - CMake 3.21 or newer
 - A supported C/C++ toolchain
 

@@ -90,8 +90,15 @@ drags, and transition statuses are never persisted.
 From the repository root:
 
 ```sh
-pnpm --filter @blue/app exec vitest run --config vitest.config.ts src/renderer/tests/tree-dnd-domain.test.tsx src/renderer/tests/workbench-auxiliary.test.ts src/renderer/tests/workbench-store.test.ts src/renderer/tests/workbench-layout-persistence.test.ts
-pnpm --filter @blue/app exec vitest run --config vitest.browser.config.ts src/renderer/browser/tree-dnd-coexistence.browser.test.tsx src/renderer/browser/workbench-tree-movement.browser.test.tsx
+pnpm --filter @blue/app test \
+  src/renderer/tests/tree-dnd-domain.test.tsx \
+  src/renderer/tests/workbench-auxiliary.test.ts \
+  src/renderer/tests/workbench-store.test.ts \
+  src/renderer/tests/workbench-layout-persistence.test.ts
+
+pnpm --filter @blue/app test:browser \
+  src/renderer/browser/tree-dnd-coexistence.browser.test.tsx \
+  src/renderer/browser/workbench-tree-movement.browser.test.tsx
 ```
 
 The browser suites mount real Arborist trees and a real Dockview workbench:

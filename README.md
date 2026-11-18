@@ -47,13 +47,15 @@ for platform details.
 
 ## Build from source
 
-Run workspace commands from the repository root with pnpm.
+Run workspace commands from the repository root with pnpm. `pnpm install` supplies
+the locked [Vite+](https://viteplus.dev/) version locally. The workspace scripts use it to run Vite builds,
+Vitest tests, Oxlint, and Oxfmt, so a global `vp` install is optional.
 
 ### Prerequisites
 
 | Tool               | Requirement                                                          |
 | ------------------ | -------------------------------------------------------------------- |
-| Node.js            | 22 or newer; CI uses Node.js 22                                      |
+| Node.js            | 22.18+ on Node 22, 24.11+ on Node 24, or 26+. CI uses Node 22.       |
 | pnpm               | Use the version pinned in the root `package.json` (`packageManager`) |
 | Java and Maven     | JDK 17+ and Maven 3+ for the Java helper                             |
 | Native build tools | CMake 3.21+ and a C/C++ toolchain                                    |
@@ -173,6 +175,17 @@ pnpm test
 pnpm lint
 git diff --check
 ```
+
+`pnpm test` runs the package suites in dependency order and then runs the
+repository script tests. Use `pnpm --filter @blue/app test:browser` for browser
+correctness. The full `pnpm build` also type-checks the app's main and preload
+tests without emitting them and produces the Electron bundles.
+
+`pnpm lint` runs Oxlint, the renderer typography audit, the native and Java lint
+checks, and Oxfmt's format check. Use `pnpm format:check` for a format-only check
+or `pnpm format` to apply formatting. For direct tool access, run `pnpm exec vp`
+from the root or `pnpm --filter <package> exec vp` in the relevant package
+context.
 
 The [developer guide](docs/manual/developer.qmd) has additional build and
 extension guidance.
