@@ -41,6 +41,7 @@ copy, check playback, automation, and a disk render in Blue 3.
 - The **Libraries** panel brings reusable instruments, UDOs, effects, and SoundObjects together. A first-run scan imports recognized user libraries from the default Java Blue configuration folder into an empty Blue 3 library and leaves the Java files intact. Use **Import XML…** for libraries kept elsewhere. Project instruments and UDOs remain in their project panels, and project-shared SoundObjects are in **SoundObject Library**.
 - Blue Share imports now go into the User Library as independent resources for later use in a project. You can browse and import without signing in. Sign in to publish or manage your submissions. See the [Blue Share guide](docs/manual/tools.qmd#blue-share).
 - BlueX7 uses a new six-operator renderer and tabbed voice editor with parameter automation. Supported Blue 2 voices load, but the new synthesis can sound different. Audition existing voices before replacing a reference render. Saving back through Java Blue does not preserve Blue 3's BlueX7 automation metadata. See the [BlueX7 compatibility notes](docs/blue-x7-modern-renderer.md).
+- Existing JMask objects without a saved generation mode open in **Mode 1 (Legacy)** to preserve playback. New JMask objects default to **Mode 2 (Corrected)**, which preserves fractional instrument IDs, stops note generation before the object's end, and runs oscillator frequency sweeps across its full duration. Use the **Mode 1** or **Mode 2** button in the JMask editor to switch modes. See the [JMask guide](docs/manual/soundobject-types.qmd#pattern-generators).
 - Legacy **Symmetric** clip fades load as **S-Curve**. Mixer panning is opt-in for legacy projects, preserving their existing routing until enabled.
 - Legacy SMPTE projects open in non-drop-frame mode unless a mode is saved. Stored event times stay intact, but corrected fractional-rate arithmetic can change displayed labels and the time represented by newly entered labels.
 - Project and library loading reports unsupported or invalid serialized data. Blue rejects unexpected content that would otherwise be lost on save. If a project or import is rejected, keep the original and use the diagnostic to identify the unsupported field or type.
@@ -51,6 +52,10 @@ copy, check playback, automation, and a disk render in Blue 3.
 - The old Script Library and its Java application scripting API are unavailable in Blue 3. Supported Jython project code still runs through the Java helper. Review scripts that call Java Blue application APIs before relying on them in a render.
 - The Java-era automatic project backup and recovery workflow is unavailable. Save explicitly and keep versioned copies of important projects.
 - The old **Scanned Synthesis Matrix Editor** and **Manage Tools** menu are absent. Blue Live's old **SCO Pad** and toolbar MIDI Input toggle are absent as well. Configure MIDI input devices in settings.
+
+### Fixed
+
+- The JMask parameter visibility menu supports keyboard navigation in docked and floating editors.
 
 ## [3.0.0-beta.6] - 2026-11-16
 
