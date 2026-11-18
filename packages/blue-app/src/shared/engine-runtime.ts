@@ -33,7 +33,10 @@ export interface EngineCompatibilityReport {
 }
 
 export type EngineSelectionSource =
-  'environment-override' | 'settings-override' | 'bundled' | 'development';
+  | 'environment-override'
+  | 'settings-override'
+  | 'bundled'
+  | 'development';
 
 export interface EngineSelection {
   source: EngineSelectionSource;

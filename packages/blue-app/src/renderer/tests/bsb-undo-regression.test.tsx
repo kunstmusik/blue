@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData, BlueSynthBuilder, BSBGroup, BSBKnob } from '@blue/data';
 import { prepareBsbWidgetCreation } from '../../shared/bsb-widget-commands';
 import type { BsbInterfacePatch } from '../../shared/project-editor';

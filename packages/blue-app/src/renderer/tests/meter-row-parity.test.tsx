@@ -3,8 +3,8 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MeterMapSnapshot, MeterMapPatch, MeterSnapshot } from '../../shared/project-editor';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+import type { MeterMapSnapshot, MeterMapPatch } from '../../shared/project-editor';
 import MeterRegionBar from '../components/workbench/panels/score/MeterRegionBar';
 import MeterEntryDialog from '../components/workbench/panels/score/MeterEntryDialog';
 import {

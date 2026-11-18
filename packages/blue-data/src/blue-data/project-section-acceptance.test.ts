@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { readProjectXml } from './xml-policy';
 import { ClojureProjectData, ClojureLibraryEntry } from '../plugins/clojure-project-data';
 import { BlueData } from '../blue-data';

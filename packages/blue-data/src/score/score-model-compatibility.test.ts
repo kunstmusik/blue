@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import '../sound-objects/register-sound-object-types';
 import { Score } from './score';
 import { PolyObject } from '../sound-objects/poly-object';
@@ -10,7 +10,6 @@ import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
-import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { AudioClip } from './audio/audio-clip';
 import { TimePosition } from '../time/time-position';
 import { TimeContext } from '../time/time-context';

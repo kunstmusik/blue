@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BLUE_ENGINE_PROTOCOL_VERSION,
   AUTOMATION_DECIMAL_FEATURE,

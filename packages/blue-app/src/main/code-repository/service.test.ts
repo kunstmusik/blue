@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -49,7 +49,7 @@ describe('CodeRepositoryService', () => {
       await service.start();
       let snapshot = await service.createGroup(CODE_REPOSITORY_ROOT_ID, 'fx', 0);
       expect(snapshot.contentRevision).toBe(1);
-      const groupId = snapshot.root.children?.[0].id!;
+      const groupId = snapshot.root.children?.[0].id;
       snapshot = await service.createSnippet(groupId, 'reverb', 'aout reverb', 1);
       expect(snapshot.root.children?.[0].children?.[0].code).toBe('aout reverb');
       await service.stop();

@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ScoreTimeCanvas from '../components/workbench/panels/score/layer-groups/ScoreTimeCanvas';
 import { BLUE_LIBRARY_DRAG_MIME } from '../components/libraries/library-drag-drop';
 import { useLibraryStore } from '../stores/library-store';

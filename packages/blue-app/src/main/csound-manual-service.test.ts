@@ -1,11 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { describe, expect, it, vi } from 'vitest';
-import {
-  createCsoundManualService,
-  type CsoundManualServiceDependencies,
-} from './csound-manual-service';
+import { describe, expect, it, vi } from 'vite-plus/test';
+import { createCsoundManualService } from './csound-manual-service';
 import {
   createDefaultProgramSettings,
   type ProgramSettingsSnapshot,

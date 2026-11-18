@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   CONTROLLED_STATEFUL_RESIDUAL_LIMIT,
   LINEAR_DOUBLE_RESIDUAL_LIMIT,

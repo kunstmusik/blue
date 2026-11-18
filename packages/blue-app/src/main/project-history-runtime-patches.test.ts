@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { compactHistoryRuntimePatches } from './project-history-runtime-patches';
 import { extractPatchRuntimeWork } from './project-runtime-reconciliation';
 import { validateProjectDocumentPatch } from '../shared/project-editor';

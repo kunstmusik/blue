@@ -102,14 +102,10 @@ export function beginIpcRegistration(
     },
 
     dispose() {
-      try {
-        disposeLease(lease);
-      } catch (error) {
-        // Teardown is once-only even when a host removal operation fails.
-        // Surface the first error to explicit callers after all entries were
-        // attempted; startup rollback callers may intentionally swallow it.
-        throw error;
-      }
+      // Teardown is once-only even when a host removal operation fails.
+      // Surface the first error to explicit callers after all entries were
+      // attempted; startup rollback callers may intentionally swallow it.
+      disposeLease(lease);
     },
   };
 

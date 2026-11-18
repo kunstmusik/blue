@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { notifyManager, QueryClientProvider } from '@tanstack/react-query';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createBlueShareQueryClient } from '../components/blueshare/blueshare-query';
 import { BlueShareDialog } from '../components/blueshare/BlueShareDialog';
 import { useBlueShare } from '../components/blueshare/use-blueshare';

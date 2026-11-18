@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { Effect, Element, UDOStyle } from '@blue/data';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createDefaultProgramSettings } from '../../shared/program-settings';
 import {

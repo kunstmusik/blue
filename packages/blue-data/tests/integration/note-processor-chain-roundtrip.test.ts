@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../../src/blue-data';
 import { Score } from '../../src/score/score';
 import { PolyObject } from '../../src/sound-objects/poly-object';
@@ -7,7 +7,6 @@ import { GenericScore } from '../../src/sound-objects/generic-score';
 import { TimeBehavior } from '../../src/sound-objects/time-behavior';
 import { TimeDuration } from '../../src/time/time-duration';
 import { NoteProcessorChain } from '../../src/note-processors/note-processor-chain';
-import { NoteProcessorChainMap } from '../../src/note-processors/note-processor-chain-map';
 import { AddProcessor } from '../../src/note-processors/add-processor';
 import { MultiplyProcessor } from '../../src/note-processors/multiply-processor';
 import { PythonProcessor } from '../../src/note-processors/python-processor';

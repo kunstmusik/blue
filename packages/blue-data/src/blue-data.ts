@@ -9,8 +9,7 @@
  * Loading/saving is done via XML strings compatible with the Java .blue file format.
  */
 import { Element } from './serialization/xml-reader';
-import { ObjRefSaveMap, ObjRefLoadMap } from './serialization/obj-ref-map';
-import { UpgradeManager } from './migration/upgrade-manager';
+import { ObjRefSaveMap } from './serialization/obj-ref-map';
 import { BLUE_VERSION } from './blue-constants';
 import { Arrangement } from './arrangement';
 import { ProjectProperties } from './project-properties';
@@ -24,62 +23,25 @@ import { NoteProcessorChainMap } from './note-processors/note-processor-chain-ma
 import { MarkersList } from './markers-list';
 import { MidiInputProcessor } from './midi/midi-input-processor';
 import { InstrumentLibrary } from './instruments/instrument-library';
-import { Instrument } from './instruments/instrument';
-import { GenericInstrument } from './instruments/generic-instrument';
-import { CompileData } from './compile-data';
-import type { CompiledMidiInstrumentTarget } from './compile-data';
 import { BlueDataObject } from './blue-data-object';
 import type { CopyMode, DeepCopyable, HistoryCopyable } from './deep-copyable';
 import { NoteList } from './sound-objects/note-list';
-import { Note } from './sound-objects/note';
 import { Mixer } from './mixer/mixer';
 import { OpcodeList } from './opcodes/opcode-list';
-import { OpcodeDefinition } from './opcodes/opcode-definition';
-import { getAllParameters, assignParameterNames } from './automation/parameter-helper';
-import { Parameter } from './automation/parameter';
-import {
-  appendParameterScoreJava,
-  getParameterInstrumentTextJava,
-} from './automation/csd-parameter-automation';
-import { BSBCompilationUnit } from './instruments/blue-synth-builder/bsb-compilation-unit';
-import { Effect } from './mixer/effect';
-import { EffectsChain } from './mixer/effects-chain';
-import { Channel } from './mixer/channel';
-import { Send } from './mixer/send';
-import { UDOStyle } from './opcodes/udo-style';
-import { formatBlueNumber, formatJavaDouble } from './utilities/number-format';
-import { disposeJavaScriptCompileState, setJavaScriptSession } from './javascript-runtime';
 import type { JavaScriptSession } from './javascript-runtime';
-import { setJavaRuntimeClient, type JavaRuntimeClientContract } from './java-runtime';
+import { type JavaRuntimeClientContract } from './java-runtime';
 import {
   ClojureProjectData,
   loadClojureProjectDataFromPluginData,
   replaceClojureProjectDataInPluginData,
 } from './plugins/clojure-project-data';
-import { parseUDOText } from './opcodes/udo-utilities';
-import { TimeContext } from './time/time-context';
-import { TempoMap } from './time/tempo-map';
-import { ClojureObject } from './sound-objects/clojure-object';
 import { Instance } from './sound-objects/instance';
-import { JavaScriptObject } from './sound-objects/javascript-object';
-import { ObjectBuilder } from './sound-objects/object-builder';
 import { PolyObject } from './sound-objects/poly-object';
 import { TrackLayerGroup } from './score/track/track-layer-group';
 import { PatternsLayerGroup } from './score/patterns/patterns-layer-group';
 import { AudioClip } from './score/audio/audio-clip';
 import { FrozenSoundObject } from './sound-objects/frozen-sound-object';
-import { PythonObject } from './sound-objects/python-object';
 import type { SoundObject } from './sound-objects/sound-object';
-import { PythonInstrument } from './instruments/python-instrument';
-import { PythonProcessor } from './note-processors/python-processor';
-import type { NoteProcessorChain } from './note-processors/note-processor-chain';
-import {
-  processCommandBlocks,
-  preprocessSco,
-  getTempoScore,
-  getTempoMapFromScoreText,
-} from './utilities/csd-render';
-import { getNotes } from './utilities/score';
 import './sound-objects/register-sound-object-types';
 
 import { loadFromString, saveAsXML, saveToString } from './blue-data/xml-policy';

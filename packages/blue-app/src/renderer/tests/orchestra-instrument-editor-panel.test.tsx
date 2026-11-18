@@ -3,7 +3,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vite-plus/test';
 import type { GenericInstrumentSnapshot } from '../../shared/project-editor';
 import InstrumentEditorPanel from '../components/workbench/panels/orchestra/InstrumentEditorPanel';
 import InstrumentCommentsPanel from '../components/workbench/panels/orchestra/InstrumentCommentsPanel';

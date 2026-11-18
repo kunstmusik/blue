@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   TRACK_INSTRUMENT_RUNTIME_STATUS_CHANGED_CHANNEL,
   TRACK_INSTRUMENT_RUNTIME_STATUS_QUERY_CHANNEL,

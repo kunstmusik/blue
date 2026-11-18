@@ -8,7 +8,11 @@ export interface OpenCsoundManualRequest {
 export type ManualAvailability = 'available' | 'missing' | 'indeterminate';
 
 export type ManualFailureReason =
-  'invalid-request' | 'invalid-setting' | 'missing' | 'probe-failed' | 'open-failed';
+  | 'invalid-request'
+  | 'invalid-setting'
+  | 'missing'
+  | 'probe-failed'
+  | 'open-failed';
 
 export interface OpenCsoundManualResult {
   disposition: 'opened' | 'fallback';
@@ -122,8 +126,11 @@ export function validateManualId(manualId: unknown): { valid: boolean; error?: s
     return { valid: false, error: 'Manual ID contains malformed Unicode surrogates' };
   }
 
-  if (/[\x00-\x1f\x7f]/.test(manualId)) {
-    return { valid: false, error: 'Manual ID must not contain control characters' };
+  for (let i = 0; i < manualId.length; i += 1) {
+    const code = manualId.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) {
+      return { valid: false, error: 'Manual ID must not contain control characters' };
+    }
   }
 
   const trimmed = manualId.trim();
@@ -147,7 +154,10 @@ export function validateManualId(manualId: unknown): { valid: boolean; error?: s
       decoded.includes('..') ||
       decoded.includes('/') ||
       decoded.includes('\\') ||
-      /[\x00-\x1f\x7f]/.test(decoded)
+      [...decoded].some((ch) => {
+        const code = ch.charCodeAt(0);
+        return code <= 0x1f || code === 0x7f;
+      })
     ) {
       return { valid: false, error: 'Manual ID contains invalid decoded sequences' };
     }

@@ -97,7 +97,7 @@ export default function FileManagerPanel(): React.ReactElement {
     async (rootId: string, rootPath: string, newLabel: string) => {
       const settings = await window.blueAPI.getProgramSettings();
       const currentLabels = {
-        ...(settings.appSpecific.fileManagerRootLabels ?? {}),
+        ...settings.appSpecific.fileManagerRootLabels,
       };
       const trimmed = newLabel.trim();
       if (trimmed.length > 0) {

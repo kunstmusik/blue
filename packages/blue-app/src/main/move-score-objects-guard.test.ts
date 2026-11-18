@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, PolyObject, SoundLayer, AudioFile } from '@blue/data';
 import { applyProjectDocumentPatch, createProjectEditorSnapshot } from '../shared/project-editor';
 

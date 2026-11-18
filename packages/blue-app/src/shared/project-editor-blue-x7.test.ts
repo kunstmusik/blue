@@ -1,11 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  BlueX7,
-  createDefaultBlueX7Voice,
-  Element,
-  getBlueX7Descriptor,
-} from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, BlueX7, createDefaultBlueX7Voice, getBlueX7Descriptor } from '@blue/data';
 import {
   createOrchestraSnapshot,
   applyProjectDocumentPatch,

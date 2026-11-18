@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import LiveSpaceTab from '../components/workbench/panels/blue-live/LiveSpaceTab';
 import LiveCodeTab from '../components/workbench/panels/blue-live/LiveCodeTab';
 import OptionsTab from '../components/workbench/panels/blue-live/OptionsTab';

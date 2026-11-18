@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { ensureUniqueName } from '../../shared/project-editor';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 

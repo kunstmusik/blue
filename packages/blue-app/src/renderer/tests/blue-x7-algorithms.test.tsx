@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ALGORITHM_IMAGES, getAlgorithmImage } from '../assets/blue-x7/algorithm-images';
 import { AlgorithmTopology } from '../components/instruments/blue-x7/algorithm-topology';
 import { AlgorithmDialog } from '../components/instruments/blue-x7/algorithm-dialog';

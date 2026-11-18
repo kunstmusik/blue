@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { WorkbenchWindowManager } from './workbench-window-manager';
 
 function createHandle(opts: { destroyed?: boolean; focusSpy?: () => void } = {}) {

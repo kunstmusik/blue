@@ -3,7 +3,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import TrackInstrumentControl from '../components/workbench/panels/score/TrackInstrumentControl';
 import type { TrackInstrumentSummary } from '../../shared/project-editor';
 

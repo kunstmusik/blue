@@ -1,9 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import type {
-  MeterMapSnapshot,
-  MeterSnapshot,
-  MeterMapPatch,
-} from '../../../../../shared/project-editor';
+import type { MeterMapSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   deriveMeterRegions,

@@ -1,7 +1,7 @@
 import { reportPerformance } from '../../test-support/performance';
 import { EditorState } from '@codemirror/state';
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createJavaBlueCsoundCompletionSource } from '../components/workbench/panels/editors/csound-java-blue-completions';
 import type { JavaBlueUdoCompletionDefinition } from '../components/workbench/panels/editors/editor-adapter-types';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Element } from '../../serialization/xml-reader';
 import { BlueX7 } from '../../instruments/blue-x7';
 import { Track } from './track';

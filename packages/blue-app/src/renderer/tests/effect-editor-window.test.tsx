@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { Effect } from '@blue/data';
 import EffectEditorPage from '../components/effect-editor/EffectEditorPage';
 import {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { GenericScore } from '../sound-objects/generic-score';
 import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimeDuration } from '../time/time-duration';

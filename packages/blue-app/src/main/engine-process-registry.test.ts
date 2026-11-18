@@ -1,9 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   getEngineProcessManifestPath,
   matchesTrackedEngineCommandLine,
   planEngineProcessSweep,
-  type EngineProcessManifest,
   type EngineProcessManifestV1,
   type EngineProcessManifestV2,
 } from './engine-process-registry';

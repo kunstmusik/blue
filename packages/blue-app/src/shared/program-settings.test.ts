@@ -1,12 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   createDefaultProgramSettings,
-  createDefaultGeneralSettings,
-  createDefaultProjectDefaultsSettings,
-  createDefaultPlaybackSettings,
   createDefaultUtilitySettings,
-  createDefaultRealtimeRenderSettings,
-  createDefaultDiskRenderSettings,
   createDefaultCurrentAppSettings,
   validateProgramSettings,
   resetProgramSettingsPanel,
@@ -21,7 +16,6 @@ import {
   normalizeEnginePathSetting,
   PROGRAM_SETTINGS_PANEL_ORDER,
   TIME_BASE_CHOICES,
-  SNAP_VALUE_CHOICES,
   SMPTE_FRAME_RATES,
   FILE_FORMAT_CHOICES,
   SAMPLE_FORMAT_CHOICES,

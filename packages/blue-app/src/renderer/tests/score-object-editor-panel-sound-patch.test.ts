@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, PolyObject, Sound, SoundLayer } from '@blue/data';
 import {
   createScoreObjectEditorDocument,
@@ -466,7 +466,8 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
       sourceWidget.id,
     );
     const minimumSliders = minimumWidget?.properties.sliders as
-      Array<{ value?: number }> | undefined;
+      | Array<{ value?: number }>
+      | undefined;
 
     expect(minimumWidget?.minimum).toBe(-1);
     expect(minimumWidget?.properties.minimum).toBe(-1);
@@ -495,7 +496,8 @@ describe('ScoreObjectEditorPanel Sound optimistic patching', () => {
       sourceWidget.id,
     );
     const maximumSliders = maximumWidget?.properties.sliders as
-      Array<{ value?: number }> | undefined;
+      | Array<{ value?: number }>
+      | undefined;
 
     expect(maximumWidget?.maximum).toBe(10);
     expect(maximumWidget?.properties.maximum).toBe(10);

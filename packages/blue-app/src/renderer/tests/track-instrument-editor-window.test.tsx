@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { toast } from 'sonner';
 import type {
   TrackInstrumentEditorPatchResult,

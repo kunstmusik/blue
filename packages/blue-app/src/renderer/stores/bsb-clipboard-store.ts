@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 import type { BsbCanvasClipboard } from '../../shared/unified-library';
 
 export type { BsbCanvasClipboard } from '../../shared/unified-library';

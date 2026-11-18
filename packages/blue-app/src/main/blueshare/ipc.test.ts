@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { IpcMain } from 'electron';
 import { BLUESHARE_CHANNELS } from '../../shared/blueshare';
 import { registerBlueShareIpc } from './ipc';

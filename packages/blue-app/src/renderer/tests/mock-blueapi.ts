@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 /**
  * Stub `window.blueAPI` so renderer code can import the MIDI surface without

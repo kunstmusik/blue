@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   BlueData,
   Channel,
@@ -29,7 +29,6 @@ import { applyProjectGraphDelta } from './project-history-graph';
 import {
   assignExplicitMixerChannelSnapshotId,
   assignExplicitScoreObjectId,
-  getKnownMixerChannelSnapshotId,
   getScoreObjectId,
 } from '../shared/project-editor/identity';
 import {
@@ -1140,12 +1139,10 @@ describe('project-history-memento', () => {
         expect(historyCopySpy).not.toHaveBeenCalled();
         expect(
           (
-            data
-              .getLiveData()
-              .getLiveObjectBins()
-              .getLiveObject(0, 0)
-              ?.getSoundObject() as GenericScore
-          ).getScoreText(),
+            data.getLiveData().getLiveObjectBins().getLiveObject(0, 0)?.getSoundObject() as
+              | GenericScore
+              | undefined
+          )?.getScoreText(),
         ).toBe('i1 0 1 440');
 
         const committed = await history.commit({
@@ -1184,12 +1181,10 @@ describe('project-history-memento', () => {
         const afterCommit = session.read().data!;
         expect(
           (
-            afterCommit
-              .getLiveData()
-              .getLiveObjectBins()
-              .getLiveObject(0, 0)
-              ?.getSoundObject() as GenericScore
-          ).getScoreText(),
+            afterCommit.getLiveData().getLiveObjectBins().getLiveObject(0, 0)?.getSoundObject() as
+              | GenericScore
+              | undefined
+          )?.getScoreText(),
         ).toBe('i1 0 2 880');
         expect(afterCommit.getOpcodeList().size()).toBe(1);
         expect(afterCommit.getOpcodeList().getOpcode(0)?.getName()).toBe('BatchUdo');
@@ -1206,12 +1201,10 @@ describe('project-history-memento', () => {
         const afterUndo = session.read().data!;
         expect(
           (
-            afterUndo
-              .getLiveData()
-              .getLiveObjectBins()
-              .getLiveObject(0, 0)
-              ?.getSoundObject() as GenericScore
-          ).getScoreText(),
+            afterUndo.getLiveData().getLiveObjectBins().getLiveObject(0, 0)?.getSoundObject() as
+              | GenericScore
+              | undefined
+          )?.getScoreText(),
         ).toBe('i1 0 1 440');
         expect(afterUndo.getOpcodeList().size()).toBe(0);
 
@@ -1227,12 +1220,10 @@ describe('project-history-memento', () => {
         const afterRedo = session.read().data!;
         expect(
           (
-            afterRedo
-              .getLiveData()
-              .getLiveObjectBins()
-              .getLiveObject(0, 0)
-              ?.getSoundObject() as GenericScore
-          ).getScoreText(),
+            afterRedo.getLiveData().getLiveObjectBins().getLiveObject(0, 0)?.getSoundObject() as
+              | GenericScore
+              | undefined
+          )?.getScoreText(),
         ).toBe('i1 0 2 880');
         expect(afterRedo.getOpcodeList().size()).toBe(1);
         expect(afterRedo.getOpcodeList().getOpcode(0)?.getName()).toBe('BatchUdo');

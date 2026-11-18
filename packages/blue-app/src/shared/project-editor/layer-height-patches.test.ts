@@ -1,12 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  PolyObject,
-  TrackLayerGroup,
-  PatternsLayerGroup,
-  SoundLayer,
-  TrackLayer,
-} from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, PolyObject, TrackLayerGroup, PatternsLayerGroup } from '@blue/data';
 import { applyProjectDocumentPatch } from './index';
 import { assignLayerGroupId, assignLayerSelectionId } from './identity';
 

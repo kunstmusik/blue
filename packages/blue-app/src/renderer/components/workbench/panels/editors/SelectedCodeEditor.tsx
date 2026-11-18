@@ -21,7 +21,6 @@ import {
   bracketMatching,
   foldKeymap,
   HighlightStyle,
-  type TagStyle,
 } from '@codemirror/language';
 import { history, historyKeymap, defaultKeymap } from '@codemirror/commands';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';

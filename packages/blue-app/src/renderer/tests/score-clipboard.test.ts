@@ -1,5 +1,5 @@
 import { BlueData, GenericScore } from '@blue/data';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   createDefaultBsbWidgetSnapshot,
   createProjectEditorSnapshot,

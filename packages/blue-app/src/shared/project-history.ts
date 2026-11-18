@@ -41,7 +41,12 @@ export interface ProjectHistoryPrecondition {
 }
 
 export type ProjectHistorySelectionTargetType =
-  'scoreObject' | 'layer' | 'mixerChannel' | 'instrument' | 'text' | 'parameter';
+  | 'scoreObject'
+  | 'layer'
+  | 'mixerChannel'
+  | 'instrument'
+  | 'text'
+  | 'parameter';
 
 export interface ProjectHistorySelectionHint {
   targetType: ProjectHistorySelectionTargetType;
@@ -191,7 +196,13 @@ export interface FocusedHistoryAvailability {
 }
 
 export type ProjectHistoryResponseStatus =
-  'committed' | 'unchanged' | 'stale' | 'invalid' | 'busy' | 'oversize' | 'failed';
+  | 'committed'
+  | 'unchanged'
+  | 'stale'
+  | 'invalid'
+  | 'busy'
+  | 'oversize'
+  | 'failed';
 
 export interface ProjectHistoryCommittedResponse {
   status: 'committed';
@@ -267,7 +278,8 @@ export type ProjectHistoryResponse =
   | ProjectHistoryFailedResponse;
 
 export type ProjectHistoryReadResponse =
-  ProjectHistoryStateProjection | ProjectHistoryInvalidResponse;
+  | ProjectHistoryStateProjection
+  | ProjectHistoryInvalidResponse;
 
 /**
  * Renderer-facing summary of one committed history entry for read-only
@@ -290,7 +302,8 @@ export interface ProjectHistoryEntriesSnapshot {
 }
 
 export type ProjectHistoryEntriesResponse =
-  ProjectHistoryEntriesSnapshot | ProjectHistoryInvalidResponse;
+  | ProjectHistoryEntriesSnapshot
+  | ProjectHistoryInvalidResponse;
 
 export interface ProjectHistoryControlResponse {
   ok: boolean;
@@ -421,7 +434,8 @@ export interface ProjectRuntimeOutcomeEvent {
 }
 
 export type ProjectHistoryValidationResult<T> =
-  { valid: true; value: T } | { valid: false; reason: string };
+  | { valid: true; value: T }
+  | { valid: false; reason: string };
 
 export interface ProjectDocumentPatchBatchRequest {
   patches: ProjectDocumentPatch[];

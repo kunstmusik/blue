@@ -1,13 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  PolyObject,
-  SoundLayer,
-  GenericScore,
-  NoteProcessorChain,
-  AddProcessor,
-  MultiplyProcessor,
-} from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, PolyObject, GenericScore } from '@blue/data';
 import { applyProjectDocumentPatch, createScoreDocumentSnapshot } from './project-editor';
 import type { NoteProcessorChainSnapshot } from './project-editor';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import TimeBar from '../components/workbench/panels/score-object/editors/pianoroll/TimeBar';
 
 it('renders project DF labels from local zero with the complete tempo map', () => {

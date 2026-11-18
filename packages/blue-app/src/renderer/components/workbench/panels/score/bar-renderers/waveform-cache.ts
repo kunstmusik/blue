@@ -64,8 +64,8 @@ export function summarizeAiffPcmBytes(
   );
   const bucketCount = Math.max(1, Math.ceil(frameCount / samplesPerBucket));
   const channels = Array.from({ length: metadata.channels }, () => ({
-    min: new Array<number>(bucketCount).fill(1),
-    max: new Array<number>(bucketCount).fill(-1),
+    min: Array.from({ length: bucketCount }, () => 1),
+    max: Array.from({ length: bucketCount }, () => -1),
   }));
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
 
@@ -267,8 +267,8 @@ export function summarizeWaveformChannels(
       Math.ceil(samples.length / maxBuckets),
     );
     const bucketCount = Math.max(1, Math.ceil(samples.length / samplesPerBucket));
-    const min = new Array<number>(bucketCount).fill(0);
-    const max = new Array<number>(bucketCount).fill(0);
+    const min = Array.from({ length: bucketCount }, () => 0);
+    const max = Array.from({ length: bucketCount }, () => 0);
 
     for (let bucketIndex = 0; bucketIndex < bucketCount; bucketIndex += 1) {
       const start = bucketIndex * samplesPerBucket;

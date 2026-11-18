@@ -26,7 +26,7 @@ export class Scale {
 
   private static default12TET(): number[] {
     const ratio = Math.pow(2.0, 1.0 / 12.0);
-    const ratios = new Array(12);
+    const ratios = Array.from<number>({ length: 12 });
     for (let i = 0; i < 12; i++) {
       ratios[i] = Math.pow(ratio, i);
     }

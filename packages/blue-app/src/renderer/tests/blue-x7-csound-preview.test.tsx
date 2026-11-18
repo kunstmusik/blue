@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createDefaultBlueX7Voice } from '@blue/data';
 import { CsoundPanel } from '../components/instruments/blue-x7/csound-panel';
 

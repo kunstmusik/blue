@@ -94,7 +94,7 @@ function seedAppZoomPercent(profileDir, percent) {
   const filePath = settingsFilePath(profileDir);
   const existing = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : {};
   existing.appSpecific = {
-    ...(existing.appSpecific ?? {}),
+    ...existing.appSpecific,
     appZoomPercent: percent,
   };
   fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));

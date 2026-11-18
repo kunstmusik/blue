@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Score } from '../score/score';
 import { PolyObject } from '../sound-objects/poly-object';
 import { SoundLayer } from '../sound-objects/sound-layer';

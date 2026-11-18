@@ -1,16 +1,6 @@
 import { reportPerformance } from '../test-support/performance';
-import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  GenericScore,
-  PolyObject,
-  SoundLayer,
-  Track,
-  TrackLayerGroup,
-  Pattern,
-  PatternLayer,
-  PatternsLayerGroup,
-} from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, GenericScore, PolyObject, SoundLayer } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
@@ -18,12 +8,7 @@ import {
   type ProjectDocumentPatch,
   type ScoreObjectEditorTargetSnapshot,
 } from './project-editor';
-import {
-  createTestProjectWithLayers,
-  createMockScoreObjectTarget,
-  createMockTrackTarget,
-  createMockPatternSourceTarget,
-} from './project-editor-layer-color-test-utils';
+import { createTestProjectWithLayers } from './project-editor-layer-color-test-utils';
 
 describe('Project Editor Score Color Application (US3)', () => {
   it('accepts valid no-op layer and item colors but rejects invalid or stale targets', () => {

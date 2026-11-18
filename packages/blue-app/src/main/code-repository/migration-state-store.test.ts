@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import * as fs from 'node:fs';
 import {
   DEFAULT_CODE_REPOSITORY_MIGRATION_STATE,

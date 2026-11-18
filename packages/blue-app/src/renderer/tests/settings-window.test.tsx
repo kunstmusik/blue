@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vite-plus/test';
 import { chooseAppSelectOption } from './app-select-test-utils';
 import SettingsApp from '../components/settings/SettingsApp';
 import { createDefaultProgramSettings } from '../../shared/program-settings';

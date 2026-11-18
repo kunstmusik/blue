@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { UnifiedLibraryRepositoryClient, type RepositoryWorkerPort } from './repository-client';
 
 describe('UnifiedLibraryRepositoryClient', () => {

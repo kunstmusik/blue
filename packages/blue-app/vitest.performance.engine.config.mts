@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 import base from './vitest.config.mts';
 
 export default defineConfig({

@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { LibraryActionsMenu } from '../components/libraries/LibraryActionsMenu';
 import { LibraryImportDialog } from '../components/libraries/LibraryImportDialog';
 import { chooseAppSelectOption } from './app-select-test-utils';

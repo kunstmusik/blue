@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { Socket } from 'node:dgram';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { Bundle, Message, encode } from 'node-osc';
 import { OscControlService } from './osc-control-service';
 import type { OscCommandEvent } from '../shared/osc-control';

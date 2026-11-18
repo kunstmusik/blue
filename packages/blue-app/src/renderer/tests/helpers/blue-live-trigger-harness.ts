@@ -11,7 +11,7 @@
  * same abstract runtime/session contracts the production code uses, so tests
  * never depend on a live engine or a spawned Java helper.
  */
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 import type {
   BlueData,
   JavaRuntimeClientContract,

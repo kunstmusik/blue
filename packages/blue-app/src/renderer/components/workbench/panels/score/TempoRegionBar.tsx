@@ -5,7 +5,6 @@ import type {
   MeterMapSnapshot,
   TempoMapSnapshot,
   TempoMapPatch,
-  TempoCurveTypeSnapshot,
 } from '../../../../../shared/project-editor';
 import type { SnapValueName } from '@blue/data';
 import * as ContextMenu from '@radix-ui/react-context-menu';

@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { createUnifiedLibraryTestDirectory } from './test-helpers';
 import {
   CURRENT_LIBRARY_SCHEMA_VERSION,

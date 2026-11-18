@@ -18,11 +18,7 @@ import {
   resolveEffectiveHeight,
   resolveExplicitHeight,
 } from '../layer-height-policy';
-import {
-  DEFAULT_LAYER_COLOR,
-  isValidLayerColorInput,
-  normalizeLayerColor,
-} from '../layers/layer-color';
+import { DEFAULT_LAYER_COLOR, normalizeLayerColor } from '../layers/layer-color';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { TimeContext } from '../../time/time-context';
 import {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../blue-data';
 import { BSBKnob } from '../instruments/blue-synth-builder/bsb-knob';
 import { TimeDuration } from '../time/time-duration';

@@ -1214,7 +1214,7 @@ export function applyPatchToDocument(
             : [];
         return {
           ...pattern,
-          values: [...values, ...new Array<boolean>(numSteps - values.length).fill(false)],
+          values: [...values, ...Array.from({ length: numSteps - values.length }, () => false)],
         };
       });
     }
@@ -1355,7 +1355,7 @@ export function applyPatchToDocument(
         patternScore: '',
         muted: false,
         solo: false,
-        values: new Array(numSteps).fill(false),
+        values: Array.from({ length: numSteps }, () => false),
       };
       payload.patterns = [...(payload.patterns as Array<Record<string, unknown>>), newPattern];
       payload.numSteps = numSteps;
@@ -1377,7 +1377,7 @@ export function applyPatchToDocument(
     if (p.addTrack !== undefined && Array.isArray(payload.trackData)) {
       const trackData = payload.trackData as string[][];
       const numCols = trackData[0]?.length ?? 16;
-      payload.trackData = [...trackData, new Array(numCols).fill('')];
+      payload.trackData = [...trackData, Array.from({ length: numCols }, () => '')];
     }
 
     const editor: TypeSpecificScoreObjectEditorSnapshot = {

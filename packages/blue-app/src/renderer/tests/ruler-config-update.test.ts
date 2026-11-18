@@ -1,13 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import type { TimebaseUpdateMode } from '../components/workbench/panels/score/RulerConfigDialog';
-import {
-  TimeBase,
-  TimePosition,
-  TimeDuration,
-  TimeContext,
-  BlueData,
-  GenericScore,
-} from '@blue/data';
+import { TimeBase, TimePosition, TimeDuration, BlueData, GenericScore } from '@blue/data';
 import { applyScoreTimeStatePatch, applyProjectDocumentPatch } from '../../shared/project-editor';
 import type { ScoreObjectEditorTargetSnapshot } from '../../shared/project-editor';
 

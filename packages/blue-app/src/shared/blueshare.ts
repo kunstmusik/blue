@@ -75,7 +75,10 @@ export interface CategoryTreeNode extends Category {
 
 export interface CategoryHierarchyValidationError {
   readonly code:
-    'duplicate_category_id' | 'orphan_category' | 'category_cycle' | 'invalid_category_item';
+    | 'duplicate_category_id'
+    | 'orphan_category'
+    | 'category_cycle'
+    | 'invalid_category_item';
   readonly message: string;
 }
 
@@ -582,7 +585,8 @@ export interface BlueShareError {
 }
 
 export type BlueShareResult<T> =
-  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: BlueShareError };
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: BlueShareError };
 
 export function isBlueShareSuccess<T>(
   result: unknown,
@@ -956,7 +960,7 @@ export function validatePublishRequest(
               errors.xml = envelope.error;
             }
           }
-        } catch (err: unknown) {
+        } catch {
           if (!errors.xml) {
             errors.xml = 'XML is malformed or contains unsupported declarations';
           }

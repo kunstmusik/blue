@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { readResourceXml } from './resource-xml-policy';
 import { GenericInstrument } from './instruments/generic-instrument';
 import { PythonInstrument } from './instruments/python-instrument';
@@ -10,8 +10,6 @@ import { PresetGroup } from './instruments/blue-synth-builder/preset-group';
 import { ClojureObject } from './sound-objects/clojure-object';
 import { FrozenSoundObject } from './sound-objects/frozen-sound-object';
 import { BlueSynthBuilder } from './instruments/blue-synth-builder';
-import { BlueData } from './blue-data';
-import { Sound } from './sound-objects/sound';
 import { XmlLoadContext, loadXml } from './serialization/xml-load';
 import { Element } from './serialization/xml-reader';
 

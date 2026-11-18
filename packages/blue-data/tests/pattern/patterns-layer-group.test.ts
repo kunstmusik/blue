@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { PatternsLayerGroup } from '../../src/score/patterns/patterns-layer-group';
 import { GenericScore } from '../../src/sound-objects/generic-score';
 import { TimeBehavior } from '../../src/sound-objects/time-behavior';

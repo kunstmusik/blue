@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, BlueSynthBuilder, BSBGroup, BSBKnob } from '@blue/data';
 import type { Parameter } from '@blue/data';
 import { applyProjectDocumentPatch } from './project-editor';

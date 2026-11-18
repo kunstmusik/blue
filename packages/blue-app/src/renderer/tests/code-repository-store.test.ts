@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CODE_REPOSITORY_ROOT_ID, createEmptyCodeRepositoryDocument } from '@blue/data';
 import { useCodeRepositoryStore } from '../stores/code-repository-store';
 

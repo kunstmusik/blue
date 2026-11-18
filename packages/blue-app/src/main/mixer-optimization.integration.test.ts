@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import {
   buildStandardCSD,
   buildStandardCSDAsync,
@@ -387,7 +387,7 @@ function resetVariablesOf(csdText: string): string[] {
     .filter((line) => /^ga_(bluemix|bluesub)_\S+ = 0$/.test(line))
     .map((line) => line.slice(0, line.indexOf(' =')));
   if (zeroAssigned.length > 0) return zeroAssigned;
-  const clearLines = lines.filter((line) => /^clear /.test(line));
+  const clearLines = lines.filter((line) => line.startsWith('clear '));
   if (clearLines.length === 0) {
     throw new Error('BlueMixer has no accumulator reset statements');
   }

@@ -2,7 +2,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { DockviewReact, type DockviewApi } from 'dockview';
 import 'dockview/dist/styles/dockview.css';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
   applyAuxiliaryLayout,
   createDefaultAuxiliaryLayoutState,

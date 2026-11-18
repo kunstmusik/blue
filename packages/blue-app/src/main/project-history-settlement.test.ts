@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { BlueData } from '@blue/data';

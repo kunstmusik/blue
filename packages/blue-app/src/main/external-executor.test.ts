@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { prepareCommandLine, shouldUseOutFile } from '../shared/external-executor';
 import { createMainExternalExecutor, executeExternalTest } from './external-executor';
 

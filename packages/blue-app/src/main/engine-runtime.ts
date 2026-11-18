@@ -23,7 +23,6 @@ import {
   requiredFeatureForExecution,
   type CsoundExecutionRequest,
   type CsoundExecutionResult,
-  type CsoundIoQueryErrorCode,
   type CsoundIoQueryRequest,
   type CsoundIoQueryResult,
 } from '../shared/csound-runtime';

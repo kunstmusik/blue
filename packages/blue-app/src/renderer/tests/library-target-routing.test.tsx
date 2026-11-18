@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { LibraryExactTransferTarget, LibraryType } from '../../shared/unified-library';
 import { useLibraryStore } from '../stores/library-store';
 

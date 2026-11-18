@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainEditor from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';

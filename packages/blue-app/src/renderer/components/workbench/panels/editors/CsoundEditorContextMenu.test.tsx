@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 
 import CsoundEditorContextMenu from './CsoundEditorContextMenu';
 import { createOpcodesSubmenu } from './csound-opcode-menu';
@@ -118,7 +118,7 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
       targetUrl: 'https://csound.com/manual/opcodes/oscili/',
     });
     window.blueAPI = {
-      ...(window.blueAPI ?? {}),
+      ...window.blueAPI,
       openCsoundManual,
     } as unknown as typeof window.blueAPI;
 
@@ -179,7 +179,7 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
       targetUrl: 'https://csound.com/manual/opcodes/opa/',
     });
     window.blueAPI = {
-      ...(window.blueAPI ?? {}),
+      ...window.blueAPI,
       openCsoundManual,
     } as unknown as typeof window.blueAPI;
 
@@ -233,7 +233,7 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
   it('performs no navigation when caret is on an unrecognized identifier', async () => {
     const openCsoundManual = vi.fn();
     window.blueAPI = {
-      ...(window.blueAPI ?? {}),
+      ...window.blueAPI,
       openCsoundManual,
     } as unknown as typeof window.blueAPI;
 
@@ -295,7 +295,7 @@ describe('CsoundEditorContextMenu opcode insertion', () => {
       message: 'Csound manual entry not found (404)',
     });
     window.blueAPI = {
-      ...(window.blueAPI ?? {}),
+      ...window.blueAPI,
       openCsoundManual,
     } as unknown as typeof window.blueAPI;
 

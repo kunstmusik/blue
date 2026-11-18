@@ -1,7 +1,6 @@
 import type { BarRendererProps } from './renderer-registry';
 import ScoreObjectBar, { LabelText, RepeatMarkers, activeRepeatPointBeats } from './ScoreObjectBar';
 import { textColorForBackground } from './color-utils';
-import { SOUND_LAYER_HEIGHT } from '../types';
 
 export default function GenericScoreObjectBar({
   item,

@@ -1,5 +1,5 @@
 import type { XmlDiagnostic } from '@blue/data';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { formatProjectMessages } from './xml-diagnostics';
 
 describe('Project Messages formatting', () => {

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -8,7 +8,6 @@ import {
   buildFactoryManifest,
   createFactoryManifestProvider,
   deriveFactoryRevision,
-  FactorySourceError,
   FactoryFileManifestRecord,
 } from './manifest';
 

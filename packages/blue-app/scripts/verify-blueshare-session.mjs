@@ -71,7 +71,11 @@ async function supervise() {
         });
         child.once('exit', (code) => {
           clearTimeout(timer);
-          code === 0 ? resolve() : reject(new Error(`Native phase ${phase} failed`));
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`Native phase ${phase} failed`));
+          }
         });
       });
     }

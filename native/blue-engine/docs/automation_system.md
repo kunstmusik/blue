@@ -509,7 +509,7 @@ and evaluator details above are the normative protocol-v2 and realtime model.
 - The Blue Engine owns only a transient prepared copy received through the
   engine-client protocol-v2 boundary. Protocol v2 transports canonical
   resolution text (`channelName\0 + curve:u8 + enabled:u8 +
-resolutionLength:u32-le + resolution:ascii + pointCount:u32-le + points`)
+  resolutionLength:u32-le + resolution:ascii + pointCount:u32-le + points`)
   and contains no resolution-double, scale, or precision-mode field.
 
 ### Realtime ownership and retirement

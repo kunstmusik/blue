@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import type { MeterMapPatch, MeterMapSnapshot, MeterSnapshot } from '../../shared/project-editor';
+import { describe, expect, it } from 'vite-plus/test';
+import type { MeterMapPatch, MeterMapSnapshot } from '../../shared/project-editor';
 import {
   createMeterMapSnapshot,
   createScoreDocumentSnapshot,

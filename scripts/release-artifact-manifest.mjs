@@ -47,7 +47,6 @@
  * hashes published package bytes.
  */
 
-import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
@@ -62,7 +61,6 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseFlags } from './parse-cli-flags.mjs';
 
-const require = createRequire(import.meta.url);
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const repoRoot = resolve(__dirname, '..');
 const appPkgPath = join(repoRoot, 'packages', 'blue-app', 'package.json');

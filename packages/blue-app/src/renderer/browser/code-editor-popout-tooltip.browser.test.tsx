@@ -1,6 +1,6 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 import { HostDocumentContext } from '../hooks/use-host-document';
 

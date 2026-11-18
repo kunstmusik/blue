@@ -20,7 +20,6 @@ import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
 import { checkRoot, checkShape } from '../utilities/xml';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { ScoreGenerationException } from './score-generation-exception';
 import { CompileData } from '../compile-data';
 import {
   normalizeScoreGenerationOptions,

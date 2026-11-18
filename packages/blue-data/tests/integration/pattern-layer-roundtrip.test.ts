@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import '../../src/sound-objects/register-sound-object-types';
 import { PatternData } from '../../src/score/patterns/pattern-data';
 import { PatternLayer } from '../../src/score/patterns/pattern-layer';
@@ -6,8 +6,6 @@ import { PatternsLayerGroup } from '../../src/score/patterns/patterns-layer-grou
 import { GenericScore } from '../../src/sound-objects/generic-score';
 import { PatternObject } from '../../src/sound-objects/pattern-object';
 import { TrackerObject } from '../../src/sound-objects/tracker-object';
-import { Pattern } from '../../src/sound-objects/pattern/pattern';
-import { TrackList } from '../../src/sound-objects/tracker/track-list';
 import { TimePosition } from '../../src/time/time-position';
 import { TimeDuration } from '../../src/time/time-duration';
 import { TimeContext } from '../../src/time/time-context';

@@ -14,7 +14,6 @@ import { TimeContext } from '../../time/time-context';
 import { CompileData } from '../../compile-data';
 import { NoteList } from '../../sound-objects/note-list';
 import { SoundObject } from '../../sound-objects/sound-object';
-import { SoundObjectException } from '../../sound-objects/sound-object-exception';
 import { GenericScore } from '../../sound-objects/generic-score';
 import { loadSoundObjectFromXML } from '../../sound-objects/sound-object-registry';
 import {

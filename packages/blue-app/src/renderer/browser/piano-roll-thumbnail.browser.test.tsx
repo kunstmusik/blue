@@ -1,7 +1,7 @@
 import '../styles/index.css';
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import PianoRollScoreObjectBar from '../components/workbench/panels/score/bar-renderers/PianoRollScoreObjectBar';
 import {
   computeNoteRects,

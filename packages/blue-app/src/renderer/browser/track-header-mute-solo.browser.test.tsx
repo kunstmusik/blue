@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { userEvent } from 'vitest/browser';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vite-plus/test/browser';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData, Channel } from '@blue/data';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { useProjectStore } from '../stores/project-store';

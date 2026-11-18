@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   cancelScheduledProjectHistoryEntriesRefresh,
   getProjectHistoryEntries,

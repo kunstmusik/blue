@@ -1,7 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { TrackerObject } from './tracker-object';
 import { Track } from './tracker/track';
-import { Column } from './tracker/column';
 import { TimeContext } from '../time/time-context';
 import { Element } from '../serialization/xml-reader';
 

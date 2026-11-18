@@ -2,23 +2,19 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { ScoreLayerGroupSnapshot } from '../../shared/project-editor';
 import {
   useLayerHeightResize,
   type UseLayerHeightResizeParams,
 } from '../components/workbench/panels/score/useLayerHeightResize';
-import {
-  LayerHeightResizeHandle,
-  type LayerHeightResizeHandleProps,
-} from '../components/workbench/panels/score/LayerHeightResizeHandle';
+import { LayerHeightResizeHandle } from '../components/workbench/panels/score/LayerHeightResizeHandle';
 import {
   flattenVisibleLayers,
   resolveLayerHeightTargets,
   getNextPresetHeight,
   getLayerHeightStatus,
   buildSelectionKey,
-  type VisibleLayerRef,
 } from '../components/workbench/panels/score/layer-selection-utils';
 import { useProjectStore, acceptProjectDocumentRevision } from '../stores/project-store';
 import { settleHistoryEditors } from '../lib/history-scope-router';

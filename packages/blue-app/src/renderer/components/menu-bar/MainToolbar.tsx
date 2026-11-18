@@ -1,5 +1,4 @@
 import React from 'react';
-import type { JSX } from 'react';
 import ToolbarBlueLive from './ToolbarBlueLive';
 import ToolbarDisplays from './ToolbarDisplays';
 import PlaybackControls from './PlaybackControls';

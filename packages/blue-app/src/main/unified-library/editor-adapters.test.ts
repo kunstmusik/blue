@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Effect, GenericInstrument, GenericScore, OpcodeDefinition } from '@blue/data';
 import { LibraryEditorAdapterRegistry } from './editor-adapters';
 

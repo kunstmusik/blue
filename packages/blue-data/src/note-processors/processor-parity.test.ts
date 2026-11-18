@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
 import { AddProcessor } from './add-processor';

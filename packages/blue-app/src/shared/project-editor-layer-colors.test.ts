@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { DEFAULT_LAYER_COLOR, GenericScore, TimeDuration, TimePosition } from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { GenericScore } from '@blue/data';
 import { applyProjectDocumentPatch, type ProjectDocumentPatch } from './project-editor';
 import { createTestProjectWithLayers } from './project-editor-layer-color-test-utils';
 

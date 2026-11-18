@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { PassThrough } from 'stream';
-import type { ChildProcess } from 'child_process';
 import type {
   EngineCapabilities,
   EngineStateListener,

@@ -99,7 +99,7 @@ export function decodeMeterFrame(buf: Buffer): DecodedMeterFrame {
     );
   }
 
-  const channels: DecodedChannelMeterReading[] = new Array(channelCount);
+  const channels: DecodedChannelMeterReading[] = Array.from({ length: channelCount });
   let offset = HEADER_SIZE;
 
   for (let i = 0; i < channelCount; i++) {
@@ -112,13 +112,13 @@ export function decodeMeterFrame(buf: Buffer): DecodedMeterFrame {
     const csdKey = buf.toString('utf-8', offset, keyEnd);
 
     let valOffset = offset + CSD_KEY_SIZE;
-    const rms = new Array<number>(nchnls);
+    const rms = Array.from<number>({ length: nchnls });
     for (let c = 0; c < nchnls; c++) {
       rms[c] = sanitizeFloat(buf.readDoubleLE(valOffset));
       valOffset += 8;
     }
 
-    const peak = new Array<number>(nchnls);
+    const peak = Array.from<number>({ length: nchnls });
     for (let c = 0; c < nchnls; c++) {
       peak[c] = sanitizeFloat(buf.readDoubleLE(valOffset));
       valOffset += 8;

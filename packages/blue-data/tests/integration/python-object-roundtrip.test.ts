@@ -1,4 +1,4 @@
-import { beforeAll, describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vite-plus/test';
 import { PythonObject } from '../../src/sound-objects/python-object';
 import { JavaScriptObject } from '../../src/sound-objects/javascript-object';
 import { CSDSoundObject } from '../../src/sound-objects/csd-sound-object';

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { toast } from 'sonner';
 
 vi.mock('sonner', () => ({
@@ -18,7 +18,6 @@ import {
   executeProjectUndo,
   finishProjectGesture,
   registerHistoryEditorSettlement,
-  settleHistoryEditors,
 } from '../lib/history-scope-router';
 import { getProjectDocumentRevision, useProjectStore } from '../stores/project-store';
 

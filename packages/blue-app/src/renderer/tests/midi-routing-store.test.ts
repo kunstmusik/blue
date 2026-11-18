@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vite-plus/test';
 import { useMidiRoutingStore, type MidiRoutingReconciliation } from '../stores/midi-routing-store';
 
 describe('MIDI routing focus store', () => {

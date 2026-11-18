@@ -1,10 +1,5 @@
 import React, { useCallback } from 'react';
-import type {
-  GeneratorSnapshot,
-  MaskSnapshot,
-  QuantizerSnapshot,
-  AccumulatorSnapshot,
-} from './jmask-utils';
+import type { MaskSnapshot, QuantizerSnapshot, AccumulatorSnapshot } from './jmask-utils';
 import TableEditor from './TableEditor';
 import CommitNumberInput, { CommitNumberField } from '../../../../../CommitNumberInput';
 import { AppSelect } from '../../../../../AppSelect';

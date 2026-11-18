@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Element } from '../../src/serialization/xml-reader';
 import { EffectsChain } from '../../src/mixer/effects-chain';
 import { Effect } from '../../src/mixer/effect';

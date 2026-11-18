@@ -5,7 +5,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { startCompletion } from '@codemirror/autocomplete';
 import { EditorView } from 'codemirror';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 import type { JavaBlueCsoundCompletionOptions } from '../components/workbench/panels/editors/editor-adapter-types';
 import { useCodeRepositoryStore } from '../stores/code-repository-store';

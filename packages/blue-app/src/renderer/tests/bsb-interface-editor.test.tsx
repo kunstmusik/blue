@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vite-plus/test';
 import type {
   BlueSynthBuilderInstrumentSnapshot,
   BsbWidgetNodeSnapshot,
@@ -541,7 +541,10 @@ describe('BSB Grid Settings', () => {
       height: 10,
       gridStyle: 'NONE',
     };
-    const updated = { ...base, ...{ width: 20 } };
+    const updated = {
+      ...base,
+      width: 20,
+    };
     expect(updated).toEqual({
       enabled: true,
       snapEnabled: true,

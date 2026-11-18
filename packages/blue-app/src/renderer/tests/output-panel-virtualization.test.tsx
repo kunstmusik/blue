@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import OutputPanel from '../components/workbench/panels/output/OutputPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';

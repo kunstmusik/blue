@@ -3,7 +3,11 @@ import * as path from 'node:path';
 
 export type LegacyMigrationState = 'never' | 'completed' | 'skipped' | 'failed';
 export type LibraryMigrationResultKind =
-  'none' | 'complete' | 'partial' | 'noSources' | 'pipelineFailure';
+  | 'none'
+  | 'complete'
+  | 'partial'
+  | 'noSources'
+  | 'pipelineFailure';
 
 export interface LibraryBackupDescriptor {
   readonly id: string;

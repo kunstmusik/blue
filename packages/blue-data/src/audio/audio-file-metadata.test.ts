@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { parseAudioFileMetadata, AudioFileMetadataError } from './audio-file-metadata';
 import { buildWavBytes, buildAiffBytes, buildAifcBytes } from '../test-support/audio-fixtures';
@@ -166,7 +166,7 @@ describe('parseAudioFileMetadata', () => {
     });
 
     it('rejects RIFF without WAVE', () => {
-      const buf = new Array(44).fill(0);
+      const buf = Array.from({ length: 44 }, () => 0);
       buf[0] = 0x52;
       buf[1] = 0x49;
       buf[2] = 0x46;
@@ -179,7 +179,7 @@ describe('parseAudioFileMetadata', () => {
     });
 
     it('rejects FORM without AIFF/AIFC', () => {
-      const buf = new Array(44).fill(0);
+      const buf = Array.from({ length: 44 }, () => 0);
       buf[0] = 0x46;
       buf[1] = 0x4f;
       buf[2] = 0x52;

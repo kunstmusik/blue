@@ -1,6 +1,6 @@
 import React, { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test';
 import ScoreObjectPropertiesPanel from '../components/workbench/panels/ScoreObjectPropertiesPanel';
 import ScoreObjectPropertiesForm from '../components/workbench/panels/score-object/ScoreObjectPropertiesForm';
 import type {

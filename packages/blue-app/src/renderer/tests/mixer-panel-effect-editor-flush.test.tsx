@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import MixerPanel from '../components/workbench/panels/MixerPanel';
 import type { EffectEditorRequest, MixerPatch, MixerSnapshot } from '../../shared/project-editor';
@@ -170,7 +170,8 @@ describe('MixerPanel effect editor opening', () => {
     expect(window.blueAPI?.focusEffectEditor).toHaveBeenCalledWith(editorRequest);
     expect(window.blueAPI?.openEffectInterface).toHaveBeenCalledWith(editorRequest);
     expect(mockProjectState.flushPendingPatches.mock.invocationCallOrder[0]).toBeLessThan(
-      (window.blueAPI?.focusEffectEditor as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0],
+      (window.blueAPI?.focusEffectEditor as ReturnType<typeof vi.fn> | undefined)?.mock
+        .invocationCallOrder[0] ?? -1,
     );
 
     act(() => {

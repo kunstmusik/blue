@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { convertUdoSnapshotStyle } from '../components/workbench/panels/udo/udo-snapshot-utils';
 

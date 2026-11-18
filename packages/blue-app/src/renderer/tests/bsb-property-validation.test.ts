@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { validateNumericProperty } from '../components/workbench/panels/orchestra/bsb/BSBPropertySheet';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueX7 } from './instruments/blue-x7';
 import { BlueSynthBuilder } from './instruments/blue-synth-builder';
 import { Channel } from './mixer/channel';

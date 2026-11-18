@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import test from 'node:test';
@@ -778,10 +778,10 @@ test('rejects implicit small, sub, and sup elements without an explicit role', a
 
 test('fails fast on malformed and duplicate exception registries', async () => {
   const malformedWorkspace = await createFixtureWorkspace({
-    guide: `# Typography Guide\n\n<!-- renderer-typography-exceptions:start -->\n\`\`\`json\n{\"schemaVersion\": 1,\n\`\`\`\n<!-- renderer-typography-exceptions:end -->`,
+    guide: `# Typography Guide\n\n<!-- renderer-typography-exceptions:start -->\n\`\`\`json\n{"schemaVersion": 1,\n\`\`\`\n<!-- renderer-typography-exceptions:end -->`,
   });
   const duplicateWorkspace = await createFixtureWorkspace({
-    guide: `# Typography Guide\n\n<!-- renderer-typography-exceptions:start -->\n\`\`\`json\n{\"schemaVersion\": 1, \"exceptions\": [{\"id\": \"duplicate\", \"path\": \"x\", \"category\": \"project-authored-font\", \"expression\": \"x\", \"expectedOccurrences\": 1, \"ownerSurface\": \"x\", \"reason\": \"x\", \"verification\": \"x\", \"reviewPolicy\": \"x\"}, {\"id\": \"duplicate\", \"path\": \"y\", \"category\": \"project-authored-font\", \"expression\": \"y\", \"expectedOccurrences\": 1, \"ownerSurface\": \"y\", \"reason\": \"y\", \"verification\": \"y\", \"reviewPolicy\": \"y\"}]}\n\`\`\`\n<!-- renderer-typography-exceptions:end -->`,
+    guide: `# Typography Guide\n\n<!-- renderer-typography-exceptions:start -->\n\`\`\`json\n{"schemaVersion": 1, "exceptions": [{"id": "duplicate", "path": "x", "category": "project-authored-font", "expression": "x", "expectedOccurrences": 1, "ownerSurface": "x", "reason": "x", "verification": "x", "reviewPolicy": "x"}, {"id": "duplicate", "path": "y", "category": "project-authored-font", "expression": "y", "expectedOccurrences": 1, "ownerSurface": "y", "reason": "y", "verification": "y", "reviewPolicy": "y"}]}\n\`\`\`\n<!-- renderer-typography-exceptions:end -->`,
   });
 
   try {

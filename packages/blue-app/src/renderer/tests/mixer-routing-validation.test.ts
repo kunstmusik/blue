@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import type { MixerSnapshot, MixerChannelSnapshot } from '../../shared/project-editor';
 import {
   validateMixerRouting,

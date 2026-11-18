@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { ProjectDocumentPatch } from '../shared/project-editor/contract';
 import type { ProjectRuntimeOutcome } from '../shared/project-history';
 import {

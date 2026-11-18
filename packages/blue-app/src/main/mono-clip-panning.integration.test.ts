@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
   buildPanningFixtures,
   expectedFixtureRender,
@@ -21,7 +21,6 @@ import {
   BlueData,
   Channel,
   EQUAL_POWER_CENTER_GAIN,
-  ScoreTrack,
   TimeDuration,
   TimePosition,
   TrackLayerGroup,
@@ -31,7 +30,6 @@ import {
   getStereoBalanceGains,
   getStereoPanGains,
   parseAudioFileMetadata,
-  Send,
 } from '@blue/data';
 import { preflightAudioLayout } from './audio-layout-preflight';
 import { syncCompiledRuntimeParameterNames } from './runtime-parameter-sync';
@@ -331,7 +329,7 @@ describe.skipIf(!hasCsound)('mono-clip-panning numerical renders (T071)', () => 
     const endFrame = Math.min(Math.floor(endSeconds * sampleRate), frameCount);
     expect(endFrame).toBeGreaterThan(startFrame);
 
-    const peaks = new Array<number>(channels).fill(0);
+    const peaks = Array.from({ length: channels }, () => 0);
     for (let frame = startFrame; frame < endFrame; frame += 1) {
       for (let channel = 0; channel < channels; channel += 1) {
         const sample = buffer.readDoubleLE(dataOffset + frame * bytesPerFrame + channel * 8);

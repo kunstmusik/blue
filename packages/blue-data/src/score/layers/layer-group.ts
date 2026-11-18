@@ -11,7 +11,6 @@ import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { NoteList } from '../../sound-objects/note-list';
 import { TimeContext } from '../../time/time-context';
 import { CompileData } from '../../compile-data';
-import { ScoreGenerationException } from '../score-generation-exception';
 import { Element } from '../../serialization/xml-reader';
 import { ObjRefSaveMap } from '../../serialization/obj-ref-map';
 import type { ScoreGenerationOptionsOrSolo } from '../score-generation-options';

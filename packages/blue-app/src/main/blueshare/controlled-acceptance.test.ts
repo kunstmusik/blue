@@ -1,8 +1,8 @@
 import { forkProjectGraph } from '../project-history-graph';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { BlueData, Channel, GenericInstrument, GenericScore, Effect, PolyObject } from '@blue/data';
+import { BlueData, Channel, GenericInstrument, Effect, PolyObject } from '@blue/data';
 import { UnifiedLibraryService } from '../unified-library/service';
 import { UnifiedLibraryRepositoryClient } from '../unified-library/repository-client';
 import { createUnifiedLibraryTestDirectory } from '../unified-library/test-helpers';

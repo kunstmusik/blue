@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { LibraryDragSessionService } from './drag-session-service';
 
 const key = { scope: 'user' as const, libraryType: 'instrument' as const, nodeId: 'item-1' };

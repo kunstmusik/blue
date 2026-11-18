@@ -1,7 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import {
   argbToRGB,
-  activeRepeatPointBeats,
   brighten,
   darken,
   isBright,
@@ -25,7 +24,6 @@ import {
 } from '../components/workbench/panels/score/bar-renderers/piano-roll-thumbnail-utils';
 import { computeRepeatMarkers } from '../components/workbench/panels/score/bar-renderers/repeat-marker-utils';
 import { activeRepeatPointBeats as getActiveRepeatPointBeats } from '../components/workbench/panels/score/bar-renderers/ScoreObjectBar';
-import type { AudioFadeType } from '../../shared/project-editor';
 
 describe('color-utils', () => {
   it('argbToRGB strips alpha channel', () => {

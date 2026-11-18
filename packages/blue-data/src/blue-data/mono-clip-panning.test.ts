@@ -1,12 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../blue-data';
 import { Channel } from '../mixer/channel';
-import {
-  getMonoPanGains,
-  getSourceLegGains,
-  getStereoPanGains,
-  getDualPanGains,
-} from '../mixer/channel-pan';
+import { getSourceLegGains, getStereoPanGains, getDualPanGains } from '../mixer/channel-pan';
 import { Effect } from '../mixer/effect';
 import { Send } from '../mixer/send';
 import { GenericInstrument } from '../instruments/generic-instrument';

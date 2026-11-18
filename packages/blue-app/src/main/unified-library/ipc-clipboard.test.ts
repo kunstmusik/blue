@@ -1,5 +1,5 @@
 import type { IpcMain } from 'electron';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { UNIFIED_LIBRARY_SET_BSB_CLIPBOARD_CHANNEL } from '../../shared/unified-library';
 import { registerUnifiedLibraryIpc } from './ipc';

@@ -1,6 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../blue-data';
-import { Element } from '../serialization/xml-reader';
 import { DEFAULT_LAYER_COLOR } from './layers/layer-color';
 import { PolyObject } from '../sound-objects/poly-object';
 

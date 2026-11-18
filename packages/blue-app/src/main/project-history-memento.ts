@@ -15,8 +15,6 @@ import {
   BlueData,
   Channel,
   Effect,
-  OpcodeDefinition,
-  Parameter,
   Send,
   TrackLayerGroup,
   PolyObject,
@@ -33,9 +31,7 @@ import {
   validateProjectDocumentPatch,
 } from '../shared/project-editor';
 import {
-  getBsbWidgetSnapshotId,
   getKnownMixerChannelSnapshotId,
-  getKnownMixerEntrySnapshotId,
   getParameterSnapshotId,
   getScoreObjectId,
   getLayerSelectionId,

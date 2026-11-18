@@ -3,7 +3,7 @@
 import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   copySelectionToClipboard,
@@ -25,9 +25,7 @@ import {
 import { JSDOM } from 'jsdom';
 import {
   buildOpcodeHelpModel,
-  getOpcodeAtCaret,
   handleOpenManualAtCaret,
-  presentOpcodeHelp,
   renderOpcodeHelpHtml,
 } from '../components/workbench/panels/editors/csound-opcode-help';
 import {
@@ -540,7 +538,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         },
       } as unknown as EditorView;
 
-      (option?.apply as any)(view, option, 5, 9);
+      (option?.apply as ((...args: any[]) => void) | undefined)?.(view, option, 5, 9);
       expect(state.doc.toString()).toBe('a1 = oscili(xamp, xcps)');
     });
 
@@ -630,7 +628,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         targetUrl: 'https://csound.com/manual/opcodes/oscili/',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -651,7 +649,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         targetUrl: 'https://csound.com/manual/opcodes/oscili/',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -680,7 +678,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         targetUrl: 'https://csound.com/manual/opcodes/opa/',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -705,7 +703,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
     it('performs no navigation and leaves editor state untouched when caret is not on an opcode', async () => {
       const openCsoundManual = vi.fn();
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -739,7 +737,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         message: 'Csound manual entry not found (404)',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -827,7 +825,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
       for (const scenario of scenarios) {
         const openCsoundManual = vi.fn().mockResolvedValue(scenario);
         window.blueAPI = {
-          ...(window.blueAPI ?? {}),
+          ...window.blueAPI,
           openCsoundManual,
         } as unknown as typeof window.blueAPI;
 
@@ -858,7 +856,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         targetUrl: 'https://csound.com/manual/opcodes/oscili/',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -907,7 +905,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         message: 'Local manual entry not found: oscili',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 
@@ -949,7 +947,7 @@ describe('Csound editor parity menu and clipboard helpers', () => {
         targetUrl: 'https://csound.com/manual/opcodes/oscili/',
       });
       window.blueAPI = {
-        ...(window.blueAPI ?? {}),
+        ...window.blueAPI,
         openCsoundManual,
       } as unknown as typeof window.blueAPI;
 

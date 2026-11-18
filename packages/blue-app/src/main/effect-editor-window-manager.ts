@@ -12,11 +12,6 @@ import { attachEditorLayout, forgetEditorLayouts } from './window-state-manager'
 
 export type EffectEditorMode = 'interface' | 'edit';
 
-interface EffectEditorKey {
-  mode: EffectEditorMode;
-  key: string;
-}
-
 interface EffectEditorWindowState {
   window: BrowserWindow;
   disposeStateHandlers: (() => void) | null;

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { BlueData, Channel, Effect, GenericInstrument, Send } from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, Channel, Effect, GenericInstrument } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,

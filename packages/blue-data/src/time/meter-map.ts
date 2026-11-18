@@ -123,7 +123,7 @@ export class MeterMap {
    * where entries[i].measure begins.
    */
   updateMeasureStartBeats(): void {
-    this.measureStartBeats = new Array(this.entries.length);
+    this.measureStartBeats = Array.from<number>({ length: this.entries.length });
     this.measureStartBeats[0] = 0.0;
 
     for (let i = 1; i < this.entries.length; i++) {

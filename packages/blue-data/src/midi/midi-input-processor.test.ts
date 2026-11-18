@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { MidiInputProcessor } from './midi-input-processor';
 import { Element } from '../serialization/xml-reader';
 import { Scale } from '../sound-objects/piano-roll/scale';

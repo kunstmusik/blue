@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { getWindowTitle } from './window-title';
 
 describe('getWindowTitle save-state matrix (spec 109)', () => {

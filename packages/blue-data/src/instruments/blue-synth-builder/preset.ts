@@ -87,7 +87,7 @@ export class Preset {
     collectNames(graphicInterface.getRootGroup().getChildren());
 
     // Remove preset entries whose objectName no longer exists in the interface
-    for (const key of [...this._valuesMap.keys()]) {
+    for (const key of Array.from(this._valuesMap.keys())) {
       if (!nameSet.has(key)) {
         this._valuesMap.delete(key);
       }

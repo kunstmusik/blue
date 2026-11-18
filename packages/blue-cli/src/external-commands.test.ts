@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import { CliExternalCommands } from './external-commands';
 
 afterEach(() => vi.restoreAllMocks());

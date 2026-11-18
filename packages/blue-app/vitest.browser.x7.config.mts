@@ -1,12 +1,24 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 import { resolve } from 'path';
-import { playwright } from '@vitest/browser-playwright';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 export default defineConfig({
   test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
     include: ['src/renderer/browser/blue-x7-editor.browser.test.tsx'],
     globals: true,
     browser: {
+      locators: {
+        // Vitest v4 compatibility: keep partial, case-insensitive locator matching.
+        // Remove after updating locators for full, case-sensitive matches.
+        // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+        // https://vitest.dev/guide/migration/#locators-are-strict-by-default
+        exact: false,
+      },
       enabled: true,
       provider: playwright({
         launchOptions: {

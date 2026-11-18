@@ -11,14 +11,7 @@ import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import {
-  checkShape,
-  readText,
-  readInt,
-  readBoolean,
-  readEnum,
-  parseXmlBoolean,
-} from '../utilities/xml';
+import { checkShape, readText, parseXmlBoolean } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
@@ -179,7 +172,7 @@ export class PythonObject extends AbstractSoundObject {
     checkShape(
       data,
       ['type', 'onLoadProcessable'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['pythonCode']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'pythonCode'],
       ctx,
     );
     const obj = new PythonObject();

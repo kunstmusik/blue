@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Element } from './xml-reader';
 import { XmlLoadContext, XmlLoadError, loadXml, requireXmlValue } from './xml-load';
 

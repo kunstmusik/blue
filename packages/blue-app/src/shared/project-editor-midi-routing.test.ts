@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { BlueLiveNoteTarget, BlueLiveNoteTriggerRequest } from './project-editor';
 import {
   MAX_BLUE_LIVE_TARGET_ID_LENGTH,

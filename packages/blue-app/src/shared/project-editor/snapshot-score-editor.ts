@@ -608,7 +608,9 @@ export function resolveEditorTarget(
         sObj = lookupCache
           ? (findTimelineEntryBySelectionId(score, trimmedId, lookupCache)?.sObj ?? null)
           : ((resolveTimelineScoreObjects(data, [target.selectionId])?.[0] ?? null) as
-              SoundObject | AudioClip | null);
+              | SoundObject
+              | AudioClip
+              | null);
       } else {
         sObj = null;
       }

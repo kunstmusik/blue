@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Element } from '../serialization/xml-reader';
 import { Track } from '../score/track/track';
 import {

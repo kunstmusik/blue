@@ -1,10 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vite-plus/test';
 import {
   MixerGainPreviewAdapter,
   type MixerGainPreviewDeps,
   type MixerGainPreviewChannel,
 } from './mixer-gain-preview';
-import type { MixerRealtimeLevelUpdate } from '../shared/project-editor/contract';
 
 describe('MixerGainPreviewAdapter', () => {
   let deps: MixerGainPreviewDeps;

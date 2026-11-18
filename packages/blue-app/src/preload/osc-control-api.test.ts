@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   OSC_CONTROL_COMMAND_CHANNEL,
   OSC_CONTROL_GET_SNAPSHOT_CHANNEL,

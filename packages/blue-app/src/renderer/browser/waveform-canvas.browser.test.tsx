@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import WaveformBody from '../components/workbench/panels/score/bar-renderers/WaveformBody';
 import {
   buildWaveformCacheKey,

@@ -9,7 +9,12 @@ export type LibraryType = (typeof LIBRARY_TYPES)[number];
 export type LibraryScopeKind = 'user' | 'projectOwned' | 'projectShared';
 export type LibrarySupportStatus = 'supported' | 'unsupported';
 export type LibraryServicePhase =
-  'initializing' | 'migrating' | 'ready' | 'readOnlyFailure' | 'recovering' | 'stopped';
+  | 'initializing'
+  | 'migrating'
+  | 'ready'
+  | 'readOnlyFailure'
+  | 'recovering'
+  | 'stopped';
 export type LegacyMigrationState = 'never' | 'completed' | 'skipped' | 'failed';
 
 export interface InstrumentProjectLocator {
@@ -47,7 +52,10 @@ export interface ProjectEffectLocator {
 }
 
 export type ProjectItemLocator =
-  InstrumentProjectLocator | ProjectUdoLocator | SharedSoundObjectLocator | ProjectEffectLocator;
+  | InstrumentProjectLocator
+  | ProjectUdoLocator
+  | SharedSoundObjectLocator
+  | ProjectEffectLocator;
 
 export type LibraryItemKey =
   | {
@@ -118,7 +126,13 @@ export interface LibraryServiceSnapshot {
 export interface LibraryChangedEvent {
   readonly contentRevision: number;
   readonly cause:
-    'mutation' | 'itemSave' | 'import' | 'importUndo' | 'migration' | 'recovery' | 'projectChanged';
+    | 'mutation'
+    | 'itemSave'
+    | 'import'
+    | 'importUndo'
+    | 'migration'
+    | 'recovery'
+    | 'projectChanged';
   readonly affectedKeys?: readonly LibraryItemKey[];
   readonly requiresFullRefresh: boolean;
 }
@@ -333,7 +347,11 @@ export interface InsertionTargetSnapshot {
   };
   readonly location?: ScoreInsertionLocation;
   readonly destinationKind?:
-    'score' | 'scoreBsbSound' | 'projectSoundObjectLibrary' | 'trackInstrument' | 'blueLive';
+    | 'score'
+    | 'scoreBsbSound'
+    | 'projectSoundObjectLibrary'
+    | 'trackInstrument'
+    | 'blueLive';
 }
 
 export interface LibraryContextSnapshot {

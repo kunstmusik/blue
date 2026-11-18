@@ -1,122 +1,14 @@
 import {
-  BlueData,
-  Channel,
-  ChannelList,
-  BlueSynthBuilder,
-  BlueX7,
-  cloneBlueX7Voice,
   getBlueX7Descriptor,
-  BSBGroup,
-  BSBWidget,
-  BSBXYController,
-  BSBDropdown,
-  Element,
-  GenericInstrument,
-  Instrument,
-  JavaScriptInstrument,
-  Effect,
-  OpcodeDefinition,
-  OpcodeList,
-  Preset,
-  PresetGroup,
-  ProjectProperties,
-  PythonInstrument,
-  Mixer,
   type MeterProfileKey,
   type XmlDiagnostic,
   type TrackLayerMuteSoloMode,
   type PanLawDb,
   type StereoPanMode,
   isMeterProfileKey,
-  isTrackLayerMuteSoloMode,
-  DEFAULT_NEW_METER_ENABLED,
-  DEFAULT_NEW_METER_PROFILE_KEY,
-  Scale,
-  TempoMap,
-  TempoPoint,
-  CurveType,
-  UDOStyle,
-  convertToModern,
-  convertToClassic,
-  LiveData,
-  LiveObject,
-  LiveObjectBins,
-  LiveObjectSetList,
-  Send,
-  Score,
-  PolyObject,
-  SoundLayer,
-  TrackLayer,
-  TrackLayerGroup,
-  PatternLayer,
-  PatternsLayerGroup,
-  TimeBase,
-  isValidSnapValueName,
-  SoundObject,
-  SoundObjectLibrary,
-  collectInstanceSoundObjects,
-  Instance,
-  AbstractSoundObject,
-  TimeBehavior,
-  NoteProcessorChain,
-  AudioClip,
-  ObjRefLoadMap,
-  TimePosition,
-  TimeDuration,
-  TimeContext,
-  GenericScore,
-  PythonObject,
-  ClojureLibraryEntry,
-  ClojureProjectData,
-  ClojureObject,
-  JavaScriptObject,
-  Comment,
-  External,
-  AudioFile,
-  FrozenSoundObject,
-  PatternObject,
-  Pattern,
-  LineObject,
-  ZakLineObject,
-  PianoRoll,
-  PianoNote,
-  FieldDef,
-  TrackerObject,
-  Track,
-  TrackerNote,
-  Column,
-  JMask,
   type JMaskGenerationMode,
-  loadFieldFromSnapshot,
-  Sound,
-  createSoundObject,
-  loadSoundObjectFromXML,
-  convertTimePosition,
-  beatsToTimePosition,
-  timePositionToBeats,
-  beatsToDuration,
-  MeterMap,
-  MeasureMeterPair,
-  Meter,
-  ObjectBuilder,
-  ScratchPadData,
-  getTrackPlacementForSoundObject,
-  getNotes as parseScoreNotes,
-  createNoteProcessorChainSnapshot as createNoteProcessorChainSnapshotFromData,
-  reifyChainFromSnapshot,
 } from '@blue/data';
 import type {
-  NoteProcessorChainSnapshot as DataNoteProcessorChainSnapshot,
-  Parameter as BlueDataParameter,
-  ScoreObject as BlueDataScoreObject,
-  AutomatableLayer as BlueDataAutomatableLayer,
-  Arrangement as BlueDataArrangement,
-  Mixer as BlueDataMixer,
-} from '@blue/data';
-import { AutomationCurve as BlueDataAutomationCurve, LineColors } from '@blue/data';
-import { ParameterHelper } from '@blue/data';
-import type {
-  SnapValueName,
   BlueX7Voice,
   BlueX7Common,
   BlueX7Lfo,
@@ -124,7 +16,6 @@ import type {
   BlueX7EnvelopePoint,
 } from '@blue/data';
 import type { MissingAudioAssetsSession } from '../missing-audio-assets';
-import type { ScoreInsertionLocation } from '../unified-library';
 import type { ProjectHistoryContext } from '../project-history';
 
 export interface ScoreTimeStateSnapshot {
@@ -266,7 +157,12 @@ export interface ScoreLayerSnapshot {
 
 export type AutomationLayerKind = 'soundObject' | 'track';
 export type AutomationTargetSourceKind =
-  'instrument' | 'mixer' | 'audioChannel' | 'effect' | 'send' | 'unknown';
+  | 'instrument'
+  | 'mixer'
+  | 'audioChannel'
+  | 'effect'
+  | 'send'
+  | 'unknown';
 
 export interface AutomationPointSnapshot {
   time: number;
@@ -294,7 +190,10 @@ export interface AutomationParameterSnapshot {
 }
 
 export type AutomationAssignmentState =
-  'available' | 'assignedCurrentLayer' | 'assignedOtherLayer' | 'missing';
+  | 'available'
+  | 'assignedCurrentLayer'
+  | 'assignedOtherLayer'
+  | 'missing';
 
 export interface AutomationTargetSnapshot {
   parameterId: string;
@@ -398,7 +297,9 @@ export interface PatternsLayerGroupSnapshot {
 }
 
 export type ScoreLayerGroupSnapshot =
-  PolyObjectLayerGroupSnapshot | TrackLayerGroupSnapshot | PatternsLayerGroupSnapshot;
+  | PolyObjectLayerGroupSnapshot
+  | TrackLayerGroupSnapshot
+  | PatternsLayerGroupSnapshot;
 
 export interface ScoreDocumentSnapshot {
   trackLayerMuteSoloMode: TrackLayerMuteSoloMode;
@@ -528,7 +429,11 @@ export interface TrackerColumnSnapshot {
 }
 
 export type AudioFileMetadataStatus =
-  'empty' | 'missing' | 'unreadable' | 'unsupported' | 'available';
+  | 'empty'
+  | 'missing'
+  | 'unreadable'
+  | 'unsupported'
+  | 'available';
 
 export type AudioFileMetadataState =
   | { status: 'empty' }
@@ -1204,16 +1109,6 @@ export interface MeterSnapshot {
 
 export interface MeterMapSnapshot {
   entries: MeterSnapshot[];
-}
-
-interface MeterMapLike {
-  getEntries(): ReadonlyArray<{
-    measure: number;
-    meter: {
-      numBeats: number;
-      beatLength: number;
-    };
-  }>;
 }
 
 export interface ToolbarProjectTransportSnapshot {
@@ -2143,10 +2038,16 @@ export interface ProjectDocumentPatchContext {
  * column-major order. Row/column indices are never canonical identity.
  */
 export type LegacyBlueLiveTriggerRequest =
-  { mode: 'selected'; liveObjectId: string } | { mode: 'enabled' };
+  | { mode: 'selected'; liveObjectId: string }
+  | { mode: 'enabled' };
 
 export type LegacyBlueLiveTriggerStatus =
-  'submitted' | 'empty' | 'busy' | 'rejected' | 'failed' | 'stale';
+  | 'submitted'
+  | 'empty'
+  | 'busy'
+  | 'rejected'
+  | 'failed'
+  | 'stale';
 
 export type LegacyBlueLiveTriggerErrorCode =
   | 'no-project'
@@ -2427,7 +2328,9 @@ export interface MixerRealtimePanCancelRequest extends MixerRealtimeLevelBaseReq
 }
 
 export type MixerRealtimePanUpdate =
-  MixerRealtimePanPreviewRequest | MixerRealtimePanFinishRequest | MixerRealtimePanCancelRequest;
+  | MixerRealtimePanPreviewRequest
+  | MixerRealtimePanFinishRequest
+  | MixerRealtimePanCancelRequest;
 
 export type MixerRealtimePanResult = MixerRealtimeLevelResult;
 
@@ -2463,7 +2366,11 @@ export interface EffectRealtimeUpdate {
 }
 
 export type SupportedNewInstrumentType =
-  'generic' | 'python' | 'javascript' | 'blueX7' | 'blueSynthBuilder';
+  | 'generic'
+  | 'python'
+  | 'javascript'
+  | 'blueX7'
+  | 'blueSynthBuilder';
 
 export type InstrumentSnapshot =
   | GenericInstrumentSnapshot
@@ -3104,7 +3011,8 @@ export interface BlueX7TrackOwnerTarget {
  * routing identities.
  */
 export type BlueX7RuntimeTarget =
-  { assignmentId: string; track?: never } | { assignmentId?: never; track: BlueX7TrackOwnerTarget };
+  | { assignmentId: string; track?: never }
+  | { assignmentId?: never; track: BlueX7TrackOwnerTarget };
 
 export interface BlueX7ParameterValuePair {
   parameterId: string;

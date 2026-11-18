@@ -2,7 +2,7 @@
 
 import React, { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import SettingsField, {
   SettingsCheckboxField,
   SettingsDraftNumberField,
@@ -13,10 +13,7 @@ import CommitNumberInput from '../components/CommitNumberInput';
 import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
 import { useDialogFocus } from '../components/dialogs/use-dialog-focus';
 import BSBKnobWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget';
-import BSBHSliderWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBHSliderWidget';
-import BSBVSliderWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderWidget';
 import BSBHSliderBankWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBHSliderBankWidget';
-import BSBVSliderBankWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBVSliderBankWidget';
 import BSBXYControllerWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBXYControllerWidget';
 import type { BSBWidgetPatchComponentProps } from '../components/workbench/panels/orchestra/bsb/widgets/widget-component-props';
 import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';

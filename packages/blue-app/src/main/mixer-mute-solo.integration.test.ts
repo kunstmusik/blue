@@ -1,10 +1,9 @@
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   AudioClip,
   BlueData,
@@ -12,8 +11,6 @@ import {
   Channel,
   Effect,
   Send,
-  GenericInstrument,
-  GenericScore,
   ScoreTrack,
   TimeDuration,
   TimePosition,
@@ -676,7 +673,8 @@ async function captureLiveGateTransitions(
     const recordResponse = async (
       label: string,
       response:
-        Awaited<ReturnType<ProjectHistory['commit']>> | Awaited<ReturnType<ProjectHistory['undo']>>,
+        | Awaited<ReturnType<ProjectHistory['commit']>>
+        | Awaited<ReturnType<ProjectHistory['undo']>>,
     ): Promise<void> => {
       expect(response.status).toBe('committed');
       if (response.status !== 'committed') return;

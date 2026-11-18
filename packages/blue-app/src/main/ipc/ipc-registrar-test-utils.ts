@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 import type { IpcMainEventListener, IpcMainInvokeHandler, IpcMainLike } from './ipc-registration';
 
 export class FakeRegistrarIpcMain implements IpcMainLike {

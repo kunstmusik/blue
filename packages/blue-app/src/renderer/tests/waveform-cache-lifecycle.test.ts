@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   buildWaveformCacheKey,
   clearWaveformCache,
@@ -85,7 +85,10 @@ describe('waveform cache lifecycle', () => {
 
   it('keeps large actively owned results reusable without a byte budget', () => {
     const channels = [
-      { min: new Array<number>(1_100_000).fill(-1), max: new Array<number>(1_100_000).fill(1) },
+      {
+        min: Array.from({ length: 1_100_000 }, () => -1),
+        max: Array.from({ length: 1_100_000 }, () => 1),
+      },
     ];
     const listener = vi.fn();
     const unsubscribe = subscribeWaveformCacheEntry('oversize', listener);

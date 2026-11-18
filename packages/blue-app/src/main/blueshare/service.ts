@@ -1,6 +1,5 @@
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
-import type { WebContents } from 'electron';
 import { shell } from 'electron';
 import { RememberedSessionStore, STORAGE_FAILURE, CLEANUP_FAILURE } from './remembered-session';
 import type {

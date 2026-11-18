@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import * as path from 'path';
 import { buildWavBytes, buildAiffBytes } from '@blue/data/test-support/audio-fixtures';
 import {

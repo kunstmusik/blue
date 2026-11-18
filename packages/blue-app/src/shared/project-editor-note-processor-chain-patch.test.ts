@@ -1,12 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import {
-  BlueData,
-  PolyObject,
-  GenericScore,
-  AddProcessor,
-  MultiplyProcessor,
-  NoteProcessorChain,
-} from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, PolyObject, GenericScore, AddProcessor, NoteProcessorChain } from '@blue/data';
 import {
   applyProjectDocumentPatch,
   createProjectEditorSnapshot,
@@ -35,7 +28,7 @@ function createProjectWithChain(...processors: import('@blue/data').NoteProcesso
   score.push(poly);
 
   const snapshot = createProjectEditorSnapshot(data, null);
-  const item = snapshot.score?.layerGroups[0]?.layers[0]?.items[0]!;
+  const item = snapshot.score?.layerGroups[0]?.layers[0]?.items[0];
   return { data, target: item.editorTarget };
 }
 

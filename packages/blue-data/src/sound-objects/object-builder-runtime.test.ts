@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { BSBKnob } from '../instruments/blue-synth-builder/bsb-knob';
 import { BlueData } from '../blue-data';
 import { CompileData } from '../compile-data';

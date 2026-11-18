@@ -18,7 +18,6 @@ import {
 } from './utilities/xml';
 import { loadSoundObjectFromXML } from './sound-objects/sound-object-registry';
 import './sound-objects/register-sound-object-types';
-import type { SoundObject } from './sound-objects/sound-object';
 
 export class LiveData implements BlueDataObject {
   private _commandLine = 'csound -Wdo devaudio -L stdin';

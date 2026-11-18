@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   DEFAULT_PLAYBACK_FPS,
   derivePlaybackDisplayState,
@@ -13,7 +13,6 @@ import {
   usePlaybackStore,
   __testResetPlaybackSessionWatermark,
   type PlaybackLifecycle,
-  type PlaybackLifecycleEvent,
 } from '../stores/playback-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import { useProjectStore } from '../stores/project-store';

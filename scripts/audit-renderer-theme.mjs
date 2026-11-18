@@ -2,8 +2,6 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  CONTRAST_FLOORS,
-  SEMANTIC_COLOR_ROLES,
   GOVERNED_CONTRAST_PAIRS,
   parseColor,
   compositeAlpha,

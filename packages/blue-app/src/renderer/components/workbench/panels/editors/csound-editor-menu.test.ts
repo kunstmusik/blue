@@ -1,5 +1,5 @@
 import { sampleSynchronous, reportPerformance } from '../../../../../test-support/performance';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { CodeRepositoryNode } from '@blue/data';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 import {

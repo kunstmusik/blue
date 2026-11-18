@@ -13,16 +13,7 @@ import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import {
-  checkShape,
-  readText,
-  readDouble,
-  readInt,
-  readBoolean,
-  readEnum,
-  parseXmlBoolean,
-  writeDouble,
-} from '../utilities/xml';
+import { checkShape, readText, readDouble, readInt, writeDouble } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
@@ -171,7 +162,7 @@ export class TrackerObject extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['duration', 'stepsPerBeat', 'trackList', 'tracks']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'duration', 'stepsPerBeat', 'trackList', 'tracks'],
       ctx,
     );
     const obj = new TrackerObject();

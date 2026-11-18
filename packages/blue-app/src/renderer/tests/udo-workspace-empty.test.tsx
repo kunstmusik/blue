@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createDefaultWindowLayoutSettings } from '../../shared/window-layout-settings';
 import UdoWorkspacePanel from '../components/workbench/panels/udo/UdoWorkspacePanel';
 import { useLibraryStore } from '../stores/library-store';

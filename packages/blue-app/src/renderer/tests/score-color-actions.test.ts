@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   buildSetSelectionToLayerColorPatch,
   buildApplyLayerColorToAllClipsPatch,
@@ -71,7 +71,7 @@ describe('Score Color Action Builders (US3)', () => {
     expect(patchPair).not.toBeNull();
     expect(patchPair?.score?.type).toBe('setScoreObjectBackgroundColors');
 
-    const fUpdates = (patchPair?.score as any).updates;
+    const fUpdates = (patchPair?.score as any)?.updates;
 
     expect(fUpdates).toHaveLength(2);
     expect(fUpdates[0]).toEqual({ target: target1, backgroundColor: -65536 }); // Layer 0 is Red
@@ -95,7 +95,7 @@ describe('Score Color Action Builders (US3)', () => {
     });
 
     expect(patchPair).not.toBeNull();
-    const fUpdates = (patchPair?.score as any).updates;
+    const fUpdates = (patchPair?.score as any)?.updates;
 
     // Item 1 changes from Green to Red; Item 3 is already Red so it may be included or excluded, but item 2 from layer 1 MUST be excluded
     const updatedTargetIds = fUpdates.map((u: any) => u.target.selectionId);

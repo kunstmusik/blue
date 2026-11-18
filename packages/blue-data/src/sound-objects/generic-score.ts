@@ -8,7 +8,6 @@
  * During CSD generation, the text is passed through directly to the score output.
  */
 import { AbstractSoundObject } from './abstract-sound-object';
-import { SoundObjectException } from './sound-object-exception';
 import { NoteList } from './note-list';
 import { TimeContext } from '../time/time-context';
 import { CompileData } from '../compile-data';
@@ -16,7 +15,7 @@ import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
 import { checkShape, readText } from '../utilities/xml';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
-import { SoundObject, SoundObjectStatic } from './sound-object';
+import { SoundObject } from './sound-object';
 import { TimeBehavior } from './time-behavior';
 import {
   initBasicFromXML,

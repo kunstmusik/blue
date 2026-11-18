@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vite-plus/test';
 import {
   getAudioFadeValue,
   buildFadePolygon,

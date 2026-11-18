@@ -208,10 +208,10 @@ export class MeterStore {
     for (const entry of payload.entries) {
       this.csdKeyToStripId.set(entry.csdKey, entry.stripId);
 
-      const barLevels = new Array<number>(nchnls).fill(-Infinity);
-      const peakHoldLevels = new Array<number>(nchnls).fill(-Infinity);
-      const heldSamplePeaks = new Array<number>(nchnls).fill(-Infinity);
-      const clipFlags = new Array<boolean>(nchnls).fill(false);
+      const barLevels = Array.from({ length: nchnls }, () => -Infinity);
+      const peakHoldLevels = Array.from({ length: nchnls }, () => -Infinity);
+      const heldSamplePeaks = Array.from({ length: nchnls }, () => -Infinity);
+      const clipFlags = Array.from({ length: nchnls }, () => false);
 
       const stripState: StripInternalState = {
         stripId: entry.stripId,
@@ -220,10 +220,10 @@ export class MeterStore {
         peakHoldLevels,
         heldSamplePeaks,
         clipFlags,
-        targetRms: new Array<number>(nchnls).fill(0),
-        targetPeak: new Array<number>(nchnls).fill(0),
-        peakHoldTimers: new Array<number>(nchnls).fill(0),
-        clipTimers: new Array<number>(nchnls).fill(0),
+        targetRms: Array.from({ length: nchnls }, () => 0),
+        targetPeak: Array.from({ length: nchnls }, () => 0),
+        peakHoldTimers: Array.from({ length: nchnls }, () => 0),
+        clipTimers: Array.from({ length: nchnls }, () => 0),
         canvasState: {
           barLevels,
           peakHoldLevels,

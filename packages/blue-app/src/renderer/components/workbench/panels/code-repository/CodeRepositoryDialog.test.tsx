@@ -2,7 +2,7 @@ import { reportPerformance } from '../../../../../test-support/performance';
 // @vitest-environment jsdom
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { CODE_REPOSITORY_ROOT_ID, type CodeRepositoryNode } from '@blue/data';
 import CodeRepositoryDialog from './CodeRepositoryDialog';
 

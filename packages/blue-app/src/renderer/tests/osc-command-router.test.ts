@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { OscCommandRouter } from '../services/osc-command-router';
 import type { OscCommandEvent } from '../../shared/osc-control';
 

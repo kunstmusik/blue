@@ -4,7 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BlueData, PolyObject, SoundLayer, Track, TrackerObject } from '@blue/data';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { createScoreObjectEditorDocument } from '../../shared/project-editor';
 import TrackerScoreObjectEditor from '../components/workbench/panels/score-object/editors/TrackerScoreObjectEditor';
 

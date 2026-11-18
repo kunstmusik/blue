@@ -1,14 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '@blue/data';
 import {
   buildUsageMatrix,
   buildRealtimeEngineOptions,
   FEATURE_PARITY_NOTES,
 } from './program-settings-usage';
-import {
-  createDefaultProgramSettings,
-  type ProgramSettingsSnapshot,
-} from '../shared/program-settings';
+import { createDefaultProgramSettings } from '../shared/program-settings';
 
 describe('program-settings-usage matrix', () => {
   it('has entries for every panel', () => {

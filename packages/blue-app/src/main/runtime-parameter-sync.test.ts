@@ -1,5 +1,5 @@
 import { serializeMixerBindings } from './mixer-optimization-test-support';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   TrackLayer,
   TrackLayerGroup,

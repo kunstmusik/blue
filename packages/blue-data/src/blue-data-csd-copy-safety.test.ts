@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from './blue-data';
 import { Arrangement } from './arrangement';
 import { Channel } from './mixer/channel';

@@ -1,5 +1,5 @@
 import type { BrowserWindow } from 'electron';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   APP_ZOOM_DEFAULT_PERCENT,
   APP_ZOOM_MAX_PERCENT,

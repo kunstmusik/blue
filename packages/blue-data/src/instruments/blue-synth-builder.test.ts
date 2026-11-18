@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { Element } from '../serialization/xml-reader';
 import { assignParameterNames } from '../automation/parameter-helper';
 import { BlueSynthBuilder } from './blue-synth-builder';
@@ -11,11 +11,7 @@ import { BSBHSlider } from './blue-synth-builder/bsb-hslider';
 import { BSBHSliderBank } from './blue-synth-builder/bsb-hslider-bank';
 import { BSBKnob } from './blue-synth-builder/bsb-knob';
 import { BSBLabel } from './blue-synth-builder/bsb-label';
-import {
-  BSBLineObject,
-  createDefaultBsbLine,
-  normalizeBsbLinePatch,
-} from './blue-synth-builder/bsb-line-object';
+import { createDefaultBsbLine, normalizeBsbLinePatch } from './blue-synth-builder/bsb-line-object';
 import { BSBVSlider } from './blue-synth-builder/bsb-vslider';
 import { BSBVSliderBank } from './blue-synth-builder/bsb-vslider-bank';
 
@@ -413,7 +409,7 @@ describe('BlueSynthBuilder', () => {
   it('updates text field and file selector properties through widget patches', () => {
     const xml = `<instrument type="blue.orchestra.BlueSynthBuilder">
       <name>String Widgets</name>
-      <instrumentText>Smsg sprintf \"%s %s\", \"&lt;textField&gt;\", \"&lt;fileSelect&gt;\"</instrumentText>
+      <instrumentText>Smsg sprintf "%s %s", "&lt;textField&gt;", "&lt;fileSelect&gt;"</instrumentText>
       <graphicInterface>
         <bsbObject type="blue.orchestra.blueSynthBuilder.BSBTextField">
           <objectName>textField</objectName>

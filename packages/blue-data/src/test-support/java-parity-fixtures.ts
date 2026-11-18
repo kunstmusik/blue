@@ -11,7 +11,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BlueData } from '../blue-data';
 import { PolyObject } from '../sound-objects/poly-object';
-import { SoundLayer } from '../sound-objects/sound-layer';
 import { GenericScore } from '../sound-objects/generic-score';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
@@ -370,7 +369,14 @@ export function assertManifestInvariants(
 }
 
 export type HistoryFixtureKind =
-  'score' | 'mixer' | 'instrument' | 'bsb' | 'blueX7' | 'pianoRoll' | 'freeze' | 'pluginData';
+  | 'score'
+  | 'mixer'
+  | 'instrument'
+  | 'bsb'
+  | 'blueX7'
+  | 'pianoRoll'
+  | 'freeze'
+  | 'pluginData';
 
 export function resolveRepoRoot(): string {
   const candidates = [

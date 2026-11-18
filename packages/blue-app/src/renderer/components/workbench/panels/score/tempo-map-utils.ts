@@ -4,7 +4,6 @@ import type {
   TempoMapSnapshot,
   TempoPointSnapshot,
   TempoCurveTypeSnapshot,
-  TempoMapPatch,
 } from '../../../../../shared/project-editor';
 import type { SnapValueName } from '@blue/data';
 import { snapValueToBeats } from '@blue/data';

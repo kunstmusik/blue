@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import {
   type ResourceKind,
-  type ResourceKey,
   type ResourceSummary,
   buildCategoryTree,
 } from '../../../shared/blueshare';

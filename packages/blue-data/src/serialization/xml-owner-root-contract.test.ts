@@ -132,7 +132,7 @@ import { FieldDef } from '../sound-objects/piano-roll/field-def';
 import { Field } from '../sound-objects/piano-roll/field';
 import { PianoNote } from '../sound-objects/piano-roll/piano-note';
 import { ObjRefLoadMap } from './obj-ref-map';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { GlobalOrcSco } from '../global-orc-sco';
 import { MarkersList } from '../markers-list';
 import { MidiInputProcessor } from '../midi/midi-input-processor';

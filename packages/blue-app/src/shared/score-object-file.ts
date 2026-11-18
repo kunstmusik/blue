@@ -24,7 +24,8 @@ export type ScoreObjectImportResult =
   | { ok: false; error: string; diagnostics?: readonly XmlDiagnostic[] };
 
 export type ScoreObjectExportResult =
-  { status: 'saved' | 'cancelled' } | { status: 'error'; error: string };
+  | { status: 'saved' | 'cancelled' }
+  | { status: 'error'; error: string };
 
 export type ScoreObjectValidationResult = { ok: true } | { ok: false; error: string };
 

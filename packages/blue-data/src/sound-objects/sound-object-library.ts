@@ -248,7 +248,7 @@ export class SoundObjectLibrary implements BlueDataObject {
       return generated;
     });
     const map = new ObjRefLoadMap();
-    const values: Array<SoundObject | undefined> = new Array(nodes.length);
+    const values: Array<SoundObject | undefined> = Array.from({ length: nodes.length });
     const loading = new Set<number>();
     const resolve = (index: number): SoundObject => {
       const existing = values[index];

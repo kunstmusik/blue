@@ -27,7 +27,6 @@ import {
   CODE_REPOSITORY_RETRY_CHANNEL,
   createCodeRepositoryError,
   isCodeRepositoryNode,
-  isCodeRepositorySnapshot,
   type CodeRepositoryCommitDraftRequest,
   type CodeRepositoryCreateGroupRequest,
   type CodeRepositoryCreateSnippetRequest,

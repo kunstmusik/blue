@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData, GenericScore, LiveObject, LiveObjectBins, PythonObject } from '@blue/data';
 import { createModernProject, createRuntimeBackedLiveData } from '@blue/data';
 import {

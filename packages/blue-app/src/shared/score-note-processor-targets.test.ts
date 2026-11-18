@@ -1,7 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   BlueData,
-  Score,
   PolyObject,
   SoundLayer,
   GenericScore,
@@ -14,9 +13,8 @@ import {
   AudioClip,
   TimePosition,
   PatternsLayerGroup,
-  Element,
 } from '@blue/data';
-import { createScoreDocumentSnapshot, createProjectEditorSnapshot } from './project-editor';
+import { createScoreDocumentSnapshot } from './project-editor';
 
 function makePolyObjectWithChains(): BlueData {
   const data = new BlueData();

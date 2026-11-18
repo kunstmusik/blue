@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData } from '../../blue-data';
 import { CompileData } from '../../compile-data';
 import { AudioFile } from '../../sound-objects/audio-file';
@@ -6,7 +6,6 @@ import { GenericScore } from '../../sound-objects/generic-score';
 import { AudioClip } from '../audio/audio-clip';
 import { TimeDuration } from '../../time/time-duration';
 import { TimePosition } from '../../time/time-position';
-import { Track } from './track';
 import { TrackLayerGroup } from './track-layer-group';
 import '../../sound-objects/register-sound-object-types';
 

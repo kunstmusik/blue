@@ -10,18 +10,10 @@ import { AbstractSoundObject } from './abstract-sound-object';
 import { NoteList } from './note-list';
 import { TimeBehavior } from './time-behavior';
 import { TimeContext } from '../time/time-context';
-import { TimeDuration } from '../time/time-duration';
 import { CompileData } from '../compile-data';
 import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../serialization/xml-load';
-import {
-  checkShape,
-  readText,
-  readInt,
-  readBoolean,
-  readEnum,
-  parseXmlBoolean,
-} from '../utilities/xml';
+import { checkShape, readText, readInt } from '../utilities/xml';
 import { BASIC_SOUND_OBJECT_CHILDREN } from './sound-object-utilities';
 import { ObjRefSaveMap, ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
@@ -71,7 +63,7 @@ export class PatternObject extends AbstractSoundObject {
     const preserveSteps = this._subDivisions === subDivisions;
     const numSteps = beats * subDivisions;
     for (const pattern of this._patterns) {
-      const values = new Array<boolean>(numSteps).fill(false);
+      const values = Array.from({ length: numSteps }, () => false);
       if (preserveSteps) {
         for (let i = 0; i < Math.min(numSteps, pattern.values.length); i++) {
           values[i] = pattern.values[i] ?? false;
@@ -206,7 +198,7 @@ export class PatternObject extends AbstractSoundObject {
     checkShape(
       data,
       ['type'],
-      [...BASIC_SOUND_OBJECT_CHILDREN, ...['beats', 'subDivisions', 'patterns']],
+      [...BASIC_SOUND_OBJECT_CHILDREN, 'beats', 'subDivisions', 'patterns'],
       ctx,
     );
     const obj = new PatternObject();

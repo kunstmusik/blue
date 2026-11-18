@@ -11,7 +11,12 @@ export interface JavaRuntimeDependencyLoadResult extends JavaRuntimeDependencySp
 }
 
 export type JavaRuntimeStatus =
-  'stopped' | 'starting' | 'ready' | 'unavailable' | 'error' | 'stopping';
+  | 'stopped'
+  | 'starting'
+  | 'ready'
+  | 'unavailable'
+  | 'error'
+  | 'stopping';
 
 export interface JavaRuntimeError {
   code: string;

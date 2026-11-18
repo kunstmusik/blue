@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import { Element } from '../serialization/xml-reader';
 import { MidiKeyMapping } from './midi-key-mapping';
 import { MidiVelocityMapping } from './midi-velocity-mapping';

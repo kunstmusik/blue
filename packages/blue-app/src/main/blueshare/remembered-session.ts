@@ -33,6 +33,14 @@ export const STORAGE_FAILURE =
 export const CLEANUP_FAILURE =
   'Blue could not remove the saved sign-in. Durable local sign-out could not be confirmed.';
 
+function hasControlChars(value: string): boolean {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f) return true;
+  }
+  return false;
+}
+
 export function isRememberedSession(value: unknown, origin: string): value is RememberedSession {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const r = value as RememberedSession;
@@ -69,7 +77,7 @@ export function isRememberedSession(value: unknown, origin: string): value is Re
       /^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,256}$/.test(c.name) &&
       typeof c.value === 'string' &&
       c.value.length <= 8192 &&
-      !/[\x00-\x1f\x7f]/.test(c.value) &&
+      !hasControlChars(c.value) &&
       c.domain === url.hostname &&
       c.hostOnly === true &&
       c.httpOnly === true &&
@@ -78,7 +86,7 @@ export function isRememberedSession(value: unknown, origin: string): value is Re
       typeof c.path === 'string' &&
       c.path.startsWith('/') &&
       c.path.length <= 1024 &&
-      !/[\x00-\x1f\x7f]/.test(c.path) &&
+      !hasControlChars(c.path) &&
       ['unspecified', 'no_restriction', 'lax', 'strict'].includes(c.sameSite) &&
       (c.expirationDate === undefined ||
         (Number.isFinite(c.expirationDate) && c.expirationDate * 1000 > Date.now())),

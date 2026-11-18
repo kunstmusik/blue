@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { SoundObjectLibrary } from './sound-object-library';
 import { PianoRoll } from './piano-roll';
 import { Instance } from './instance';

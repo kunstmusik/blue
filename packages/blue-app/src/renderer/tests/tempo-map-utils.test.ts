@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { TempoMapSnapshot } from '../../shared/project-editor';
 import { secondsToBeats } from '../components/workbench/panels/score/tempo-map-utils';
 

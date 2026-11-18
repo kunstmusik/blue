@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { ProjectProperties } from './project-properties';
 import { Element } from './serialization/xml-reader';
 import type { XmlDiagnostic } from './serialization/xml-load';

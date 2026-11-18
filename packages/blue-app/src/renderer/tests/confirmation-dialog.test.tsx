@@ -2,7 +2,7 @@
 
 import React, { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';

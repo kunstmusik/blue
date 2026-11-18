@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { CompileData } from '../compile-data';
 import { BlueData } from '../blue-data';
 import { TimeContext } from '../time/time-context';

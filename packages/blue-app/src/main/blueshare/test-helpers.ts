@@ -8,7 +8,6 @@ import {
   BlueSynthBuilder,
   PythonInstrument,
   ClojureObject,
-  PianoRoll,
 } from '@blue/data';
 import { BlueShareTransport } from './transport';
 

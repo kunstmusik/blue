@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { buildSoundFontProbeCsd, inspectSoundFont, parseSoundFontOutput } from './soundfont-viewer';
 
 const temporaryDirectories: string[] = [];

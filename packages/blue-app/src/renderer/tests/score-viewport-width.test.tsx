@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRoot } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ScorePanel from '../components/workbench/panels/ScorePanel';
 import { useProjectStore } from '../stores/project-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';

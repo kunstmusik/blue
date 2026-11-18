@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { createJavaRuntimeProcess } from './java-runtime-process';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import * as path from 'node:path';
 import { JavaRuntimeSessionManager } from './java-runtime-session';
 

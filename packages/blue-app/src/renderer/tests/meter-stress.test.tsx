@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ChannelStrip from '../components/workbench/panels/mixer/ChannelStrip';
 import { meterStore } from '../stores/meter-store';
 import {

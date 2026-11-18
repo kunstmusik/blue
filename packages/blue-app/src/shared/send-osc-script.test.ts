@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as dgram from 'node:dgram';
 import { execFileSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const SCRIPT_PATH = path.resolve(__dirname, '../../scripts/send-osc.mjs');
 

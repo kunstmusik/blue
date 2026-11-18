@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ScoreManagerDialog from '../components/workbench/panels/score/ScoreManagerDialog';
 import {
   createEmptyScoreDocumentSnapshot,
@@ -235,7 +235,7 @@ describe('ScoreManagerDialog', () => {
     expect(dialog?.textContent).toContain('Deleting Layer Groups cannot be undone.');
 
     // Cancel first
-    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;
+    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]');
     act(() => {
       cancelButton.click();
     });
@@ -249,7 +249,7 @@ describe('ScoreManagerDialog', () => {
     const confirmDialog = document.body.querySelector('[role="alertdialog"]');
     const deleteButton = confirmDialog?.querySelector<HTMLButtonElement>(
       '[data-action-id="remove"]',
-    )!;
+    );
     act(() => {
       deleteButton.click();
     });

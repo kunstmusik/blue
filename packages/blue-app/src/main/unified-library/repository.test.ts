@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { DatabaseSync } from 'node:sqlite';
 import { classifyLibraryPayload, parseRawXmlDocument, stableTextHash } from '@blue/data';
 import { UnifiedLibraryRepository } from './repository';

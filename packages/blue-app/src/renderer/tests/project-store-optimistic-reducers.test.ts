@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type {

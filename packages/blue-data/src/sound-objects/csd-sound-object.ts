@@ -63,7 +63,7 @@ export class CSDSoundObject extends AbstractSoundObject {
         message: 'Unsupported CSDSoundObject root/type.',
         recovery: 'Supply the declared concrete SoundObject root and type.',
       });
-    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, ...['csdText']], context);
+    checkShape(data, ['type'], [...BASIC_SOUND_OBJECT_CHILDREN, 'csdText'], context);
     const object = new CSDSoundObject();
     initBasicFromXML(object, data, context);
     const csdText = data.getElement('csdText');

@@ -27,7 +27,11 @@ export interface DisplayWorkArea {
 }
 
 export type WindowId =
-  'main' | 'settings' | 'effect-editor' | 'effect-interface' | 'track-instrument-editor';
+  | 'main'
+  | 'settings'
+  | 'effect-editor'
+  | 'effect-interface'
+  | 'track-instrument-editor';
 
 export const WINDOW_IDENTITIES: readonly WindowId[] = [
   'main',

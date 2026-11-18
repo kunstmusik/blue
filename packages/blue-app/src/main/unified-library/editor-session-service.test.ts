@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { UnifiedLibraryEditorSessionService } from './editor-session-service';
 import { UnifiedLibraryRepositoryClient } from './repository-client';
 import { BlueData, GenericInstrument, GenericScore } from '@blue/data';

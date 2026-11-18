@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { MidiNoteRouter } from '../services/midi-note-router';
 
 function makeRouter(

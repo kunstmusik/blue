@@ -2,7 +2,7 @@
 
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { rendererToastOptions } from '../lib/toast-styles';
 import MidiSettings from '../components/settings/MidiSettings';
 import RealtimeRenderSettings from '../components/settings/RealtimeRenderSettings';

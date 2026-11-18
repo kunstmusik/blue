@@ -67,7 +67,6 @@ import {
 
 // Status codes (from engine protocol)
 const STATUS_OK = 0x00;
-const STATUS_ERROR = 0x01;
 
 export interface EngineClientOptions {
   /** ZMQ endpoint (default: tcp://localhost:5555) */

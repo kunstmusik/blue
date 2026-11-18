@@ -9,7 +9,9 @@ const execFileAsync = promisify(execFile);
 const MAX_PROCESS_OUTPUT_CHARS = 1024 * 1024;
 
 export type JavaProcessTerminationResult =
-  { status: 'exited' } | { status: 'not-started' } | { status: 'failed'; reason: string };
+  | { status: 'exited' }
+  | { status: 'not-started' }
+  | { status: 'failed'; reason: string };
 
 export interface JavaExecutableProbe {
   available: boolean;
@@ -48,7 +50,7 @@ export interface JavaRuntimeProcessDependencies {
 
 export function parseJavaVersion(rawOutput: string): number | null {
   const versionToken =
-    rawOutput.match(/version\s+\"([^\"]+)\"/i)?.[1] ?? rawOutput.match(/\"([^\"]+)\"/)?.[1] ?? null;
+    rawOutput.match(/version\s+"([^"]+)"/i)?.[1] ?? rawOutput.match(/"([^"]+)"/)?.[1] ?? null;
 
   if (!versionToken) {
     return null;

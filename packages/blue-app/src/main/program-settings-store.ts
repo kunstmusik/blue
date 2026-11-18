@@ -7,7 +7,6 @@ import {
   type ProgramSettingsSaveResult,
   type PlaybackPreferencePatch,
   isValidPlaybackPreferencePatch,
-  createDefaultProgramSettings,
   validateProgramSettings,
   resetProgramSettingsPanel,
   mergeWithDefaults,

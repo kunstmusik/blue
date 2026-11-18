@@ -1,9 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import type { ScoreLayerGroupSnapshot } from '../../shared/project-editor';
-import {
-  buildSelectionKey,
-  flattenVisibleLayers,
-} from '../components/workbench/panels/score/layer-selection-utils';
+import { flattenVisibleLayers } from '../components/workbench/panels/score/layer-selection-utils';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 
 function makeMockGroups(): ScoreLayerGroupSnapshot[] {

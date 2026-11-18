@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   attachWindowStateHandlers,
   captureWindowState,
@@ -109,7 +109,7 @@ function createMockWindow(initialBounds: {
     trigger(event: string): void {
       const set = handlers.get(event);
       if (!set) return;
-      for (const handler of [...set]) handler();
+      for (const handler of Array.from(set)) handler();
     },
     show: vi.fn(),
     focus: vi.fn(),

@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import VirtualKeyboardPanel from '../components/workbench/panels/VirtualKeyboardPanel';
 import { useBlueLiveStore } from '../stores/blue-live-store';
 import { useMidiRoutingStore } from '../stores/midi-routing-store';

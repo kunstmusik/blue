@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { MeterMap } from '../../src/time/meter-map';
 import { Meter } from '../../src/time/meter';
 import { MeasureMeterPair } from '../../src/time/measure-meter-pair';

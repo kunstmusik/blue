@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { BlueData, BlueSynthBuilder, GenericInstrument, JavaScriptInstrument } from '@blue/data';
 import { applyProjectDocumentPatch } from '../../shared/project-editor';
 

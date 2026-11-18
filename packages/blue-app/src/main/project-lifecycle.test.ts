@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { BlueData } from '@blue/data';
 import { createProjectLifecycle } from './project-lifecycle';
 import { ProjectSession } from './project-session';

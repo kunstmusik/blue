@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../../../../shared/project-editor';
 import { DraftNumberInput } from '../../../CommitNumberInput';
-import { parseMeterSignature, isPowerOfTwo } from './meter-map-utils';
+import { parseMeterSignature } from './meter-map-utils';
 import { useDialogFocus } from '../../../dialogs/use-dialog-focus';
 
 const SECONDARY_BUTTON_CLASS =

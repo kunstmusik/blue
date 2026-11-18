@@ -25,7 +25,6 @@ import {
 } from '../../serialization/xml-load';
 import { checkRoot, checkShape, readInt } from '../../utilities/xml';
 import { writeInt } from '../../utilities/xml';
-import { LAYER_HEIGHT } from '../layers/layer';
 import {
   normalizeScoreGenerationOptions,
   type ScoreGenerationOptions,

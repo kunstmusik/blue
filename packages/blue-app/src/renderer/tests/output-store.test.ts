@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vite-plus/test';
 import { useOutputStore, MAX_LINES, sliceOutputLines } from '../stores/output-store';
 import { buildBatchedEngineOutputPayload } from '../../shared/io-provider';
 

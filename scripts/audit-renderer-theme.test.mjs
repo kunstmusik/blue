@@ -8,7 +8,6 @@ import {
   parseColor,
   compositeAlpha,
   contrastRatio,
-  validateException,
   CONTRAST_FLOORS,
 } from './renderer-accessibility-contract.mjs';
 import { auditRendererTheme } from './audit-renderer-theme.mjs';

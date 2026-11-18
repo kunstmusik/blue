@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 import { Element } from '../../src/serialization/xml-reader';
 import { BSBHSlider } from '../../src/instruments/blue-synth-builder/bsb-hslider';
 import { BSBVSlider } from '../../src/instruments/blue-synth-builder/bsb-vslider';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   isResourceKind,
   isResourceKey,
@@ -17,7 +17,6 @@ import {
   isUserLibraryItemKey,
   isRequestId,
   isContextId,
-  isAccountEpoch,
   validateBlueShareResult,
   isResourceSummary,
   isResourceDetail,
@@ -28,17 +27,11 @@ import {
   isLoginRequest,
   checkXmlEnvelope,
   MAX_LOGIN_JSON_BYTES,
-  MAX_PUBLISH_JSON_BYTES,
-  MAX_XML_DEPTH,
-  MAX_XML_ELEMENTS,
   isBlueShareSuccess,
   isBlueShareError,
   validateCategoryHierarchy,
   buildCategoryTree,
   flattenCategoryHierarchy,
-  isValidIsoUtcDate,
-  MAX_PAGE_SIZE,
-  MAX_LATEST_SIZE,
   MAX_RESOURCE_ID,
   MAX_RESOURCE_XML_BYTES,
   BLUESHARE_CHANNELS,

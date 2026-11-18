@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { LibraryBrowseNode } from '../../shared/unified-library';
 import SoundObjectLibraryPanel from '../components/workbench/panels/SoundObjectLibraryPanel';
 import { useLibraryEditorStore } from '../stores/library-editor-store';
@@ -325,7 +325,7 @@ describe('Project SoundObject Library panel', () => {
     expect(dialog?.textContent).toContain('and 3 linked instances');
 
     // Cancel first
-    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]')!;
+    const cancelButton = dialog?.querySelector<HTMLButtonElement>('[data-action-id="cancel"]');
     act(() => {
       cancelButton.click();
     });
@@ -349,7 +349,7 @@ describe('Project SoundObject Library panel', () => {
     });
 
     const confirmDialog = document.body.querySelector('[role="alertdialog"]');
-    const deleteBtn = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="delete"]')!;
+    const deleteBtn = confirmDialog?.querySelector<HTMLButtonElement>('[data-action-id="delete"]');
     await act(async () => {
       deleteBtn.click();
       await Promise.resolve();

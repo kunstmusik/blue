@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import BSBLineObjectWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBLineObjectWidget';
 import LineObjectEditor from '../components/workbench/panels/score-object/editors/LineObjectEditor';
 import ZakLineObjectEditor from '../components/workbench/panels/score-object/editors/ZakLineObjectEditor';

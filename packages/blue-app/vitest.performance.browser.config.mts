@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 import base from './vitest.browser.config.mts';
-import { playwright } from '@vitest/browser-playwright';
+import { playwright } from 'vite-plus/test/browser-playwright';
 
 export default defineConfig({
   ...base,

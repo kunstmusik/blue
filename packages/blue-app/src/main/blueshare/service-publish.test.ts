@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueShareService } from './service';
-import { BlueShareTransport, BlueShareNotDispatchedError } from './transport';
+import { BlueShareNotDispatchedError } from './transport';
 import {
   FakeBlueShareServer,
   createConnectedTransport,

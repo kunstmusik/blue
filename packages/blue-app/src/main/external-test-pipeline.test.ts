@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { BlueData, External, PolyObject, GenericScore } from '@blue/data';
+import { describe, expect, it } from 'vite-plus/test';
+import { BlueData, External, PolyObject } from '@blue/data';
 import { createScoreObjectEditorDocument } from '../shared/project-editor';
 import { executeExternalTest, executeExternalTestSync } from './external-executor';
 import type { ScoreObjectEditorRequest } from '../shared/project-editor';

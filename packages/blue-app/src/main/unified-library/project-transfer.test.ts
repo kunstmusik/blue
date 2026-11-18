@@ -16,7 +16,7 @@ import {
   PolyObject,
   Sound,
 } from '@blue/data';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   createMixerSnapshot,
   createNestedPolyObjectSnapshot,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { AddProcessor } from '../../note-processors/add-processor';
 import { NoteProcessorChain } from '../../note-processors/note-processor-chain';
 import { Element } from '../../serialization/xml-reader';

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { MidiImportDocument } from '@blue/data';
 import type { MidiImportPreview } from '../shared/midi-import';
 import { MidiImportService } from './midi-import-service';

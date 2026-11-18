@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vite-plus/test';
 import { External, setExternalCommandExecutor, getExternalCommandExecutor } from './external';
 import { ExternalCommandExecutor } from './external';
 import { Element } from '../serialization/xml-reader';

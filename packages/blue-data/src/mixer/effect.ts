@@ -12,7 +12,7 @@ import { checkRoot, checkShape, readText, readBoolean, readInt, readEnum } from 
 
 import { BlueDataObject } from '../blue-data-object';
 import { CopyMode } from '../deep-copyable';
-import { Parameter, AutomationCurve } from '../automation/parameter';
+import { Parameter } from '../automation/parameter';
 import { BSBGraphicInterface } from '../instruments/blue-synth-builder/bsb-graphic-interface';
 import { BSBCompilationUnit } from '../instruments/blue-synth-builder/bsb-compilation-unit';
 import { OpcodeDefinition } from '../opcodes/opcode-definition';

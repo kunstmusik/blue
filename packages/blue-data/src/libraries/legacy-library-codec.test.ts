@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   EMPTY_LEGACY_LIBRARY_FIXTURES,
   NESTED_LEGACY_LIBRARY_FIXTURES,
