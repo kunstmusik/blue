@@ -10,10 +10,6 @@ import { useLibraryEditorStore } from '../stores/library-editor-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useProjectStore } from '../stores/project-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const originalProjectState = useProjectStore.getState();
 
 const sharedNode: LibraryBrowseNode = {

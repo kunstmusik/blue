@@ -15,10 +15,6 @@ import {
   settleHistoryEditors,
 } from '../lib/history-scope-router';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('SelectedCodeEditor history and scope integration', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

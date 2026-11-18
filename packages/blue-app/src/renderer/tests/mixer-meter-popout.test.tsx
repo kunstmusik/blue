@@ -11,10 +11,6 @@ import { HostDocumentContext } from '../hooks/use-host-document';
 import { meterStore } from '../stores/meter-store';
 import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('MeterCanvas in popout and re-dock lifecycle', () => {
   let host: HTMLDivElement;
   let root: Root;

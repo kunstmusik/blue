@@ -11,10 +11,6 @@ import { createDefaultBsbWidgetSnapshot } from '../../shared/project-editor';
 import BSBInterfaceCanvas from '../components/workbench/panels/orchestra/bsb/BSBInterfaceCanvas';
 import { getWidgetDisplaySize } from '../components/workbench/panels/orchestra/bsb/widgets/utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 type WidgetSummary = BlueSynthBuilderInstrumentSnapshot['widgets'][number];
 
 function clone<T>(value: T): T {

@@ -46,10 +46,6 @@ import {
   type WindowLayoutUpdateRequest,
 } from '../../shared/window-layout-settings';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 type ListenerMap = Map<string, Set<(...args: unknown[]) => void>>;
 
 function createListenerBucket(): ListenerMap {

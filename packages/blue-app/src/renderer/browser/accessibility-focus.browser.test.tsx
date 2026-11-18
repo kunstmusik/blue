@@ -14,10 +14,6 @@ import { MeterScaleRuler } from '../components/workbench/panels/mixer/MeterScale
 import { PeakReadout } from '../components/workbench/panels/mixer/ChannelStrip';
 import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('Accessibility Focus Traversal Browser Tests (T020)', () => {
   let container: HTMLDivElement;
   let root: Root;

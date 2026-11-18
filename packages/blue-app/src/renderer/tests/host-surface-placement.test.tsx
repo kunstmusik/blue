@@ -14,10 +14,6 @@ import type {
   HostSurfaceKind,
 } from '../components/host-surface/host-surface-options';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 // The "popout window": a second JSDOM realm hosting the floated panel
 // content. Its viewport is deliberately smaller than the main window's so
 // clamping against the wrong realm is detectable (spec FR-004).

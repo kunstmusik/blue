@@ -12,10 +12,6 @@ import {
 } from '../components/workbench/panels/score/tempo-map-utils';
 import { useProjectStore } from '../stores/project-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const { mockFinishProjectGesture } = vi.hoisted(() => ({
   mockFinishProjectGesture: vi.fn(async () => ({
     status: 'committed',

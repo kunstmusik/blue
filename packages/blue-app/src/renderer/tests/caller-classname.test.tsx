@@ -10,10 +10,6 @@ import CommitNumberInput from '../components/CommitNumberInput';
 import { ToolbarDisplayCard } from '../components/menu-bar/ToolbarDisplays';
 import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('Caller className precedence in shared components (US1)', () => {
   let container: HTMLDivElement;
   let root: Root;

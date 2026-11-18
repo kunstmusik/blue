@@ -7,10 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { TempoMapPatch, TempoMapSnapshot } from '../../shared/project-editor';
 import TempoRegionBar from '../components/workbench/panels/score/TempoRegionBar';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
   visible: false,

@@ -10,10 +10,6 @@ import ScoreObjectColorPicker, {
   type ScoreObjectColorPickerHandle,
 } from '../components/workbench/panels/score/layer-groups/ScoreObjectColorPicker';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('ScoreObjectColorPicker', () => {
   let host: HTMLDivElement;
   let root: Root;

@@ -12,10 +12,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { getLayerOperationAvailability } from '../components/workbench/panels/score/layer-selection-utils';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 class MockResizeObserver {
   observe(): void {}
   unobserve(): void {}

@@ -10,10 +10,6 @@ import {
 import { SOUND_LAYER_HEIGHT } from '../components/workbench/panels/score/types';
 import type { ScoreRowObjectSnapshot } from '../components/workbench/panels/score/types';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('batched piano-roll thumbnail geometry', () => {
   it.each(['NONE', 'SCALE', 'REPEAT', 'REPEAT_CLASSIC'])(
     'preserves %s geometry in a single path across resize and selection',

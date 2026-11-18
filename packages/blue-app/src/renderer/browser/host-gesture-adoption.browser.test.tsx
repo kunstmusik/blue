@@ -5,10 +5,6 @@ import { attachHostGesture, type HostGestureTerminalReason } from '../lib/host-g
 import { EditableLineCanvas } from '../components/workbench/panels/shared/line-editor/EditableLineCanvas';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('Host gesture adoption, multi-window ordering, pointer cancellation, and capture-phase Escape (T044)', () => {
   let mainContainer: HTMLDivElement;
   let iframe: HTMLIFrameElement;

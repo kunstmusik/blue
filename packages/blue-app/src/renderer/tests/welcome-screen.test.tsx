@@ -6,10 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import WelcomeScreen from '../components/welcome/WelcomeScreen';
 import { useSettingsStore } from '../stores/settings-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('WelcomeScreen', () => {
   let container: HTMLDivElement;
   let root: Root;

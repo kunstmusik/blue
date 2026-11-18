@@ -13,10 +13,6 @@ import {
   setElementRect,
 } from './library-interaction-test-helpers';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const previewLibraryTransfer = vi.fn(async (request) => ({
   ok: true as const,
   value: {

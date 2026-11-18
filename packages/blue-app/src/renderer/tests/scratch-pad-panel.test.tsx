@@ -10,10 +10,6 @@ import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import { settleHistoryEditors } from '../lib/history-scope-router';
 import { getPanel } from '../../shared/workbench-menu';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 let commitProjectDocumentPatches: ReturnType<typeof vi.fn>;
 
 function setTextareaValue(textarea: HTMLTextAreaElement, value: string): void {

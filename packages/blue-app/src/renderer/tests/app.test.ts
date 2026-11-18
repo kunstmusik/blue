@@ -34,10 +34,6 @@ import {
   useKeyboardShortcuts,
 } from '../hooks/use-keyboard-shortcuts';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 // Mock window.blueAPI
 const mockBlueAPI = {
   openFile: vi.fn(),

@@ -8,10 +8,6 @@ import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';
 import { PROJECT_MESSAGES_TAB } from '../../shared/xml-diagnostics';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('OutputPanel virtualization', () => {
   let host: HTMLDivElement;
   let root: Root;

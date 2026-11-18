@@ -9,10 +9,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import CsoundEditorContextMenu from './CsoundEditorContextMenu';
 import { createOpcodesSubmenu } from './csound-opcode-menu';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function findMenuItem(label: string): HTMLElement | undefined {
   return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
     (item) => item.textContent?.trim() === label,

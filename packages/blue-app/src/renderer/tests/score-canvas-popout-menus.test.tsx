@@ -21,10 +21,6 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLibraryStore } from '../stores/library-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 // The "popout window": a second JSDOM realm whose document hosts a floated
 // panel's content, mirroring the Dockview popout mechanism.
 const popout = new JSDOM('<!doctype html><html><body></body></html>');

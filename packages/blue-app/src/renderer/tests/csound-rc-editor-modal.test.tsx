@@ -6,10 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import CsoundRCEditorModal from '../components/workbench/panels/tools/CsoundRCEditorModal';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('CsoundRCEditorModal', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

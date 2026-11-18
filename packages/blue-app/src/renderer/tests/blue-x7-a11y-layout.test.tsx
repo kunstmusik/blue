@@ -19,10 +19,6 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
 
 import { BlueX7TabList, type BlueX7TabItem } from '../components/instruments/blue-x7/tab-list';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('BlueX7 A11y, Keyboard Navigation & Responsive Layout', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

@@ -13,10 +13,6 @@ import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 import type { ProjectDocumentPatch } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const ROW_HEIGHT = 44;
 const PPB = 20;
 const capturedPatches: ProjectDocumentPatch[] = [];

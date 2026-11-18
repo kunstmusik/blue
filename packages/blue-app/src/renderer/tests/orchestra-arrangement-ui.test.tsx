@@ -8,10 +8,6 @@ import type { ArrangementRowSnapshot } from '../../shared/project-editor';
 import ArrangementPanel from '../components/workbench/panels/orchestra/ArrangementPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const ROWS: ArrangementRowSnapshot[] = [
   {
     assignmentId: '1',

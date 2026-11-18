@@ -11,6 +11,7 @@ export default defineConfig({
     clearMocks: false,
     include: ['src/renderer/browser/blue-x7-editor.browser.test.tsx'],
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     browser: {
       locators: {
         // Vitest v4 compatibility: keep partial, case-insensitive locator matching.

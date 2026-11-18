@@ -13,10 +13,6 @@ import {
 } from '../components/workbench/panels/score/layer-selection-utils';
 import type { ScoreLayerSnapshot } from '../components/workbench/panels/score/types';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function setInputValue(input: HTMLInputElement, value: string) {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype,

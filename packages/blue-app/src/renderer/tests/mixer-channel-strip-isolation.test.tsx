@@ -35,10 +35,6 @@ vi.mock('../components/workbench/panels/mixer/ChannelStrip', async () => {
 
 import MixerPanel from '../components/workbench/panels/MixerPanel';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('MixerPanel ChannelStrip subscription isolation', () => {
   const originalBlueAPI = window.blueAPI;
 

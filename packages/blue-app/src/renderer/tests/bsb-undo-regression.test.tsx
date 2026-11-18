@@ -22,9 +22,6 @@ import { useBsbClipboardStore } from '../stores/bsb-clipboard-store';
 import { useProjectStore } from '../stores/project-store';
 import { settleHistoryEditors } from '../lib/history-scope-router';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 let mounted: { root: Root; container: HTMLDivElement } | undefined;
 let frames: Map<number, FrameRequestCallback>;
 let nextFrame: number;

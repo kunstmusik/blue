@@ -9,10 +9,6 @@ import { OversizeProposalDialog } from '../components/dialogs/OversizeProposalDi
 import { useProjectStore } from '../stores/project-store';
 import type { InAppConfirmationAction } from '../../shared/confirmation-dialog';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 interface OversizeProposalState {
   open: boolean;
   documentId: string;

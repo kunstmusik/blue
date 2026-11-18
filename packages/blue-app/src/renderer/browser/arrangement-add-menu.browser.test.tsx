@@ -6,10 +6,6 @@ import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import ArrangementPanel from '../components/workbench/panels/orchestra/ArrangementPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 let container: HTMLDivElement;
 let root: Root;
 

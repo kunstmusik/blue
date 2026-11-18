@@ -9,10 +9,6 @@ import {
 import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
 import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 /**
  * Browser-level verification for Spec 112 T075 (US3/US2): real Chromium
  * focus, keyboard, and checkbox semantics for the mixer Pan control

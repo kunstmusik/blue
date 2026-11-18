@@ -15,10 +15,6 @@ import ScoreObjectEditorPanel from '../components/workbench/panels/ScoreObjectEd
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const originalProjectState = useProjectStore.getState();
 const originalBlueAPI = window.blueAPI;
 

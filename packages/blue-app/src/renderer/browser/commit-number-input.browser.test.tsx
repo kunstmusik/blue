@@ -4,10 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 import CommitNumberInput, { DraftNumberInput } from '../components/CommitNumberInput';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('CommitNumberInput Browser Native & Popout Tests (T006, T010)', () => {
   let container: HTMLDivElement;
   let root: Root;

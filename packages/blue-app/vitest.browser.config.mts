@@ -17,6 +17,7 @@ export default defineConfig({
     tagsFilter: ['!performance'],
     include: ['src/renderer/browser/**/*.browser.test.tsx'],
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     browser: {
       locators: {
         // Vitest v4 compatibility: keep partial, case-insensitive locator matching.

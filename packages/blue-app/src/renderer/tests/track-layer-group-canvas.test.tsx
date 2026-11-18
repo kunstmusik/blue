@@ -24,10 +24,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLayerSelectionStore } from '../stores/layer-selection-store';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function makeItem(
   objectId: string,
   startBeats: number,

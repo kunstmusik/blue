@@ -20,10 +20,6 @@ import type { BsbWidgetNodeSnapshot } from '../../shared/project-editor';
 import BSBKnobWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBKnobWidget';
 import BSBHSliderWidget from '../components/workbench/panels/orchestra/bsb/widgets/BSBHSliderWidget';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function makeSnapshot(
   overrides: Partial<BsbWidgetNodeSnapshot> & { type: string; objectName: string },
 ): BsbWidgetNodeSnapshot {

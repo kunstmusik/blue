@@ -11,10 +11,6 @@ import type { ResourceSummary, Category } from '../../shared/blueshare';
 // Keep Query observer notifications inside React's async act boundary.
 notifyManager.setScheduler(queueMicrotask);
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const mockCategories: readonly Category[] = [
   { id: 1, kind: 'instrument', parentId: null, name: 'Synthesizers', description: null },
   { id: 2, kind: 'instrument', parentId: null, name: 'Drums', description: null },

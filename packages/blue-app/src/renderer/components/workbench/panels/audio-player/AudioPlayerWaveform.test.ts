@@ -8,10 +8,6 @@ import AudioPlayerWaveform, {
   drawWaveformEnvelope,
 } from './AudioPlayerWaveform';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('buildWaveformEnvelope', () => {
   it('builds one ordered envelope spanning the canvas', () => {
     const points = buildWaveformEnvelope(

@@ -6,10 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import ClojureObjectEditor from '../components/workbench/panels/score-object/editors/ClojureObjectEditor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const useScoreObjectTestMock = vi.fn(() => ({
   testing: false,
   testOutput: null,

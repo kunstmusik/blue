@@ -12,10 +12,6 @@ import type {
 import TempoMapEditorDialog from '../components/workbench/panels/score/TempoMapEditorDialog';
 import { chooseAppSelectOption } from './app-select-test-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const BASE_TEMPO_MAP: TempoMapSnapshot = {
   enabled: true,
   visible: true,

@@ -7,10 +7,6 @@ import { ALGORITHM_IMAGES, getAlgorithmImage } from '../assets/blue-x7/algorithm
 import { AlgorithmTopology } from '../components/instruments/blue-x7/algorithm-topology';
 import { AlgorithmDialog } from '../components/instruments/blue-x7/algorithm-dialog';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('BlueX7 Algorithm Topology and Manifest', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

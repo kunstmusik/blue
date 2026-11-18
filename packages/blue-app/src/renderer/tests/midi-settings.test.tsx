@@ -7,10 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import MidiSettings from '../components/settings/MidiSettings';
 import { useMidiInputStore } from '../stores/midi-input-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 declare global {
   interface Window {
     blueAPI?: {

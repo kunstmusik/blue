@@ -14,10 +14,6 @@ const formatterCallCounts = vi.hoisted(() => ({
   selection: 0,
 }));
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 vi.mock('../components/menu-bar/toolbar-formatters', async () => {
   const actual = await vi.importActual<any>('../components/menu-bar/toolbar-formatters');
 

@@ -16,10 +16,6 @@ vi.mock('../../../../stores/workbench-store', () => ({
 import { useRenderAndPlayInterceptor } from './use-render-and-play';
 import { subscribePendingAudioFile } from './audio-player-bus';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 interface StatusShape {
   operationId: string;
   kind: 'diskRender' | 'freeze';

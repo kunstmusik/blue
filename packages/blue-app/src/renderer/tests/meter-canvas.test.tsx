@@ -18,10 +18,6 @@ import {
 } from '../components/workbench/panels/mixer/meter-profiles';
 import { METER_PROFILE_KEYS } from '@blue/data';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('MeterCanvas', () => {
   let host: HTMLDivElement;
   let root: Root;

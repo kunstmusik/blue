@@ -9,10 +9,6 @@ import OutputPanel from '../components/workbench/panels/output/OutputPanel';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { useOutputStore } from '../stores/output-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',
 });

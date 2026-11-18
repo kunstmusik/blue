@@ -6,10 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import FTableConverterModal from '../components/workbench/panels/tools/FTableConverterModal';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('FTableConverterModal', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

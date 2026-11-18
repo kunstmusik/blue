@@ -6,10 +6,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import WelcomeScreen from '../components/welcome/WelcomeScreen';
 import { BlueX7TabList } from '../components/instruments/blue-x7/tab-list';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function parseRgb(colorStr: string): { r: number; g: number; b: number; a: number } {
   const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
   if (!match) {

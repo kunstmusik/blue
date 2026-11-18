@@ -8,7 +8,6 @@ import { BlueShareDialog } from '../components/blueshare/BlueShareDialog';
 import { useBlueShare } from '../components/blueshare/use-blueshare';
 import type { AccountSessionSnapshot } from '../../shared/blueshare';
 
-(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 notifyManager.setScheduler(queueMicrotask);
 function deferred<T>() {
   let resolve!: (value: T) => void;

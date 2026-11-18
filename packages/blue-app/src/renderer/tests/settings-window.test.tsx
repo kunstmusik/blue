@@ -9,10 +9,6 @@ import SettingsApp from '../components/settings/SettingsApp';
 import { createDefaultProgramSettings } from '../../shared/program-settings';
 import type { ProgramSettingsSnapshot } from '../../shared/program-settings';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const defaultSettings = createDefaultProgramSettings('darwin');
 let settingsCloseRequest: (() => void) | null = null;
 

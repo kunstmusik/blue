@@ -12,10 +12,6 @@ import ToolbarDisplays from '../components/menu-bar/ToolbarDisplays';
 import { usePlaybackStore } from '../stores/playback-store';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 // Radix menus rely on pointer-capture APIs that jsdom does not implement.
 beforeAll(() => {
   if (!Element.prototype.hasPointerCapture) {

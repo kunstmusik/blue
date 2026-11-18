@@ -5,10 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createDeferred } from '../../main/project-history-test-support';
 import { useProjectLibraryNodes } from '../components/libraries/use-project-library-nodes';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function Probe({ session = 1, revision = 0 }: { session?: number; revision?: number }) {
   const nodes = useProjectLibraryNodes('projectOwned', 'effect', session, revision);
   return <span>{nodes.map((node) => node.nodeId).join(',')}</span>;

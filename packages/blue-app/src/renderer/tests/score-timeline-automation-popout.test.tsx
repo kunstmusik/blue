@@ -19,10 +19,6 @@ import type {
   ScoreLayerAutomationSnapshot,
 } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const { mockFinishProjectGesture, mockRegisterHistoryEditorSettlement } = vi.hoisted(() => ({
   mockRegisterHistoryEditorSettlement: vi.fn((_doc: Document, _settle: () => Promise<unknown>) =>
     vi.fn(),

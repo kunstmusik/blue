@@ -7,10 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { JSDOM } from 'jsdom';
 import ColorPickerButton, { ColorPickerPopover } from '../components/ColorPicker';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('ColorPicker', () => {
   let host: HTMLDivElement;
   let root: Root;

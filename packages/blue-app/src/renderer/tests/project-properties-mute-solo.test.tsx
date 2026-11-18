@@ -7,10 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import ProjectInformationTab from '../components/workbench/panels/project-properties/ProjectInformationTab';
 import { useProjectStore } from '../stores/project-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 function mountTab(): {
   host: HTMLDivElement;
   updateSpy: ReturnType<typeof vi.fn>;

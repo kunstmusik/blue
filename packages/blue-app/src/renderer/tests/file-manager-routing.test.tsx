@@ -7,10 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { FileManagerRootSnapshot } from '../../shared/file-manager';
 import WorkbenchPanelContent from '../components/workbench/WorkbenchPanelContent';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 describe('File Manager panel routing', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;

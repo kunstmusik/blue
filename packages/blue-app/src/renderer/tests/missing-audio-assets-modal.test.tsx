@@ -7,10 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import MissingAudioAssetsModal from '../components/workbench/panels/MissingAudioAssetsModal';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 interface MockProjectState {
   missingAudioSession: MissingAudioAssetsSession | null;
   setMissingAudioSession: (session: MissingAudioAssetsSession | null) => void;

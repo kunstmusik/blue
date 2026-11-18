@@ -11,10 +11,6 @@ import type {
 import { useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
-
 const originalScore = useProjectStore.getState().score;
 
 function createItem(objectId: string, rootGroupIndex: number): ScoreRowObjectSnapshot {
