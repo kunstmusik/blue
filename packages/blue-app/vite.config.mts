@@ -89,25 +89,24 @@ export default defineConfig(({ command }) => ({
         command: 'node -e ""',
         dependsOn: ['engine:stage', '@blue/data#build', '@blue/engine-client#build'],
       },
-      'build:ts:main': {
-        command: 'tsc -p tsconfig.main.json',
+      'build:electron': {
+        // Both TypeScript projects emit shared files. Bundle last so the app
+        // starts with the sandbox-compatible preload on cold and warm builds.
+        command: 'tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && vp build',
+        cache: false,
         dependsOn: ['build:deps'],
       },
-      'build:ts:preload': {
-        command: 'tsc -p tsconfig.preload.json',
+      'build:ts:host-tests': {
+        command: 'tsc -p tsconfig.host-tests.json',
         dependsOn: ['build:deps'],
       },
       'build:ts:renderer': {
         command: 'tsc -p tsconfig.renderer.json',
         dependsOn: ['build:deps'],
       },
-      'build:bundle': {
-        command: 'vp build',
-        dependsOn: ['build:deps'],
-      },
       'build:all': {
         command: 'node -e ""',
-        dependsOn: ['build:ts:main', 'build:ts:preload', 'build:ts:renderer', 'build:bundle'],
+        dependsOn: ['build:electron', 'build:ts:host-tests', 'build:ts:renderer'],
       },
     },
   },

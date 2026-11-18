@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { describe, expect, it } from 'vite-plus/test';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -50,6 +51,7 @@ describe('CodeRepositoryService', () => {
       let snapshot = await service.createGroup(CODE_REPOSITORY_ROOT_ID, 'fx', 0);
       expect(snapshot.contentRevision).toBe(1);
       const groupId = snapshot.root.children?.[0].id;
+      assert.ok(groupId);
       snapshot = await service.createSnippet(groupId, 'reverb', 'aout reverb', 1);
       expect(snapshot.root.children?.[0].children?.[0].code).toBe('aout reverb');
       await service.stop();

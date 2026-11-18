@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/main/**/*.test.ts",
+    "src/main/**/*.test.tsx",
+    "src/main/ipc/ipc-registrar-test-utils.ts",
+    "src/preload/**/*.test.ts",
+    "src/preload/**/*.test.tsx"
+  ]
+}

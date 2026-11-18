@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { describe, expect, it } from 'vite-plus/test';
 import { CODE_REPOSITORY_ROOT_ID, createEmptyCodeRepositoryDocument } from '@blue/data';
 import { CodeRepositoryRepository } from './repository';
@@ -58,6 +59,7 @@ describe('CodeRepositoryRepository', () => {
       expect(() => repo.createGroup(CODE_REPOSITORY_ROOT_ID, '   ', 0)).toThrow(/empty-name/);
       const snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'valid', 0);
       const groupId = snapshot.root.children?.[0].id;
+      assert.ok(groupId);
       expect(() => repo.updateNode(groupId, { name: '' }, 1)).toThrow(/empty-name/);
       expect(() => repo.commitDraft(1, { ...snapshot.root, id: 'another-root' })).toThrow(
         /root-id/,
@@ -72,6 +74,7 @@ describe('CodeRepositoryRepository', () => {
     try {
       const snapshot = repo.createSnippet(CODE_REPOSITORY_ROOT_ID, 'solo', 'code', 0);
       const snippetId = snapshot.root.children?.[0].id;
+      assert.ok(snippetId);
       expect(() => repo.createGroup(snippetId, 'bad', 1)).toThrow(/invalid-parent-kind/);
     } finally {
       repo.close();
@@ -83,8 +86,10 @@ describe('CodeRepositoryRepository', () => {
     try {
       let snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'outer', 0);
       const outerId = snapshot.root.children?.[0].id;
+      assert.ok(outerId);
       snapshot = repo.createGroup(outerId, 'inner', 1);
       const innerId = snapshot.root.children?.[0].children?.[0].id;
+      assert.ok(innerId);
       // Moving outer into inner should be rejected as a cycle.
       expect(() => repo.moveNode(outerId, innerId, 0, 2)).toThrow(/cycle/);
     } finally {
@@ -161,7 +166,9 @@ describe('CodeRepositoryRepository', () => {
     try {
       let repo = CodeRepositoryRepository.open(dir.databasePath);
       let snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'envelopes', 0);
-      snapshot = repo.createSnippet(snapshot.root.children?.[0].id, 'pan', 'aout pan2 a', 1);
+      const groupId = snapshot.root.children?.[0].id;
+      assert.ok(groupId);
+      snapshot = repo.createSnippet(groupId, 'pan', 'aout pan2 a', 1);
       const beforeRestart = snapshot.contentRevision;
       repo.close();
 
@@ -225,6 +232,7 @@ describe('CodeRepositoryRepository', () => {
       repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'a', 0);
       let snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'b', 1);
       const bId = snapshot.root.children?.find((c) => c.name === 'b')?.id;
+      assert.ok(bId);
       // Move b to position 0.
       snapshot = repo.moveNode(bId, CODE_REPOSITORY_ROOT_ID, 0, 2);
       const children = snapshot.root.children ?? [];
@@ -241,6 +249,7 @@ describe('CodeRepositoryRepository', () => {
     try {
       let snapshot = repo.createGroup(CODE_REPOSITORY_ROOT_ID, 'parent', 0);
       const parentId = snapshot.root.children?.[0].id;
+      assert.ok(parentId);
       snapshot = repo.createGroup(parentId, 'child', 1);
       const revision = snapshot.contentRevision;
       snapshot = repo.deleteNode(parentId, revision);
@@ -256,6 +265,7 @@ describe('CodeRepositoryRepository', () => {
       repo.createSnippet(CODE_REPOSITORY_ROOT_ID, 'first', '', 0);
       let snapshot = repo.createSnippet(CODE_REPOSITORY_ROOT_ID, 'second', '', 1);
       const firstId = snapshot.root.children?.[0].id;
+      assert.ok(firstId);
       snapshot = repo.deleteNode(firstId, 2);
       expect(snapshot.root.children?.map((node) => node.order)).toEqual([0]);
 
