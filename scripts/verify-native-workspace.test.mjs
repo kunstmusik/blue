@@ -1,9 +1,20 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(import.meta.dirname, '..');
+const vpBin = fileURLToPath(import.meta.resolve('vite-plus/bin'));
+
+function runPlan(...args) {
+  const output = execFileSync(process.execPath, [vpBin, 'run', '--dry-run', '--json', ...args], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
+  return JSON.parse(output).plan;
+}
 
 async function json(relativePath) {
   return JSON.parse(await readFile(join(repoRoot, relativePath), 'utf8'));
@@ -38,9 +49,15 @@ test('registers the private native package and topological app dependency', asyn
   assert.equal(nativePackage.private, true);
   assert.equal(appPackage.devDependencies['@blue/engine-native'], 'workspace:*');
   assert.match(lockfile, /native\/blue-engine:/);
-  assert.match(rootPackage.scripts.build, /pnpm -r run build/);
+  const buildPlan = runPlan('-r', 'build');
+  assert.ok(buildPlan['packages/blue-app#build']?.dependsOn.includes('native/blue-engine#build'));
+
   assert.match(rootPackage.scripts.test, /pnpm -r run test/);
-  assert.match(rootPackage.scripts.lint, /pnpm -r run lint/);
+  assert.ok(nativePackage.scripts.test);
+
+  const lintTask = rootPackage.scripts.lint.replace(/^vp run /, '');
+  const lintPlan = runPlan(lintTask);
+  assert.ok(lintPlan[lintTask]?.dependsOn.includes('native/blue-engine#lint'));
 });
 
 test('development builds the workspace engine and does not search a system install', async () => {
