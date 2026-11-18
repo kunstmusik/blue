@@ -97,3 +97,13 @@ Validated commands:
 - `pnpm --filter @blue/app build:preload` - pass
 - `pnpm --filter @blue/app build:renderer` - pass
 - `git diff --check` - pass
+
+## Mode 2 oscillator compatibility
+
+Mode 2 intentionally diverges from Java by scaling frequency-table evaluation
+to the JMask's generation duration and integrating the selected interpolation.
+Keep the legacy oscillator calculation in Mode 1. Verify the attached #765
+and #739 projects, constant-table parity with a fixed frequency, and the saw
+and square wave values at exact phase transitions. The implementation uses
+original TypeScript within the MIT data package. See the
+[oscillator compatibility rationale](research.md#oscillator-frequency-sweeps-in-mode-2).

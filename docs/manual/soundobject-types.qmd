@@ -49,6 +49,7 @@ The **Mode 1** or **Mode 2** button beside **Test** opens the generation
 settings for this object. **Mode 1 (Legacy)** keeps whole-number instrument IDs
 and the timing used by earlier versions of Blue. **Mode 2 (Corrected)** keeps
 fractional instrument IDs and stops the generator before the object's end.
+Oscillator frequency tables in Mode 2 sweep across the full object duration.
 Note processors and time behavior can still shift the resulting events.
 Existing JMask objects without a saved mode open in Mode 1. New JMask objects
 start in Mode 2. Use **Apply** to save the choice on the object, then use

@@ -142,3 +142,33 @@ The editor refreshes the selected JMask on project history revisions. A selectio
 change cancels its pending read, and a later local patch supersedes a response
 that was already in flight. If a canonical update changes the mode while the
 configuration dialog is open, the dialog starts a fresh draft from that mode.
+
+### Oscillator frequency sweeps in Mode 2
+
+The attached projects from #765 and #739 reproduce the Java behavior in Mode 1.
+Java Blue's `Oscillator.initialize()` at revision
+`3ca3f40579c48a023299a68130d8ab6b9e950974` leaves the table normalized, and
+`getPhase()` passes elapsed beats directly to the table. A table ending at 1
+therefore reaches its final frequency after one beat. In #765 the final rate
+of 20 cycles per beat and the 0.2-beat interval land every subsequent note
+four cycles apart, so those notes all sample the same phase.
+
+Mode 2 integrates the authored frequency curve over the normalized fraction
+of the object duration and multiplies the area by that duration to obtain
+phase in cycles. It follows step, cosine, and power interpolation and preserves
+phase through knots. Oscillators with a fixed rate or a flat table use elapsed beats times frequency.
+For a curved table, phase within floating-point roundoff of a waveform transition
+uses the transition value, so a tiny error cannot select the opposite side.
+The frequency table remains authored in normalized coordinates. The mode's
+duration is stored only for the oscillator instance preparing notes.
+The corrected phase calculation is original TypeScript based on the integral
+of each interpolation curve.
+
+- [Oscillator output stops varying, issue #765](https://github.com/kunstmusik/blue/issues/765)
+- [Frequency sweep ends early, issue #739](https://github.com/kunstmusik/blue/issues/739)
+
+The #737 Freeze attachment uses a separate, shared offline automation path.
+For the JMask at beats 19 through 23, the switch starts at 0 and has a same-time
+jump from 0 to 1 at beat 21. The Freeze CSD omits a switch event at relative
+beat 2. The Java-compatible automation exporter skips intermediate point pairs
+with equal times, regardless of source object type or JMask mode.

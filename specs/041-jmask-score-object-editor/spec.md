@@ -73,6 +73,7 @@ As a composer validating generative results, I need the table-based visualizatio
 - **FR-007**: The editor MUST expose supported modifier and nested-section workflows such as mask, quantizer, accumulator, probability, and table-driven editors where the TypeScript model can support them honestly, including duration propagation for duration-sensitive editors.
 - **FR-008**: The editor MUST preserve unsupported `JMask` data deliberately instead of silently flattening or dropping it from the model.
 - **FR-009**: The implementation MUST add tests covering `@blue/data` round-trip and generation prerequisites, `JMask` document creation, parameter-stack rendering, menu and shortcut behavior, supported nested mutations, removed-target fallback behavior, and any preview or table workflows claimed by this slice.
+- **FR-010**: Mode 2 MUST evaluate oscillator frequency tables across the full JMask generation duration and derive waveform phase from the authored curve. Mode 1 MUST retain Java's historical one-beat table behavior for existing projects. See the [oscillator compatibility rationale](research.md#oscillator-frequency-sweeps-in-mode-2).
 
 ### Key Entities *(include if feature involves data)*
 
