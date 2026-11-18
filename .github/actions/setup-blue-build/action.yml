@@ -113,11 +113,25 @@ runs:
         }
         Split-Path $dumpbin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-    - name: Restore Blue Engine vcpkg packages
+    - name: Configure vcpkg binary cache
+      if: inputs.build-workspace == 'true'
+      shell: bash
+      env:
+        VCPKG_ARCHIVE_PATH: ${{ runner.temp }}/blue-vcpkg-archives
+      run: |
+        cmake -E make_directory "$VCPKG_ARCHIVE_PATH"
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$VCPKG_ARCHIVE_PATH" >> "$GITHUB_ENV"
+        echo "VCPKG_BINARY_SOURCES=clear;default,readwrite" >> "$GITHUB_ENV"
+        echo "VCPKG_CACHE_IMAGE=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_ENV"
+
+    - name: Restore vcpkg package archives
+      if: inputs.build-workspace == 'true'
       uses: actions/cache@v5
       with:
-        path: native/blue-engine/vcpkg_installed
-        key: ${{ runner.os }}-${{ runner.arch }}-blue-engine-vcpkg-${{ hashFiles('native/blue-engine/vcpkg.json', 'native/blue-engine/vcpkg-configuration.json', 'native/blue-engine/triplets/*') }}
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: ${{ runner.os }}-${{ runner.arch }}-blue-engine-vcpkg-archives-${{ env.VCPKG_CACHE_IMAGE }}-${{ hashFiles('native/blue-engine/vcpkg.json', 'native/blue-engine/vcpkg-configuration.json', 'native/blue-engine/triplets/*') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-blue-engine-vcpkg-archives-
 
     - name: Resolve pnpm store path
       shell: bash
