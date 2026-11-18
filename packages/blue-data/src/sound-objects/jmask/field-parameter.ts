@@ -8,6 +8,7 @@ import { validateJmaskXml } from './xml-policy';
 import {
   JavaRandom,
   type Generator,
+  type JMaskGenerationMode,
   Table,
   Mask,
   Quantizer,
@@ -177,8 +178,12 @@ export class Parameter {
     return this.visible;
   }
 
-  initialize(duration: number): void {
-    this.generator?.initialize(duration);
+  initialize(duration: number, mode: JMaskGenerationMode = 1): void {
+    if (mode === 2 && this.generator instanceof Oscillator) {
+      this.generator.initialize(duration, mode);
+    } else {
+      this.generator?.initialize(duration);
+    }
     if (this.mask) {
       this.mask.duration = duration;
     }
@@ -315,8 +320,6 @@ function prepareGenerator(generator: Generator, duration: number): Generator {
   }
 }
 
-export type JMaskGenerationMode = 1 | 2;
-
 export class Field {
   parameters: Parameter[] = [];
 
@@ -451,7 +454,7 @@ export class Field {
     }
 
     for (const parameter of this.parameters) {
-      parameter.initialize(duration);
+      parameter.initialize(duration, mode);
     }
 
     let xt = 0.0;

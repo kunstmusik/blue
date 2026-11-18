@@ -14,10 +14,12 @@ import {
   Constant,
   JavaRandom,
   Linear,
+  Oscillator,
   Parameter,
   Probability,
   Random,
   Table,
+  TablePoint,
 } from './jmask-support';
 
 function snapshotJMaskValue(value: unknown): unknown {
@@ -155,6 +157,119 @@ describe('JMask support model', () => {
     const notes = [...jmask.generateNotes(new TimeContext())];
     expect(notes).toHaveLength(1870);
     expect(notes.at(-1)?.getStartTime()).toBe(2057.4);
+  });
+
+  it('continues the oscillator sweep over four beats instead of settling after one (#765)', () => {
+    const jmask = buildSeededJMask(1234);
+    const field = jmask.getField();
+    const step = new Constant();
+    step.value = 0.2;
+    field.getParameter(1).setGenerator(step);
+    const oscillator = new Oscillator();
+    oscillator.oscillatorType = Oscillator.SAW_UP;
+    oscillator.freqTableEnabled = true;
+    oscillator.freqTable.getPoint(0).value = 0.001;
+    oscillator.freqTable.getPoint(1).value = 20;
+    field.addParameterAfter(2, oscillator);
+    const context = new TimeContext();
+    const values = () => [...jmask.generateNotes(context)].map((note) => note.getPField(4));
+
+    expect(values().slice(10, 13)).toEqual(['0.0015', '0.101595', '0.40168']);
+    jmask.setGenerationMode(1);
+    expect(values().slice(10, 13)).toEqual(['0.0005', '0.0005', '0.0005']);
+    expect(oscillator.freqTable.getPoint(1).time).toBe(1);
+  });
+
+  it('integrates the rising frequency across the entire 18-beat sweep (#739)', () => {
+    const jmask = buildSeededJMask(1234);
+    jmask.setSubjectiveDuration(TimeDuration.beats(18));
+    const field = jmask.getField();
+    const step = new Constant();
+    step.value = 0.05;
+    field.getParameter(1).setGenerator(step);
+    const oscillator = new Oscillator();
+    oscillator.freqTableEnabled = true;
+    oscillator.freqTable.getPoint(0).value = 0.5;
+    oscillator.freqTable.getPoint(1).value = 5;
+    field.addParameterAfter(2, oscillator);
+
+    const notes = [...jmask.generateNotes(new TimeContext())];
+    expect(notes[180]?.getStartTime()).toBe(10.5);
+    expect(Number(notes[180]?.getPField(4))).toBeCloseTo(0.1464466094, 9);
+  });
+
+  it.each([
+    [Oscillator.SAW_UP, 1, 1, 22, 15],
+    [Oscillator.SAW_UP, 2, 13, 11, 6],
+    [Oscillator.SQUARE, 19, 1, 6, 5],
+  ])(
+    'uses the correct side of an exact waveform boundary (shape %s, %s to %s)',
+    (shape, from, to, duration, time) => {
+      const oscillator = new Oscillator();
+      oscillator.oscillatorType = shape;
+      oscillator.freqTableEnabled = true;
+      oscillator.freqTable.getPoint(0).value = from;
+      oscillator.freqTable.getPoint(1).value = to;
+      oscillator.initialize(duration, 2);
+      expect(oscillator.getValue(time, new JavaRandom(1))).toBe(0);
+    },
+  );
+
+  it('preserves an authored frequency just below a cycle boundary on a flat table', () => {
+    const oscillator = new Oscillator();
+    oscillator.oscillatorType = Oscillator.SAW_UP;
+    oscillator.frequency = 1 - Number.EPSILON;
+    oscillator.freqTableEnabled = true;
+    for (const point of oscillator.freqTable.points) point.value = oscillator.frequency;
+    oscillator.initialize(22, 2);
+    expect(oscillator.getValue(1, new JavaRandom(1))).toBe(oscillator.frequency);
+  });
+
+  it('integrates the held first frequency without subtracting a distant point time', () => {
+    const table = new Table();
+    table.getPoint(0).time = 1e16;
+    table.getPoint(1).time = 1e16 + 2;
+    table.getPoint(0).value = 1;
+    table.getPoint(1).value = 2;
+    expect(table.integrateFrequency(0.25)).toBe(0.25);
+  });
+
+  it.each([
+    [Table.OFF, 0, 0.1],
+    [Table.ON, 0, 0.175],
+    [Table.ON, 1, 0.125],
+    [Table.ON, -1, 0.225],
+    [Table.COS, 0, 0.25 - 0.3 / Math.PI],
+  ])(
+    'integrates the authored frequency curve (interpolation %s, shape %s)',
+    (type, shape, expected) => {
+      const table = new Table();
+      table.interpolationType = type;
+      table.interpolation = shape;
+      table.getPoint(0).value = 0.2;
+      table.getPoint(1).value = 0.8;
+
+      expect(table.integrateFrequency(0.5)).toBeCloseTo(expected, 12);
+      expect(table.prepareForGeneration().integrateFrequency(0.5)).toBeCloseTo(expected, 12);
+    },
+  );
+
+  it('keeps phase continuous through a step at the final frequency point', () => {
+    const table = new Table();
+    table.interpolationType = Table.OFF;
+    table.getPoint(0).time = 0.25;
+    table.getPoint(0).value = 0.4;
+    table.getPoint(1).time = 0.75;
+    table.getPoint(1).value = 0.8;
+    const last = new TablePoint(table.getPoint(1));
+    last.value = 0.2;
+    table.addPoint(2, last);
+
+    expect(table.integrateFrequency(0)).toBe(0);
+    expect(table.integrateFrequency(0.75)).toBeCloseTo(0.3, 12);
+    expect(table.integrateFrequency(1)).toBeCloseTo(0.35, 12);
+    last.value = 0.6;
+    expect(table.integrateFrequency(1)).toBeCloseTo(0.45, 12);
   });
 
   it('preserves legacy score output across project loading, saving, and copying', () => {

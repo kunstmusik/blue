@@ -84,6 +84,8 @@ export class JavaRandom {
   }
 }
 
+export type JMaskGenerationMode = 1 | 2;
+
 export interface Generator {
   initialize(duration: number): void;
   getValue(time: number, rnd: JavaRandom): number;
@@ -156,6 +158,7 @@ interface TableCache {
   interpolation: number;
   sorted: Array<Readonly<Pick<TablePoint, 'time' | 'value'>>>;
   prefixPhs: Float64Array;
+  frequencyIntegral?: { prefix: Float64Array; origin: number };
 }
 
 const tableCaches = new WeakMap<Table, TableCache>();
@@ -476,6 +479,87 @@ export class Table {
       default:
         return this.interpolateValue(this.interpolation, r, a.value, b.value);
     }
+  }
+
+  /** Area under the table's frequency curve from zero to time. */
+  integrateFrequency(time: number): number {
+    const cache = this.getOrBuildCache();
+    const points = cache.sorted;
+    if (points.length === 0) return 0;
+    const first = points[0]!;
+    if (Math.max(time, 0) <= first.time) return time * first.value;
+
+    if (!cache.frequencyIntegral) {
+      const prefix = new Float64Array(points.length);
+      for (let index = 1; index < points.length; index++) {
+        const start = points[index - 1]!;
+        const end = points[index]!;
+        const width = end.time - start.time;
+        prefix[index] =
+          prefix[index - 1]! + this.integrateFrequencySegment(width, width, start.value, end.value);
+      }
+      cache.frequencyIntegral = { prefix, origin: this.frequencyIntegralAt(0, points, prefix) };
+    }
+
+    const { prefix, origin } = cache.frequencyIntegral;
+    return this.frequencyIntegralAt(time, points, prefix) - origin;
+  }
+
+  private frequencyIntegralAt(
+    time: number,
+    points: TableCache['sorted'],
+    prefix: Float64Array,
+  ): number {
+    const first = points[0]!;
+    if (time < first.time) return (time - first.time) * first.value;
+
+    const lastIndex = points.length - 1;
+    const last = points[lastIndex]!;
+    if (time >= last.time) return prefix[lastIndex]! + (time - last.time) * last.value;
+
+    let lo = 0;
+    let hi = lastIndex;
+    while (lo + 1 < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (points[mid]!.time <= time) lo = mid;
+      else hi = mid;
+    }
+
+    const start = points[lo]!;
+    const end = points[hi]!;
+    return (
+      prefix[lo]! +
+      this.integrateFrequencySegment(
+        time - start.time,
+        end.time - start.time,
+        start.value,
+        end.value,
+      )
+    );
+  }
+
+  private integrateFrequencySegment(
+    elapsed: number,
+    width: number,
+    from: number,
+    to: number,
+  ): number {
+    if (width === 0 || this.interpolationType === Table.OFF || from === to) return elapsed * from;
+
+    const ratio = elapsed / width;
+    let area: number;
+    if (this.interpolationType === Table.COS) {
+      area = (ratio - Math.sin(Math.PI * ratio) / Math.PI) / 2;
+    } else {
+      const integralPower = Math.abs(this.interpolation) + 2;
+      const reversed =
+        (this.interpolation > 0 && to < from) || (this.interpolation < 0 && to >= from);
+      area = reversed
+        ? ratio + ((1 - ratio) ** integralPower - 1) / integralPower
+        : ratio ** integralPower / integralPower;
+    }
+
+    return elapsed * from + width * (to - from) * area;
   }
 
   getphs(xt: number): number {

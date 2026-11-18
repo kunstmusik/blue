@@ -13,6 +13,7 @@ import { clamp } from '../../utilities/math-utils';
 import {
   JavaRandom,
   type Generator,
+  type JMaskGenerationMode,
   type Maskable,
   type Quantizable,
   type Accumulatable,
@@ -119,6 +120,11 @@ export class Random implements Generator, Quantizable, Accumulatable {
   }
 }
 
+const oscillatorFrequencyRuns = new WeakMap<
+  Oscillator,
+  { duration: number; constantFrequency: number | undefined }
+>();
+
 export class Oscillator implements Generator, Maskable, Quantizable, Accumulatable {
   static readonly SINE = 0;
   static readonly COSINE = 1;
@@ -193,13 +199,34 @@ export class Oscillator implements Generator, Maskable, Quantizable, Accumulatab
     return oscillator;
   }
 
-  initialize(_duration: number): void {}
+  initialize(duration: number, mode: JMaskGenerationMode = 1): void {
+    if (mode === 2 && this.freqTableEnabled && duration > 0) {
+      const points = this.freqTable.points;
+      const initialFrequency = points[0]?.value ?? 0;
+      const constantFrequency = points.every((point) => point.value === initialFrequency)
+        ? initialFrequency
+        : undefined;
+      oscillatorFrequencyRuns.set(this, { duration, constantFrequency });
+    } else {
+      oscillatorFrequencyRuns.delete(this);
+    }
+  }
 
   private getPhase(time: number): number {
     if (!this.freqTableEnabled) {
       return this.phaseInit + time * this.frequency;
     }
-    return this.phaseInit + this.freqTable.getphs(time);
+    const run = oscillatorFrequencyRuns.get(this);
+    if (!run) return this.phaseInit + this.freqTable.getphs(time);
+    if (run.constantFrequency !== undefined) return this.phaseInit + time * run.constantFrequency;
+
+    const phase =
+      this.phaseInit + run.duration * this.freqTable.integrateFrequency(time / run.duration);
+    // Roundoff at a wrap or square-wave transition can flip the output instead of nudging it.
+    const stepsPerCycle = this.oscillatorType === Oscillator.SQUARE ? 2 : 1;
+    const transition = Math.round(phase * stepsPerCycle) / stepsPerCycle;
+    const tolerance = Math.min(Math.abs(phase) * Number.EPSILON * 2, 1e-10);
+    return Math.abs(phase - transition) <= tolerance ? transition : phase;
   }
 
   private sin(phase: number): number {

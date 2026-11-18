@@ -6,6 +6,7 @@
 export {
   JavaRandom,
   type Generator,
+  type JMaskGenerationMode,
   type Maskable,
   type Quantizable,
   type Accumulatable,
@@ -39,5 +40,5 @@ export {
   loadGeneratorFromXML,
   loadProbabilityGeneratorFromXML,
 } from './jmask/generators';
-export { Parameter, Field, type JMaskGenerationMode } from './jmask/field-parameter';
+export { Parameter, Field } from './jmask/field-parameter';
 export { loadFieldFromSnapshot } from './jmask/snapshot-hydration';

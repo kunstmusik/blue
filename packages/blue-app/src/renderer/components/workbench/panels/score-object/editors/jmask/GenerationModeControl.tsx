@@ -14,7 +14,7 @@ const modes = [
     value: 2,
     name: 'Mode 2 (Corrected)',
     description:
-      'Preserves fractional instrument IDs and stops generating events before the end of the object.',
+      'Preserves fractional instrument IDs, sweeps oscillator frequency across the full object, and stops generation at the end.',
   },
 ] as const;
 
