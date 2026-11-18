@@ -8,9 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppSelect } from '../components/AppSelect';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>');
 const popoutDoc = popout.window.document;

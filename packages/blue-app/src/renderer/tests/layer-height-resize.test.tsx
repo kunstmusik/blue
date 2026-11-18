@@ -23,9 +23,6 @@ import {
 import { useProjectStore, acceptProjectDocumentRevision } from '../stores/project-store';
 import { settleHistoryEditors } from '../lib/history-scope-router';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeTestLayerGroups(): ScoreLayerGroupSnapshot[] {
   return [

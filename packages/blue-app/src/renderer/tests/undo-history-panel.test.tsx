@@ -28,9 +28,6 @@ vi.mock('../lib/history-scope-router', async (importOriginal) => {
   };
 });
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const ENTRY_TIMES = {
   one: new Date(2026, 8, 11, 12, 5, 9).getTime(),

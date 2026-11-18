@@ -12,9 +12,6 @@ import { useCodeRepositoryStore } from '../stores/code-repository-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import { CODE_REPOSITORY_ROOT_ID } from '@blue/data';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 /**
  * Regression coverage for the cursor-reset bug fixed by reconfiguring the

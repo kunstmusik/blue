@@ -17,9 +17,6 @@ import type { LibraryBrowseNode } from '../../shared/unified-library';
 // Keep Query observer notifications inside React's async act boundary.
 notifyManager.setScheduler(queueMicrotask);
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mockCategories: readonly Category[] = [
   { id: 10, kind: 'instrument', parentId: null, name: 'Synthesizers', description: 'Synths' },

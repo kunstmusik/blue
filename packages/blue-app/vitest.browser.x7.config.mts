@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     include: ['src/renderer/browser/blue-x7-editor.browser.test.tsx'],
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     browser: {
       enabled: true,
       provider: playwright({

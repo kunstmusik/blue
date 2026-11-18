@@ -175,7 +175,6 @@ describe('useScoreWheelZoom hook', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
     Object.defineProperty(window.navigator, 'platform', {
       value: 'MacIntel',

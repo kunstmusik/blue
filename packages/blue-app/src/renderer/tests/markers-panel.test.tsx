@@ -7,9 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MarkersPanel from '../components/workbench/panels/MarkersPanel';
 import { chooseAppSelectOption } from './app-select-test-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface MockProjectState {
   loaded: boolean;

@@ -11,9 +11,6 @@ import { useFreezeOperationStore } from '../stores/freeze-operation-store';
 import { useProjectStore } from '../stores/project-store';
 import type { FreezeItemStatus, RenderOperationStatus } from '../../shared/render-freeze-contract';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 

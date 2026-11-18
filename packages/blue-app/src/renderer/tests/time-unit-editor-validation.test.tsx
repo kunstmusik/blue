@@ -4,9 +4,6 @@ import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import TimeUnitEditor from '../components/workbench/panels/score-object/TimeUnitEditor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 it('keeps a skipped DF label visible with feedback and no durable commit', () => {
   const host = document.createElement('div');

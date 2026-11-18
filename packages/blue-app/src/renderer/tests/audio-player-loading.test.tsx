@@ -29,7 +29,6 @@ beforeEach(() => {
   decode.mockClear();
   readBytes.mockClear();
   width = 400;
-  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal(
     'AudioContext',
     class {

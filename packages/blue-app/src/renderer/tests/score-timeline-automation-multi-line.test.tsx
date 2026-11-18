@@ -667,7 +667,9 @@ describe('shift-gated object selection via explicit objectIds (B3)', () => {
         }),
       });
     } finally {
-      root.unmount();
+      act(() => {
+        root.unmount();
+      });
       container.remove();
       useScoreAutomationStore.setState({
         selectedPoint: null,

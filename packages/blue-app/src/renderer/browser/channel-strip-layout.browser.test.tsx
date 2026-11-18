@@ -16,9 +16,6 @@ import { getMeterTrackGeometry } from '../components/workbench/panels/mixer/mete
 import { gainDbToFraction } from '../components/workbench/panels/mixer/fader-taper';
 import { useProjectStore } from '../stores/project-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function createTestMixer(channelCount = 1): {
   mixer: MixerSnapshot;

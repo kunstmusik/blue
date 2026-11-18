@@ -12,9 +12,6 @@ import { deriveTempoRegions } from '../components/workbench/panels/score/tempo-m
 import { deriveMeterRegions } from '../components/workbench/panels/score/meter-map-utils';
 import { __testOnly } from '../components/workbench/panels/score/ColumnHeader';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 type ResizeCallback = (entries: Array<{ contentRect: { width: number; height: number } }>) => void;
 let resizeObserverCallback: ResizeCallback | null = null;

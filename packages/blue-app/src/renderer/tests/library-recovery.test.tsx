@@ -6,9 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { LibraryRecoveryPanel } from '../components/libraries/LibraryRecoveryPanel';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('library recovery UI', () => {
   it('offers explicit recovery choices without blocking unrelated project work', () => {

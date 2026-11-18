@@ -23,9 +23,6 @@ import {
   formatValue,
 } from '../components/workbench/panels/orchestra/bsb/widgets/ValuePanel';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 beforeAll(() => {
   if (!Element.prototype.hasPointerCapture) {

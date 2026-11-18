@@ -25,9 +25,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { useLibraryStore } from '../stores/library-store';
 import { useFreezeOperationStore } from '../stores/freeze-operation-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 

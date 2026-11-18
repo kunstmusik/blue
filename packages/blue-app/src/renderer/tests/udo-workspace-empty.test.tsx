@@ -9,9 +9,6 @@ import UdoWorkspacePanel from '../components/workbench/panels/udo/UdoWorkspacePa
 import { useLibraryStore } from '../stores/library-store';
 import { useLayoutSettingsStore } from '../stores/layout-settings-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/udo/UdoEditor', () => ({
   default: () => <div data-testid="udo-editor" />,

@@ -13,9 +13,6 @@ import { isAuxiliaryInteractionTarget } from '../components/workbench/auxiliary-
 import { useLibraryStore } from '../stores/library-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const unsupported: LibraryBrowseNode = {
   key: { scope: 'user', libraryType: 'soundObject', nodeId: 'unsupported' },

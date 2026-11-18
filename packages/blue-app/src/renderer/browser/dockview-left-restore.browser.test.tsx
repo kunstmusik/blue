@@ -12,10 +12,6 @@ describe('Dockview left auxiliary restoration', () => {
   let host: HTMLDivElement;
   let root: Root;
 
-  (
-    globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-  ).IS_REACT_ACT_ENVIRONMENT = true;
-
   beforeEach(() => {
     host = document.createElement('div');
     host.style.width = '1200px';

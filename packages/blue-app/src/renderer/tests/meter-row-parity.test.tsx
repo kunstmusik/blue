@@ -13,9 +13,6 @@ import {
   findRegionAtBeat,
 } from '../components/workbench/panels/score/meter-map-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mountedRoots: Root[] = [];
 

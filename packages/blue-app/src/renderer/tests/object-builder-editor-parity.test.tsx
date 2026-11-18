@@ -10,9 +10,6 @@ import ObjectBuilderScoreObjectEditor from '../components/workbench/panels/score
 import { resolveEditorComponent } from '../components/workbench/panels/score-object/editor-registry';
 import { chooseAppSelectOption, getAppSelectOptionLabels } from './app-select-test-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   default: ({

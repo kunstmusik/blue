@@ -10,9 +10,6 @@ import { useProjectStore } from '../stores/project-store';
 import { __testClearPendingPatches } from '../stores/project-store';
 import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('global project history views settlement (T037, US2)', () => {
   let container: HTMLDivElement;

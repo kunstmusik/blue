@@ -23,9 +23,6 @@ import type {
 } from '../../../shared/file-manager';
 import type { LibraryBrowseNode } from '../../../shared/unified-library';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const LIBRARY_NODES: LibraryBrowseNode[] = [
   {

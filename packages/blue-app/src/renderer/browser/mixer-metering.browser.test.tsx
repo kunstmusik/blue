@@ -26,9 +26,6 @@ import type { MeterBindingMapPayload } from '../../shared/meter-types';
 // fader (pointer, keyboard, and range input), the Pre/Post effect chain
 // rows, the level value, and the output select on all strips.
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function buildMixerSnapshot(): {
   mixer: MixerSnapshot;

@@ -13,9 +13,6 @@ import PresetsManagerDialog, {
 import { applyBsbInterfacePatchToSnapshot } from '../stores/project-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function createPresetGroup(): PresetGroupSnapshot {
   return {

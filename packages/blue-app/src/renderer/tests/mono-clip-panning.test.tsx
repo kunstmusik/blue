@@ -11,9 +11,6 @@ import {
 import { MixerSettingsDialog } from '../components/workbench/panels/mixer/MixerSettingsDialog';
 import { createEmptyMixerSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('MixerPanSlider accessibility and interaction (T043, T050, T065)', () => {
   let container: HTMLDivElement;

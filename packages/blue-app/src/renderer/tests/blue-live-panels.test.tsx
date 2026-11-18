@@ -23,9 +23,6 @@ import { useWorkbenchStore } from '../stores/workbench-store';
 import { useLibraryStore } from '../stores/library-store';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeBlueLiveSnapshot(): BlueLiveProjectSnapshot {
   const scoreXml = new GenericScore().saveAsXML().toXml();

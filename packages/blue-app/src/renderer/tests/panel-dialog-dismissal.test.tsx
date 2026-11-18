@@ -17,9 +17,6 @@ import type {
   ScoreTimeStateSnapshot,
 } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 // The "popout window": a second JSDOM realm hosting a floated panel.
 const popout = new JSDOM('<!doctype html><html><body></body></html>');

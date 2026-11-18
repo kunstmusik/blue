@@ -41,9 +41,6 @@ const baseWidgetProps = {
   onWidgetAction: () => {},
 };
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('Accessibility Value Controls Browser Tests (T021)', () => {
   let container: HTMLDivElement;

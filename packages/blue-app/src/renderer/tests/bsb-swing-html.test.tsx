@@ -235,9 +235,6 @@ describe('BSB Swing HTML labels', () => {
         const container = document.createElement('div');
         document.body.appendChild(container);
         appendSpy.mockClear();
-        (
-          globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-        ).IS_REACT_ACT_ENVIRONMENT = true;
         const root = createRoot(container);
         try {
           await act(async () => {
@@ -327,9 +324,6 @@ describe('BSB Swing HTML labels', () => {
 
     const container = origCreateElement('div');
     document.body.appendChild(container);
-    (
-      globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-    ).IS_REACT_ACT_ENVIRONMENT = true;
     const root = createRoot(container);
     try {
       await act(async () => {

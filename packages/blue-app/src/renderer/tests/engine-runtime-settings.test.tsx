@@ -11,9 +11,6 @@ import {
 import RealtimeRenderSettings from '../components/settings/RealtimeRenderSettings';
 import { getAppSelectOptionLabels } from './app-select-test-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;

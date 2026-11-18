@@ -31,9 +31,6 @@ import type {
 } from '../../shared/project-history';
 import type { ProjectDocumentPatch, ProjectEditorSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 type DocumentUpdatedListener = (event: ProjectDocumentUpdatedEvent) => void;
 

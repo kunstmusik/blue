@@ -4,9 +4,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 /**
  * T059: a floated panel containing a code editor painted as a blank window.

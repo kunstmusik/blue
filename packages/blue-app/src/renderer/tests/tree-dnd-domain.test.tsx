@@ -9,9 +9,6 @@ import { acquireTreeDndManager, hasActiveTreeDrag } from '../components/tree/tre
 import { NativeTypes } from 'react-dnd-html5-backend';
 import { BlueTree } from '../components/tree/BlueTree';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface TestNode {
   id: string;

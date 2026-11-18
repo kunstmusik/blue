@@ -48,9 +48,6 @@ vi.mock('../stores/midi-routing-store', () => {
   return { useMidiRoutingStore };
 });
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const popout = new JSDOM('<!doctype html><html><body></body></html>', {
   url: 'https://popout.test',

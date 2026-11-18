@@ -11,9 +11,6 @@ import type { ResourceSummary } from '../../shared/blueshare';
 // Keep Query observer notifications inside React's async act boundary.
 notifyManager.setScheduler(queueMicrotask);
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mockOwnedSubmissions: readonly ResourceSummary[] = [
   {

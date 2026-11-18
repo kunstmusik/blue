@@ -14,9 +14,6 @@ import { settleHistoryEditors } from '../lib/history-scope-router';
 import InstrumentCommentsPanel from '../components/workbench/panels/orchestra/InstrumentCommentsPanel';
 import { InputBase } from '../components/workbench/panels/project-properties/ProjectPropertyFields';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('detectTextOperation', () => {
   it('detects none for identical strings', () => {

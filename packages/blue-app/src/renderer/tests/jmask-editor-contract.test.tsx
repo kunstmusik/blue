@@ -25,9 +25,6 @@ import {
   type TableSnapshot,
 } from '../components/workbench/panels/score-object/editors/jmask/jmask-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   constructor(private readonly callback: ResizeObserverCallback) {}

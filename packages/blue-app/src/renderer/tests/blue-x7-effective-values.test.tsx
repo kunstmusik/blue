@@ -11,9 +11,6 @@ import type { BlueX7Voice } from '@blue/data';
 import { createDefaultBlueX7Voice } from '@blue/data';
 import type { BlueX7InstrumentSnapshot, BlueX7Patch } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 type ProbeProps = Parameters<typeof useBlueX7EffectiveValues>[0];
 

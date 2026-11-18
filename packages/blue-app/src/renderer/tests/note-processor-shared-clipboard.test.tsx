@@ -7,9 +7,6 @@ import type { NoteProcessorChainSnapshot } from '../../shared/project-editor';
 import NoteProcessorChainEditor from '../components/workbench/panels/score-object/note-processors/NoteProcessorChainEditor';
 import { useNoteProcessorClipboardStore } from '../stores/note-processor-clipboard-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeChain(
   id: string,

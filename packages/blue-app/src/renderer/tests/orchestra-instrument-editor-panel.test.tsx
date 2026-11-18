@@ -8,9 +8,6 @@ import type { GenericInstrumentSnapshot } from '../../shared/project-editor';
 import InstrumentEditorPanel from '../components/workbench/panels/orchestra/InstrumentEditorPanel';
 import InstrumentCommentsPanel from '../components/workbench/panels/orchestra/InstrumentCommentsPanel';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const GENERIC_INSTRUMENT: GenericInstrumentSnapshot = {
   assignmentId: '1',

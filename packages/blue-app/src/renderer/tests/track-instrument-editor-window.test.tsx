@@ -71,9 +71,6 @@ vi.mock('../components/workbench/panels/orchestra/InstrumentEditorPanel', () => 
 
 import TrackInstrumentEditorPage from '../components/track-instrument-editor/TrackInstrumentEditorPage';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeSnapshot(): TrackInstrumentEditorSnapshot {
   return {

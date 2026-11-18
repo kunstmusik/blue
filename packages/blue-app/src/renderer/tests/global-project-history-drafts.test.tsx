@@ -7,9 +7,6 @@ import { EditorView } from 'codemirror';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SelectedCodeEditor from '../components/workbench/panels/editors/SelectedCodeEditor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function getEditorText(container: HTMLElement): string {
   const mount = container.querySelector('.cm-editor');

@@ -10,9 +10,6 @@ import {
   type ScoreDocumentSnapshot,
 } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const { mockProjectState } = vi.hoisted(() => ({
   mockProjectState: {

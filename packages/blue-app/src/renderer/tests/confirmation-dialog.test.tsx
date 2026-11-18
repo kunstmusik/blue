@@ -8,9 +8,6 @@ import { ConfirmationDialog } from '../components/dialogs/ConfirmationDialog';
 import { HostDocumentContext } from '../hooks/use-host-document';
 import type { InAppConfirmationAction } from '../../shared/confirmation-dialog';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('ConfirmationDialog component', () => {
   let container: HTMLDivElement;

@@ -25,9 +25,6 @@ import { BlueData } from '@blue/data';
 import { ProjectHistory } from '../../main/project-history';
 import { ProjectSession } from '../../main/project-session';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function projection(
   revision: number,

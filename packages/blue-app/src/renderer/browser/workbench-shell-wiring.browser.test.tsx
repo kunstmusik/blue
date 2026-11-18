@@ -15,9 +15,6 @@ import {
 } from '../components/workbench/auxiliary-drag';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const capturedErrors: string[] = [];
 

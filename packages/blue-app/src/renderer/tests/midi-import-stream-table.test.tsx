@@ -7,9 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import MidiImportStreamTable from '../components/workbench/panels/MidiImportStreamTable';
 import type { MidiImportPreview, MidiImportSettings } from '../../shared/midi-import';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('MidiImportStreamTable typography', () => {
   let container: HTMLDivElement;

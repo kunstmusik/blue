@@ -7,9 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MeterMapSnapshot, MeterMapPatch } from '../../shared/project-editor';
 import MeterMapEditorDialog from '../components/workbench/panels/score/MeterMapEditorDialog';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const DEFAULT_METER_MAP: MeterMapSnapshot = {
   entries: [{ measure: 1, numBeats: 4, beatLength: 4, startBeat: 0 }],

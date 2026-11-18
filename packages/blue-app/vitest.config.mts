@@ -17,6 +17,7 @@ export default defineConfig({
       'src/renderer/lib/**/*.test.ts',
     ],
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     ...createPackageReporterConfig('@blue/app', GithubActionsReporter),
   },
   resolve: {

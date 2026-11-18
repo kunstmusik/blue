@@ -8,9 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createScoreObjectEditorDocument } from '../../shared/project-editor';
 import TrackerScoreObjectEditor from '../components/workbench/panels/score-object/editors/TrackerScoreObjectEditor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeTrackerDocument(steps = 4) {
   const data = new BlueData();

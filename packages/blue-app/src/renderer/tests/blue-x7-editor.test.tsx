@@ -21,9 +21,6 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLElement, value: string) {
   const tracker = (input as unknown as { _valueTracker?: { setValue: (v: string) => void } })

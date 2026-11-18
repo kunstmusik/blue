@@ -11,9 +11,6 @@ import { useScoreSelectionStore } from '../stores/score-selection-store';
 import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { AutomationParameterSnapshot } from '../../shared/project-editor';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}

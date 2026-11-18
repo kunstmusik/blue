@@ -16,9 +16,6 @@ import { HostDocumentContext } from '../hooks/use-host-document';
 import { __testClearPendingPatches, useProjectStore } from '../stores/project-store';
 import { useScoreSelectionStore } from '../stores/score-selection-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalProjectState = useProjectStore.getState();
 const originalBlueAPI = window.blueAPI;

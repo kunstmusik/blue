@@ -12,9 +12,6 @@ import { useProjectStore } from '../stores/project-store';
 import { routeVirtualKeyboardNote, useMidiInputService } from '../hooks/use-midi-input-service';
 import { FakeMidiAccess } from './helpers/fake-midi-access';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function MidiInputHost(): null {
   useMidiInputService();

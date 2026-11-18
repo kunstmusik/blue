@@ -12,6 +12,7 @@ export default defineConfig({
     tagsFilter: ['!performance'],
     include: ['src/renderer/browser/**/*.browser.test.tsx'],
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     browser: {
       enabled: true,
       provider: playwright({

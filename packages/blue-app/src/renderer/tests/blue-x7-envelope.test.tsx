@@ -9,9 +9,6 @@ import { EnvelopeEditor } from '../components/instruments/blue-x7/envelope-edito
 import { PitchEnvelopePanel } from '../components/instruments/blue-x7/pitch-envelope-panel';
 import { OperatorPanel } from '../components/instruments/blue-x7/operator-panel';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('BlueX7 EnvelopeEditor Component', () => {
   let container: HTMLDivElement | null = null;

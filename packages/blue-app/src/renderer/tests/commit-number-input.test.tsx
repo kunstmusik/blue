@@ -10,9 +10,6 @@ import CommitNumberInput, {
   LiveNumberInput,
 } from '../components/CommitNumberInput';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function changeInputValue(input: HTMLInputElement, value: string): void {
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(

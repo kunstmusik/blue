@@ -18,9 +18,6 @@ import { createEmptyProjectEditorSnapshot } from '../../shared/project-editor';
 import type { MixerChainClipboardPayload } from '../../shared/project-editor';
 import type { MissingAudioAssetsSession } from '../../shared/missing-audio-assets';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function createFocusSnapshot(sessionId: number) {
   const snapshot = createEmptyProjectEditorSnapshot();

@@ -15,9 +15,6 @@ import ChannelStrip from '../components/workbench/panels/mixer/ChannelStrip';
 // pressed state, are keyboard operable, distinguish explicit state from
 // derived solo exclusion, and master exposes no Solo control at all.
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function buildSnapshot(): {
   mixer: MixerSnapshot;

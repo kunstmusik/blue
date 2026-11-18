@@ -34,9 +34,6 @@ import {
 import { setProjectHistoryProjection } from '../hooks/use-project-history';
 import { HostDocumentContext } from '../hooks/use-host-document';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function createClojureModel(): ClojureProjectData {
   const projectData = new ClojureProjectData();

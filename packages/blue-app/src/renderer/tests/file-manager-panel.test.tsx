@@ -18,9 +18,6 @@ import { subscribePendingAudioFile } from '../components/workbench/panels/audio-
 import { subscribePendingSoundFontFile } from '../components/workbench/panels/tools/soundfont-viewer-bus';
 import { useWorkbenchStore } from '../stores/workbench-store';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function makeRoots(): FileManagerRootSnapshot[] {
   return [

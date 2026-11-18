@@ -7,9 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import MidiImportDialog from '../components/workbench/panels/MidiImportDialog';
 import type { MidiImportPreview } from '../../shared/midi-import';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const preview: MidiImportPreview = {
   fileName: 'notes.mid',

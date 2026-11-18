@@ -14,9 +14,6 @@ import {
   createMockPatternLayerSnapshot,
 } from '../../shared/project-editor-layer-color-test-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}

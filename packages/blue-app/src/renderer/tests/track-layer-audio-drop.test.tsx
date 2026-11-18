@@ -24,9 +24,6 @@ import {
   setCachedAudioFileDuration,
 } from '../components/workbench/panels/score/layer-groups/audio-file-duration-cache';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 import { toast } from 'sonner';

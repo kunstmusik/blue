@@ -7,9 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MarkerSnapshot } from '../../shared/project-editor';
 import MarkersBar from '../components/workbench/panels/score/MarkersBar';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 interface MockProjectState {
   applyProjectDocumentPatch: ReturnType<typeof vi.fn>;

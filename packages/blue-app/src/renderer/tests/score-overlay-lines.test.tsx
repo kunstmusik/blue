@@ -6,9 +6,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import ScoreOverlayLines from '../components/workbench/panels/score/ScoreOverlayLines';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function renderOverlay(overrides?: Partial<Parameters<typeof ScoreOverlayLines>[0]>) {
   const container = document.createElement('div');

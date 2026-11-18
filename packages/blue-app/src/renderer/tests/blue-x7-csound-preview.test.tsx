@@ -16,9 +16,6 @@ vi.mock('../components/workbench/panels/editors/SelectedCodeEditor', () => ({
   ),
 }));
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 function setInputValue(input: HTMLElement, value: string) {
   const descriptor = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');

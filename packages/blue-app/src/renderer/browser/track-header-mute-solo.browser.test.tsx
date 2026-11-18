@@ -14,9 +14,6 @@ import { createMockTrackSnapshot } from '../../shared/project-editor-layer-color
 // domain, revert to event semantics under mixer bypass, and remain keyboard
 // operable with accessible names and pressed state in a real browser.
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 const { mockScorePathState } = vi.hoisted(() => ({
   mockScorePathState: {

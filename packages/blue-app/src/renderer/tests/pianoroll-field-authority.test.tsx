@@ -6,9 +6,6 @@ import { useProjectStore } from '../stores/project-store';
 import type { NoteSnapshot } from '../components/workbench/panels/score-object/editors/pianoroll/types';
 import PianoRollCanvas from '../components/workbench/panels/score-object/editors/pianoroll/PianoRollCanvas';
 import FieldEditor from '../components/workbench/panels/score-object/editors/pianoroll/FieldEditor';
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 it.each(
   ['target', 'project', 'source'].flatMap((change) =>
     ['local', 'outside'].map((release) => ({ change, release })),

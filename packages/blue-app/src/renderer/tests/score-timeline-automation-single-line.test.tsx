@@ -22,9 +22,6 @@ import {
   findPointNear,
 } from '../components/workbench/panels/score/automation/automation-line-utils';
 
-(
-  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
-).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockResizeObserver {
   observe(): void {}
