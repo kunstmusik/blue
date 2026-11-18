@@ -5,6 +5,9 @@ These rules apply to work in `packages/blue-app`. Repository-wide guidance remai
 
 ## UI and typography
 
+- For visible UI changes, inspect the result at its normal display size and exercise the changed
+  interaction. For workbench panel popups, verify opening and dismissal in both the main window
+  and a detached panel.
 - Before choosing or changing typography, consult `docs/typography.md`.
 - Popups (menus, popovers, tooltips, dialogs) rendered from workbench panel content must follow
   `docs/popout-popup-conventions.md`: portal into, position against, and take dismissal input from

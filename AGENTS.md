@@ -10,6 +10,7 @@ guidance and where to record feature decisions and evidence.
 
 - `packages/blue-data` (`@blue/data`) — platform-neutral project models, XML, and CSD generation.
 - `packages/blue-app` (`@blue/app`) — Electron main, preload, and renderer code.
+  Before changing this package, read its [agent guidance](packages/blue-app/AGENTS.md).
 - `packages/blue-engine-client` — versioned engine protocol and client.
 - `packages/blue-java` (`@blue/java-runtime`) — Java helper integration.
 - `native/blue-engine` — native Blue Engine source and build inputs.
@@ -87,35 +88,26 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 
 ## Java-first parity
 
-- Blue TypeScript must load supported Java Blue projects; Java Blue is not required to load or
-  preserve Blue TypeScript extensions. Supported fields need authoritative model representations;
-  raw-value/presence shadow state or retained deferred payloads require an explicit compatibility
-  contract. An unavailable runtime does not make a known serialized format unexpected.
+- Supported Java fields need authoritative model representations even when their runtime is
+  unavailable. Follow the [Java compatibility contract](.specify/memory/constitution.md#ii-java-compatible-behavior-and-explicit-serialization-contracts)
+  for load/save, retained payloads, and TypeScript extensions.
 - For behavior mismatches, rendering failures, XML compatibility, formatting, or parity bugs,
   consult the Java implementation before changing TypeScript.
 - Primary references, when available, are `~/work/nbprojects/blue/blue-core` and
   `~/work/nbprojects/blue/blue-ui-core`.
 - Compare Java-generated artifacts such as `~/work/blue/demo2026/01.csd`; document any
   intentional TypeScript divergence and cover it with a focused test.
-- For serialization changes, research Java loader/writer history and record revisions and the
-  evidence for accepted historical forms. Check standalone disk, library, and BlueShare payloads
-  as well as projects; incidental Java tolerance is not a compatibility contract.
+- For serialization changes, record Java loader/writer revisions and evidence for historical
+  forms across project, disk, library, and BlueShare entry points. Follow the
+  [migration and evidence rules](.specify/memory/constitution.md#migration-ownership-and-historical-evidence).
 
 ## Serialization and migration boundaries
 
-- Cross-section or project-graph restructures belong in project migrators operating on raw XML
-  before deserialization and canonical-form validation.
-- Class-local aliases, value conversions, defaults, and resource subtree changes belong at the
-  class loading boundary or in a shared resource migration reached by all relevant entry points.
-  Instruments and effects may load independently from disk, libraries, or BlueShare; their
-  local compatibility must not require a `BlueData` load or unavailable project version.
-- Give each migration one owner, scope, ordering, and conflict rule. Canonical data must remain
-  stable when normalization is reapplied; cover composed migrations and standalone roots.
-- Diagnostics must name the source/resource, element path, offending member/value, severity,
-  and recovery behavior. Failed acceptance must leave active documents, libraries, and source
-  files unchanged. Warnings must not enable an ordinary save after meaningful data is discarded.
-- Preserve significant text/code whitespace and avoid mutable XML aliases across loader input,
-  serialization output, canonical models, copies, and history mementos.
+- Migrate project-graph changes on raw XML before deserialization. Migrate class-local forms
+  at the resource loader shared by all entry points, or in the owning class. Standalone instruments
+  and effects must load without a `BlueData` project or a project version.
+- Apply the [XML acceptance rules](.specify/memory/constitution.md#xml-and-serialized-resources)
+  for diagnostics, atomic failure, significant whitespace, and independent XML copies.
 
 ## Project history and undo/redo
 
@@ -133,16 +125,13 @@ Do not manually create worktrees beside the repository or in a tool-specific def
 
 ## Host filesystem and embedded-text paths
 
-- Keep native OS paths unchanged for `fs`, `path`, `os`, and process APIs. Do not globally
-  replace separators in filesystem paths.
-- Convert paths only at an explicit boundary: canonical host identity, external text, or
-  embedded Csound text. Csound paths use forward slashes; escape quotes and Csound string
-  syntax at that boundary.
-- Build test paths with `path.join()` and `os.tmpdir()`. Include synthetic Windows paths such
-  as `C:\\Users\\...`; do not compare native filesystem paths directly with embedded text.
-- Do not use POSIX `chmod` as a Windows permission test. Inject `EACCES`/`EPERM` or run a
-  native Windows ACL test. Path-sensitive changes require Windows CI or equivalent native
-  Windows coverage.
+- Pass native paths to filesystem and process APIs. Convert at the boundary that needs a host
+  identity or external text. In embedded Csound strings, use forward slashes and escape quotes
+  and other Csound string syntax.
+- Use `path.join()`, `os.tmpdir()`, and synthetic Windows paths in tests. For permission failures,
+  inject `EACCES`/`EPERM` or use native Windows ACLs. Follow the
+  [host-path rules](.specify/memory/constitution.md#host-path-portability-and-boundary-forms)
+  for identity comparisons and Windows validation.
 
 ## Import discipline
 
