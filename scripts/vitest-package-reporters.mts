@@ -9,8 +9,8 @@ import type {
   TestModule,
   TestRunEndReason,
   Vitest,
-} from 'vitest/node';
-import type { TestAnnotation } from 'vitest';
+} from 'vite-plus/test/node';
+import type { TestAnnotation } from 'vite-plus/test';
 
 const DEFAULT_SUMMARY_HEADING = '## Vitest Test Report';
 

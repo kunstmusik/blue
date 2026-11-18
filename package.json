@@ -1,18 +1,17 @@
 {
   "name": "blue-electron-workspace",
   "private": true,
-  "packageManager": "pnpm@12.8.1",
   "scripts": {
-    "build": "pnpm -r run build",
-    "build:manual": "pnpm --filter @blue/app manual:build",
-    "app:package": "pnpm --filter @blue/app package:current",
+    "build": "vp run -r build",
+    "build:manual": "vp run --filter @blue/app manual:build",
+    "app:package": "vp run --filter @blue/app package:current",
     "clean": "node scripts/clean.mjs",
-    "test": "pnpm -r run test && pnpm test:scripts",
-    "test:performance": "pnpm -r --workspace-concurrency=1 --no-sort --no-bail run test:performance",
+    "test": "vp run -r test && vp run test:scripts",
+    "test:performance": "vp run -r --concurrency-limit=1 test:performance",
     "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs packages/blue-app/scripts/verify-release-version.test.mjs scripts/run-performance-tests.test.mjs",
-    "lint": "pnpm audit:renderer-typography && eslint . && pnpm -r run lint && pnpm format:check",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "vp run audit:renderer-typography && vp lint && vp run -r lint && vp run format:check",
+    "format": "vp fmt",
+    "format:check": "vp fmt --check",
     "fixtures:java-automation": "node scripts/generate-java-blue-automation-fixtures.mjs",
     "fixtures:java-automation:check": "node scripts/generate-java-blue-automation-fixtures.mjs --check",
     "audit:renderer-theme": "node scripts/audit-renderer-theme.mjs",
@@ -27,11 +26,10 @@
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "eslint": "^10.2.0",
-    "prettier": "^3.9.8",
     "typescript": "^5.8.0",
-    "typescript-eslint": "^8.67.0",
-    "vite": "^8.3.7",
-    "vitest": "^4.1.11"
-  }
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@12.8.1"
 }

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus';
 import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron/simple';
 import electronRenderer from 'vite-plugin-electron-renderer';
@@ -11,11 +11,21 @@ import { resolve } from 'path';
 const projectRoot = resolve(import.meta.dirname);
 
 export default defineConfig(({ command }) => ({
+  test: {
+    // Vitest v4 compatibility: preserve mock call history.
+    // Remove after tests no longer rely on calls from setup or earlier tests.
+    // https://viteplus.dev/guide/vitest-v5#remove-unneeded-compatibility-settings
+    // https://vitest.dev/guide/migration/#clearmocks-is-enabled-by-default
+    clearMocks: false,
+  },
   plugins: [
     tailwindcss(),
     react(),
     electron({
       main: {
+        onstart({ startup }) {
+          startup(['.', '--no-sandbox'], { cwd: projectRoot });
+        },
         entry: {
           main: resolve(projectRoot, 'src/main/main.ts'),
           'repository-worker': resolve(

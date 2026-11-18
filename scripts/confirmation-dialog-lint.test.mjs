@@ -1,29 +1,60 @@
 import assert from 'node:assert/strict';
-import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { ESLint } from 'eslint';
+import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const eslint = new ESLint({
-  cwd: repoRoot,
-  overrideConfigFile: path.join(repoRoot, 'eslint.config.mjs'),
-});
+const vpBin = path.join(repoRoot, 'node_modules', '.bin', 'vp');
 
-async function lintText(code, relativeFilePath) {
-  const [result] = await eslint.lintText(code, {
-    filePath: path.join(repoRoot, relativeFilePath),
-  });
-  return result;
+function lintFixture(files) {
+  const tmpRoot = mkdtempSync(path.join(os.tmpdir(), 'blue-vp-lint-'));
+  try {
+    writeFileSync(path.join(tmpRoot, 'package.json'), '{"name":"tmp-lint","private":true}\n');
+    copyFileSync(path.join(repoRoot, 'vite.config.mts'), path.join(tmpRoot, 'vite.config.mts'));
+    mkdirSync(path.join(tmpRoot, 'scripts'), { recursive: true });
+    copyFileSync(
+      path.join(repoRoot, 'scripts', 'blue-lint-plugin.mjs'),
+      path.join(tmpRoot, 'scripts', 'blue-lint-plugin.mjs'),
+    );
+    symlinkSync(path.join(repoRoot, 'node_modules'), path.join(tmpRoot, 'node_modules'), 'dir');
+
+    const targets = [];
+    for (const [relativeFilePath, code] of Object.entries(files)) {
+      const fullPath = path.join(tmpRoot, relativeFilePath);
+      mkdirSync(path.dirname(fullPath), { recursive: true });
+      writeFileSync(fullPath, code, 'utf8');
+      targets.push(relativeFilePath);
+    }
+
+    try {
+      const stdout = execFileSync(vpBin, ['lint', '--format', 'json', ...targets], {
+        cwd: tmpRoot,
+        encoding: 'utf8',
+      });
+      return JSON.parse(stdout).diagnostics ?? [];
+    } catch (error) {
+      const stdout = typeof error?.stdout === 'string' ? error.stdout : '';
+      const jsonStart = stdout.indexOf('{');
+      if (jsonStart !== -1) {
+        return JSON.parse(stdout.slice(jsonStart)).diagnostics ?? [];
+      }
+      throw error;
+    }
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
 }
 
-function ruleErrors(result) {
-  return result.messages.filter((message) => message.severity === 2);
+function ruleErrors(diagnostics) {
+  return diagnostics.filter((d) => d.severity === 'error');
 }
 
-test('production renderer code rejects bare, window, and globalThis browser dialogs', async () => {
-  const result = await lintText(
-    [
+test('production renderer code rejects bare, window, and globalThis browser dialogs', () => {
+  const diagnostics = lintFixture({
+    'packages/blue-app/src/renderer/confirmation-dialog-lint-fixture.ts': [
       "confirm('continue?');",
       "prompt('name');",
       "alert('failure');",
@@ -34,54 +65,44 @@ test('production renderer code rejects bare, window, and globalThis browser dial
       "globalThis.prompt('name');",
       "globalThis.alert('failure');",
     ].join('\n'),
-    'packages/blue-app/src/renderer/confirmation-dialog-lint-fixture.ts',
-  );
+  });
 
-  const errors = ruleErrors(result);
+  const errors = ruleErrors(diagnostics);
   assert.equal(errors.length, 9);
   assert.ok(
     errors.every(
-      (message) =>
-        message.ruleId === 'no-restricted-globals' || message.ruleId === 'no-restricted-properties',
+      (d) => d.code === 'eslint(no-restricted-globals)' || d.code === 'blue(no-browser-dialogs)',
     ),
   );
 });
 
-test('main-process code rejects both synchronous and asynchronous message boxes', async () => {
-  const result = await lintText(
-    "dialog.showMessageBox({ message: 'confirm' });\ndialog.showMessageBoxSync({ message: 'confirm' });",
-    'packages/blue-app/src/main/confirmation-dialog-lint-fixture.ts',
-  );
+test('main-process code rejects both synchronous and asynchronous message boxes', () => {
+  const diagnostics = lintFixture({
+    'packages/blue-app/src/main/confirmation-dialog-lint-fixture.ts':
+      "dialog.showMessageBox({ message: 'confirm' });\ndialog.showMessageBoxSync({ message: 'confirm' });",
+  });
 
-  const errors = ruleErrors(result);
-  assert.equal(errors.length, 4);
-  assert.ok(
-    errors.every(
-      (message) =>
-        message.ruleId === 'no-restricted-properties' || message.ruleId === 'no-restricted-syntax',
-    ),
-  );
+  const errors = ruleErrors(diagnostics);
+  assert.equal(errors.length, 2);
+  assert.ok(errors.every((d) => d.code === 'blue(no-direct-show-message-box)'));
 });
 
-test('tests and the native confirmation adapter are explicit lint boundaries', async () => {
-  const testResult = await lintText(
-    "window.confirm('test');\ndialog.showMessageBoxSync({ message: 'test' });",
-    'packages/blue-app/src/main/confirmation-dialog.test.ts',
-  );
-  assert.deepEqual(ruleErrors(testResult), []);
+test('tests and the native confirmation adapter are explicit lint boundaries', () => {
+  const diagnostics = lintFixture({
+    'packages/blue-app/src/main/confirmation-dialog.test.ts':
+      "window.confirm('test');\ndialog.showMessageBoxSync({ message: 'test' });",
+    'packages/blue-app/src/main/native-confirmation.ts':
+      "dialog.showMessageBox({ message: 'adapter' });",
+  });
 
-  const adapterResult = await lintText(
-    "dialog.showMessageBox({ message: 'adapter' });",
-    'packages/blue-app/src/main/native-confirmation.ts',
-  );
-  assert.deepEqual(ruleErrors(adapterResult), []);
+  assert.deepEqual(ruleErrors(diagnostics), []);
 });
 
-test('fixture directories remain outside the production audit scope', async () => {
-  const result = await lintText(
-    "window.confirm('fixture');\ndialog.showMessageBoxSync({ message: 'fixture' });",
-    'packages/blue-app/src/fixtures/confirmation-dialog.ts',
-  );
+test('fixture directories remain outside the production audit scope', () => {
+  const diagnostics = lintFixture({
+    'packages/blue-app/src/fixtures/confirmation-dialog.ts':
+      "window.confirm('fixture');\ndialog.showMessageBoxSync({ message: 'fixture' });",
+  });
 
-  assert.deepEqual(ruleErrors(result), []);
+  assert.deepEqual(ruleErrors(diagnostics), []);
 });
