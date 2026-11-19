@@ -135,6 +135,19 @@ describe('BlueShare IPC Registrar', () => {
     const badPurpose = await openWebHandler!(event, contextId, 'invalid-purpose');
     expect(badPurpose.ok).toBe(false);
     expect(badPurpose.error.code).toBe('invalid_request');
+    const badUrlPurpose = await openWebHandler!(event, contextId, 'https://evil.invalid');
+    expect(badUrlPurpose.ok).toBe(false);
+    expect(badUrlPurpose.error.code).toBe('invalid_request');
+
+    const openWebsiteSpy = vi
+      .spyOn(service, 'openWebsite')
+      .mockResolvedValue({ ok: true, value: { opened: true } });
+    for (const purpose of ['register', 'recover', 'acceptTerms', 'termsLicensing'] as const) {
+      const okPurpose = await openWebHandler!(event, contextId, purpose);
+      expect(okPurpose.ok).toBe(true);
+      expect(openWebsiteSpy).toHaveBeenCalledWith(contextId, purpose, sender.id);
+    }
+    openWebsiteSpy.mockRestore();
 
     // 11. PREPARE_PUBLISH validation
     const prepareHandler = ipcMain.handlers.get(BLUESHARE_CHANNELS.PREPARE_PUBLISH);
@@ -279,7 +292,7 @@ describe('checked outgoing IPC (T074/T075)', () => {
     const dispose = registerBlueShareIpc({ ipcMain: ipcMain as unknown as IpcMain, service });
     const event = { sender: { id: 12, isDestroyed: () => false } };
     const opened = await ipcMain.handlers.get(BLUESHARE_CHANNELS.OPEN)!(event);
-    expect(opened.value.serviceScope).toBe('https://blue3.kunstmusik.com');
+    expect(opened.value.serviceScope).toBe('https://blue.kunstmusik.com');
     vi.spyOn(service, 'importResource').mockResolvedValueOnce({
       ok: true,
       value: { contentRevision: 1, affectedNodes: [null] },

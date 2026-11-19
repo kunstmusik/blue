@@ -92,7 +92,7 @@ describe('BlueShare Export UI & Recovery (T033)', () => {
         ok: true,
         value: {
           contextId: 'ctx-test-export',
-          serviceScope: 'https://blue3.kunstmusik.com',
+          serviceScope: 'https://blue.kunstmusik.com',
           account: {
             state: 'signedIn',
             user: { id: 'u1', name: 'Steven Yi', username: 'stevenyi' },
@@ -145,6 +145,7 @@ describe('BlueShare Export UI & Recovery (T033)', () => {
           author: { id: 'u1', name: 'Steven Yi', username: 'stevenyi' },
         },
       }),
+      openBlueShareWebsite: vi.fn().mockResolvedValue({ ok: true, value: { opened: true } }),
       onBlueShareAccountChanged: vi.fn().mockReturnValue(() => {}),
     };
   });
@@ -236,7 +237,7 @@ describe('BlueShare Export UI & Recovery (T033)', () => {
       ok: true,
       value: {
         contextId: 'ctx-test-export-anon',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: { state: 'signedOut', user: null, expiresAt: null, accountEpoch: 1 },
       },
     });
@@ -1596,5 +1597,301 @@ describe('BlueShare Export UI & Recovery (T033)', () => {
     expect(window.blueAPI.browseLibraries).toHaveBeenCalledTimes(2);
     expect(container.textContent).toContain('Lead Synth');
     expect(container.textContent).not.toContain('Database query failed');
+  });
+
+  it('displays CC0 1.0 default licensing note and opens Terms & Licensing on click', async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <TestHarness />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('#open-btn')?.click();
+    });
+
+    const exportTabBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Export'),
+    );
+    await act(async () => {
+      exportTabBtn?.click();
+    });
+
+    expect(container.textContent).toContain(
+      'Uploads default to CC0 1.0 unless you specify another license in the description or XML comments.',
+    );
+
+    const termsBtn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Terms & Licensing',
+    );
+    expect(termsBtn).toBeDefined();
+    await act(async () => {
+      termsBtn?.click();
+    });
+    expect((window as any).blueAPI.openBlueShareWebsite).toHaveBeenCalledWith(
+      'ctx-test-export',
+      'termsLicensing',
+    );
+  });
+
+  it('handles 403 TERMS_NOT_ACCEPTED on publish without auto-retry, preserves draft, and allows explicit retry after website acceptance', async () => {
+    (window as any).blueAPI.publishBlueShareResource.mockResolvedValueOnce({
+      ok: false,
+      error: {
+        code: 'TERMS_NOT_ACCEPTED',
+        status: 403,
+        outcome: 'rejected',
+        message:
+          'Accept the BlueShare Terms of Use and Content Licensing on the website before publishing.',
+      },
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <TestHarness />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('#open-btn')?.click();
+    });
+
+    const exportTabBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Export'),
+    );
+    await act(async () => {
+      exportTabBtn?.click();
+    });
+
+    const leadItem = Array.from(container.querySelectorAll('button, [role="button"]')).find((el) =>
+      el.textContent?.includes('Lead Synth'),
+    );
+    await act(async () => {
+      leadItem?.click();
+    });
+
+    const select = container.querySelector('[aria-label="Destination categories"]') as HTMLElement;
+    await act(async () => {
+      setSelectValue(select, '10');
+    });
+
+    const customDescription = '  My exact draft\n\twith whitespace  ';
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    await act(async () => {
+      setTextareaValue(textarea, customDescription);
+    });
+
+    const submitBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Publish to Blue Share'),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      submitBtn.click();
+    });
+
+    // No auto-retry: called once
+    expect((window as any).blueAPI.publishBlueShareResource).toHaveBeenCalledTimes(1);
+
+    // Actionable Terms prompt shown inside the pinned publish footer alongside Submit; form stays separate
+    const exportForm = container.querySelector('[data-testid="blueshare-export-form"]');
+    const exportFooter = container.querySelector('[data-testid="blueshare-export-footer"]');
+    expect(exportForm).not.toBeNull();
+    expect(exportFooter).not.toBeNull();
+    expect(exportForm?.contains(textarea)).toBe(true);
+    expect(exportFooter?.contains(submitBtn)).toBe(true);
+
+    const alertBanner = container.querySelector('[role="alert"]');
+    expect(alertBanner).not.toBeNull();
+    expect(exportFooter?.contains(alertBanner!)).toBe(true);
+    expect(exportForm?.contains(alertBanner!)).toBe(false);
+    expect(alertBanner?.textContent).toContain('Terms acceptance required before publishing');
+    expect(alertBanner?.textContent).toContain(
+      'Accept the BlueShare Terms of Use and Content Licensing on the website before publishing.',
+    );
+    expect(alertBanner?.textContent).toContain(
+      'make sure you’re signed in as Steven Yi (@stevenyi)',
+    );
+    expect(alertBanner?.textContent).toContain(
+      'If the website shows a different account, sign out there and sign in with the account you use in Blue.',
+    );
+    expect(alertBanner?.textContent).toContain('you do not need to sign in to Blue again');
+    expect(alertBanner?.textContent).not.toContain('no sign-in is required');
+    expect(container.textContent).not.toContain('Publication outcome is uncertain');
+
+    // Draft and source token preserved; Publish stays enabled
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe(
+      customDescription,
+    );
+    expect(container.textContent).toContain('Lead Synth');
+    expect(submitBtn.disabled).toBe(false);
+
+    // Clicking Accept Terms on Website opens /accept-terms via IPC
+    const acceptTermsBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Accept Terms on Website'),
+    );
+    expect(acceptTermsBtn).toBeDefined();
+    await act(async () => {
+      acceptTermsBtn?.click();
+    });
+    expect((window as any).blueAPI.openBlueShareWebsite).toHaveBeenCalledWith(
+      'ctx-test-export',
+      'acceptTerms',
+    );
+
+    // Explicit retry succeeds with same sourceToken, category, and exact custom description
+    await act(async () => {
+      submitBtn.click();
+    });
+
+    expect((window as any).blueAPI.publishBlueShareResource).toHaveBeenCalledTimes(2);
+    expect((window as any).blueAPI.publishBlueShareResource).toHaveBeenNthCalledWith(
+      2,
+      'ctx-test-export',
+      expect.any(String),
+      'token-prep-123',
+      10,
+      customDescription,
+    );
+    expect(container.textContent).toContain('successfully published');
+    expect(container.textContent).not.toContain('Terms acceptance required before publishing');
+  });
+
+  it.each(['FORBIDDEN', 'INVALID_ORIGIN'])(
+    'renders generic 403 %s error without Terms acceptance prompt',
+    async (code) => {
+      (window as any).blueAPI.publishBlueShareResource.mockResolvedValueOnce({
+        ok: false,
+        error: {
+          code,
+          status: 403,
+          outcome: 'rejected',
+          message: 'The service denied this operation. Check ownership and service configuration.',
+        },
+      });
+
+      await act(async () => {
+        root.render(
+          <QueryClientProvider client={queryClient}>
+            <TestHarness />
+          </QueryClientProvider>,
+        );
+      });
+      await act(async () => {
+        container.querySelector<HTMLButtonElement>('#open-btn')?.click();
+      });
+
+      const exportTabBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Export'),
+      );
+      await act(async () => {
+        exportTabBtn?.click();
+      });
+
+      const leadItem = Array.from(container.querySelectorAll('button, [role="button"]')).find(
+        (el) => el.textContent?.includes('Lead Synth'),
+      );
+      await act(async () => {
+        leadItem?.click();
+      });
+
+      const select = container.querySelector(
+        '[aria-label="Destination categories"]',
+      ) as HTMLElement;
+      await act(async () => {
+        setSelectValue(select, '10');
+      });
+
+      const submitBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Publish to Blue Share'),
+      ) as HTMLButtonElement;
+      await act(async () => {
+        submitBtn.click();
+      });
+
+      expect(container.textContent).toContain(
+        'The service denied this operation. Check ownership and service configuration.',
+      );
+      expect(container.textContent).not.toContain('Terms acceptance required before publishing');
+      expect(container.textContent).not.toContain('Accept Terms on Website');
+    },
+  );
+
+  it('clears Terms acceptance prompt when switching group or resetting export', async () => {
+    (window as any).blueAPI.publishBlueShareResource.mockResolvedValueOnce({
+      ok: false,
+      error: {
+        code: 'TERMS_NOT_ACCEPTED',
+        status: 403,
+        outcome: 'rejected',
+        message:
+          'Accept the BlueShare Terms of Use and Content Licensing on the website before publishing.',
+      },
+    });
+
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <TestHarness />
+        </QueryClientProvider>,
+      );
+    });
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('#open-btn')?.click();
+    });
+
+    const exportTabBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Export'),
+    );
+    await act(async () => {
+      exportTabBtn?.click();
+    });
+
+    const leadItem = Array.from(container.querySelectorAll('button, [role="button"]')).find((el) =>
+      el.textContent?.includes('Lead Synth'),
+    );
+    await act(async () => {
+      leadItem?.click();
+    });
+
+    const select = container.querySelector('[aria-label="Destination categories"]') as HTMLElement;
+    await act(async () => {
+      setSelectValue(select, '10');
+    });
+
+    const submitBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Publish to Blue Share'),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      submitBtn.click();
+    });
+
+    expect(container.textContent).toContain('Terms acceptance required before publishing');
+
+    // Switching group hides the Terms prompt
+    const effectsBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Effects'),
+    );
+    await act(async () => {
+      effectsBtn?.click();
+    });
+    expect(container.textContent).not.toContain('Terms acceptance required before publishing');
+
+    // Switching back shows it still belongs to that failed attempt, and Reset export clears it
+    const instrumentsBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Instruments'),
+    );
+    await act(async () => {
+      instrumentsBtn?.click();
+    });
+    expect(container.textContent).toContain('Terms acceptance required before publishing');
+
+    const resetBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Reset export'),
+    );
+    await act(async () => {
+      resetBtn?.click();
+    });
+    expect(container.textContent).not.toContain('Terms acceptance required before publishing');
   });
 });

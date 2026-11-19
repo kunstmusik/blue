@@ -59,7 +59,7 @@ describe('BlueShare Account & Session UI (T024)', () => {
         ok: true,
         value: {
           contextId: 'ctx-test-acc',
-          serviceScope: 'https://blue3.kunstmusik.com',
+          serviceScope: 'https://blue.kunstmusik.com',
           account: { state: 'signedOut', user: null, expiresAt: null, accountEpoch: 1 },
         },
       }),
@@ -229,7 +229,7 @@ describe('BlueShare Account & Session UI (T024)', () => {
       ok: true,
       value: {
         contextId: 'ctx-test-acc',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: {
           state: 'signedIn',
           user: { id: 'u1', name: 'Steven Yi', username: 'stevenyi' },
@@ -279,7 +279,7 @@ describe('BlueShare Account & Session UI (T024)', () => {
       ok: true,
       value: {
         contextId: 'ctx-test-acc',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: {
           state: 'signedIn',
           user: { id: 'u1', name: 'Steven Yi', username: 'stevenyi' },
@@ -409,7 +409,7 @@ describe('BlueShare Account & Session UI (T024)', () => {
       ok: true,
       value: {
         contextId: 'ctx-test-acc',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: {
           state: 'signedIn',
           user: { id: 'u1', name: 'Steven Yi', username: 'stevenyi' },
@@ -483,7 +483,7 @@ describe('BlueShare Account & Session UI (T024)', () => {
       ok: true,
       value: {
         contextId: 'ctx-test-acc',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: unavailable,
       },
     });

@@ -3,7 +3,9 @@ import { blueShareKey, BlueShareQueryError, callBlueShare, readBlueShare } from 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   isResourceKind,
+  isTermsNotAcceptedError,
   type AccountSessionSnapshot,
+  type BlueShareWebsitePurpose,
   type PublishSourceSeed,
   type ResourceKey,
   type ResourceKind,
@@ -857,6 +859,9 @@ export function useBlueShare() {
   const importMatches =
     importMutation.variables?.key.id === selectedResourceKey?.id &&
     importMutation.variables?.key.kind === selectedResourceKey?.kind;
+  const activePublishError =
+    currentPublish && publishMutation.variables?.kind === group ? publishMutation.error : null;
+  const activePublishFailure = activePublishError ? queryFailure(activePublishError) : null;
   return {
     isOpen,
     retryAccount: () => refreshAccount(),
@@ -942,11 +947,8 @@ export function useBlueShare() {
         ? (publishMutation.data ?? null)
         : null,
     publishUncertain: uncertainPublish?.kind === group,
-    publishError: errorText(
-      (currentPublish && publishMutation.variables?.kind === group
-        ? publishMutation.error
-        : null) ?? (currentPrepare ? prepareMutation.error : null),
-    ),
+    publishError: errorText(activePublishError ?? (currentPrepare ? prepareMutation.error : null)),
+    publishTermsRequired: isTermsNotAcceptedError(activePublishFailure),
     canRetryPublish: uncertainPublish?.kind === group && uncertainPublish.reconciled,
     uncertainPublishName:
       uncertainPublish?.kind === group ? uncertainPublish.draft?.reviewedName : null,
@@ -1004,7 +1006,8 @@ export function useBlueShare() {
       if (!removeMutation.isPending) removeMutation.reset();
       setAbsenceReceipt(null);
     },
-    openWebsite: async (purpose: 'register' | 'recover') => {
+    openWebsite: async (purpose: BlueShareWebsitePurpose) => {
+      if (!ctx) return;
       try {
         await callBlueShare(() => window.blueAPI.openBlueShareWebsite(ctx, purpose));
       } catch (err) {

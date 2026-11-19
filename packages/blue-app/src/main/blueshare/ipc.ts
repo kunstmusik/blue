@@ -2,6 +2,7 @@ import type { BrowserWindow, IpcMain, IpcMainInvokeEvent } from 'electron';
 import {
   BLUESHARE_CHANNELS,
   isBlueShareError,
+  isBlueShareWebsitePurpose,
   isResetPublishResult,
   isOpenDialogResult,
   isSignOutResult,
@@ -557,8 +558,8 @@ export function registerBlueShareIpc(options: BlueShareIpcOptions): () => void {
       BLUESHARE_CHANNELS.OPEN_WEBSITE,
       async (event: IpcMainInvokeEvent, contextId: unknown, purpose: unknown) => {
         if (!isContextId(contextId)) return invalidRequest('contextId must be a valid string');
-        if (purpose !== 'register' && purpose !== 'recover') {
-          return invalidRequest('purpose must be register or recover');
+        if (!isBlueShareWebsitePurpose(purpose)) {
+          return invalidRequest('Invalid website purpose');
         }
         const dialogOrErr = service.validateDialog(contextId, event.sender.id);
         if ('code' in dialogOrErr) return { ok: false, error: dialogOrErr };

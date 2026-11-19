@@ -281,11 +281,19 @@ describe('BlueShareService - Account & Session Lifecycle (T023)', () => {
 
     const regRes = await service.openWebsite(contextId, 'register');
     expect(regRes.ok).toBe(true);
-    expect(openedUrls[0]).toBe('https://blue3.kunstmusik.com/register');
+    expect(openedUrls[0]).toBe('https://blue.kunstmusik.com/register');
 
     const recRes = await service.openWebsite(contextId, 'recover');
     expect(recRes.ok).toBe(true);
-    expect(openedUrls[1]).toBe('https://blue3.kunstmusik.com/forgot-password');
+    expect(openedUrls[1]).toBe('https://blue.kunstmusik.com/forgot-password');
+
+    const acceptTermsRes = await service.openWebsite(contextId, 'acceptTerms');
+    expect(acceptTermsRes.ok).toBe(true);
+    expect(openedUrls[2]).toBe('https://blue.kunstmusik.com/accept-terms');
+
+    const licensingRes = await service.openWebsite(contextId, 'termsLicensing');
+    expect(licensingRes.ok).toBe(true);
+    expect(openedUrls[3]).toBe('https://blue.kunstmusik.com/terms#licensing');
 
     // Reject arbitrary purposes
     const badRes = await service.openWebsite(contextId, 'evil' as any);

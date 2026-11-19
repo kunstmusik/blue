@@ -8,6 +8,7 @@ import type {
   AccountState,
   BlueShareError,
   BlueShareResult,
+  BlueShareWebsitePurpose,
   ResourceKind,
   ResourceKey,
   Category,
@@ -18,6 +19,7 @@ import type {
   PublishSourceSeed,
 } from '../../shared/blueshare';
 import {
+  isBlueShareWebsitePurpose,
   isCategory,
   isSessionResponse,
   isResourcePage,
@@ -169,6 +171,13 @@ export interface DialogContext {
   uncertainRemoveKey?: ResourceKey | null;
   uncertainRemoveReconciled?: boolean;
 }
+
+const WEBSITE_PATHS: Readonly<Record<BlueShareWebsitePurpose, string>> = {
+  register: '/register',
+  recover: '/forgot-password',
+  acceptTerms: '/accept-terms',
+  termsLicensing: '/terms#licensing',
+};
 
 export interface BlueShareServiceOptions {
   readonly transport?: BlueShareTransport;
@@ -1542,25 +1551,24 @@ export class BlueShareService {
 
   async openWebsite(
     contextId: string,
-    purpose: 'register' | 'recover',
+    purpose: BlueShareWebsitePurpose,
     senderId?: number,
   ): Promise<BlueShareResult<{ opened: boolean }>> {
     const dialogOrErr = this.validateDialog(contextId, senderId);
     if ('code' in dialogOrErr) return { ok: false, error: dialogOrErr };
 
-    if (purpose !== 'register' && purpose !== 'recover') {
+    if (!isBlueShareWebsitePurpose(purpose)) {
       return {
         ok: false,
         error: {
           code: 'invalid_purpose',
-          message: 'Invalid website purpose; only register and recover are permitted',
+          message: 'Invalid website purpose.',
           outcome: 'rejected',
         },
       };
     }
 
-    const path = purpose === 'register' ? '/register' : '/forgot-password';
-    const url = `${this.transport.getOrigin()}${path}`;
+    const url = `${this.transport.getOrigin()}${WEBSITE_PATHS[purpose]}`;
 
     try {
       if (this.externalUrlOpener) {

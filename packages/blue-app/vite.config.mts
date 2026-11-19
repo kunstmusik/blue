@@ -9,6 +9,7 @@ import { resolve } from 'path';
 // also provides HMR + hot restart; in production the single-file preload is
 // required because sandboxed preload scripts cannot require local modules.
 const projectRoot = resolve(import.meta.dirname);
+const electronArgs = [projectRoot, '--no-sandbox'];
 
 export default defineConfig(({ command }) => ({
   test: {
@@ -23,8 +24,8 @@ export default defineConfig(({ command }) => ({
     react(),
     electron({
       main: {
-        onstart({ startup }) {
-          startup([projectRoot, '--no-sandbox'], { cwd: projectRoot });
+        async onstart({ startup }) {
+          await startup(electronArgs, { cwd: projectRoot });
         },
         entry: {
           main: resolve(projectRoot, 'src/main/main.ts'),
@@ -47,10 +48,13 @@ export default defineConfig(({ command }) => ({
         },
       },
       preload: {
-        onstart({ reload }) {
+        async onstart({ reload, startup }) {
           if (process.electronApp) {
             reload();
+            return;
           }
+          // The first launch uses the hook for whichever bundle finishes last.
+          await startup(electronArgs, { cwd: projectRoot });
         },
         input: resolve(projectRoot, 'src/preload/preload.ts'),
         vite: {

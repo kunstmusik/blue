@@ -12,6 +12,8 @@ import {
   isPublishSourceSeed,
   isRemoveResourceResult,
   isOpenWebsiteResult,
+  isBlueShareWebsitePurpose,
+  isTermsNotAcceptedError,
   isLibraryMutationReceipt,
   isCategoryList,
   isUserLibraryItemKey,
@@ -1082,7 +1084,7 @@ describe('shared/blueshare DTO guards and constraints', () => {
         expect(
           isOpenDialogResult({
             contextId: 'ctx-123',
-            serviceScope: 'https://blue3.kunstmusik.com',
+            serviceScope: 'https://blue.kunstmusik.com',
             account: {
               state: 'signedOut',
               user: null,
@@ -1161,6 +1163,23 @@ describe('shared/blueshare DTO guards and constraints', () => {
         expect(isOpenWebsiteResult({ opened: true })).toBe(true);
         expect(isOpenWebsiteResult({ opened: false })).toBe(true);
         expect(isOpenWebsiteResult({ opened: 'yes' })).toBe(false);
+      });
+
+      it('validates isBlueShareWebsitePurpose and isTermsNotAcceptedError', () => {
+        expect(isBlueShareWebsitePurpose('register')).toBe(true);
+        expect(isBlueShareWebsitePurpose('recover')).toBe(true);
+        expect(isBlueShareWebsitePurpose('acceptTerms')).toBe(true);
+        expect(isBlueShareWebsitePurpose('termsLicensing')).toBe(true);
+        expect(isBlueShareWebsitePurpose('https://blue.kunstmusik.com/accept-terms')).toBe(false);
+        expect(isBlueShareWebsitePurpose('other')).toBe(false);
+        expect(isBlueShareWebsitePurpose(null)).toBe(false);
+
+        expect(isTermsNotAcceptedError({ status: 403, code: 'TERMS_NOT_ACCEPTED' })).toBe(true);
+        expect(isTermsNotAcceptedError({ status: 403, code: 'FORBIDDEN' })).toBe(false);
+        expect(isTermsNotAcceptedError({ status: 403, code: 'INVALID_ORIGIN' })).toBe(false);
+        expect(isTermsNotAcceptedError({ status: 400, code: 'TERMS_NOT_ACCEPTED' })).toBe(false);
+        expect(isTermsNotAcceptedError(null)).toBe(false);
+        expect(isTermsNotAcceptedError(undefined)).toBe(false);
       });
 
       it('validates isLibraryMutationReceipt', () => {
@@ -1261,7 +1280,7 @@ describe('nested IPC contracts (T074)', () => {
   it('requires a canonical service scope from main', () => {
     const value = {
       contextId: 'ctx',
-      serviceScope: 'https://blue3.kunstmusik.com',
+      serviceScope: 'https://blue.kunstmusik.com',
       account: { state: 'signedOut', user: null, expiresAt: null, accountEpoch: 1 },
     };
     expect(isOpenDialogResult(value)).toBe(true);

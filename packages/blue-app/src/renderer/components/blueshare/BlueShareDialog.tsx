@@ -7,6 +7,7 @@ import {
   Upload,
   AlertTriangle,
   CheckCircle2,
+  ExternalLink,
   Trash2,
 } from 'lucide-react';
 import {
@@ -130,6 +131,7 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
     publishReceipt,
     publishUncertain,
     publishError,
+    publishTermsRequired,
     canRetryPublish,
     remoteRevocationConfirmed,
     selectLibraryItemForExport,
@@ -174,6 +176,12 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
     selectedResourceKey && selectedDetail && !detailError && !loadingDetail,
   );
   const isAnyWritePending = state.isWritePending || isImporting || isPublishing || isRemoving;
+  const termsAccountLabel =
+    account.user?.name && account.user?.username && account.user.name !== account.user.username
+      ? `${account.user.name} (@${account.user.username})`
+      : account.user?.username
+        ? `@${account.user.username}`
+        : (account.user?.name ?? null);
 
   if (!isOpen) return null;
 
@@ -783,9 +791,9 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
         )}
 
         {state.contextId && tab === 'export' && account.state === 'signedIn' && (
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex min-h-0 flex-1 overflow-hidden">
             {/* Left Column: User Library Items */}
-            <div className="flex w-72 flex-col border-r border-app-border bg-app-input">
+            <div className="flex w-72 shrink-0 flex-col border-r border-app-border bg-app-input">
               <div className="border-b border-app-border/40 px-4 py-2 text-role-callout font-semibold uppercase tracking-wider text-app-text-muted">
                 Your{' '}
                 {group === 'instrument'
@@ -837,255 +845,318 @@ export function BlueShareDialog({ state }: BlueShareDialogProps): React.ReactEle
               </div>
             </div>
 
-            {/* Right Column: Export Preparation & Submission Form */}
-            <div className="flex flex-1 flex-col overflow-y-auto p-6">
-              {publishReceipt && (
-                <div
-                  role="status"
-                  aria-live="polite"
-                  className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <div className="flex-1 text-role-body text-app-text-bright">
-                      <span className="font-semibold">‘{publishReceipt.name}’</span> successfully
-                      published to Blue Share!
+            {/* Right Column: Scrollable Export Form & Pinned Publish Footer */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div
+                data-testid="blueshare-export-form"
+                className="min-h-0 flex-1 overflow-y-auto px-6 py-5"
+              >
+                <div className="max-w-2xl space-y-5">
+                  <div>
+                    <h3 className="text-role-title-2 font-semibold text-app-text-bright">
+                      Export to Blue Share
+                    </h3>
+                    <p className="text-role-callout text-app-text-muted">
+                      Publish your library items to the Blue Share community. Review item metadata
+                      and select a destination category.
+                    </p>
+                  </div>
+
+                  {/* Resource Metadata Preview */}
+                  <div className="rounded-lg border border-app-border/40 bg-app-input p-4">
+                    <div className="mb-2 text-role-callout font-semibold uppercase tracking-wider text-app-text-muted">
+                      Selected Resource
+                      <button
+                        type="button"
+                        className="ml-3 text-role-callout text-app-text-muted hover:text-app-text"
+                        onClick={resetExport}
+                      >
+                        Reset export
+                      </button>
+                    </div>
+                    {isPreparingPublish && (
+                      <div className="flex items-center gap-2 py-4 text-role-body text-app-text-muted">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Reading and verifying library source…</span>
+                      </div>
+                    )}
+                    {!isPreparingPublish && !exportSourceSeed && (
+                      <div className="py-4 text-center text-role-body text-app-text-muted">
+                        {exportReviewedName
+                          ? `${exportReviewedName} — select the item again to review it for this session. Your description and category are preserved.`
+                          : 'Select an item from the left column to prepare it for export.'}
+                      </div>
+                    )}
+                    {!isPreparingPublish && exportSourceSeed && (
+                      <div className="grid grid-cols-2 gap-4 text-role-body">
+                        <div>
+                          <span className="text-role-callout font-medium text-app-text-muted">
+                            Resource Name
+                          </span>
+                          <div className="font-semibold text-app-text-bright">
+                            {exportSourceSeed.name}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-role-callout font-medium text-app-text-muted">
+                            Type
+                          </span>
+                          <div className="text-app-text">
+                            {exportSourceSeed.blueType ? (
+                              <code className="text-role-callout">{exportSourceSeed.blueType}</code>
+                            ) : group === 'effect' ? (
+                              'Effect'
+                            ) : (
+                              '—'
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-role-callout font-medium text-app-text-muted">
+                            Payload Size
+                          </span>
+                          <div className="text-app-text-muted">
+                            {exportSourceSeed.byteLength} bytes
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {exportSourceSeed && !isPreparingPublish && (
+                    <section aria-label="Source comments" className="space-y-1.5">
+                      <h3 className="text-role-callout font-medium text-app-text">
+                        Source comments
+                      </h3>
+                      <div className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded border border-app-border bg-app-input p-3 text-role-body text-app-text">
+                        {exportSourceSeed.descriptionSeed || 'No source comments provided.'}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Destination Category */}
+                  <div className="space-y-1.5">
+                    <div className="text-role-callout font-medium text-app-text">
+                      Destination Category <span className="text-red-400">*</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto rounded border border-app-border bg-app-input p-1">
+                      <BlueShareCategoryTree
+                        key={`destination-${group}`}
+                        label="Destination categories"
+                        categories={categoryTree}
+                        kind={group}
+                        selectedId={exportCategoryId}
+                        onSelect={setExportCategoryId}
+                      />
                     </div>
                   </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-callout text-app-text hover:bg-app-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
-                      onClick={clearPublishReceipt}
-                    >
-                      Export Another
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded bg-app-accent px-3 py-1.5 text-role-callout font-medium text-app-accent-foreground hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
-                      onClick={() => {
-                        clearPublishReceipt();
-                        setTab('manage');
-                        void fetchMine();
-                      }}
-                    >
-                      View in My Submissions
-                    </button>
+
+                  {/* Public Description */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        htmlFor="export-description-textarea"
+                        className="text-role-callout font-medium text-app-text"
+                      >
+                        Public Description
+                      </label>
+                      <span className="text-role-callout text-app-text-muted">
+                        {new TextEncoder().encode(exportDescription).length} / 65536 bytes
+                      </span>
+                    </div>
+                    <textarea
+                      id="export-description-textarea"
+                      rows={4}
+                      className="w-full rounded border border-app-border bg-app-input p-3 text-role-body text-app-text focus:border-app-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                      placeholder="Enter a description for the community (instructions, parameters, credits)…"
+                      value={exportDescription}
+                      onChange={(e) => setExportDescription(e.target.value)}
+                    />
                   </div>
                 </div>
-              )}
+              </div>
 
-              {publishUncertain && (
-                <div
-                  role="alert"
-                  className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" />
-                    <div className="flex-1 space-y-2 text-role-body">
-                      <div className="font-semibold text-app-text-bright">
-                        {canRetryPublish
-                          ? 'Submissions refreshed after uncertain publication'
-                          : 'Publication outcome is uncertain'}
+              {/* Pinned Bottom Publish Footer & Feedback */}
+              <div
+                data-testid="blueshare-export-footer"
+                className="max-h-1/2 shrink-0 overflow-y-auto border-t border-app-border bg-app-surface px-6 py-3.5"
+              >
+                <div className="max-w-2xl space-y-3">
+                  {publishReceipt && (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-lg border border-green-500/30 bg-green-500/10 p-3.5"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        <div className="flex-1 text-role-body text-app-text-bright">
+                          <span className="font-semibold">‘{publishReceipt.name}’</span>{' '}
+                          successfully published to Blue Share!
+                        </div>
                       </div>
-                      <p className="text-role-callout text-app-text-muted">
-                        {canRetryPublish
-                          ? 'Your submissions have been refreshed. If your item does not appear in My Submissions, you may now retry publication.'
-                          : 'The server may have received and committed your submission, but the confirmation response was lost or timed out. Please check ‘My Submissions’ in the Manage tab before retrying to avoid creating a duplicate publication.'}
-                      </p>
-                      {state.uncertainPublishName && (
-                        <p className="text-role-callout text-app-text-muted">
-                          Submitted source: {state.uncertainPublishName}
-                        </p>
-                      )}
-                      <div className="flex gap-2 pt-1">
-                        {canRetryPublish && (
-                          <button
-                            type="button"
-                            onClick={state.restoreUncertainPublishDraft}
-                            className="rounded border border-app-border px-3 py-1.5 text-role-callout focus-visible:ring-2 focus-visible:ring-app-focus"
-                          >
-                            Restore submitted draft for review
-                          </button>
-                        )}
+                      <div className="mt-3 flex gap-2">
                         <button
                           type="button"
-                          className="rounded bg-amber-500/20 px-3 py-1.5 text-role-callout font-medium text-amber-200 hover:bg-amber-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                          className="rounded border border-app-border/40 bg-app-surface px-3 py-1.5 text-role-callout text-app-text hover:bg-app-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                          onClick={clearPublishReceipt}
+                        >
+                          Export Another
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded bg-app-accent px-3 py-1.5 text-role-callout font-medium text-app-accent-foreground hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
                           onClick={() => {
+                            clearPublishReceipt();
                             setTab('manage');
                             void fetchMine();
                           }}
                         >
-                          Check My Submissions
+                          View in My Submissions
                         </button>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {publishError && !publishUncertain && (
-                <div
-                  role="alert"
-                  className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-role-body text-red-400"
-                >
-                  {publishError}
-                </div>
-              )}
+                  {publishUncertain && (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" />
+                        <div className="flex-1 space-y-2 text-role-body">
+                          <div className="font-semibold text-app-text-bright">
+                            {canRetryPublish
+                              ? 'Submissions refreshed after uncertain publication'
+                              : 'Publication outcome is uncertain'}
+                          </div>
+                          <p className="text-role-callout text-app-text-muted">
+                            {canRetryPublish
+                              ? 'Your submissions have been refreshed. If your item does not appear in My Submissions, you may now retry publication.'
+                              : 'The server may have received and committed your submission, but the confirmation response was lost or timed out. Please check ‘My Submissions’ in the Manage tab before retrying to avoid creating a duplicate publication.'}
+                          </p>
+                          {state.uncertainPublishName && (
+                            <p className="text-role-callout text-app-text-muted">
+                              Submitted source: {state.uncertainPublishName}
+                            </p>
+                          )}
+                          <div className="flex gap-2 pt-1">
+                            {canRetryPublish && (
+                              <button
+                                type="button"
+                                onClick={state.restoreUncertainPublishDraft}
+                                className="rounded border border-app-border px-3 py-1.5 text-role-callout focus-visible:ring-2 focus-visible:ring-app-focus"
+                              >
+                                Restore submitted draft for review
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="rounded bg-amber-500/20 px-3 py-1.5 text-role-callout font-medium text-amber-200 hover:bg-amber-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                              onClick={() => {
+                                setTab('manage');
+                                void fetchMine();
+                              }}
+                            >
+                              Check My Submissions
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              <div className="max-w-2xl space-y-6">
-                <div>
-                  <h3 className="text-role-title-2 font-semibold text-app-text-bright">
-                    Export to Blue Share
-                  </h3>
-                  <p className="text-role-callout text-app-text-muted">
-                    Publish your library items to the Blue Share community. Review item metadata and
-                    select a destination category.
-                  </p>
-                </div>
+                  {publishTermsRequired && !publishUncertain && (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-app-warning/40 bg-app-warning/10 p-3.5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-app-warning" />
+                        <div className="flex-1 space-y-2 text-role-body">
+                          <div className="font-semibold text-app-text-bright">
+                            Terms acceptance required before publishing
+                          </div>
+                          <p className="text-role-callout text-app-text">
+                            {publishError} On the website, make sure you’re signed in as{' '}
+                            <span className="font-semibold text-app-text-bright">
+                              {termsAccountLabel ?? 'the same BlueShare account you use in Blue'}
+                            </span>
+                            . If the website shows a different account, sign out there and sign in
+                            with the account you use in Blue. Accept the terms, then click Publish
+                            to Blue Share again. Your draft is preserved and you do not need to sign
+                            in to Blue again.
+                          </p>
+                          <div className="pt-1">
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded bg-app-accent px-3 py-1.5 text-role-callout font-medium text-app-accent-foreground transition-colors hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                              onClick={() => void openWebsite('acceptTerms')}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>Accept Terms on Website</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Resource Metadata Preview */}
-                <div className="rounded-lg border border-app-border/40 bg-app-input p-4">
-                  <div className="mb-2 text-role-callout font-semibold uppercase tracking-wider text-app-text-muted">
-                    Selected Resource
+                  {publishError && !publishTermsRequired && !publishUncertain && (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-red-500/30 bg-red-500/10 p-3.5 text-role-body text-red-400"
+                    >
+                      {publishError}
+                    </div>
+                  )}
+
+                  {/* Submit Button & Licensing Notice */}
+                  <div className="flex flex-wrap items-center gap-4">
                     <button
                       type="button"
-                      className="ml-3 text-role-callout text-app-text-muted hover:text-app-text"
-                      onClick={resetExport}
+                      disabled={
+                        !exportSourceSeed ||
+                        exportCategoryId === null ||
+                        isAnyWritePending ||
+                        (!!state.recoveryKind && state.recoveryKind !== group) ||
+                        isPreparingPublish ||
+                        (publishUncertain && !canRetryPublish)
+                      }
+                      className="flex shrink-0 items-center gap-2 rounded bg-app-accent px-5 py-2.5 text-role-body font-medium text-app-accent-foreground transition-colors hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => void publishExport()}
                     >
-                      Reset export
+                      {isPublishing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Publishing…</span>
+                        </>
+                      ) : publishUncertain && canRetryPublish ? (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          <span>Retry Publication</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          <span>Publish to Blue Share</span>
+                        </>
+                      )}
                     </button>
+                    <p className="min-w-60 flex-1 text-role-callout text-app-text-muted">
+                      Uploads default to CC0 1.0 unless you specify another license in the
+                      description or XML comments. View{' '}
+                      <button
+                        type="button"
+                        className="rounded px-0.5 text-app-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
+                        onClick={() => void openWebsite('termsLicensing')}
+                      >
+                        Terms &amp; Licensing
+                      </button>
+                      .
+                    </p>
                   </div>
-                  {isPreparingPublish && (
-                    <div className="flex items-center gap-2 py-4 text-role-body text-app-text-muted">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Reading and verifying library source…</span>
-                    </div>
-                  )}
-                  {!isPreparingPublish && !exportSourceSeed && (
-                    <div className="py-4 text-center text-role-body text-app-text-muted">
-                      {exportReviewedName
-                        ? `${exportReviewedName} — select the item again to review it for this session. Your description and category are preserved.`
-                        : 'Select an item from the left column to prepare it for export.'}
-                    </div>
-                  )}
-                  {!isPreparingPublish && exportSourceSeed && (
-                    <div className="grid grid-cols-2 gap-4 text-role-body">
-                      <div>
-                        <span className="text-role-callout font-medium text-app-text-muted">
-                          Resource Name
-                        </span>
-                        <div className="font-semibold text-app-text-bright">
-                          {exportSourceSeed.name}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-role-callout font-medium text-app-text-muted">
-                          Type
-                        </span>
-                        <div className="text-app-text">
-                          {exportSourceSeed.blueType ? (
-                            <code className="text-role-callout">{exportSourceSeed.blueType}</code>
-                          ) : group === 'effect' ? (
-                            'Effect'
-                          ) : (
-                            '—'
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-role-callout font-medium text-app-text-muted">
-                          Payload Size
-                        </span>
-                        <div className="text-app-text-muted">
-                          {exportSourceSeed.byteLength} bytes
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {exportSourceSeed && !isPreparingPublish && (
-                  <section aria-label="Source comments" className="space-y-1.5">
-                    <h3 className="text-role-callout font-medium text-app-text">Source comments</h3>
-                    <div className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded border border-app-border bg-app-input p-3 text-role-body text-app-text">
-                      {exportSourceSeed.descriptionSeed || 'No source comments provided.'}
-                    </div>
-                  </section>
-                )}
-
-                {/* Destination Category */}
-                <div className="space-y-1.5">
-                  <div className="text-role-callout font-medium text-app-text">
-                    Destination Category <span className="text-red-400">*</span>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto rounded border border-app-border bg-app-input p-1">
-                    <BlueShareCategoryTree
-                      key={`destination-${group}`}
-                      label="Destination categories"
-                      categories={categoryTree}
-                      kind={group}
-                      selectedId={exportCategoryId}
-                      onSelect={setExportCategoryId}
-                    />
-                  </div>
-                </div>
-
-                {/* Public Description */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="export-description-textarea"
-                      className="text-role-callout font-medium text-app-text"
-                    >
-                      Public Description
-                    </label>
-                    <span className="text-role-callout text-app-text-muted">
-                      {new TextEncoder().encode(exportDescription).length} / 65536 bytes
-                    </span>
-                  </div>
-                  <textarea
-                    id="export-description-textarea"
-                    rows={4}
-                    className="w-full rounded border border-app-border bg-app-input p-3 text-role-body text-app-text focus:border-app-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus"
-                    placeholder="Enter a description for the community (instructions, parameters, credits)…"
-                    value={exportDescription}
-                    onChange={(e) => setExportDescription(e.target.value)}
-                  />
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    disabled={
-                      !exportSourceSeed ||
-                      exportCategoryId === null ||
-                      isAnyWritePending ||
-                      (!!state.recoveryKind && state.recoveryKind !== group) ||
-                      isPreparingPublish ||
-                      (publishUncertain && !canRetryPublish)
-                    }
-                    className="flex items-center gap-2 rounded bg-app-accent px-5 py-2.5 text-role-body font-medium text-app-accent-foreground transition-colors hover:bg-app-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-app-focus disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => void publishExport()}
-                  >
-                    {isPublishing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Publishing…</span>
-                      </>
-                    ) : publishUncertain && canRetryPublish ? (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        <span>Retry Publication</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        <span>Publish to Blue Share</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
             </div>

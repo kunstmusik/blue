@@ -86,6 +86,7 @@ import {
   isResourceSummary,
   validateBlueShareResult,
   type AccountSessionSnapshot,
+  type BlueShareWebsitePurpose,
   type Category,
   type LatestResult,
   type ResourceKey,
@@ -1579,7 +1580,7 @@ contextBridge.exposeInMainWorld('blueAPI', {
       await ipcRenderer.invoke(BLUESHARE_CHANNELS.REMOVE_RESOURCE, contextId, requestId, key),
       isRemoveResourceResult,
     ),
-  openBlueShareWebsite: async (contextId: string, purpose: 'register' | 'recover') =>
+  openBlueShareWebsite: async (contextId: string, purpose: BlueShareWebsitePurpose) =>
     validateBlueShareResult(
       await ipcRenderer.invoke(BLUESHARE_CHANNELS.OPEN_WEBSITE, contextId, purpose),
       isOpenWebsiteResult,

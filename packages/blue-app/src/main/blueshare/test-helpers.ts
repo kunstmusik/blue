@@ -9,7 +9,7 @@ import {
   PythonInstrument,
   ClojureObject,
 } from '@blue/data';
-import { BlueShareTransport } from './transport';
+import { BlueShareTransport, DEFAULT_BLUESHARE_ORIGIN } from './transport';
 
 export type TestResourceKind = 'instrument' | 'effect' | 'soundObject';
 
@@ -438,6 +438,7 @@ export class FakeBlueShareServer {
   public injectedStatus: number | null = null;
   public injectedBody: string | null = null;
   public retryAfterSeconds: number | null = null;
+  public unacceptedTermsUserIds = new Set<string>();
 
   resetFaults(): void {
     this.delayMs = 0;
@@ -445,6 +446,7 @@ export class FakeBlueShareServer {
     this.injectedStatus = null;
     this.injectedBody = null;
     this.retryAfterSeconds = null;
+    this.unacceptedTermsUserIds.clear();
   }
 
   getDetail(kind: TestResourceKind, id: number): TestResourceDetail | null {
@@ -471,7 +473,7 @@ export class FakeBlueShareServer {
       };
     }
 
-    const parsedUrl = new URL(options.url, 'https://blue3.kunstmusik.com');
+    const parsedUrl = new URL(options.url, DEFAULT_BLUESHARE_ORIGIN);
     const pathname = parsedUrl.pathname;
     const method = (options.method ?? 'GET').toUpperCase();
 
@@ -484,7 +486,7 @@ export class FakeBlueShareServer {
     // Check origin on mutations
     if (method === 'POST' || method === 'DELETE') {
       const origin = options.headers?.origin ?? options.headers?.Origin;
-      if (origin !== 'https://blue3.kunstmusik.com') {
+      if (origin !== DEFAULT_BLUESHARE_ORIGIN) {
         return {
           status: 403,
           headers: { 'content-type': 'application/json' },
@@ -687,6 +689,20 @@ export class FakeBlueShareServer {
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
               error: { code: 'unauthorized', message: 'Authentication required' },
+            }),
+          };
+        }
+
+        if (this.unacceptedTermsUserIds.has(session.user.id)) {
+          return {
+            status: 403,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              error: {
+                code: 'TERMS_NOT_ACCEPTED',
+                message:
+                  'Accept the BlueShare Terms of Use and Content Licensing on the website before publishing.',
+              },
             }),
           };
         }

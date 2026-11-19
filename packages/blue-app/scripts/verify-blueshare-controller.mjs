@@ -38,6 +38,7 @@ try {
         password: 'Test-only-password-2026!',
         name,
         username: name,
+        termsAccepted: true,
       }),
     });
     assert.equal(response.status, 200);

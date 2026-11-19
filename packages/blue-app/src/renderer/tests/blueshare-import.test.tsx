@@ -55,7 +55,7 @@ describe('BlueShareDialog and useBlueShare (T014)', () => {
         ok: true,
         value: {
           contextId: 'ctx-test-1',
-          serviceScope: 'https://blue3.kunstmusik.com',
+          serviceScope: 'https://blue.kunstmusik.com',
           account: { state: 'signedOut' },
         },
       }),
@@ -642,7 +642,7 @@ describe('BlueShareDialog and useBlueShare (T014)', () => {
         ok: true,
         value: {
           contextId: 'ctx-abandoned-99',
-          serviceScope: 'https://blue3.kunstmusik.com',
+          serviceScope: 'https://blue.kunstmusik.com',
           account: { state: 'signedOut' },
         },
       });

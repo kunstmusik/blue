@@ -48,7 +48,7 @@ describe('BlueShare Preload API bridge', () => {
       ok: true,
       value: {
         contextId: 'ctx-1',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: { state: 'signedOut', user: null, expiresAt: null, accountEpoch: 1 },
       },
     });
@@ -235,6 +235,24 @@ describe('BlueShare Preload API bridge', () => {
     const webRes = await blueAPI.openBlueShareWebsite('ctx-1', 'register');
     expect(invoke).toHaveBeenCalledWith(BLUESHARE_CHANNELS.OPEN_WEBSITE, 'ctx-1', 'register');
     expect(webRes.ok).toBe(true);
+
+    invoke.mockResolvedValueOnce({ ok: true, value: { opened: true } });
+    const acceptTermsRes = await blueAPI.openBlueShareWebsite('ctx-1', 'acceptTerms');
+    expect(invoke).toHaveBeenLastCalledWith(
+      BLUESHARE_CHANNELS.OPEN_WEBSITE,
+      'ctx-1',
+      'acceptTerms',
+    );
+    expect(acceptTermsRes.ok).toBe(true);
+
+    invoke.mockResolvedValueOnce({ ok: true, value: { opened: true } });
+    const licensingRes = await blueAPI.openBlueShareWebsite('ctx-1', 'termsLicensing');
+    expect(invoke).toHaveBeenLastCalledWith(
+      BLUESHARE_CHANNELS.OPEN_WEBSITE,
+      'ctx-1',
+      'termsLicensing',
+    );
+    expect(licensingRes.ok).toBe(true);
 
     // 10. onBlueShareAccountChanged & unsubscribe
     const callback = vi.fn();

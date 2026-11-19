@@ -3,7 +3,7 @@ import { net, session as electronSession, type Session, type ClientRequest } fro
 import type { RememberedCookie } from './remembered-session';
 import type { BlueShareError, BlueShareResult } from '../../shared/blueshare';
 
-export const DEFAULT_BLUESHARE_ORIGIN = 'https://blue3.kunstmusik.com';
+export const DEFAULT_BLUESHARE_ORIGIN = 'https://blue.kunstmusik.com';
 export const BLUESHARE_API_BASE = '/api/blueshare/v1';
 export const MAX_RESPONSE_BYTES = 16 * 1024 * 1024; // 16 MiB
 export const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds
@@ -533,13 +533,20 @@ export class BlueShareTransport {
       'RESOURCE_REMOVED',
       'RESOURCE_CONTENT_UNAVAILABLE',
       'FORBIDDEN',
+      'TERMS_NOT_ACCEPTED',
       'INVALID_INPUT',
       'PAYLOAD_TOO_LARGE',
       'UNSUPPORTED_MEDIA_TYPE',
       'REQUEST_TIMEOUT',
       'RATE_LIMITED',
     ]);
-    const code = allowedCodes.has(rawCode.toUpperCase()) ? rawCode : `http_${response.status}`;
+    const normalizedCode = rawCode.toUpperCase();
+    const isTermsNotAccepted = response.status === 403 && normalizedCode === 'TERMS_NOT_ACCEPTED';
+    const code = isTermsNotAccepted
+      ? 'TERMS_NOT_ACCEPTED'
+      : allowedCodes.has(normalizedCode)
+        ? rawCode
+        : `http_${response.status}`;
     const messages: Record<number, string> = {
       400: 'Check the indicated submission fields.',
       401: 'Sign-in failed or the session expired. Sign in again or recover your account.',
@@ -551,9 +558,10 @@ export class BlueShareTransport {
       415: 'The service rejected the submission format.',
       429: 'Too many requests. Wait before trying again.',
     };
-    const message =
-      messages[response.status] ??
-      'The BlueShare service could not complete this request. Refresh before retrying a write.';
+    const message = isTermsNotAccepted
+      ? 'Accept the BlueShare Terms of Use and Content Licensing on the website before publishing.'
+      : (messages[response.status] ??
+        'The BlueShare service could not complete this request. Refresh before retrying a write.');
     let fields: Record<string, string> | undefined;
     if (errObj?.fields && typeof errObj.fields === 'object' && !Array.isArray(errObj.fields)) {
       const entries = Object.keys(errObj.fields).filter((k) =>

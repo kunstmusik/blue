@@ -81,7 +81,7 @@ describe('BlueShareTransport', () => {
       const transport = new BlueShareTransport();
       expect(transport.getOrigin()).toBe(DEFAULT_BLUESHARE_ORIGIN);
       expect(transport.buildUrl('/instrument/categories')).toBe(
-        'https://blue3.kunstmusik.com/api/blueshare/v1/instrument/categories',
+        'https://blue.kunstmusik.com/api/blueshare/v1/instrument/categories',
       );
     });
 
@@ -94,7 +94,7 @@ describe('BlueShareTransport', () => {
         ignoredUndefined: undefined,
       });
       expect(url).toBe(
-        'https://blue3.kunstmusik.com/api/blueshare/v1/effect/resources?categoryId=10&beforeId=45',
+        'https://blue.kunstmusik.com/api/blueshare/v1/effect/resources?categoryId=10&beforeId=45',
       );
     });
 
@@ -400,6 +400,56 @@ describe('BlueShareTransport', () => {
         if (!res.ok) {
           expect(res.error.outcome).toBe('rejected');
         }
+      }
+    });
+
+    it('preserves 403 TERMS_NOT_ACCEPTED with fixed wording without projecting server text, and distinguishes FORBIDDEN / INVALID_ORIGIN', () => {
+      const transport = new BlueShareTransport();
+
+      const termsRes = transport.parseResponse({
+        status: 403,
+        headers: {},
+        body: JSON.stringify({
+          error: { code: 'TERMS_NOT_ACCEPTED', message: 'token=synthetic-proof' },
+        }),
+      });
+      expect(termsRes.ok).toBe(false);
+      if (!termsRes.ok) {
+        expect(termsRes.error.status).toBe(403);
+        expect(termsRes.error.code).toBe('TERMS_NOT_ACCEPTED');
+        expect(termsRes.error.outcome).toBe('rejected');
+        expect(termsRes.error.message).toBe(
+          'Accept the BlueShare Terms of Use and Content Licensing on the website before publishing.',
+        );
+        expect(JSON.stringify(termsRes)).not.toContain('synthetic-proof');
+      }
+
+      for (const code of ['FORBIDDEN', 'INVALID_ORIGIN']) {
+        const other403 = transport.parseResponse({
+          status: 403,
+          headers: {},
+          body: JSON.stringify({ error: { code, message: 'Server secret text' } }),
+        });
+        expect(other403.ok).toBe(false);
+        if (!other403.ok) {
+          expect(other403.error.status).toBe(403);
+          expect(other403.error.code).toBe(code);
+          expect(other403.error.outcome).toBe('rejected');
+          expect(other403.error.message).toBe(
+            'The service denied this operation. Check ownership and service configuration.',
+          );
+        }
+      }
+
+      const non403Terms = transport.parseResponse({
+        status: 400,
+        headers: {},
+        body: JSON.stringify({ error: { code: 'TERMS_NOT_ACCEPTED', message: 'Bad request' } }),
+      });
+      expect(non403Terms.ok).toBe(false);
+      if (!non403Terms.ok) {
+        expect(non403Terms.error.status).toBe(400);
+        expect(non403Terms.error.message).toBe('Check the indicated submission fields.');
       }
     });
   });

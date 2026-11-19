@@ -1050,6 +1050,89 @@ describe('BlueShare Publication Contract & Races (T032)', () => {
       expect(localCheck.value.revision).toBe(1);
     }
   });
+
+  it('preserves session, sourceToken, /mine, and delete on 403 TERMS_NOT_ACCEPTED and allows immediate retry after acceptance', async () => {
+    const fakeServer = new FakeBlueShareServer();
+    let publishPosts = 0;
+    const origHandle = fakeServer.handleRequest.bind(fakeServer);
+    fakeServer.handleRequest = async (opts) => {
+      if (opts.method === 'POST' && opts.url.includes('/resources')) {
+        publishPosts++;
+      }
+      return origHandle(opts);
+    };
+
+    const user = TEST_USERS[0];
+    fakeServer.unacceptedTermsUserIds.add(user.id);
+
+    const transport = createConnectedTransport(fakeServer);
+    const mockLibrary = createMockLibraryService();
+    const service = new BlueShareService({ transport, libraryService: mockLibrary });
+    const sender = createMockSender(35);
+    const { contextId } = (service.openDialog(sender) as any).value;
+
+    await service.signIn(contextId, 'req-login', user.email, user.password);
+    const epochBeforePublish = service.getAccountEpoch();
+
+    const key: LibraryItemKey = { scope: 'user', libraryType: 'instrument', nodeId: 'inst-1' };
+    const prepRes = await service.preparePublishSource(contextId, 'req-prep', key, 1);
+    if (!prepRes.ok) throw new Error('Prepare failed');
+    const token = prepRes.value.sourceToken;
+
+    // Publish fails with 403 TERMS_NOT_ACCEPTED
+    const pubFail = await service.publishResource(
+      contextId,
+      'req-pub-terms',
+      token,
+      10,
+      'Terms Blocked Synth',
+      'Exact preserved description',
+    );
+    expect(pubFail.ok).toBe(false);
+    if (pubFail.ok) throw new Error('Expected TERMS_NOT_ACCEPTED failure');
+    expect(pubFail.error.status).toBe(403);
+    expect(pubFail.error.code).toBe('TERMS_NOT_ACCEPTED');
+    expect(pubFail.error.outcome).toBe('rejected');
+    expect(publishPosts).toBe(1);
+
+    // Desktop session and epoch stay intact; sourceToken stays valid; no uncertainty lock
+    expect(service.getAccountSnapshot().state).toBe('signedIn');
+    expect(service.getAccountEpoch()).toBe(epochBeforePublish);
+    const dialog = service.validateDialog(contextId);
+    if ('code' in dialog) throw new Error('Expected open dialog');
+    expect(dialog.publishSource?.token).toBe(token);
+    expect(dialog.uncertainPublishToken).toBeNull();
+    expect(dialog.activeOperation).toBeNull();
+
+    // Unaccepted user can still read /mine and remove legacy uploads
+    const mineRes = await service.listMine(contextId, 'req-mine-unaccepted', 'instrument');
+    expect(mineRes.ok).toBe(true);
+    if (!mineRes.ok) throw new Error('Expected listMine to work for unaccepted user');
+    const ownItem = mineRes.value.items[0];
+    expect(ownItem).toBeDefined();
+    const remRes = await service.removeResource(contextId, 'req-rem-unaccepted', {
+      kind: ownItem.kind,
+      id: ownItem.id,
+    });
+    expect(remRes.ok).toBe(true);
+
+    // User accepts terms on the website; existing session immediately succeeds on explicit retry
+    fakeServer.unacceptedTermsUserIds.delete(user.id);
+    const pubRetry = await service.publishResource(
+      contextId,
+      'req-pub-retry',
+      token,
+      10,
+      'Terms Blocked Synth',
+      'Exact preserved description',
+    );
+    expect(pubRetry.ok).toBe(true);
+    if (!pubRetry.ok) throw new Error('Expected explicit retry to succeed');
+    expect(pubRetry.value.name).toBe('Terms Blocked Synth');
+    expect(pubRetry.value.description).toBe('Exact preserved description');
+    expect(publishPosts).toBe(2);
+    service.shutdown();
+  });
 });
 
 it('reset invalidates pending preparation before a token can be installed (T084)', async () => {

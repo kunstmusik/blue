@@ -690,6 +690,12 @@ export function isBlueShareError(value: unknown): value is BlueShareError {
   );
 }
 
+export function isTermsNotAcceptedError(
+  error: Pick<BlueShareError, 'code' | 'status'> | null | undefined,
+): boolean {
+  return error?.status === 403 && error.code === 'TERMS_NOT_ACCEPTED';
+}
+
 // Publish source preparation and submission
 export interface PublishSourceSeed {
   readonly sourceToken: string;
@@ -1021,6 +1027,20 @@ export const BLUESHARE_CHANNELS = {
   CLOSE: 'blueshare:close',
   ACCOUNT_CHANGED: 'blueshare:account-changed',
 } as const;
+
+export const BLUESHARE_WEBSITE_PURPOSES = [
+  'register',
+  'recover',
+  'acceptTerms',
+  'termsLicensing',
+] as const;
+export type BlueShareWebsitePurpose = (typeof BLUESHARE_WEBSITE_PURPOSES)[number];
+
+export function isBlueShareWebsitePurpose(value: unknown): value is BlueShareWebsitePurpose {
+  return (
+    typeof value === 'string' && (BLUESHARE_WEBSITE_PURPOSES as readonly string[]).includes(value)
+  );
+}
 
 export function isRequestId(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0 && value.length <= 256;

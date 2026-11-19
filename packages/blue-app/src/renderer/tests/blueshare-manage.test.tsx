@@ -52,7 +52,7 @@ describe('BlueShare Manage Submissions & Removal UI (T043)', () => {
         ok: true,
         value: {
           contextId: 'ctx-test-manage',
-          serviceScope: 'https://blue3.kunstmusik.com',
+          serviceScope: 'https://blue.kunstmusik.com',
           account: {
             state: 'signedIn',
             user: { id: 'u1', name: 'Steven Yi', username: 'stevenyi' },
@@ -1046,7 +1046,7 @@ describe('BlueShare Manage Submissions & Removal UI (T043)', () => {
       ok: true,
       value: {
         contextId: 'ctx-signed-out',
-        serviceScope: 'https://blue3.kunstmusik.com',
+        serviceScope: 'https://blue.kunstmusik.com',
         account: { state: 'signedOut' },
       },
     });

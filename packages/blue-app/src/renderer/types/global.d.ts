@@ -795,7 +795,7 @@ declare global {
       >;
       openBlueShareWebsite: (
         contextId: string,
-        purpose: 'register' | 'recover',
+        purpose: import('../../shared/blueshare').BlueShareWebsitePurpose,
       ) => Promise<import('../../shared/blueshare').BlueShareResult<{ opened: boolean }>>;
       closeBlueShare: (contextId: string) => Promise<void>;
       onBlueShareAccountChanged: (
