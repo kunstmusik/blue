@@ -2,6 +2,8 @@
 
 This guide defines the maintainer procedure and security boundary for Blue desktop packages.
 
+For standalone npm packages (`@kunstmusik/blue-data` and `@kunstmusik/blue-cli`) and the tagged `blue-projects` agent skill, see the [npm tooling release guide](npm-release-guide.md). Desktop `v*.*.*` releases and npm/skill `npm-v*` releases are independent, with separate versions, tags, GitHub Environments (`release` vs. `npm-release`), and release workflows.
+
 Blue's packaged release supports macOS arm64, Windows x64, and Linux x64. It
 ships Blue, its Java helper, and a revision-matched Blue Engine sidecar. Csound
 7 remains an optional runtime installation required for playback/rendering,
@@ -201,3 +203,5 @@ bundle a Java runtime, ship Windows arm64, or add extra Linux package formats.
 Blue Engine is bundled. Signed release credentials remain a release-policy
 concern; the nested engine signing hook and engine-only entitlement are ready
 for a configured macOS identity.
+
+Desktop `v*.*.*` releases and standalone npm/skill `npm-v*` releases (`@kunstmusik/blue-data`, `@kunstmusik/blue-cli`, and `skills/blue-projects`) are also independent; npm publication uses separate versions, `npm-v*` tags, the `npm-release` Environment, and the [npm tooling release guide](npm-release-guide.md).

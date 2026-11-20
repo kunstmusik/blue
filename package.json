@@ -8,7 +8,7 @@
     "clean": "node scripts/clean.mjs",
     "test": "pnpm -r run test && pnpm test:scripts",
     "test:performance": "pnpm -r --workspace-concurrency=1 --no-sort --no-bail run test:performance",
-    "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs packages/blue-app/scripts/verify-release-version.test.mjs scripts/run-performance-tests.test.mjs",
+    "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs packages/blue-app/scripts/verify-release-version.test.mjs scripts/run-performance-tests.test.mjs scripts/verify-npm-packages.test.mjs scripts/verify-npm-release.test.mjs",
     "lint": "vp run lint:workspace",
     "format": "vp fmt",
     "format:check": "vp fmt --check",

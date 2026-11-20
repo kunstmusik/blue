@@ -1,6 +1,6 @@
 {
   "name": "blue-cli",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Node CLI for compiling Blue projects to Csound CSD output.",
   "keywords": [
     "blue",
@@ -11,7 +11,8 @@
   "author": "Steven Yi",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kunstmusik/blue"
+    "url": "git+https://github.com/kunstmusik/blue.git",
+    "directory": "packages/blue-cli"
   },
   "bin": {
     "blue-cli": "./dist/blue-cli.cjs"
@@ -24,6 +25,10 @@
   ],
   "type": "commonjs",
   "main": "./dist/blue-cli.cjs",
+  "publishConfig": {
+    "name": "@kunstmusik/blue-cli",
+    "access": "public"
+  },
   "scripts": {
     "build": "node ./scripts/build.mjs",
     "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
@@ -41,7 +46,7 @@
     "esbuild": "^0.28.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "//": "The bundled CLI externalizes quickjs-emscripten and zeromq. Both must remain runtime dependencies for standalone installations."
 }

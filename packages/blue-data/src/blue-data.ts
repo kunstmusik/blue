@@ -74,6 +74,26 @@ export { hasLegacyMixerStateAtLoad, markLegacyMixerStateAtLoad } from './blue-da
 import { processOnLoad, processOnLoadAsync, usesJavaRuntime } from './blue-data/runtime-policy';
 import type { AudioLayoutManifest } from './score/audio/audio-layout';
 
+/**
+ * Canonical in-memory model for a Blue composition project, matching Java Blue's `BlueData`.
+ *
+ * Aggregates project properties, arrangement, mixer, sound object library, optional instrument library,
+ * global orchestra/score, F-tables, opcodes, score, Blue Live data, scratch pad data, note processor
+ * chains, markers, MIDI input settings, render window/loop state, and opaque/Clojure `pluginData`.
+ *
+ * - **XML loading & saving**: `BlueData.loadFromString()`, `readProjectXml()`, `saveAsXML()`, and
+ *   `saveToString()` operate purely in memory without touching disk and never execute project scripts.
+ *   Use `readProjectXml()` when you want a non-throwing `XmlLoadResult<BlueData>` with source attribution
+ *   and full diagnostics; `BlueData.loadFromString()` throws `XmlLoadError` on errors or on accepted
+ *   warnings when no `XmlDiagnosticSink` is provided.
+ * - **JavaScript runtime (QuickJS)**: Before compiling projects that contain `JavaScriptObject` or
+ *   JavaScript `ObjectBuilder` scripts (`toCSD*`, `toDiskCSD*`, `toRealtimePlaybackCSD*`, `toBlueLiveCSD*`),
+ *   await `initializeJavaScriptRuntime()` once (or provide a `JavaScriptSession` created after it).
+ * - **Java-backed runtime (Clojure / Jython)**: `@blue/data` stays browser-safe and never spawns Java
+ *   directly. When `usesJavaRuntime()` returns `true`, pass a host-injected `JavaRuntimeClientContract`
+ *   to `processOnLoadAsync()`, `toCSDAsync()`, `toDiskCSDAsync()`, `toRealtimePlaybackCSDAsync()`, or
+ *   `toBlueLiveCSDAsync()`.
+ */
 export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, HistoryCopyable<BlueData> {
   // Version
   private version = BLUE_VERSION;
@@ -254,26 +274,87 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
 
   // ─── Loading ───
 
+  /**
+   * Strict convenience loader that parses, validates, and migrates a `.blue` project XML string
+   * using the `'in-memory project'` source.
+   *
+   * Never executes project scripts (`processOnLoad` / `processOnLoadAsync` must be called separately).
+   * Throws `XmlLoadError` on XML/validation errors **or** when accepted XML emits `'warning'`
+   * diagnostics and no `sink` callback is supplied.
+   *
+   * Prefer `readProjectXml()` when callers want a non-throwing `XmlLoadResult<BlueData>` with custom
+   * `XmlSource` attribution and direct inspection of warnings/errors.
+   *
+   * @param xmlString Raw `.blue` project XML text.
+   * @param sink Optional diagnostic callback invoked when accepted XML produces warnings.
+   * @returns Loaded and migrated `BlueData` instance.
+   */
   static loadFromString(xmlString: string, sink?: XmlDiagnosticSink): BlueData {
     return loadFromString(xmlString, () => new BlueData(), sink);
   }
 
   // ─── Saving ───
 
+  /**
+   * Serializes this project to a detached `<blueData>` XML {@link Element} tree without touching disk.
+   *
+   * Normalizes the root `version` attribute to {@link BLUE_VERSION}, writes sections in Java-compatible
+   * root ordering, resolves cross-references via `objRefMap` when provided, and clones preserved
+   * `pluginData` children so external tree mutations do not mutate this project.
+   *
+   * @param objRefMap Optional object-reference map shared across serialized project elements.
+   * @returns Root `<blueData>` XML element tree.
+   */
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     return saveAsXML(this, objRefMap);
   }
 
+  /**
+   * Serializes this project to a canonical `.blue` XML string in memory without touching disk.
+   *
+   * Delegates to {@link saveAsXML} with a fresh {@link ObjRefSaveMap}, normalizing the root `version`
+   * attribute to {@link BLUE_VERSION}, using Java-compatible root section ordering, and cloning
+   * preserved `pluginData` children.
+   *
+   * @returns Canonical `.blue` XML text.
+   */
   saveToString(): string {
     return saveToString(this);
   }
 
   // ─── CSD Generation ───
 
+  /**
+   * Synchronously compiles a render snapshot of this project into a Csound `.csd` string using the
+   * `'realtime'` profile (`emitMetering = false`), without mutating this `BlueData` instance.
+   *
+   * If the project uses `JavaScriptObject` (or JavaScript `ObjectBuilder`) scripts, callers must first
+   * await `initializeJavaScriptRuntime()` (or pass a `JavaScriptSession` created after initialization).
+   * Synchronous compilation cannot execute Java-backed Clojure or Jython code; use {@link toCSDAsync}
+   * with a host-injected {@link JavaRuntimeClientContract} when {@link usesJavaRuntime} is `true`.
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Generated Csound `.csd` document text.
+   */
   toCSD(session?: JavaScriptSession, layoutManifest?: AudioLayoutManifest | null): string {
     return buildStandardCSD(this, 'realtime', session, false, layoutManifest).csdText;
   }
 
+  /**
+   * Asynchronously compiles a render snapshot of this project into a Csound `.csd` string using the
+   * `'realtime'` profile (`emitMetering = false`).
+   *
+   * Uses QuickJS (initialized via `initializeJavaScriptRuntime()` / optional `session`) for JavaScript
+   * score generation and a host-injected `runtimeClient` ({@link JavaRuntimeClientContract}) for
+   * Java-backed `ClojureObject`, `PythonObject`, Python `ObjectBuilder`, `PythonInstrument`, and
+   * `PythonProcessor` execution.
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param runtimeClient Host-provided Java runtime client for Clojure/Jython evaluation.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Promise resolving to the generated Csound `.csd` document text.
+   */
   async toCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -284,10 +365,36 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     ).csdText;
   }
 
+  /**
+   * Synchronously compiles a render snapshot of this project into a Csound `.csd` string using the
+   * `'disk'` render profile (disk sample rate/ksmps/channels/0dbfs, disk render window, parameter
+   * automation score notes, fixed mixer pruning of inaudible tracks, and no realtime metering).
+   *
+   * Requires prior `initializeJavaScriptRuntime()` (or an initialized `session`) for `JavaScriptObject`
+   * scripts. Use {@link toDiskCSDAsync} with a host-injected {@link JavaRuntimeClientContract} when
+   * {@link usesJavaRuntime} is `true`.
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Generated disk-render Csound `.csd` document text.
+   */
   toDiskCSD(session?: JavaScriptSession, layoutManifest?: AudioLayoutManifest | null): string {
     return buildStandardCSD(this, 'disk', session, false, layoutManifest).csdText;
   }
 
+  /**
+   * Asynchronously compiles a render snapshot of this project into a Csound `.csd` string using the
+   * `'disk'` render profile.
+   *
+   * Asynchronous counterpart to {@link toDiskCSD}, accepting a host-injected `runtimeClient`
+   * ({@link JavaRuntimeClientContract}) for Java-backed Clojure and Jython instruments, sound objects,
+   * and note processors alongside QuickJS (`initializeJavaScriptRuntime()` / optional `session`).
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param runtimeClient Host-provided Java runtime client for Clojure/Jython evaluation.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Promise resolving to the generated disk-render Csound `.csd` document text.
+   */
   async toDiskCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -298,6 +405,21 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     ).csdText;
   }
 
+  /**
+   * Synchronously compiles a `'realtime'` render snapshot into a full {@link RenderCsdResult}
+   * containing `csdText`, automation `parameters`, `stringChannels`, `blueX7Bindings`, optional
+   * `meterBindingMap` (when `emitMetering` is `true` and the mixer is enabled), `mixerGateBindings`,
+   * and `pannerBindings`.
+   *
+   * Requires prior `initializeJavaScriptRuntime()` (or an initialized `session`) for `JavaScriptObject`
+   * scripts. Use {@link toRealtimePlaybackCSDAsync} with a host-injected {@link JavaRuntimeClientContract}
+   * when {@link usesJavaRuntime} is `true`.
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param emitMetering Whether to emit mixer RMS/peak meter channels and `meterBindingMap`.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Compiled CSD text and disposable engine runtime bindings.
+   */
   toRealtimePlaybackCSD(
     session?: JavaScriptSession,
     emitMetering = false,
@@ -306,6 +428,19 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     return buildStandardCSD(this, 'realtime', session, emitMetering, layoutManifest);
   }
 
+  /**
+   * Asynchronously compiles a `'realtime'` render snapshot into a full {@link RenderCsdResult}.
+   *
+   * Asynchronous counterpart to {@link toRealtimePlaybackCSD}, accepting a host-injected `runtimeClient`
+   * ({@link JavaRuntimeClientContract}) for Java-backed Clojure and Jython evaluation alongside QuickJS
+   * (`initializeJavaScriptRuntime()` / optional `session`).
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param runtimeClient Host-provided Java runtime client for Clojure/Jython evaluation.
+   * @param emitMetering Whether to emit mixer RMS/peak meter channels and `meterBindingMap`.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Promise resolving to compiled CSD text and disposable engine runtime bindings.
+   */
   async toRealtimePlaybackCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -322,6 +457,20 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     );
   }
 
+  /**
+   * Synchronously compiles a Blue Live performance {@link RenderCsdResult} with always-on instruments,
+   * `blueAllNotesOff`, live mixer gate/panner bindings, MIDI instrument target mappings, and optional
+   * metering.
+   *
+   * Requires prior `initializeJavaScriptRuntime()` (or an initialized `session`) for `JavaScriptObject`
+   * scripts. Use {@link toBlueLiveCSDAsync} with a host-injected {@link JavaRuntimeClientContract} when
+   * Java-backed orchestra generation (such as `PythonInstrument`) is required.
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param emitMetering Whether to emit mixer RMS/peak meter channels and `meterBindingMap`.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Compiled Blue Live CSD text and disposable engine runtime bindings.
+   */
   toBlueLiveCSD(
     session?: JavaScriptSession,
     emitMetering = false,
@@ -330,6 +479,18 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     return toBlueLiveCSD(this, session, emitMetering, layoutManifest);
   }
 
+  /**
+   * Asynchronously compiles a Blue Live performance {@link RenderCsdResult}.
+   *
+   * Asynchronous counterpart to {@link toBlueLiveCSD}, passing `runtimeClient`
+   * ({@link JavaRuntimeClientContract}) for asynchronous orchestra generation (such as `PythonInstrument`).
+   *
+   * @param session Optional QuickJS session shared across script evaluations.
+   * @param runtimeClient Host-provided Java runtime client for Java-backed orchestra generation.
+   * @param emitMetering Whether to emit mixer RMS/peak meter channels and `meterBindingMap`.
+   * @param layoutManifest Optional host-observed audio file channel layout manifest for track panning.
+   * @returns Promise resolving to compiled Blue Live CSD text and disposable engine runtime bindings.
+   */
   async toBlueLiveCSDAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -339,10 +500,32 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     return toBlueLiveCSDAsync(this, session, runtimeClient, emitMetering, layoutManifest);
   }
 
+  /**
+   * Synchronously executes `onLoadProcessable` scripts across the score (`PolyObject`, `TrackLayerGroup`)
+   * and `LiveData` bins.
+   *
+   * Executes `JavaScriptObject` on-load scripts only when a {@link JavaScriptSession} (created after
+   * `initializeJavaScriptRuntime()`) is supplied. Clojure and Python on-load scripts are skipped with a
+   * console warning in synchronous mode; use {@link processOnLoadAsync} with a host-injected
+   * {@link JavaRuntimeClientContract} to execute them.
+   *
+   * @param session Optional QuickJS session used to retain on-load JavaScript definitions.
+   */
   processOnLoad(session?: JavaScriptSession): void {
     processOnLoad(this, session);
   }
 
+  /**
+   * Asynchronously executes `onLoadProcessable` scripts across the score (`PolyObject`, `TrackLayerGroup`)
+   * and `LiveData` bins.
+   *
+   * Asynchronous counterpart to {@link processOnLoad}: runs `JavaScriptObject` on-load scripts in `session`
+   * (created after `initializeJavaScriptRuntime()`) and delegates `ClojureObject` and `PythonObject`
+   * on-load scripts to the host-injected `runtimeClient` ({@link JavaRuntimeClientContract}).
+   *
+   * @param session Optional QuickJS session used to retain on-load JavaScript definitions.
+   * @param runtimeClient Host-provided Java runtime client for Clojure/Jython on-load evaluation.
+   */
   async processOnLoadAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -350,6 +533,14 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     await processOnLoadAsync(this, session, runtimeClient);
   }
 
+  /**
+   * Reports whether this project contains any entities whose execution requires a host-injected
+   * {@link JavaRuntimeClientContract} (`ClojureObject`, `PythonObject`, Python/Clojure `ObjectBuilder`,
+   * `PythonInstrument`, or `PythonProcessor`) across the score, `SoundObjectLibrary`, `Arrangement`,
+   * note processor chains, or `LiveData` bins.
+   *
+   * @returns `true` if async compilation/on-load flows require a Java runtime client; otherwise `false`.
+   */
   usesJavaRuntime(): boolean {
     return usesJavaRuntime(this);
   }

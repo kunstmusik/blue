@@ -57,6 +57,26 @@ const CANONICAL_PROJECT_CHILDREN = PROJECT_CHILDREN.filter(
   (name) => name !== 'soundObject' && name !== 'tempo' && name !== 'timeContext',
 );
 
+/**
+ * Parses, validates, migrates, and deserializes a `.blue` project XML string into a {@link BlueData} model.
+ *
+ * Validation runs against the raw XML shape and `@version` syntax (`^\d+(?:\.\d+){0,2}(?:_beta\d*|_dev)?$`),
+ * applies raw-XML project migrations via `UpgradeManager`, re-validates the canonical post-migration shape,
+ * and loads project sections without executing any project scripts (`JavaScriptObject`, `ClojureObject`,
+ * `PythonObject`, `ObjectBuilder`, or `External`) or touching disk.
+ *
+ * This function never throws on XML syntax or validation failures:
+ * - Accepted loads (including non-fatal `'warning'` diagnostics such as omitted redundant fields or unresolved
+ *   live references) return `{ ok: true, value, diagnostics }`.
+ * - Syntax, shape, version, conflict, or value failures return `{ ok: false, diagnostics }`.
+ *
+ * Every diagnostic carries the provided `source` attribution and XPath-like `path` (plus `line` and `column`
+ * for XML syntax errors). For a throwing convenience loader, see {@link BlueData.loadFromString}.
+ *
+ * @param xml Raw `.blue` project XML text.
+ * @param source Caller-supplied provenance attached to all emitted diagnostics.
+ * @returns Non-throwing {@link XmlLoadResult} containing either the loaded {@link BlueData} or error diagnostics.
+ */
 export function readProjectXml(
   xml: string,
   source: XmlSource = { kind: 'project', label: 'in-memory project' },
@@ -104,6 +124,14 @@ type BlueDataXmlState = {
   version: string;
 };
 
+/**
+ * Strict project loader backing {@link BlueData.loadFromString}.
+ *
+ * Performs the same XML parsing, validation, raw-XML migration, and script-free deserialization as
+ * {@link readProjectXml} using the `'in-memory project'` source, then unwraps the result via
+ * `requireXmlValue`: throws {@link XmlLoadError} if loading fails OR if accepted XML emits `'warning'`
+ * diagnostics without a `sink` handler.
+ */
 export function loadFromString(
   xmlString: string,
   createBlueData: () => BlueData,
@@ -333,6 +361,18 @@ function loadProjectRoot(
   return blueData;
 }
 
+/**
+ * Serializes a {@link BlueData} project to a detached `<blueData>` XML {@link Element} tree in memory.
+ *
+ * Normalizes the root `version` attribute to the canonical {@link BLUE_VERSION}, writes project sections in
+ * Java-compatible root ordering, assigns/resolves cross-references through `objRefMap` when supplied, and
+ * clones preserved `pluginData` children so mutating the returned XML tree never mutates `blueData`.
+ * Does not touch disk.
+ *
+ * @param blueData Project instance to serialize.
+ * @param objRefMap Optional object-reference map shared across serialized project sections.
+ * @returns Root `<blueData>` XML element tree.
+ */
 export function saveAsXML(blueData: BlueData, objRefMap?: ObjRefSaveMap): Element {
   const state = blueData as unknown as BlueDataXmlState;
   const root = new Element('blueData');
@@ -365,6 +405,16 @@ export function saveAsXML(blueData: BlueData, objRefMap?: ObjRefSaveMap): Elemen
   return root;
 }
 
+/**
+ * Serializes a {@link BlueData} project to a canonical `.blue` XML string in memory.
+ *
+ * Delegates to {@link saveAsXML} with a fresh `ObjRefSaveMap` without touching disk: normalizes the root
+ * `version` attribute to {@link BLUE_VERSION}, uses Java-compatible root section ordering, and clones
+ * preserved `pluginData` children.
+ *
+ * @param blueData Project instance to serialize.
+ * @returns Canonical `.blue` XML text.
+ */
 export function saveToString(blueData: BlueData): string {
   const objRefMap = new ObjRefSaveMap();
   const root = saveAsXML(blueData, objRefMap);

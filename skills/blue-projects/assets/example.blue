@@ -1,0 +1,53 @@
+<blueData version="2.10.1">
+  <projectProperties>
+    <title>Blue Projects Skill Example</title>
+    <author>Blue</author>
+    <sampleRate>44100</sampleRate>
+    <ksmps>64</ksmps>
+    <channels>2</channels>
+    <useZeroDbFS>true</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>true</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
+    <useAudioOut>true</useAudioOut>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId="1" isEnabled="true">
+      <instrument type="blue.orchestra.GenericInstrument" enabled="true">
+        <name>Sine</name>
+        <instrumentText>ifreq = p4
+iamp = p5
+aenv linseg 0, 0.01, 1, p3 - 0.02, 1, 0.01, 0
+aout poscil aenv * iamp, ifreq
+outs aout, aout</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <score>
+    <soundObject type="blue.soundObject.PolyObject">
+      <startTime type="BEATS">
+        <csoundBeats>0</csoundBeats>
+      </startTime>
+      <subjectiveDuration type="BEATS">
+        <csoundBeats>4</csoundBeats>
+      </subjectiveDuration>
+      <name>SoundObject Layer Group</name>
+      <timeBehavior>2</timeBehavior>
+      <soundLayer name="Layer 1">
+        <soundObject type="blue.soundObject.GenericScore">
+          <startTime type="BEATS">
+            <csoundBeats>0</csoundBeats>
+          </startTime>
+          <subjectiveDuration type="BEATS">
+            <csoundBeats>2</csoundBeats>
+          </subjectiveDuration>
+          <name>Sine Phrase</name>
+          <score>i1 0 2 440 0.2</score>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
+</blueData>

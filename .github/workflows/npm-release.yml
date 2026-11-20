@@ -1,0 +1,366 @@
+# npm tooling build, cross-platform archive smoke, and OIDC trusted publisher workflow.
+#
+# Independent from desktop application releases (.github/workflows/release.yml).
+# - Triggers on immutable `npm-v*` tags for publication.
+# - Triggers on tooling/skill/workflow PRs and manual `workflow_dispatch` for
+#   verification-only runs without touching npm registry state.
+# - Packs both archives once on initial run, retains exact bytes, SHA-512
+#   integrity, and per-package file inventories immutably (`overwrite: false`),
+#   reuses the retained pair across tagged reruns, verifies on macOS arm64,
+#   Windows x64, and Linux x64, and reserves `id-token: write` strictly for
+#   `publish-npm` inside the protected `npm-release` Environment.
+name: npm Tooling Release
+
+on:
+  push:
+    tags:
+      - 'npm-v*'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'packages/blue-data/**'
+      - 'packages/blue-cli/**'
+      - 'packages/blue-java/**'
+      - 'skills/blue-projects/**'
+      - 'scripts/verify-npm-packages*'
+      - 'scripts/npm-smoke/**'
+      - 'scripts/verify-npm-release*'
+      - '.github/workflows/npm-release.yml'
+      - 'LICENSING.md'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-tooling-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pack-and-validate:
+    name: pack-and-validate
+    runs-on: ubuntu-22.04
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      version: ${{ steps.validate.outputs.version }}
+      dist-tag: ${{ steps.validate.outputs.dist-tag }}
+      is-prerelease: ${{ steps.validate.outputs.is-prerelease }}
+      is-tag-release: ${{ steps.validate.outputs.is-tag-release }}
+      artifact-name: ${{ steps.validate.outputs.artifact-name }}
+      data-integrity: ${{ steps.prepare-archives.outputs.data-integrity }}
+      cli-integrity: ${{ steps.prepare-archives.outputs.cli-integrity }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Setup pnpm 12.8.1
+        uses: pnpm/action-setup@v6
+        with:
+          version: '12.8.1'
+          run_install: false
+
+      - name: Resolve pnpm store path
+        shell: bash
+        run: |
+          echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-12.8.1-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-12.8.1-store-
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Install workspace dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate tag, workspace versions, and artifact identity
+        id: validate
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/npm-v* ]]; then
+            VALIDATE_JSON=$(node scripts/verify-npm-release.mjs validate-tag \
+              --tag "${GITHUB_REF_NAME}" \
+              --github-output "$GITHUB_OUTPUT")
+            VERSION=$(node -e "process.stdout.write(JSON.parse(process.argv[1]).version)" "$VALIDATE_JSON")
+            echo "is-tag-release=true" >> "$GITHUB_OUTPUT"
+            echo "artifact-name=npm-tooling-archives-${VERSION}-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            VALIDATE_JSON=$(node scripts/verify-npm-release.mjs validate-tag \
+              --github-output "$GITHUB_OUTPUT")
+            VERSION=$(node -e "process.stdout.write(JSON.parse(process.argv[1]).version)" "$VALIDATE_JSON")
+            echo "is-tag-release=false" >> "$GITHUB_OUTPUT"
+            echo "artifact-name=npm-tooling-archives-${VERSION}-${GITHUB_SHA}-run-${GITHUB_RUN_ID}-attempt-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run package and release unit tests
+        run: |
+          pnpm --filter @blue/data test
+          pnpm --filter blue-cli test
+          node --test scripts/verify-npm-packages.test.mjs scripts/verify-npm-release.test.mjs
+
+      - name: Download retained archive pair on tagged rerun
+        id: download-retained
+        if: steps.validate.outputs.is-tag-release == 'true' && github.run_attempt > 1
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.validate.outputs.artifact-name }}
+          path: ${{ runner.temp }}/npm-artifacts
+
+      - name: Prepare or reuse immutable verified archive pair
+        id: prepare-archives
+        shell: bash
+        env:
+          TAG: ${{ steps.validate.outputs.tag }}
+          VERSION: ${{ steps.validate.outputs.version }}
+          DIST_TAG: ${{ steps.validate.outputs.dist-tag }}
+          IS_TAG_RELEASE: ${{ steps.validate.outputs.is-tag-release }}
+          DOWNLOAD_OUTCOME: ${{ steps.download-retained.outcome }}
+        run: |
+          ARTIFACTS_DIR="${RUNNER_TEMP}/npm-artifacts"
+          MANIFEST_PATH="${ARTIFACTS_DIR}/npm-release-manifest.json"
+          if [[ "${IS_TAG_RELEASE}" == "true" && "${GITHUB_RUN_ATTEMPT}" -gt 1 ]]; then
+            if [[ "${DOWNLOAD_OUTCOME}" != "success" || ! -f "${MANIFEST_PATH}" ]]; then
+              echo "::error::Retained archive artifact '${{ steps.validate.outputs.artifact-name }}' is unavailable for tagged rerun attempt ${GITHUB_RUN_ATTEMPT}. Refusing to re-pack an already-tagged release; recover using locally retained matrix-verified archives per docs/npm-release-guide.md#failure-and-partial-release-recovery or cut a new npm-v<next-version> tag."
+              exit 1
+            fi
+            node scripts/verify-npm-release.mjs verify-manifest \
+              --manifest "${MANIFEST_PATH}" \
+              --artifacts-dir "${ARTIFACTS_DIR}" \
+              --expected-version "${VERSION}" \
+              --expected-tag "${TAG}" \
+              --expected-revision "${GITHUB_SHA}" \
+              --github-output "$GITHUB_OUTPUT"
+            echo "reused-retained=true" >> "$GITHUB_OUTPUT"
+          else
+            if [[ "${IS_TAG_RELEASE}" == "true" ]]; then
+              node scripts/verify-npm-release.mjs check-registry-absent --version "${VERSION}"
+            fi
+            rm -rf "${ARTIFACTS_DIR}"
+            mkdir -p "${ARTIFACTS_DIR}"
+            pnpm --filter @blue/data build
+            pnpm --filter @blue/data pack --pack-destination "${ARTIFACTS_DIR}"
+            pnpm --filter blue-cli pack --pack-destination "${ARTIFACTS_DIR}"
+            node scripts/verify-npm-release.mjs create-manifest \
+              --data "${ARTIFACTS_DIR}/kunstmusik-blue-data-${VERSION}.tgz" \
+              --cli "${ARTIFACTS_DIR}/kunstmusik-blue-cli-${VERSION}.tgz" \
+              --version "${VERSION}" \
+              --revision "${GITHUB_SHA}" \
+              --dist-tag "${DIST_TAG}" \
+              --out "${MANIFEST_PATH}" \
+              --github-output "$GITHUB_OUTPUT"
+            node scripts/verify-npm-release.mjs verify-manifest \
+              --manifest "${MANIFEST_PATH}" \
+              --artifacts-dir "${ARTIFACTS_DIR}" \
+              --expected-version "${VERSION}" \
+              --expected-tag "${TAG}" \
+              --expected-revision "${GITHUB_SHA}"
+            echo "reused-retained=false" >> "$GITHUB_OUTPUT"
+          fi
+          ls -lh "${ARTIFACTS_DIR}"
+
+      - name: Upload retained npm archives and manifest
+        if: steps.prepare-archives.outputs.reused-retained != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.validate.outputs.artifact-name }}
+          path: ${{ runner.temp }}/npm-artifacts
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+
+  verify-consumers:
+    name: verify-consumers (${{ matrix.target-id }})
+    needs: pack-and-validate
+    runs-on: ${{ matrix.runs-on }}
+    env:
+      ARCHIVE_DIR_NAME: npm artifacts %OS%
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target-id: macos-arm64
+            runs-on: macos-15
+          - target-id: windows-x64
+            runs-on: windows-2022
+          - target-id: linux-x64
+            runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Setup pnpm 12.8.1
+        uses: pnpm/action-setup@v6
+        with:
+          version: '12.8.1'
+          run_install: false
+
+      - name: Resolve pnpm store path
+        shell: bash
+        run: |
+          echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
+
+      - name: Restore pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-12.8.1-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-12.8.1-store-
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install workspace verification dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download retained npm archives and manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.pack-and-validate.outputs.artifact-name }}
+          path: ${{ runner.temp }}/${{ env.ARCHIVE_DIR_NAME }}
+
+      - name: Verify downloaded archive integrity and inventory against manifest
+        shell: bash
+        env:
+          TAG: ${{ needs.pack-and-validate.outputs.tag }}
+          VERSION: ${{ needs.pack-and-validate.outputs.version }}
+          DATA_INTEGRITY: ${{ needs.pack-and-validate.outputs.data-integrity }}
+          CLI_INTEGRITY: ${{ needs.pack-and-validate.outputs.cli-integrity }}
+        run: |
+          node scripts/verify-npm-release.mjs verify-manifest \
+            --manifest "${RUNNER_TEMP}/${ARCHIVE_DIR_NAME}/npm-release-manifest.json" \
+            --artifacts-dir "${RUNNER_TEMP}/${ARCHIVE_DIR_NAME}" \
+            --expected-version "${VERSION}" \
+            --expected-tag "${TAG}" \
+            --expected-revision "${GITHUB_SHA}" \
+            --expected-data-integrity "${DATA_INTEGRITY}" \
+            --expected-cli-integrity "${CLI_INTEGRITY}"
+
+      - name: Verify literal Windows shim arguments
+        if: runner.os == 'Windows'
+        run: node --test scripts/verify-npm-packages.test.mjs
+
+      - name: Verify isolated npm package installs and consumer smokes
+        id: smoke-report
+        shell: bash
+        env:
+          VERSION: ${{ needs.pack-and-validate.outputs.version }}
+          SMOKE_REPORT: ${{ runner.temp }}/smoke-${{ matrix.target-id }}.json
+        run: |
+          node scripts/verify-npm-packages.mjs \
+            "${RUNNER_TEMP}/${ARCHIVE_DIR_NAME}/kunstmusik-blue-data-${VERSION}.tgz" \
+            "${RUNNER_TEMP}/${ARCHIVE_DIR_NAME}/kunstmusik-blue-cli-${VERSION}.tgz" \
+            --expected-version "${VERSION}" \
+            --json "${SMOKE_REPORT}"
+          echo "path=${SMOKE_REPORT}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload consumer smoke report
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-smoke-${{ matrix.target-id }}-${{ needs.pack-and-validate.outputs.version }}-${{ github.sha }}-attempt-${{ github.run_attempt }}
+          path: ${{ steps.smoke-report.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+
+  publish-npm:
+    name: publish-npm
+    needs: [pack-and-validate, verify-consumers]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/npm-v')
+    runs-on: ubuntu-22.04
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Ensure trusted publishing Node and npm versions
+        shell: bash
+        run: |
+          npm install -g "npm@^11.5.1"
+          NPM_VERSION=$(npm --version)
+          node -e "
+            const parse = (v) => v.replace(/^v/, '').split('-')[0].split('.').map(Number);
+            const gte = (a, b) => a[0] !== b[0] ? a[0] > b[0] : a[1] !== b[1] ? a[1] > b[1] : a[2] >= b[2];
+            const nodeVer = parse(process.version);
+            const npmVer = parse(process.argv[1]);
+            if (!gte(nodeVer, [22, 14, 0])) throw new Error('Node >= 22.14.0 required for OIDC trusted publishing, got ' + process.version);
+            if (!gte(npmVer, [11, 5, 1])) throw new Error('npm >= 11.5.1 required for OIDC trusted publishing, got ' + process.argv[1]);
+            console.log('Verified trusted publishing toolchain: node', process.version, 'npm', process.argv[1]);
+          " "$NPM_VERSION"
+
+      - name: Download retained npm archives and manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ needs.pack-and-validate.outputs.artifact-name }}
+          path: ${{ runner.temp }}/npm-artifacts
+
+      - name: Re-verify retained archive integrity and inventory before publication
+        shell: bash
+        env:
+          TAG: ${{ needs.pack-and-validate.outputs.tag }}
+          VERSION: ${{ needs.pack-and-validate.outputs.version }}
+          DATA_INTEGRITY: ${{ needs.pack-and-validate.outputs.data-integrity }}
+          CLI_INTEGRITY: ${{ needs.pack-and-validate.outputs.cli-integrity }}
+        run: |
+          node scripts/verify-npm-release.mjs verify-manifest \
+            --manifest "${RUNNER_TEMP}/npm-artifacts/npm-release-manifest.json" \
+            --artifacts-dir "${RUNNER_TEMP}/npm-artifacts" \
+            --expected-version "${VERSION}" \
+            --expected-tag "${TAG}" \
+            --expected-revision "${GITHUB_SHA}" \
+            --expected-data-integrity "${DATA_INTEGRITY}" \
+            --expected-cli-integrity "${CLI_INTEGRITY}"
+
+      - name: Publish verified packages to npm with OIDC provenance
+        shell: bash
+        env:
+          TAG: ${{ needs.pack-and-validate.outputs.tag }}
+          VERSION: ${{ needs.pack-and-validate.outputs.version }}
+          DATA_INTEGRITY: ${{ needs.pack-and-validate.outputs.data-integrity }}
+          CLI_INTEGRITY: ${{ needs.pack-and-validate.outputs.cli-integrity }}
+        run: |
+          node scripts/verify-npm-release.mjs publish \
+            --manifest "${RUNNER_TEMP}/npm-artifacts/npm-release-manifest.json" \
+            --artifacts-dir "${RUNNER_TEMP}/npm-artifacts" \
+            --expected-version "${VERSION}" \
+            --expected-tag "${TAG}" \
+            --expected-revision "${GITHUB_SHA}" \
+            --expected-data-integrity "${DATA_INTEGRITY}" \
+            --expected-cli-integrity "${CLI_INTEGRITY}" \
+            --provenance

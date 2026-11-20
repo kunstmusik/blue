@@ -1,243 +1,267 @@
-# @blue/data — Quick Start Guide
+# @kunstmusik/blue-data
 
-## Installation
+Portable TypeScript/JavaScript data model, `.blue` XML loader/migrator/serializer, musical timing primitives, and Csound CSD compiler for [Blue](https://github.com/kunstmusik/blue), compatible with Java Blue project files.
+
+> Published on npm as `@kunstmusik/blue-data`. Inside the Blue monorepo, the workspace package name is `@blue/data`.
+
+## Requirements & Installation
+
+- **Node.js**: `>= 22` (native ESM and CommonJS supported; ESM and CJS share `BlueData` model identity)
+- **TypeScript**: Declarations included (`dist/esm/index.d.ts` and `dist/cjs/index.d.ts`, tested with strict `NodeNext` and bundler resolution)
+- **Browsers**: Portable ESM output with zero `node:*` built-ins for Vite, esbuild, and other ESM bundlers
 
 ```bash
-pnpm install @blue/data
+npm install @kunstmusik/blue-data
 ```
 
-Or from the monorepo root:
+From a monorepo checkout, build the workspace package with:
 
 ```bash
-pnpm install
-pnpm build
+pnpm --filter @blue/data build
 ```
 
-## Basic Usage
+## Runnable Inspect, Edit, Save, and Reload Example
 
-### Loading a .blue File
+A complete runnable example ships in the package at [examples/inspect-edit.mjs](examples/inspect-edit.mjs). Run it against any `.blue` project, writing the updated copy to a separate file so the original stays untouched:
 
-```typescript
-import { BlueData } from '@blue/data';
-import { readFileSync } from 'fs';
-
-// Read XML from file (in Node.js; browser uses fetch/FileReader)
-const xml = readFileSync('project.blue', 'utf-8');
-const data = BlueData.loadFromString(xml);
-
-console.log('Project:', data.getProjectProperties().title);
-console.log('Version:', data.getVersion());
+```bash
+node node_modules/@kunstmusik/blue-data/examples/inspect-edit.mjs <input.blue> <output.blue> [new-title]
 ```
 
-### Saving a .blue File
+### Node.js ESM Walkthrough
 
-```typescript
-const xml = data.saveToString();
-writeFileSync('project.blue', xml);
-```
+The example reads native file paths with `node:fs`, loads XML with `readProjectXml` (which surfaces diagnostics without throwing), edits the project title, writes to a separate output file, and reloads the output to verify the change:
 
-### Inspecting the Score
+```javascript
+import { mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { readProjectXml } from '@kunstmusik/blue-data';
 
-```typescript
-const score = data.getScore();
-
-// Check layer groups
-for (const lg of score) {
-  console.log('Layer group:', lg.getName());
-}
-
-// Access audio layers
-import { AudioLayerGroup } from '@blue/data';
-const audioGroup = score[0] as AudioLayerGroup;
-for (const layer of audioGroup) {
-  console.log('  Layer:', layer.getName());
-  for (const clip of layer) {
-    console.log('    Clip:', clip.getName(), clip.getAudioFile());
+function isSameFile(a, b) {
+  if (a === b) return true;
+  try {
+    const statA = statSync(a);
+    const statB = statSync(b);
+    return (
+      (statA.dev === statB.dev && statA.ino === statB.ino) || realpathSync(a) === realpathSync(b)
+    );
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+      return false;
+    }
+    throw error;
   }
 }
 
-// Access pattern layers
-import { PatternsLayerGroup } from '@blue/data';
-const patternGroup = score[1] as PatternsLayerGroup;
-console.log('Pattern beats:', patternGroup.getPatternBeatsLength());
-for (const layer of patternGroup) {
-  const pd = layer.getPatternData();
-  console.log('  Pattern max:', pd.getMaxSelected());
+const inputPath = path.resolve('input.blue');
+const outputPath = path.resolve('output.blue');
+if (isSameFile(inputPath, outputPath)) {
+  throw new Error('Refusing to overwrite input project; pass a separate output path.');
+}
+
+// 1. Read and inspect without executing project scripts
+const xml = readFileSync(inputPath, 'utf8');
+const report = readProjectXml(xml, {
+  kind: 'project',
+  label: inputPath,
+  nativePath: inputPath,
+});
+
+for (const d of report.diagnostics) {
+  console.error(
+    `[${d.severity} ${d.code}] ${d.source.label}: ${d.path}: ${d.message} ${d.recovery}`,
+  );
+}
+if (!report.ok) {
+  process.exit(1);
+}
+
+const project = report.value;
+console.log('Title:', project.getProjectProperties().title || '(untitled)');
+console.log('Version:', project.getVersion());
+console.log('Score layer groups:', project.getScore().length);
+
+// 2. Edit and save to a sibling file
+project.getProjectProperties().title = 'Updated Blue Project';
+mkdirSync(path.dirname(outputPath), { recursive: true });
+writeFileSync(outputPath, project.saveToString(), 'utf8');
+
+// 3. Reload the saved copy to verify
+const reloaded = readProjectXml(readFileSync(outputPath, 'utf8'), {
+  kind: 'project',
+  label: outputPath,
+  nativePath: outputPath,
+});
+if (!reloaded.ok) {
+  throw new Error('Failed to reload saved project.');
+}
+console.log('Verified title:', reloaded.value.getProjectProperties().title);
+```
+
+### Node.js CommonJS Loading
+
+CommonJS consumers can load the same package root with `require('@kunstmusik/blue-data')`. Both ESM and CommonJS share the exact same `BlueData` constructor and model identity:
+
+```javascript
+const { readFileSync, writeFileSync } = require('node:fs');
+const { BlueData, readProjectXml } = require('@kunstmusik/blue-data');
+
+const xml = readFileSync('input.blue', 'utf8');
+const report = readProjectXml(xml, { kind: 'project', label: 'input.blue' });
+if (!report.ok) {
+  console.error(report.diagnostics);
+  process.exit(1);
+}
+
+const project = report.value;
+project.getProjectProperties().title = 'Updated from CommonJS';
+writeFileSync('output.blue', project.saveToString(), 'utf8');
+
+const reloaded = readProjectXml(readFileSync('output.blue', 'utf8'), {
+  kind: 'project',
+  label: 'output.blue',
+});
+if (reloaded.ok) {
+  console.log('Shared BlueData identity:', reloaded.value instanceof BlueData); // true
+  console.log('Verified title:', reloaded.value.getProjectProperties().title);
 }
 ```
 
-### Generating a CSD
+## XML Diagnostics, Warnings vs. Rejection, and Save Normalization
+
+### `readProjectXml` vs. `BlueData.loadFromString`
+
+Both project loaders parse XML, validate element/attribute shape and `@version` syntax, apply raw-XML project migrations (`UpgradeManager`), and validate the canonical post-migration graph without touching disk or executing any project scripts (`JavaScriptObject`, `ClojureObject`, `PythonObject`, `ObjectBuilder`, or `External`):
+
+- **`readProjectXml(xml, source?)`** returns a non-throwing `XmlLoadResult<BlueData>`:
+  - `{ ok: true, value, diagnostics }` when loading succeeds, including any non-fatal `'warning'` diagnostics (for example, redundant historical fields safely omitted on save or unresolved `LiveData` set references).
+  - `{ ok: false, diagnostics }` on XML syntax, shape, version, conflict, or value errors (no `value` property is returned).
+  - Each `XmlDiagnostic` includes `code`, `severity` (`'warning' | 'error'`), `source` (`XmlSource`), XPath-like `path`, optional `member`/`value`/`line`/`column`, `message`, and `recovery`.
+- **`BlueData.loadFromString(xml, sink?)`** is a strict throwing convenience loader for `'in-memory project'` XML. It throws `XmlLoadError` on load failures **and** throws `XmlLoadError` when accepted XML produces `'warning'` diagnostics unless an `XmlDiagnosticSink` callback is passed as the second argument so warnings cannot be silently swallowed.
+
+### Canonical Save Normalization
+
+`project.saveAsXML()` and `project.saveToString()` serialize the in-memory `BlueData` graph without touching disk:
+
+- Normalizes `<blueData version="...">` to the canonical `BLUE_VERSION` (`2.10.1`).
+- Writes project root sections in Java-compatible order (`projectProperties`, `arrangement`, `mixer`, `tables`, `soundObjectLibrary`, `globalOrcSco`, `opcodeList`, `liveData`, `score`, `scratchPadData`, `noteProcessorChainMap`, `renderStartTime`, `renderEndTime`, `markersList`, `loopRendering`, `midiInputProcessor`, `pluginData`).
+- Emits migrated project structures cleanly (for example, `score`-owned `timeContext` and `mixer`-owned panning attributes) and clones preserved `pluginData` children (`ClojureProjectData`) so external edits to the serialized XML do not mutate `BlueData`.
+
+### Automation Resolution Parity
+
+`Parameter` keeps its values, bounds, and line points as JavaScript `number` (binary64), while storing resolution as exact Java-compatible decimal text (`getResolutionText()` / `setResolutionText()`). Positive resolutions quantize interpolated values with Java Blue semantics; zero or negative resolutions leave interpolation unquantized. Project XML reads legacy `resolution` attributes and writes canonical `bdresolution` attributes.
+
+## Timing Units
+
+Blue separates timeline positions (`TimePosition`), durations (`TimeDuration`), and conversion context (`TimeContext`):
+
+| Type           | Purpose            | Units & Rules                                                                                                                                                                                                                                                                                |
+| :------------- | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TimeBase`     | Unit discriminant  | `BEATS`, `BBT`, `BBST`, `BBF`, `TIME`, `SECONDS`, `FRAME`, `SMPTE` (display-only)                                                                                                                                                                                                            |
+| `TimePosition` | Timeline position  | `beats(n)` (quarter note = 1 beat); `bbt(bar, beat, ticks)` and `bbst(bar, beat, sixteenth, ticks)` use **1-based** bar/beat (`sixteenth` 1–4) with 960 PPQ; `bbf(bar, beat, fraction)` uses **1-based** bar/beat with 0–99 hundredths; `timeValue(h, m, s, ms)` / `seconds(s)`; `frames(n)` |
+| `TimeDuration` | Span / length      | Same unit families with **0-based** bars/beats (`sixteenth` 0–3) and converts bar/beat durations using `MeterMap.get(0)`                                                                                                                                                                     |
+| `TimeContext`  | Conversion context | Holds `TempoMap` (defaults to 60 BPM when disabled), `MeterMap` (defaults to 4/4 at bar 1), `sampleRate` (default `44100`), and `smpteFrameRate` (default `30`)                                                                                                                              |
 
 ```typescript
-import { initializeJavaScriptRuntime } from '@blue/data';
+import { TimeContext, TimeDuration, TimePosition } from '@kunstmusik/blue-data';
 
-// Required if the project contains JavaScriptObject sound objects.
-await initializeJavaScriptRuntime();
+const context = new TimeContext();
+context.getTempoMap().setTempo(120);
+context.getTempoMap().setEnabled(true);
+context.setSampleRate(48000);
 
-const csd = data.toCSD();
-console.log(csd);
-// Outputs:
-// <CsoundSynthesizer>
-// <CsOptions>
-// -r 44100
-// -k 64
-// ...
-// </CsOptions>
-// <CsInstruments>
-// ... orchestra code ...
-// </CsInstruments>
-// <CsScore>
-// i1 0 2
-// ...
-// </CsScore>
-// </CsoundSynthesizer>
+const pos = TimePosition.bbt(2, 1, 480); // bar 2, beat 1, half-beat (480/960 PPQ)
+const dur = TimeDuration.beats(4);
+
+console.log('Position in beats:', pos.toBeats(context)); // 4.5
+console.log('Position in seconds:', pos.toSeconds(context)); // 2.25
+console.log('Position in frames:', pos.toFrames(context)); // 108000
+console.log('Duration in seconds:', dur.toSeconds(context)); // 2
 ```
 
-### Generating a CSD with Java-backed Clojure or Jython
-
-```typescript
-import type { JavaRuntimeClientContract } from '@blue/data';
-
-const runtimeClient: JavaRuntimeClientContract = /* provided by the host app */;
-
-await data.processOnLoadAsync(undefined, runtimeClient);
-const csd = await data.toCSDAsync(undefined, runtimeClient);
-```
-
-`@blue/data` stays browser-safe and does not launch Java itself. Hosts such as Electron main inject a `JavaRuntimeClientContract` when they want `ClojureObject`, `PythonObject`, Python `ObjectBuilder`, `PythonInstrument`, or `PythonProcessor` execution to participate in on-load processing, note processing, orchestra generation, and score generation.
-
-### Automation resolution parity
-
-`Parameter` keeps its values, bounds, and line points as JavaScript `number`
-(binary64). Its resolution is stored as an exact Java-compatible decimal text;
-use `getResolutionText()` and `setResolutionText()` when the scale matters.
-Positive resolutions quantize interpolated values with Java Blue semantics. A
-zero or negative resolution leaves interpolation unquantized. Project XML
-writes the canonical `bdresolution` text and reads legacy numeric `resolution`
-attributes for compatibility.
-
-### Creating a Project Programmatically
+## Creating and Inspecting Projects Programmatically
 
 ```typescript
 import {
-  BlueData,
-  ProjectProperties,
-  AudioLayerGroup,
-  AudioLayer,
   AudioClip,
+  BlueData,
   FadeType,
-  TimePosition,
-  TimeDuration,
+  GenericInstrument,
+  GenericScore,
+  PatternsLayerGroup,
+  PolyObject,
   Score,
-  GlobalOrcSco,
-  Tables,
-} from '@blue/data';
+  TimeDuration,
+  TimePosition,
+  TrackLayerGroup,
+} from '@kunstmusik/blue-data';
 
 const data = new BlueData();
 
-// Set project properties
-data.getProjectProperties().sampleRate = '44100';
-data.getProjectProperties().ksmps = '64';
-data.getProjectProperties().nchnls = '2';
+// Project properties & instrument arrangement
+const props = data.getProjectProperties();
+props.title = 'Programmatic Study';
+props.sampleRate = '48000';
+props.ksmps = '64';
+props.channels = '2';
 
-// Global orchestra
-data.getGlobalOrcSco().setGlobalOrc('sr = 44100\nkr = 4410\nnchnls = 2\n0dbfs = 1\n');
+const instr = new GenericInstrument();
+instr.setName('Sine');
+instr.setText('a1 oscili p5, p4\n  outs a1, a1');
+data.getArrangement().addInstrument(instr, '1');
 
-// F-tables
-data.getTableSet().addTable('f1', 'f 1 0 1024 10 1');
+// Global orchestra / F-tables
+data.getGlobalOrcSco().setGlobalOrc('0dbfs = 1\n');
+data.getTableSet().setTables('f 1 0 1024 10 1');
 
-// Score with audio layer
+// Score with a TrackLayerGroup (audio clips & sound objects) and root PolyObject
 const score = new Score();
-const audioGroup = new AudioLayerGroup();
-const layer = audioGroup.newLayerAt(0);
-layer.setName('Audio Track 1');
+const rootPoly = score[0];
+if (rootPoly instanceof PolyObject) {
+  const gs = new GenericScore();
+  gs.setScoreText('i1 0 2 440 0.2');
+  gs.setStartTime(TimePosition.beats(0));
+  gs.setSubjectiveDuration(TimeDuration.beats(2));
+  rootPoly[0].push(gs);
+}
+
+const trackGroup = new TrackLayerGroup();
+const track = trackGroup.newLayerAt(0);
+track.setName('Audio Track 1');
 
 const clip = new AudioClip();
 clip.setName('Kick Drum');
-clip.setAudioFile('/samples/kick.wav');
+clip.setAudioFile('samples/kick.wav');
 clip.setAudioDuration(0.5);
 clip.setStartTime(TimePosition.beats(0));
 clip.setSubjectiveDuration(TimeDuration.beats(0.5));
 clip.setFadeIn(0.01);
+clip.setFadeInType(FadeType.LINEAR);
 clip.setFadeOut(0.01);
-layer.push(clip);
+track.push(clip);
 
-score.push(audioGroup);
+score.push(trackGroup);
 data.setScore(score);
 
-// Save
+// Inspect score layer groups
+for (const group of data.getScore()) {
+  if (group instanceof TrackLayerGroup) {
+    console.log('Track group:', group.getName(), 'tracks:', group.length);
+  } else if (group instanceof PatternsLayerGroup) {
+    console.log('Pattern group beats:', group.getPatternBeatsLength());
+  } else if (group instanceof PolyObject) {
+    console.log('PolyObject:', group.getName(), 'layers:', group.length);
+  }
+}
+
 const xml = data.saveToString();
 ```
 
-## API Reference
+## CSD Generation & Runtime Requirements
 
-### Core
+### QuickJS Initialization for `JavaScriptObject`
 
-| Class               | Description                                                         |
-| ------------------- | ------------------------------------------------------------------- |
-| `BlueData`          | Root project class. `loadFromString()`, `saveToString()`, `toCSD()` |
-| `ProjectProperties` | Sample rate, ksmps, nchnls, 0dbfs, Csound options                   |
-| `CompileData`       | CSD compilation accumulator                                         |
-
-### Score Layers
-
-| Type                 | Description                                 |
-| -------------------- | ------------------------------------------- |
-| `AudioClip`          | File-based audio clip with timing and fades |
-| `AudioLayer`         | Layer of AudioClip objects                  |
-| `AudioLayerGroup`    | Group of AudioLayers                        |
-| `PatternData`        | Boolean array pattern                       |
-| `PatternLayer`       | Layer with SoundObject + pattern grid       |
-| `PatternsLayerGroup` | Group of PatternLayers                      |
-| `PolyObject`         | Nested layer group (legacy score type)      |
-
-### Sound Objects
-
-| Type               | Description                                                                 |
-| ------------------ | --------------------------------------------------------------------------- |
-| `GenericScore`     | Raw Csound score text                                                       |
-| `ClojureObject`    | Clojure code -> score (requires injected Java runtime for execution)        |
-| `JavaScriptObject` | JS code → score (uses QuickJS after runtime initialization)                 |
-| `PythonObject`     | Python code → score (requires injected Java runtime for execution)          |
-| `ObjectBuilder`    | Builder-based score object; Python execution requires injected Java runtime |
-| `CSDSoundObject`   | Embedded CSD                                                                |
-| `Comment`          | Score annotation                                                            |
-
-### Supporting Types
-
-| Category        | Types                                                          |
-| --------------- | -------------------------------------------------------------- |
-| Mixer           | `Mixer`, `Channel`, `Effect`, `EffectsChain`, `Send`           |
-| Automation      | `Parameter`, `ParameterList`                                   |
-| Note Processors | `AddProcessor`, `MultiplyProcessor`, `Code`, `PythonProcessor` |
-| Live            | `LiveObject`, `LiveObjectSet`, `LiveObjectSetList`             |
-| MIDI            | `MidiKeyMapping`, `MidiVelocityMapping`                        |
-| Opcodes         | `OpcodeDefinition`, `OpcodeList`                               |
-
-### Utilities
-
-| Function                                | Description                           |
-| --------------------------------------- | ------------------------------------- |
-| `setScoreStart(notes, offset)`          | Shift all notes by offset             |
-| `getNotes(scoreText)`                   | Parse Csound score text into NoteList |
-| `applyNoteProcessorChain(notes, chain)` | Apply processor chain                 |
-
-## Environment Compatibility
-
-`@blue/data` works in **both Node.js and browsers**:
-
-- ✅ No Node.js built-in dependency for `JavaScriptObject` execution
-- ✅ `ClojureObject`, `PythonObject`, `ObjectBuilder`, `PythonInstrument`, and `PythonProcessor` XML/project metadata remain available without Java
-- ✅ QuickJS-backed JavaScript evaluation works in both Node.js and browser bundles
-- ✅ Loading/saving `.blue` XML files remains synchronous
-- ⚠️ `JavaScriptObject` execution requires a one-time async runtime preload
-- ⚠️ Clojure and Python-backed execution uses the async Java runtime contract and host-provided `toCSDAsync()` / `processOnLoadAsync()` flows
-
-### Initializing the JavaScript runtime
-
-If you call `data.toCSD()` on a project that contains `JavaScriptObject` sound
-objects, or call `JavaScriptObject.generateForCSD()` directly, preload QuickJS
-once before generating score:
+If a project contains `JavaScriptObject` sound objects (or JavaScript `ObjectBuilder` objects), await `initializeJavaScriptRuntime()` once before calling `toCSD()`, `toDiskCSD()`, `toRealtimePlaybackCSD()`, `toBlueLiveCSD()`, their `*Async` counterparts, or instantiating `JavaScriptSession`:
 
 ```typescript
 import {
@@ -247,48 +271,118 @@ import {
   TimeContext,
   disposeJavaScriptCompileState,
   initializeJavaScriptRuntime,
-} from '@blue/data';
+  readProjectXml,
+} from '@kunstmusik/blue-data';
 
 await initializeJavaScriptRuntime();
 
-const data = BlueData.loadFromString(xml);
-const csd = data.toCSD();
+const report = readProjectXml(xml);
+if (!report.ok) {
+  throw new Error(report.diagnostics.map((d) => d.message).join('\n'));
+}
 
-// Low-level direct JavaScriptObject use should dispose its compile state.
+const project = report.value;
+const realtimeCsd = project.toCSD();
+const diskCsd = project.toDiskCSD();
+
+// Low-level direct JavaScriptObject calls should dispose their compile state:
 const compileData = new CompileData();
 try {
   const notes = new JavaScriptObject().generateForCSD(new TimeContext(), compileData, 0, -1);
-  console.log(notes.length);
+  console.log('Generated notes:', notes.length);
 } finally {
   disposeJavaScriptCompileState(compileData);
 }
 ```
 
-### What works everywhere
+`toCSD()` / `toDiskCSD()` return the compiled `.csd` string, while `toRealtimePlaybackCSD()` and `toBlueLiveCSD()` return a `RenderCsdResult` containing `csdText` plus compiled runtime bindings (`parameters`, `stringChannels`, `blueX7Bindings`, `midiInstrumentTargets`, `mixerGateBindings`, `pannerBindings`, and optional `meterBindingMap`).
 
-- Loading/saving `.blue` XML files
-- All data class manipulation
-- `JavaScriptObject` score generation after `await initializeJavaScriptRuntime()`
-- CSD generation for projects that do not require host-injected Java evaluation
+### Host-Injected Java Contract (`JavaRuntimeClientContract`)
 
-### What requires a host-injected Java runtime
+`@kunstmusik/blue-data` stays browser-safe and does not launch Java or OS subprocesses itself. When `project.usesJavaRuntime()` returns `true` (projects containing `ClojureObject`, `PythonObject`, Python/Clojure `ObjectBuilder`, `PythonInstrument`, or `PythonProcessor`), pass a host-injected `JavaRuntimeClientContract` to the async methods:
 
-- `ClojureObject` score generation and on-load execution
-- `PythonObject` and Python `ObjectBuilder` score generation
-- `PythonInstrument` orchestra generation and `PythonProcessor` note-chain execution
-- `Mixer` CSD variable generation — needs channel routing info
+```typescript
+import {
+  JavaScriptSession,
+  initializeJavaScriptRuntime,
+  type JavaRuntimeClientContract,
+} from '@kunstmusik/blue-data';
 
-## Browser Usage
+await initializeJavaScriptRuntime();
+const session = new JavaScriptSession();
+const runtimeClient: JavaRuntimeClientContract = /* provided by host runtime */;
 
-```html
-<script type="module">
-  import { BlueData, initializeJavaScriptRuntime } from '/path/to/@blue/data/dist/index.js';
-
-  await initializeJavaScriptRuntime();
-
-  const xml =
-    '<blueData version="2.10.0"><projectProperties><title>Test</title></projectProperties></blueData>';
-  const data = BlueData.loadFromString(xml);
-  console.log(data.getProjectProperties().title); // "Test"
-</script>
+try {
+  await project.processOnLoadAsync(session, runtimeClient);
+  const csd = await project.toDiskCSDAsync(session, runtimeClient);
+  console.log(csd);
+} finally {
+  session.dispose();
+}
 ```
+
+External score commands (`External` and external `ObjectBuilder` objects) similarly require a host-registered `ExternalCommandExecutor` via `setExternalCommandExecutor()`.
+
+### Compiling Full User Projects with `@kunstmusik/blue-cli`
+
+If you want to compile full `.blue` projects from disk—including projects that reference project-relative audio files or Scala scales, execute on-load scripts, run Java-backed Clojure/Jython generators, or invoke external score commands—use **`@kunstmusik/blue-cli`** (which bundles the host Java helper and asset resolution):
+
+```bash
+npx @kunstmusik/blue-cli compile -p project.blue -o project.csd
+```
+
+## Browser Usage (ESM Bundlers)
+
+`@kunstmusik/blue-data` uses static ES imports and avoids Node built-ins so browser bundlers such as Vite and esbuild resolve its portable ESM entry (`dist/esm/index.js`) directly:
+
+```javascript
+// src/main.js (bundled with Vite or esbuild)
+import {
+  BlueData,
+  TimePosition,
+  initializeJavaScriptRuntime,
+  readProjectXml,
+} from '@kunstmusik/blue-data';
+
+const xml =
+  '<blueData version="2.10.1"><projectProperties><title>Browser Study</title></projectProperties></blueData>';
+
+const report = readProjectXml(xml, { kind: 'project', label: 'browser-study.blue' });
+if (!report.ok) {
+  throw new Error(report.diagnostics.map((d) => d.message).join('\n'));
+}
+
+const project = report.value;
+project.getProjectProperties().title = 'Updated in Browser';
+console.log(project instanceof BlueData, TimePosition.beats(2.5).getCsoundBeats());
+
+// Optional: initialize QuickJS WASM when compiling projects with JavaScriptObject scripts
+await initializeJavaScriptRuntime();
+const csd = project.toCSD();
+console.log(csd);
+```
+
+For example, bundling with `esbuild`:
+
+```bash
+npx esbuild src/main.js --bundle --platform=browser --format=esm --outfile=dist/bundle.js
+```
+
+## Supported Package-Root API Groups
+
+Import all supported public symbols from the package root (`@kunstmusik/blue-data`). The workspace subpaths `./test-support` and `./test-support/audio-fixtures` are **workspace-internal** for repository tests and are not supported consumer APIs.
+
+| API Group                           | Key Package-Root Exports                                                                                                                                                                                                                                                                                                                                                                                                    |
+| :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Project & XML**                   | `BlueData`, `readProjectXml`, `readResourceXml`, `BLUE_VERSION`, `ProjectProperties`, `GlobalOrcSco`, `Tables`, `MarkersList`, `ScratchPadData`, `XmlLoadError`, `XmlLoadContext`, `XmlLoadResult`, `XmlDiagnostic`, `XmlDiagnosticSink`, `XmlSource`, `XmlResourceKind`, `XmlResource`, `RenderCsdResult`                                                                                                                  |
+| **Score & Layers**                  | `Score`, `TrackLayerGroup`, `TrackLayer`, `ScoreTrack`, `TrackItem`, `AudioClip`, `FadeType`, `PatternsLayerGroup`, `PatternLayer`, `PatternData`, `PolyObject`, `SoundLayer`                                                                                                                                                                                                                                               |
+| **Instruments & Arrangement**       | `Arrangement`, `Instrument`, `GenericInstrument`, `BlueSynthBuilder` (widgets & presets), `BlueX7`, `JavaScriptInstrument`, `PythonInstrument`, `InstrumentAssignment`, `InstrumentLibrary`, `OpcodeDefinition`, `OpcodeList`                                                                                                                                                                                               |
+| **Sound Objects & Note Processors** | `GenericScore`, `JavaScriptObject`, `ClojureObject`, `PythonObject`, `ObjectBuilder`, `CSDSoundObject`, `Comment`, `AudioFile`, `Sound`, `External`, `Instance`, `LineObject`, `ZakLineObject`, `PatternObject`, `PianoRoll`, `JMask`, `TrackerObject`, `FrozenSoundObject`, `SoundObjectLibrary`, `Note`, `NoteList`, `TimeBehavior`, `NoteProcessorChain`, `AddProcessor`, `MultiplyProcessor`, `Code`, `PythonProcessor` |
+| **Mixer, Automation & Live**        | `Mixer`, `Channel`, `ChannelList`, `Effect`, `EffectsChain`, `Send`, `Parameter`, `ParameterList`, `ParameterIdList`, `AutomationCurve`, `LiveData`, `LiveObject`, `LiveObjectSet`, `LiveObjectSetList`, `MidiInputProcessor`, `MidiKeyMapping`, `MidiVelocityMapping`                                                                                                                                                      |
+| **Timing Primitives**               | `TimeBase`, `TimePosition`, `TimeDuration`, `TimeContext`, `TimeState`, `TempoMap`, `TempoPoint`, `CurveType`, `MeterMap`, `MeasureMeterPair`, `Meter`, `SmpteFrameRate`, `beatsToTimePosition`, `timePositionToBeats`, `convertTimePosition`, `secondsToTimePosition`, `timePositionToSeconds`, `framesToTimePosition`, `timePositionToFrames`, `beatsToDuration`                                                          |
+| **Runtime & CSD Compilation**       | `initializeJavaScriptRuntime`, `isJavaScriptRuntimeInitialized`, `JavaScriptSession`, `setJavaScriptSession`, `getJavaScriptSession`, `disposeJavaScriptCompileState`, `JavaRuntimeClientContract`, `setJavaRuntimeClient`, `getJavaRuntimeClient`, `setExternalCommandExecutor`, `getExternalCommandExecutor`, `CompileData`, `buildStandardCSD`, `buildStandardCSDAsync`, `toBlueLiveCSD`, `toBlueLiveCSDAsync`           |
+| **Score & XML Utilities**           | `setScoreStart`, `getNotes`, `applyNoteProcessorChain`, `getTotalDuration`, `NoteParseException`, `parseScalaScale`, `parseAudioFileMetadata`                                                                                                                                                                                                                                                                               |
+
+## Licensing
+
+See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for package license terms (`MIT AND Apache-2.0`) and third-party attributions.

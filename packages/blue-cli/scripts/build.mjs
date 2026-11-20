@@ -14,7 +14,7 @@ await build({
   entryPoints: [path.join(rootDir, 'src', 'cli.ts')],
   bundle: true,
   platform: 'node',
-  target: ['node20'],
+  target: ['node22'],
   format: 'cjs',
   outfile: outFile,
   nodePaths: [
@@ -69,11 +69,18 @@ fs.writeFileSync(path.join(runtimeRoot, 'THIRD_PARTY_NOTICES.md'), notices);
 
 const attributionRoot = path.join(rootDir, 'dist/attribution');
 fs.mkdirSync(attributionRoot, { recursive: true });
-fs.copyFileSync(
-  path.resolve(rootDir, '../blue-data/THIRD_PARTY_NOTICES.md'),
-  path.join(attributionRoot, 'blue-data.md'),
-);
+const blueDataNotices = fs
+  .readFileSync(path.resolve(rootDir, '../blue-data/THIRD_PARTY_NOTICES.md'), 'utf8')
+  .replaceAll('resources/blue-x7-modern/ATTRIBUTION.md', 'blue-x7-msfa.md')
+  .replaceAll('resources/blue-x7-modern/provenance.json', 'provenance.json')
+  .replaceAll('LICENSES/Apache-2.0.txt', '../../LICENSES/Apache-2.0.txt')
+  .replaceAll('(LICENSE)', '(../../LICENSE)');
+fs.writeFileSync(path.join(attributionRoot, 'blue-data.md'), blueDataNotices);
 fs.copyFileSync(
   path.resolve(rootDir, '../blue-data/resources/blue-x7-modern/ATTRIBUTION.md'),
   path.join(attributionRoot, 'blue-x7-msfa.md'),
+);
+fs.copyFileSync(
+  path.resolve(rootDir, '../blue-data/resources/blue-x7-modern/provenance.json'),
+  path.join(attributionRoot, 'provenance.json'),
 );

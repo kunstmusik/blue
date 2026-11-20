@@ -45,6 +45,27 @@ require Csound. Java-backed features, including Clojure and Jython execution,
 require a Java runtime. See the [installation guide](docs/manual/installation.qmd)
 for platform details.
 
+### Node packages and agent skill
+
+Blue's project library and headless compiler are published on npm for Node.js 22+:
+
+- **Data library (`@kunstmusik/blue-data`)**: inspect, edit, migrate, and
+  serialize `.blue` projects in Node (ESM and CommonJS with TypeScript
+  declarations) or browser bundlers. See the
+  [data package guide](packages/blue-data/README.md).
+- **Command-line compiler (`@kunstmusik/blue-cli`)**: compile `.blue` projects
+  to disk, realtime, or Blue Live `.csd` files (`npx @kunstmusik/blue-cli compile -p project.blue -o project.csd`). See the [CLI guide](packages/blue-cli/README.md).
+- **Agent skill (`blue-projects`)**: install Blue project workflows into an
+  agent workspace with:
+
+  ```bash
+  npx skills add kunstmusik/blue --skill blue-projects
+  ```
+
+  See [the skill definition](skills/blue-projects/SKILL.md) and the
+  [npm tooling release guide](docs/npm-release-guide.md) for maintainer release
+  procedures.
+
 ## Build from source
 
 Run workspace commands from the repository root with pnpm. `pnpm install` supplies
@@ -104,19 +125,20 @@ channels, platform packaging, verification, and publication procedures.
 
 ## Repository layout
 
-| Location                                              | Purpose                                                                             |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `packages/blue-app` (`@blue/app`)                     | Electron main process, preload contracts, and React desktop UI                      |
-| `packages/blue-data` (`@blue/data`)                   | Platform-neutral project models, XML loading/saving, migrations, and CSD generation |
-| `packages/blue-engine-client` (`@blue/engine-client`) | Node.js client and versioned protocol for Blue Engine                               |
-| `packages/blue-java` (`@blue/java-runtime`)           | Java helper for project-scoped Clojure and Jython execution                         |
-| `packages/blue-cli` (`blue-cli`)                      | Command-line compilation of `.blue` projects into `.csd` files                      |
-| `native/blue-engine` (`@blue/engine-native`)          | C++ Csound sidecar, native builds, and engine tests                                 |
-| `docs/manual`                                         | Quarto source for the bundled user manual                                           |
-| `docs`                                                | Architecture conventions, release procedures, and contributor references            |
-| `examples`                                            | Example compositions and supporting resources                                       |
-| `specs`                                               | Feature specifications, plans, research, and implementation tasks                   |
-| `.specify`                                            | Spec Kit templates and project constitution                                         |
+| Location                                                  | Purpose                                                                             |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `packages/blue-app` (`@blue/app`)                         | Electron main process, preload contracts, and React desktop UI                      |
+| `packages/blue-data` (`@blue/data`)                       | Platform-neutral project models, XML loading/saving, migrations, and CSD generation |
+| `packages/blue-engine-client` (`@blue/engine-client`)     | Node.js client and versioned protocol for Blue Engine                               |
+| `packages/blue-java` (`@blue/java-runtime`)               | Java helper for project-scoped Clojure and Jython execution                         |
+| `packages/blue-cli` (`blue-cli` / `@kunstmusik/blue-cli`) | Command-line compilation of `.blue` projects into `.csd` files                      |
+| `skills/blue-projects`                                    | Installable agent skill and walkthroughs for Blue `.blue` projects                  |
+| `native/blue-engine` (`@blue/engine-native`)              | C++ Csound sidecar, native builds, and engine tests                                 |
+| `docs/manual`                                             | Quarto source for the bundled user manual                                           |
+| `docs`                                                    | Architecture conventions, release procedures, and contributor references            |
+| `examples`                                                | Example compositions and supporting resources                                       |
+| `specs`                                                   | Feature specifications, plans, research, and implementation tasks                   |
+| `.specify`                                                | Spec Kit templates and project constitution                                         |
 
 See the [data package guide](packages/blue-data/README.md),
 [CLI guide](packages/blue-cli/README.md),

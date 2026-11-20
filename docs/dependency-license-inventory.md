@@ -7,6 +7,7 @@ this inventory when the package graph changes. Use the lockfile and run:
 pnpm licenses list --json -P --filter @blue/app
 pnpm licenses list --json -P --filter @blue/data
 pnpm licenses list --json -P --filter @blue/engine-client
+pnpm licenses list --json -P --filter blue-cli
 ```
 
 The app filter needs the workspace-package reports for the full graph. This
@@ -163,3 +164,45 @@ installer under the [licensing rules](../LICENSING.md).
 ## Electron runtime
 
 - [Electron 44.9.1](https://github.com/electron/electron/tree/v44.9.1) (MIT, Chromium and Node.js runtime) is packaged from the app's development dependencies. Packaging copies the upstream license files to `Resources/licenses/Electron-LICENSE` and `Resources/licenses/Electron-LICENSES.chromium.html`.
+
+## Standalone npm packages and skill distribution boundaries
+
+Standalone npm archives and the GitHub-installed `blue-projects` skill have narrower license scopes than the GPL-3.0-or-later Blue desktop application (see [LICENSING.md](../LICENSING.md)).
+
+### `@kunstmusik/blue-data` (`packages/blue-data`)
+
+- **Package license expression**: `MIT AND Apache-2.0`.
+- **Shipped license, notice, and provenance files**: `LICENSE` (`MIT` for Blue-authored code and post-baseline modifications to `bluex7.orc`), `LICENSES/Apache-2.0.txt` (for the six incorporated Google `msfa` lookup tables), `THIRD_PARTY_NOTICES.md`, `resources/blue-x7-modern/ATTRIBUTION.md`, and `resources/blue-x7-modern/provenance.json`.
+- **npm runtime dependencies** (installed separately by npm; `devDependencies` excluded):
+  - `@rgrove/parse-xml` `4.2.3` (`ISC`)
+  - `quickjs-emscripten` `0.32.0` (`MIT`, plus `@jitl/quickjs-ffi-types`, `@jitl/quickjs-wasmfile-debug-asyncify`, `@jitl/quickjs-wasmfile-debug-sync`, `@jitl/quickjs-wasmfile-release-asyncify`, `@jitl/quickjs-wasmfile-release-sync`, and `quickjs-emscripten-core` at `0.32.0`, all `MIT` — listed in [Production dependencies through `@blue/data`](#production-dependencies-through-bluedata)).
+
+### `@kunstmusik/blue-cli` (`packages/blue-cli`)
+
+- **Package license field**: `SEE LICENSE IN THIRD_PARTY_NOTICES.md`, separating the JavaScript CLI bundle, externalized npm runtime dependencies, and separate-process Java helper scopes.
+- **JavaScript CLI bundle (`dist/blue-cli.cjs`)**: `MIT AND Apache-2.0 AND ISC` (bundles MIT Blue CLI/`@blue/data`/`commander` code, `Apache-2.0` Google `msfa` lookup tables from `@blue/data`, and `ISC` `@rgrove/parse-xml`). Ships `LICENSE` (`MIT`), `LICENSES/Apache-2.0.txt`, `LICENSES/ISC.txt`, `THIRD_PARTY_NOTICES.md`, and `dist/attribution/` (`blue-data.md`, `blue-x7-msfa.md`, `provenance.json`).
+- **Externalized npm runtime dependencies** (installed separately by npm for the consumer platform; `@blue/data`, `@blue/java-runtime`, `commander`, and `esbuild` stay in `devDependencies`):
+
+| Package                                   | Version | License         |
+| ----------------------------------------- | ------- | --------------- |
+| `@jitl/quickjs-ffi-types`                 | 0.32.0  | MIT             |
+| `@jitl/quickjs-wasmfile-debug-asyncify`   | 0.32.0  | MIT             |
+| `@jitl/quickjs-wasmfile-debug-sync`       | 0.32.0  | MIT             |
+| `@jitl/quickjs-wasmfile-release-asyncify` | 0.32.0  | MIT             |
+| `@jitl/quickjs-wasmfile-release-sync`     | 0.32.0  | MIT             |
+| `cmake-ts`                                | 1.0.2   | MIT             |
+| `node-addon-api`                          | 8.9.2   | MIT             |
+| `quickjs-emscripten`                      | 0.32.0  | MIT             |
+| `quickjs-emscripten-core`                 | 0.32.0  | MIT             |
+| `zeromq`                                  | 6.8.0   | MIT AND MPL-2.0 |
+
+- **Separate-process Java helper (`dist/java/`)**:
+  - `dist/java/source/`: Blue-authored Java sources (`dist/java/source/java/**`) and `dist/java/source/pom.xml` (`EPL-2.0`).
+  - `dist/java/blue-java.jar`: mixed-license shaded JAR (`EPL-1.0`, `MPL-2.0`, `BSD-2-Clause`, `Apache-2.0`, `MIT`, and `PSF/Jython`, plus `META-INF/NOTICE-BLUE-JAVA.txt`).
+  - `dist/java/pythonLib/`: Jython standard Python libraries retaining `GPL-2.0-or-later` (`blue/pmask/COPYING`, `blue/orchestra/COPYING`) and `wxWindows-Library-License-3.1` (`blue/jythonconsole/COPYING`) notices.
+  - `dist/java/THIRD_PARTY_NOTICES.md` and `dist/java/licenses/`: archive-local component notice table and all 19 shared license texts copied from root `LICENSES/`.
+
+### `skills/blue-projects`
+
+- **License**: repository-default `GPL-3.0-or-later` (declared in [skills/blue-projects/SKILL.md](../skills/blue-projects/SKILL.md)).
+- **Shipped license file**: [skills/blue-projects/LICENSE](../skills/blue-projects/LICENSE) (verbatim copy of root [LICENSE](../LICENSE)) packaged alongside `SKILL.md`, `references/node.md`, and the original asset-free fixture `assets/example.blue`.
