@@ -592,7 +592,12 @@ export function spawnShimCommand(command, args, options = {}) {
  * @returns {{ status: number, stdout: string, stderr: string }}
  */
 export function spawnNpm(args, options = {}) {
-  const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  if (process.platform !== 'win32') {
+    return spawnShimCommand('npm', args, options);
+  }
+  // npm.cmd uses its own directory to locate npm-cli.js.
+  const { stdout } = runCommand('where.exe', ['$PATH:npm.cmd'], { env: options.env });
+  const [npmBin] = stdout.trim().split(/\r?\n/);
   return spawnShimCommand(npmBin, args, options);
 }
 

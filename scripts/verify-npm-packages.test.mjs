@@ -7,6 +7,7 @@ import {
   REPO_ROOT,
   buildShimInvocation,
   quoteWindowsCmdArg,
+  spawnNpm,
   spawnShimCommand,
 } from './verify-npm-packages.mjs';
 
@@ -161,3 +162,20 @@ test('spawnShimCommand preserves spaces and literal percent-delimited text throu
     rmSync(tempRoot, { recursive: true, force: true });
   }
 });
+
+test(
+  'spawnNpm locates npm from a clean Windows consumer directory',
+  {
+    skip: process.platform !== 'win32',
+  },
+  () => {
+    const cwd = mkdtempSync(path.join(tmpdir(), 'blue npm lookup '));
+    try {
+      const result = spawnNpm(['--version'], { cwd });
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout.trim(), /^\d+\.\d+\.\d+/);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  },
+);

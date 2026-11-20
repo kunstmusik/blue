@@ -144,14 +144,14 @@ npm Trusted Publishing can only be configured on npmjs.com for **existing** pack
 
    Download the three `npm-smoke-*` reports from that same workflow run. Confirm they cover `darwin-arm64`, `win32-x64`, and `linux-x64` with Node 22, and that both `archives.data.integrity` and `archives.cli.integrity` in every report match their respective SHA-512 values in the retained manifest. Record the workflow run link, full source revision, both digests, and the three passing reports in [verification.md](../specs/121-publish-blue-tooling/verification.md). These checks are required before either archive can be published.
 
-3. **Tag the verified commit** if you verified via `workflow_dispatch` rather than an `npm-v<version>` push:
+3. **Tag the verified commit** if this candidate was built via `workflow_dispatch`:
 
    ```bash
-   git tag -a npm-v<version> -m "Blue npm tooling <version>"
-   git push origin npm-v<version>
+   git tag -a -m "Blue npm tooling <version>" "npm-v<version>" "<full-40-char-sha>"
+   git push origin "refs/tags/npm-v<version>"
    ```
 
-   Confirm the tag points to the full source revision in the verified manifest. Wait for the tagged matrix to pass, then repeat step 2 with the tagged run’s retained archives and reports. This makes the tagged pair the input for both bootstrap and future reruns. The automated publisher may fail until Trusted Publishing is configured.
+   Use the full source revision from the verified manifest in the tag command. Wait for the tagged matrix to pass, then repeat step 2 with the tagged run’s retained archives and reports. This makes the tagged pair the input for both bootstrap and future reruns. The automated publisher may fail until Trusted Publishing is configured.
 
 4. **Publish both verified archives with maintainer 2FA**: Authenticate via `npm login` (interactive 2FA), then publish the exact downloaded, matrix-verified `.tgz` files directly using `--access public` and `--tag latest` (for stable `0.1.0`) or `--tag next` (for prereleases such as `0.1.0-beta.1`):
 
