@@ -32,13 +32,13 @@ A Node.js command-line interface for compiling [Blue](https://github.com/kunstmu
 ### Run On Demand with `npx` (No Install)
 
 ```bash
-npx @kunstmusik/blue-cli compile -p project.blue -o project.csd
+npx @kunstmusik/blue-cli@next compile -p project.blue -o project.csd
 ```
 
 ### Local Install (Project Dev Dependency)
 
 ```bash
-npm install --save-dev @kunstmusik/blue-cli
+npm install --save-dev @kunstmusik/blue-cli@next
 ```
 
 Invoke the installed `blue-cli` binary via `npx` or a `package.json` script:
@@ -50,7 +50,7 @@ npx blue-cli compile -p project.blue -o project.csd
 ### Global Install
 
 ```bash
-npm install -g @kunstmusik/blue-cli
+npm install -g @kunstmusik/blue-cli@next
 ```
 
 The installed executable command remains `blue-cli`:
@@ -143,7 +143,7 @@ To render a generated `.csd` file to audio or play it in realtime, install **[Cs
 
 ```bash
 # Compile a .blue project to .csd text (no Csound required)
-npx @kunstmusik/blue-cli compile -p my-song.blue -o my-song.csd
+npx @kunstmusik/blue-cli@next compile -p my-song.blue -o my-song.csd
 
 # Render or play the generated .csd separately with Csound 7
 csound my-song.csd

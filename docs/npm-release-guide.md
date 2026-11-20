@@ -24,7 +24,7 @@ npm tooling releases are completely independent of Blue desktop application rele
 
 ## Version and Tag Policy
 
-- **Initial shared release**: Both `@kunstmusik/blue-data` and `@kunstmusik/blue-cli` start at shared version `0.1.0` on the npm `latest` dist-tag (`npm-v0.1.0`).
+- **Initial shared release**: Both `@kunstmusik/blue-data` and `@kunstmusik/blue-cli` start at shared version `0.1.0-beta.1` on the npm `next` dist-tag (`npm-v0.1.0-beta.1`). The first stable release is `0.1.0` on `latest`.
 - **Optional prereleases**: Before or between stable releases, publish optional prereleases such as `0.1.0-beta.1` (`npm-v0.1.0-beta.1`) or `0.2.0-rc.1` (`npm-v0.2.0-rc.1`) to the npm `next` dist-tag. Any hyphenated version targets `next`; plain `X.Y.Z` versions target `latest`.
 - **`0.x` SemVer rules**:
   - Increment **patch** (`0.1.1`, `0.1.2`, …) for backward-compatible bug fixes, packaging fixes, and documentation updates.

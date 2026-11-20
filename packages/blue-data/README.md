@@ -11,7 +11,7 @@ Portable TypeScript/JavaScript data model, `.blue` XML loader/migrator/serialize
 - **Browsers**: Portable ESM output with zero `node:*` built-ins for Vite, esbuild, and other ESM bundlers
 
 ```bash
-npm install @kunstmusik/blue-data
+npm install @kunstmusik/blue-data@next
 ```
 
 From a monorepo checkout, build the workspace package with:
@@ -328,7 +328,7 @@ External score commands (`External` and external `ObjectBuilder` objects) simila
 If you want to compile full `.blue` projects from disk—including projects that reference project-relative audio files or Scala scales, execute on-load scripts, run Java-backed Clojure/Jython generators, or invoke external score commands—use **`@kunstmusik/blue-cli`** (which bundles the host Java helper and asset resolution):
 
 ```bash
-npx @kunstmusik/blue-cli compile -p project.blue -o project.csd
+npx @kunstmusik/blue-cli@next compile -p project.blue -o project.csd
 ```
 
 ## Browser Usage (ESM Bundlers)

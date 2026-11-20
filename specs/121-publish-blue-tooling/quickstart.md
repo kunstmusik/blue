@@ -27,12 +27,12 @@ The CLI pack lifecycle builds its bundle and Java helper. Expect one scoped arch
 
 ## 2. Install and exercise the same archives
 
-The planned cross-platform smoke entry point takes both archives explicitly. Use the same paths on every target runner. The example names are for `0.1.0`.
+The planned cross-platform smoke entry point takes both archives explicitly. Use the same paths on every target runner. The example names are for `0.1.0-beta.1`.
 
 ```sh
 node scripts/verify-npm-packages.mjs \
-  "$BLUE_NPM_ARTIFACTS/kunstmusik-blue-data-0.1.0.tgz" \
-  "$BLUE_NPM_ARTIFACTS/kunstmusik-blue-cli-0.1.0.tgz"
+  "$BLUE_NPM_ARTIFACTS/kunstmusik-blue-data-0.1.0-beta.1.tgz" \
+  "$BLUE_NPM_ARTIFACTS/kunstmusik-blue-cli-0.1.0-beta.1.tgz"
 ```
 
 The command must use a temporary consumer outside the checkout and ordinary npm install behavior. Verify the following.
@@ -44,22 +44,22 @@ The command must use a temporary consumer outside the checkout and ordinary npm 
 
 ## 3. Verify skill installation and registry resolution
 
-For a prerelease check before registry publication, install the candidate skill from a local source path with `npx skills add <path-to-blue-checkout>/skills/blue-projects --skill blue-projects --agent codex --copy --yes` in an empty consumer workspace. Use the verified tarballs for the walkthrough. After publication, repeat from the tagged GitHub source and use the exact registry versions. The examples below assume `npm-v0.1.0`.
+For a prerelease check before registry publication, install the candidate skill from a local source path with `npx skills add <path-to-blue-checkout>/skills/blue-projects --skill blue-projects --agent codex --copy --yes` in an empty consumer workspace. Use the verified tarballs for the walkthrough. After publication, repeat from the tagged GitHub source and use the exact registry versions. The examples below assume `npm-v0.1.0-beta.1`.
 
 ```sh
-npx skills add https://github.com/kunstmusik/blue/tree/npm-v0.1.0/skills/blue-projects \
+npx skills add https://github.com/kunstmusik/blue/tree/npm-v0.1.0-beta.1/skills/blue-projects \
   --skill blue-projects --agent codex --copy --yes
 npx skills list -a codex
 npm init -y
-npm install --save-exact @kunstmusik/blue-data@0.1.0
+npm install --save-exact @kunstmusik/blue-data@0.1.0-beta.1
 ```
 
 Follow the installed Node reference using its fixture and check that the saved copy reloads with the documented change. Run the scoped on-demand command below from a directory containing a copy of that fixture named `project.blue`.
 
 ```sh
-npx @kunstmusik/blue-cli@0.1.0 compile -p project.blue -o project.csd
-npm view @kunstmusik/blue-data@0.1.0 dist.integrity
-npm view @kunstmusik/blue-cli@0.1.0 dist.integrity
+npx @kunstmusik/blue-cli@0.1.0-beta.1 compile -p project.blue -o project.csd
+npm view @kunstmusik/blue-data@0.1.0-beta.1 dist.integrity
+npm view @kunstmusik/blue-cli@0.1.0-beta.1 dist.integrity
 npm dist-tag ls @kunstmusik/blue-data
 npm dist-tag ls @kunstmusik/blue-cli
 ```

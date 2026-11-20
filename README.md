@@ -54,7 +54,7 @@ Blue's project library and headless compiler are published on npm for Node.js 22
   declarations) or browser bundlers. See the
   [data package guide](packages/blue-data/README.md).
 - **Command-line compiler (`@kunstmusik/blue-cli`)**: compile `.blue` projects
-  to disk, realtime, or Blue Live `.csd` files (`npx @kunstmusik/blue-cli compile -p project.blue -o project.csd`). See the [CLI guide](packages/blue-cli/README.md).
+  to disk, realtime, or Blue Live `.csd` files (`npx @kunstmusik/blue-cli@next compile -p project.blue -o project.csd`). See the [CLI guide](packages/blue-cli/README.md).
 - **Agent skill (`blue-projects`)**: install Blue project workflows into an
   agent workspace with:
 

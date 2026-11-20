@@ -1,4 +1,4 @@
-# Node.js and CLI Reference (`@kunstmusik/blue-data@0.1.0` / `@kunstmusik/blue-cli@0.1.0`)
+# Node.js and CLI Reference (`@kunstmusik/blue-data@0.1.0-beta.1` / `@kunstmusik/blue-cli@0.1.0-beta.1`)
 
 Use this reference when inspecting or editing `.blue` project XML programmatically in Node.js or compiling `.blue` projects to Csound `.csd` files from the terminal.
 
@@ -15,7 +15,7 @@ cp /path/to/installed/blue-projects/assets/example.blue ./project.blue
 
 ---
 
-## 1. Standalone Node.js Workflow (`@kunstmusik/blue-data@0.1.0`)
+## 1. Standalone Node.js Workflow (`@kunstmusik/blue-data@0.1.0-beta.1`)
 
 `@kunstmusik/blue-data` loads, validates, migrates, edits, and serializes `.blue` XML purely in memory without touching disk or executing embedded project scripts (`JavaScriptObject`, `ClojureObject`, `PythonObject`, `ObjectBuilder`, or `External`). Plain XML inspection and editing require **Node.js >= 22** and need neither Java nor Csound.
 
@@ -23,7 +23,7 @@ cp /path/to/installed/blue-projects/assets/example.blue ./project.blue
 
 ```bash
 npm init -y
-npm install --save-exact @kunstmusik/blue-data@0.1.0
+npm install --save-exact @kunstmusik/blue-data@0.1.0-beta.1
 ```
 
 Import supported symbols only from the package root (`@kunstmusik/blue-data`); workspace `test-support` subpaths are repository-internal and unsupported for consumers.
@@ -166,7 +166,7 @@ const { readProjectXml, BlueData } = require('@kunstmusik/blue-data');
 
 ---
 
-## 2. CLI Compilation Workflow (`@kunstmusik/blue-cli@0.1.0`)
+## 2. CLI Compilation Workflow (`@kunstmusik/blue-cli@0.1.0-beta.1`)
 
 `@kunstmusik/blue-cli` compiles `.blue` projects into Csound `.csd` files from the terminal.
 
@@ -184,7 +184,7 @@ Run from the directory containing `project.blue`:
 #### Default Disk Render
 
 ```bash
-npx @kunstmusik/blue-cli@0.1.0 compile -p project.blue -o project.csd
+npx @kunstmusik/blue-cli@0.1.0-beta.1 compile -p project.blue -o project.csd
 ```
 
 Uses `project.toDiskCSDAsync()` (disk project properties such as `diskSampleRate`, `diskKsmps=1`, `diskChannels`) and prints `Wrote <resolved-path>/project.csd (disk, <bytes> bytes)`. If `@kunstmusik/blue-cli` is installed locally or globally, invoke `blue-cli compile -p project.blue -o project.csd`.
@@ -192,7 +192,7 @@ Uses `project.toDiskCSDAsync()` (disk project properties such as `diskSampleRate
 #### Realtime Playback (`--realtime`)
 
 ```bash
-npx @kunstmusik/blue-cli@0.1.0 compile -p project.blue -o project-realtime.csd --realtime
+npx @kunstmusik/blue-cli@0.1.0-beta.1 compile -p project.blue -o project-realtime.csd --realtime
 ```
 
 Uses `project.toCSDAsync()` (realtime project properties such as `sampleRate`, `ksmps=64`, `channels`).
@@ -200,7 +200,7 @@ Uses `project.toCSDAsync()` (realtime project properties such as `sampleRate`, `
 #### Blue Live (`--bluelive`)
 
 ```bash
-npx @kunstmusik/blue-cli@0.1.0 compile -p project.blue -o project-bluelive.csd --bluelive
+npx @kunstmusik/blue-cli@0.1.0-beta.1 compile -p project.blue -o project-bluelive.csd --bluelive
 ```
 
 Uses `project.toBlueLiveCSDAsync()` (Blue Live performance CSD containing `instr blueAllNotesOff` and `e 36000`).

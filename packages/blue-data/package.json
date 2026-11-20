@@ -1,6 +1,6 @@
 {
   "name": "@blue/data",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "description": "Core data model for Blue — portable TypeScript data classes with XML serialization compatible with Java .blue files",
   "keywords": [
     "audio",

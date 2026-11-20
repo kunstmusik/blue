@@ -6,19 +6,19 @@ license: GPL-3.0-or-later
 
 # Blue Projects
 
-Work with [Blue](https://github.com/kunstmusik/blue) (`.blue`) Csound composition files outside the desktop application using `@kunstmusik/blue-data@0.1.0` and `@kunstmusik/blue-cli@0.1.0`.
+Work with [Blue](https://github.com/kunstmusik/blue) (`.blue`) Csound composition files outside the desktop application using `@kunstmusik/blue-data@0.1.0-beta.1` and `@kunstmusik/blue-cli@0.1.0-beta.1`.
 
 ## Compatible Versions & Prerequisites
 
-- **Compatible npm packages**: `@kunstmusik/blue-data@0.1.0` and `@kunstmusik/blue-cli@0.1.0`.
+- **Compatible npm packages**: `@kunstmusik/blue-data@0.1.0-beta.1` and `@kunstmusik/blue-cli@0.1.0-beta.1`.
 - **Node.js `>=22`**: Required for both packages. `@kunstmusik/blue-data` supports native ESM and CommonJS with shared `BlueData` identity and TypeScript `NodeNext` declarations (plus portable ESM for browser bundlers). `@kunstmusik/blue-cli` targets macOS `arm64`, Windows `x64`, and Linux `x64` (if `pnpm` prompts to approve native build scripts for `zeromq`, run `pnpm approve-builds`).
 - **Java `>=17` (only for Java-backed projects)**: Needed only when compiling projects that use `ClojureObject`, `PythonObject`, Python or Clojure `ObjectBuilder`, `PythonInstrument`, or `PythonProcessor`. `@kunstmusik/blue-cli` bundles the Java helper (`blue-java.jar`) and Jython `pythonLib`, resolving `JAVA_HOME/bin/java` (`java.exe` on Windows) when `JAVA_HOME` is set or `java` from `PATH`. Plain `.blue` projects and JavaScript-only objects (`JavaScriptObject`, JavaScript `ObjectBuilder` executed via bundled QuickJS WASM) do **not** require Java.
 - **Csound 7 (separate, optional)**: Needed only when rendering a generated `.csd` file to audio or playing it in realtime (`csound project.csd`). Inspecting, editing, and compiling `.blue` files to `.csd` text do not require Csound.
 
 ## Workflow Choice Guide
 
-- **Use `@kunstmusik/blue-data@0.1.0`** when inspecting `.blue` XML, checking loader diagnostics (`readProjectXml`), reading metadata, arrangement instruments, score layers, or timing primitives, or making targeted edits safely **without executing project code**.
-- **Use `@kunstmusik/blue-cli@0.1.0`** (`npx @kunstmusik/blue-cli@0.1.0 compile ...` or `blue-cli compile ...`) when compiling a `.blue` project to a disk (default), `--realtime`, or `--bluelive` `.csd` file with bundled QuickJS, bundled Java helper, external score command, and project-relative resource support.
+- **Use `@kunstmusik/blue-data@0.1.0-beta.1`** when inspecting `.blue` XML, checking loader diagnostics (`readProjectXml`), reading metadata, arrangement instruments, score layers, or timing primitives, or making targeted edits safely **without executing project code**.
+- **Use `@kunstmusik/blue-cli@0.1.0-beta.1`** (`npx @kunstmusik/blue-cli@0.1.0-beta.1 compile ...` or `blue-cli compile ...`) when compiling a `.blue` project to a disk (default), `--realtime`, or `--bluelive` `.csd` file with bundled QuickJS, bundled Java helper, external score command, and project-relative resource support.
 
 ## Security Warning: Compilation Executes Project Code
 
@@ -39,7 +39,7 @@ Loading, validating, and serializing `.blue` XML with `readProjectXml()` and `pr
 Install the matching package version in a Node.js `>=22` consumer project:
 
 ```bash
-npm install --save-exact @kunstmusik/blue-data@0.1.0
+npm install --save-exact @kunstmusik/blue-data@0.1.0-beta.1
 ```
 
 Follow these source-preservation and verification steps:
@@ -55,10 +55,10 @@ See [Node and CLI walkthrough reference](references/node.md) for runnable ESM an
 Invoke on demand with `npx` or via an installed `blue-cli` binary:
 
 ```bash
-npx @kunstmusik/blue-cli@0.1.0 compile -p project.blue -o project.csd
+npx @kunstmusik/blue-cli@0.1.0-beta.1 compile -p project.blue -o project.csd
 ```
 
-Or when `@kunstmusik/blue-cli@0.1.0` is installed locally or globally:
+Or when `@kunstmusik/blue-cli@0.1.0-beta.1` is installed locally or globally:
 
 ```bash
 blue-cli compile -p project.blue -o project.csd
