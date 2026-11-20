@@ -215,7 +215,7 @@
   - `pnpm test`: exited `0` (`@blue/data`: `226 passed | 1 skipped (227)` files / `3198 passed | 5 skipped (3203)` tests; `@blue/engine-client`: `4/4` files / `53/53` tests; `blue-cli`: `5/5` files / `22/22` tests; `@blue/app`: `551/551` files / `6462 passed | 15 skipped (6477)` tests; `@blue/java-runtime`: `mvn -q test` exited `0`; `@blue/engine-native`: `30 passed, 0 failed, 8 skipped` script tests + `node scripts/test.mjs` exited `0`; `pnpm test:scripts`: `114/114` passed).
   - `pnpm lint`, `pnpm format:check` (`1,887` files), `pnpm verify:release-workflows` (`80/80` checks), and `git diff --check`: all exited `0`.
 - **Remaining cross-platform & release tasks**:
-  - **T029 (`[ ]`)**: Running the 3-OS GitHub Actions verification-only matrix (`macos-arm64` / `macos-15`, `windows-x64` / `windows-2022`, `linux-x64` / `ubuntu-22.04` with Node 22 and Java 17) for one retained archive pair and recording its CI source revision, digests, and passing matrix links awaits committing and pushing `codex/121-publish-blue-tooling` to GitHub.
+  - **T029 (`[ ]`)**: At this checkpoint, running the 3-OS GitHub Actions verification-only matrix (`macos-arm64` / `macos-15`, `windows-x64` / `windows-2022`, `linux-x64` / `ubuntu-22.04` with Node 22 and Java 17) for one retained archive pair and recording its CI source revision, digests, and passing matrix links awaited committing and pushing `codex/121-publish-blue-tooling` to GitHub.
   - **T025 (`[ ]`)**: Initial 2FA npm bootstrap (from the matrix-verified downloaded pair per `docs/npm-release-guide.md`), trusted publisher configuration, and live registry / tagged skill checks remain open for explicit maintainer authorization.
 
 ## Phase 8 Convergence — Windows Shim and Matrix Evidence
@@ -223,3 +223,24 @@
 - **T031** — The smoke uses literal percent-delimited text and spaces in the archive directory, the consumer's installed CLI shim path, and the native project and output paths. The Windows job also runs an argument-echo shim with the referenced variable set and checks the exact child arguments. The Windows runner validation is part of T029.
 - **T032** — The smoke step resolves the report filename from the matrix target, writes to it, and passes that exact path to the upload step. A missing report fails the job after a successful smoke. Each report records both archive SHA-512 integrities.
 - **Focused validation** — With Node 22.23.1 on macOS arm64, all 41 npm package and release tests passed. Workspace lint, all 80 existing release-workflow contract checks, and `git diff --check` passed.
+
+## T029 — Verification-Only Release Matrix
+
+- The verification-only run for draft PR #805 passed all three platforms on November 19, 2026. GitHub tested merge revision `b06e3fda22cfe08a7afa2c9e7e017d906af4e84f` from feature head `1a805869778a25a8b5b91a6eeee5490d7a2a2160`. The candidate manifest identifies version `0.1.0` and intended tag `npm-v0.1.0`. The publisher was skipped. [Workflow run](https://github.com/kunstmusik/blue/actions/runs/44657516540) · [Draft PR #805](https://github.com/kunstmusik/blue/pull/805)
+- The downloaded archives matched the manifest's byte counts, SHA-512 and SHA-256 digests, and full file inventories. Both package records in each downloaded smoke report matched that manifest. [Retained archive pair and manifest](https://github.com/kunstmusik/blue/actions/runs/44657516540/artifacts/14593717899)
+
+| Package | Files | SHA-512 integrity |
+| --- | ---: | --- |
+| `@kunstmusik/blue-data@0.1.0` | 2,026 | `sha512-J6pyZtWl5JMmtI5Ti/Uw+B9wksYGOc3b+MaYsDyJNDZm19+39Xp3OjGFb+qMWBjIW6W5ajpiATooTKeQMOgoEQ==` |
+| `@kunstmusik/blue-cli@0.1.0` | 108 | `sha512-SuagehquuiZwLlYhpne5FWOvhtQ+y/aG7dRs/a/Lb4iFc/f/Q792Hd+a8aC5LWaFswVM4VPQQaN6QDk86wsD8Q==` |
+
+| Platform | Node | Temurin | Result |
+| --- | --- | --- | --- |
+| macOS arm64 (`macos-15`) | 22.23.5 | 17.0.21+9 | [Passed](https://github.com/kunstmusik/blue/actions/runs/44657516540/job/136028286976) · [Report](https://github.com/kunstmusik/blue/actions/runs/44657516540/artifacts/14594725389) |
+| Windows x64 (`windows-2022`) | 22.23.4 | 17.0.21+9 | [Passed](https://github.com/kunstmusik/blue/actions/runs/44657516540/job/136028287218) · [Report](https://github.com/kunstmusik/blue/actions/runs/44657516540/artifacts/14593214829) |
+| Linux x64 (`ubuntu-22.04`) | 22.23.4 | 17.0.21+9 | [Passed](https://github.com/kunstmusik/blue/actions/runs/44657516540/job/136028286991) · [Report](https://github.com/kunstmusik/blue/actions/runs/44657516540/artifacts/14593897405) |
+
+- The Windows runner verified exact child arguments containing spaces and literal percent-delimited text, resolved the installed npm shim from a clean consumer directory, and compiled through the installed CLI shim with native resource paths. All platforms passed Java-backed compilation and confirmed missing Java preserves output.
+- A fresh local Codex workspace installed the candidate skill by name and ran both recipes against these retained archives. The edited copy reloaded with title `Updated Blue Project`, the source was byte-identical to the installed fixture, and the CLI emitted a CSD with the expected sections.
+- Local Node 22.23.1 and Zulu Java 17.0.15 validation passed `pnpm test`, `pnpm lint`, the 80 release-workflow contract checks, and `git diff --check`. The 22 CLI tests also passed with the data package's build output absent. The Windows-only npm lookup regression ran on Windows.
+- T025 remains open for the authorized maintainer release. Its bootstrap uses the exact archives retained by the passing tagged run.
