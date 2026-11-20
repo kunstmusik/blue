@@ -3,6 +3,7 @@ import { GithubActionsReporter } from 'vite-plus/test/node';
 import { createPackageReporterConfig } from '../../scripts/vitest-package-reporters.mts';
 
 export default defineConfig({
+  resolve: { tsconfigPaths: true },
   test: {
     include: ['src/**/*.test.ts'],
     ...createPackageReporterConfig('blue-cli', GithubActionsReporter),

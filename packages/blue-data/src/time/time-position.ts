@@ -25,6 +25,22 @@ import { TimeContext } from './time-context';
 /** Default PPQ (pulses per quarter note). */
 const DEFAULT_PPQ = 960;
 
+/**
+ * Immutable timeline position tagged with a {@link TimeBase} discriminant, matching Java Blue's
+ * `TimePosition` subtypes (`BEATS`, `BBT`, `BBST`, `BBF`, `TIME`, `SECONDS`, `FRAME`; `TimeBase.SMPTE`
+ * is display-only and {@link smpte} aliases {@link frames}).
+ *
+ * Unlike `TimeDuration` (which uses 0-based bars and beats), musical positions use **1-based** bar and
+ * beat numbers and convert against a {@link TimeContext}:
+ * - `BEATS`: Csound beats (quarter note = 1 beat).
+ * - `BBT` / `BBST`: 1-based bar and beat with 960 PPQ ticks (`BBST` also includes 1-based sixteenths `1–4`),
+ *   resolved through `TimeContext.getMeterMap()` (`MeterMap` and `Meter.getBeatScale()`).
+ * - `BBF`: 1-based bar and beat with `0–99` canonical hundredths, resolved through `TimeContext.getMeterMap()`.
+ * - `TIME` / `SECONDS`: wall-clock time (`hh:mm:ss.mmm` or total seconds), converted to/from Csound beats
+ *   through `TimeContext.getTempoMap()` (`TempoMap`, defaulting to 60 BPM when disabled).
+ * - `FRAME`: audio sample frame index, resolved to seconds via `TimeContext.getSampleRate()` and to
+ *   beats via `TimeContext.getTempoMap()`.
+ */
 export class TimePosition {
   private readonly _timeBase: TimeBase;
 
@@ -90,12 +106,24 @@ export class TimePosition {
 
   // ─── Factory methods ───
 
-  /** Create a BeatTime position. */
+  /**
+   * Creates a Csound beat position (`TimeBase.BEATS`), where one beat equals one quarter note.
+   *
+   * @param csoundBeats Position in Csound beats (quarter notes).
+   */
   static beats(csoundBeats: number): TimePosition {
     return new TimePosition(TimeBase.BEATS, { csoundBeats });
   }
 
-  /** Create a BBTTime position (1-based bar and beat). */
+  /**
+   * Creates a Bars.Beats.Ticks position (`TimeBase.BBT`) using 1-based `bar` and `beat` numbers
+   * and 960 PPQ `ticks`. Resolved to Csound beats via `TimeContext.getMeterMap()`.
+   *
+   * @param bar 1-based measure number (`>= 1`).
+   * @param beat 1-based beat within the measure (`>= 1`).
+   * @param ticks Sub-beat ticks at 960 PPQ (`>= 0`).
+   * @throws Error if `bar < 1`, `beat < 1`, or `ticks < 0`.
+   */
   static bbt(bar: number, beat: number, ticks: number): TimePosition {
     if (bar < 1) throw new Error(`Invalid bar: ${bar} (must be >= 1)`);
     if (beat < 1) throw new Error(`Invalid beat: ${beat} (must be >= 1)`);
@@ -103,7 +131,16 @@ export class TimePosition {
     return new TimePosition(TimeBase.BBT, { bar, beat, ticks });
   }
 
-  /** Create a BBSTTime position (1-based bar, beat, sixteenth 1-4, ticks). */
+  /**
+   * Creates a Bars.Beats.Sixteenths.Ticks position (`TimeBase.BBST`) using 1-based `bar`, `beat`,
+   * and `sixteenth` (`1–4`, 240 ticks per sixteenth at 960 PPQ). Resolved via `TimeContext.getMeterMap()`.
+   *
+   * @param bar 1-based measure number (`>= 1`).
+   * @param beat 1-based beat within the measure (`>= 1`).
+   * @param sixteenth 1-based sixteenth subdivision within the beat (`1–4`).
+   * @param ticks Sub-sixteenth ticks (`>= 0`).
+   * @throws Error if `bar < 1`, `beat < 1`, `sixteenth` is outside `1–4`, or `ticks < 0`.
+   */
   static bbst(bar: number, beat: number, sixteenth: number, ticks: number): TimePosition {
     if (bar < 1) throw new Error(`Invalid bar: ${bar} (must be >= 1)`);
     if (beat < 1) throw new Error(`Invalid beat: ${beat} (must be >= 1)`);
@@ -113,7 +150,15 @@ export class TimePosition {
     return new TimePosition(TimeBase.BBST, { bar, beat, sixteenth, ticks });
   }
 
-  /** Create a BBFTime position (1-based bar, beat, fraction 0-99 canonical hundredths). */
+  /**
+   * Creates a Bars.Beats.Fraction position (`TimeBase.BBF`) using 1-based `bar` and `beat` numbers
+   * and canonical hundredths `fraction` (`0–99`). Resolved via `TimeContext.getMeterMap()`.
+   *
+   * @param bar 1-based measure number (`>= 1`).
+   * @param beat 1-based beat within the measure (`>= 1`).
+   * @param fraction Canonical hundredths of a beat (`0–99`).
+   * @throws Error if `bar < 1`, `beat < 1`, or `fraction` is outside `0–99`.
+   */
   static bbf(bar: number, beat: number, fraction: number): TimePosition {
     if (bar < 1) throw new Error(`Invalid bar: ${bar} (must be >= 1)`);
     if (beat < 1) throw new Error(`Invalid beat: ${beat} (must be >= 1)`);
@@ -122,7 +167,15 @@ export class TimePosition {
     return new TimePosition(TimeBase.BBF, { bar, beat, fraction });
   }
 
-  /** Create a TimeValue position. */
+  /**
+   * Creates a wall-clock `TimeValue` position (`TimeBase.TIME`).
+   *
+   * @param hours Non-negative hours (`>= 0`).
+   * @param minutes Minutes (`0–59`).
+   * @param seconds Seconds (`0–59`).
+   * @param milliseconds Milliseconds (`0–999`).
+   * @throws Error if any field is out of range.
+   */
   static timeValue(
     hours: number,
     minutes: number,
@@ -137,12 +190,17 @@ export class TimePosition {
     return new TimePosition(TimeBase.TIME, { hours, minutes, seconds, milliseconds });
   }
 
-  /** Alias for timeValue matching Java TimePosition.time(). */
+  /** Alias for {@link timeValue} matching Java `TimePosition.time()`. */
   static time(hours: number, minutes: number, seconds: number, milliseconds: number): TimePosition {
     return TimePosition.timeValue(hours, minutes, seconds, milliseconds);
   }
 
-  /** Create a SecondsValue position. */
+  /**
+   * Creates a wall-clock seconds position (`TimeBase.SECONDS`).
+   *
+   * @param totalSeconds Non-negative finite elapsed seconds (`>= 0`).
+   * @throws Error if `totalSeconds < 0` or not finite.
+   */
   static seconds(totalSeconds: number): TimePosition {
     if (totalSeconds < 0) throw new Error(`Invalid totalSeconds: ${totalSeconds} (must be >= 0)`);
     if (!isFinite(totalSeconds))
@@ -150,13 +208,19 @@ export class TimePosition {
     return new TimePosition(TimeBase.SECONDS, { totalSeconds });
   }
 
-  /** Create a FrameValue position. */
+  /**
+   * Creates a sample-frame position (`TimeBase.FRAME`), resolved to wall-clock seconds via
+   * `TimeContext.getSampleRate()`.
+   *
+   * @param frameNumber Non-negative audio sample frame index (`>= 0`).
+   * @throws Error if `frameNumber < 0`.
+   */
   static frames(frameNumber: number): TimePosition {
     if (frameNumber < 0) throw new Error(`Invalid frameNumber: ${frameNumber} (must be >= 0)`);
     return new TimePosition(TimeBase.FRAME, { frameNumber });
   }
 
-  /** Alias for frames (SMPTE compatibility). */
+  /** Alias for {@link frames} (SMPTE frame-count compatibility). */
   static smpte(frames: number): TimePosition {
     return TimePosition.frames(frames);
   }
@@ -237,7 +301,18 @@ export class TimePosition {
 
   // ─── Conversions ───
 
-  /** Convert to Csound beats using the provided context. */
+  /**
+   * Converts this position to Csound beats (quarter note = 1 beat) using the provided {@link TimeContext}.
+   *
+   * - `BEATS`: returns `csoundBeats` directly.
+   * - `BBT` / `BBST` / `BBF`: resolves 1-based bar and beat via `context.getMeterMap()` (`MeterMap`
+   *   and `Meter.getBeatScale()`) with fixed 960 PPQ ticks (`BBT`/`BBST`) or `0–99` hundredths (`BBF`).
+   * - `TIME` / `SECONDS`: converts wall-clock seconds via `context.getTempoMap().secondsToBeats()`.
+   * - `FRAME`: divides `frameNumber` by `context.getSampleRate()` and converts via `TempoMap.secondsToBeats()`.
+   *
+   * @param context Project timing context supplying `MeterMap`, `TempoMap`, and sample rate.
+   * @returns Position in Csound beats (quarter notes).
+   */
   toBeats(context: TimeContext): number {
     switch (this._timeBase) {
       case TimeBase.BEATS:
@@ -291,7 +366,18 @@ export class TimePosition {
     }
   }
 
-  /** Convert to seconds using the provided context. */
+  /**
+   * Converts this position to wall-clock seconds using the provided {@link TimeContext}.
+   *
+   * - `TIME` / `SECONDS`: returns wall-clock seconds directly without consulting `TempoMap`.
+   * - `FRAME`: divides `frameNumber` by `context.getSampleRate()`.
+   * - Beat- and bar-based bases (`BEATS`, `BBT`, `BBST`, `BBF`): resolves to Csound beats via
+   *   {@link toBeats} (consulting `MeterMap` where applicable) and converts through
+   *   `context.getTempoMap().beatsToSeconds()`.
+   *
+   * @param context Project timing context supplying `MeterMap`, `TempoMap`, and sample rate.
+   * @returns Position in wall-clock seconds.
+   */
   toSeconds(context: TimeContext): number {
     switch (this._timeBase) {
       case TimeBase.BEATS:
@@ -311,7 +397,10 @@ export class TimePosition {
     }
   }
 
-  /** Convert to frames using the provided context. */
+  /**
+   * Converts this position to the nearest audio sample frame (`Math.round(toSeconds(context) * sampleRate)`)
+   * using `context.getSampleRate()`.
+   */
   toFrames(context: TimeContext): number {
     return Math.round(this.toSeconds(context) * context.getSampleRate());
   }

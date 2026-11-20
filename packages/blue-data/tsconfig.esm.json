@@ -6,5 +6,12 @@
     "module": "ES2022",
     "moduleResolution": "bundler"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*-test-fixtures.ts"
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@blue/data",
-  "version": "0.0.1",
+  "version": "0.1.0-beta.1",
   "description": "Core data model for Blue — portable TypeScript data classes with XML serialization compatible with Java .blue files",
   "keywords": [
     "audio",
@@ -13,10 +13,14 @@
   "author": "Steven Yi",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kunstmusik/blue"
+    "url": "git+https://github.com/kunstmusik/blue.git",
+    "directory": "packages/blue-data"
   },
   "files": [
     "dist",
+    "examples/inspect-edit.mjs",
+    "resources/blue-x7-modern/ATTRIBUTION.md",
+    "resources/blue-x7-modern/provenance.json",
     "LICENSE",
     "LICENSES",
     "THIRD_PARTY_NOTICES.md"
@@ -26,6 +30,10 @@
   "types": "dist/cjs/index.d.ts",
   "exports": {
     ".": {
+      "node": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      },
       "import": {
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
@@ -36,6 +44,10 @@
       }
     },
     "./test-support/audio-fixtures": {
+      "node": {
+        "types": "./dist/cjs/test-support/audio-fixtures.d.ts",
+        "default": "./dist/cjs/test-support/audio-fixtures.js"
+      },
       "import": {
         "types": "./dist/esm/test-support/audio-fixtures.d.ts",
         "default": "./dist/esm/test-support/audio-fixtures.js"
@@ -46,6 +58,10 @@
       }
     },
     "./test-support": {
+      "node": {
+        "types": "./dist/cjs/test-support/csd-comparison.d.ts",
+        "default": "./dist/cjs/test-support/csd-comparison.js"
+      },
       "import": {
         "types": "./dist/esm/test-support/csd-comparison.d.ts",
         "default": "./dist/esm/test-support/csd-comparison.js"
@@ -55,6 +71,10 @@
         "default": "./dist/cjs/test-support/csd-comparison.js"
       }
     }
+  },
+  "publishConfig": {
+    "name": "@kunstmusik/blue-data",
+    "access": "public"
   },
   "scripts": {
     "build:esm": "tsc -p tsconfig.esm.json",
@@ -72,5 +92,8 @@
   "devDependencies": {
     "typescript": "^5.8.0",
     "vite": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
