@@ -244,3 +244,14 @@
 - A fresh local Codex workspace installed the candidate skill by name and ran both recipes against these retained archives. The edited copy reloaded with title `Updated Blue Project`, the source was byte-identical to the installed fixture, and the CLI emitted a CSD with the expected sections.
 - Local Node 22.23.1 and Zulu Java 17.0.15 validation passed `pnpm test`, `pnpm lint`, the 80 release-workflow contract checks, and `git diff --check`. The 22 CLI tests also passed with the data package's build output absent. The Windows-only npm lookup regression ran on Windows.
 - T025 remains open for the authorized maintainer release. Its bootstrap uses the exact archives retained by the passing tagged run.
+
+## T025 — Public Beta Release Verification
+
+Checked November 20, 2026 against Git tag `npm-v0.1.0-beta.1` at `6bd93b238946c1b54fa7f5e70cb6b7a3ac6202e2`.
+
+- The tagged build and isolated consumer smokes passed on macOS arm64, Windows x64, and Linux x64 with Node 22.23.5 and Java 17. The three smoke reports matched both retained archive digests. The initial `publish-npm` job failed, and the subsequent public npm versions matched the verified tarballs. [Tagged workflow run](https://github.com/kunstmusik/blue/actions/runs/44752418641) · [Archives and manifest](https://github.com/kunstmusik/blue/actions/runs/44752418641/artifacts/14635981993)
+- The npm registry reported both packages at `0.1.0-beta.1` on `next`. Both registry SHA-512 values matched the retained release manifest. At verification time, `latest` also pointed to `0.1.0-beta.1` for both packages. [Data package](https://www.npmjs.com/package/@kunstmusik/blue-data/v/0.1.0-beta.1) · [CLI package](https://www.npmjs.com/package/@kunstmusik/blue-cli/v/0.1.0-beta.1)
+- Installed [the tagged skill](https://github.com/kunstmusik/blue/tree/npm-v0.1.0-beta.1/skills/blue-projects) by name with `npx skills` in a clean Codex workspace. The Node walkthrough loaded the exact published data version, reloaded the edited title, and preserved the source bytes. The scoped `npx @kunstmusik/blue-cli@0.1.0-beta.1 compile` command emitted a 413-byte disk-render CSD containing `<CsoundSynthesizer>` and the expected instrument code.
+- GitHub's `npm-release` environment exists and accepts only tags matching `npm-v*`. The workflow grants OIDC token permission to the publisher. [Workflow configuration](../../.github/workflows/npm-release.yml)
+
+**Closeout remaining** — Confirm the intended default channel with the maintainer and bring the registry tags into agreement with the release guide. Confirm npm-side Trusted Publishing for both packages with direct `npm publish` allowed. A successful OIDC publication remains unverified. Generated TypeDoc HTML is tracked as follow-up work in the [feature scope](spec.md#assumptions).

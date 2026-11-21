@@ -4,7 +4,7 @@
 
 **Created** 2026-11-19
 
-**Status** Draft
+**Status** Beta released. Maintainer release closeout is tracked in [T025 verification](verification.md#t025--public-beta-release-verification).
 
 **Input** Publish Blue’s data library and CLI on npm, document their use, and distribute a Blue project skill from the same GitHub repository.
 
