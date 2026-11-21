@@ -8,11 +8,14 @@ import { getBaseTen } from '../utilities/score';
 
 const JAVA_TYPE = 'blue.noteProcessor.PchInversionProcessor';
 
+/** Inverts values in Csound octave.pitch-class notation around a pitch. */
 export class PchInversionProcessor extends NoteProcessor {
   private _value = 8.0;
   private _pfield = 4;
 
+  /** Creates a pitch-class inversion processor initialized with its default settings. */
   constructor();
+  /** Creates a pitch-class inversion processor using the source instance’s settings. */
   constructor(src: PchInversionProcessor);
   constructor(src?: PchInversionProcessor) {
     super();
@@ -22,16 +25,20 @@ export class PchInversionProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the pitch-class inversion center as text. */
   getVal(): string {
     return this._value.toString();
   }
+  /** Sets the pitch-class value used as the inversion center. */
   setVal(value: string): void {
     this._value = parseFloat(value);
   }
@@ -80,6 +87,7 @@ export class PchInversionProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the pitch-class inversion processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): PchInversionProcessor {
     validateProcessorXml(data, 'PchInversionProcessor', context);
     const proc = new PchInversionProcessor();

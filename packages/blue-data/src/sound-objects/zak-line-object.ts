@@ -18,19 +18,31 @@ import { GenericInstrument } from '../instruments/generic-instrument';
 import { setScoreStart } from '../utilities/score';
 import { formatBlueNumber } from '../utilities/number-format';
 
+/** Authored time and value pair for a Zak control line. */
 export interface ZakLinePoint {
+  /** Horizontal time coordinate of this Zak control point. */
   x: number;
+  /** Control value at this point. */
   y: number;
 }
 
+/** Control line mapped to a numeric Csound Zak channel. */
 export interface ZakLineData {
+  /** Csound Zak channel addressed by the control line. */
   channel: number;
+  /** Minimum random value. */
   min?: number;
+  /** Maximum random value. */
   max?: number;
+  /** Numeric value step. */
   resolution?: string;
+  /** Packed display color. */
   color: number;
+  /** Whether the line includes a constrained right endpoint. */
   rightBound?: boolean;
+  /** Whether the two endpoint values are linked. */
   endPointsLinked?: boolean;
+  /** Control points belonging to this zak line data, in stored order. */
   points: ZakLinePoint[];
 }
 
@@ -41,6 +53,7 @@ export class ZakLineObject extends AbstractSoundObject {
   private _zakSpace = 0;
   private _lines: ZakLineData[] = [];
 
+  /** Creates a default zak line object or copies a supplied instance. */
   constructor(other?: ZakLineObject) {
     super();
     this.setName('ZakLineObject');
@@ -54,18 +67,22 @@ export class ZakLineObject extends AbstractSoundObject {
     }
   }
 
+  /** Returns the zak space stored on the Zak line sound object. */
   getZakSpace(): number {
     return this._zakSpace;
   }
 
+  /** Sets the zak space stored on the Zak line sound object. */
   setZakSpace(space: number): void {
     this._zakSpace = space;
   }
 
+  /** Returns the authored lines assigned to Csound Zak channels. */
   getLines(): ZakLineData[] {
     return [...this._lines];
   }
 
+  /** Adds a control line for a Zak channel. */
   addLine(line: ZakLineData): void {
     this._lines.push(line);
   }
@@ -105,6 +122,7 @@ export class ZakLineObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the Zak line sound object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

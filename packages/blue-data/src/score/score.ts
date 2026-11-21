@@ -34,18 +34,22 @@ import type { JavaScriptSession } from '../javascript-runtime';
 import type { JavaRuntimeClientContract } from '../java-runtime';
 import { applyNoteProcessorChainAsync } from '../utilities/score';
 
+/** Controls whether track mute and solo gate mixer audio or filter note generation. */
 export type TrackLayerMuteSoloMode = 'audio' | 'event';
 
+/** Checks whether a value is one of the supported track mute and solo modes. */
 export function isTrackLayerMuteSoloMode(value: unknown): value is TrackLayerMuteSoloMode {
   return value === 'audio' || value === 'event';
 }
 
+/** Ordered timeline layer groups with shared timing settings and a score-level note processor chain. */
 export class Score extends Array<LayerGroup<Layer>> {
   private timeContext = new TimeContext();
   private timeState = new TimeState();
   private npc = new NoteProcessorChain();
   private _trackLayerMuteSoloMode: TrackLayerMuteSoloMode = 'audio';
 
+  /** Creates a score with a root layer or copies another score. When copying, `copyLayerGroups` controls whether the existing layer groups are copied. */
   constructor(other?: Score, mode: CopyMode = 'duplication', copyLayerGroups = true) {
     super();
     if (other instanceof Score) {
@@ -68,35 +72,43 @@ export class Score extends Array<LayerGroup<Layer>> {
     }
   }
 
+  /** Copies the timing settings, processors, and all layer groups with the requested identity policy. */
   deepCopy(mode: CopyMode = 'duplication'): Score {
     return new Score(this, mode);
   }
 
+  /** Returns the current track mute and solo mode. New scores use audio gating. */
   get trackLayerMuteSoloMode(): TrackLayerMuteSoloMode {
     return this._trackLayerMuteSoloMode;
   }
 
+  /** Sets the track mute and solo mode. Unrecognized values are ignored. */
   set trackLayerMuteSoloMode(value: TrackLayerMuteSoloMode) {
     if (!isTrackLayerMuteSoloMode(value)) return;
     this._trackLayerMuteSoloMode = value;
   }
 
+  /** Returns the score-owned tempo, meter, and unit conversion context. */
   getTimeContext(): TimeContext {
     return this.timeContext;
   }
 
+  /** Installs the supplied conversion context by reference. */
   setTimeContext(context: TimeContext): void {
     this.timeContext = context;
   }
 
+  /** Returns the score-owned display and grid settings. */
   getTimeState(): TimeState {
     return this.timeState;
   }
 
+  /** Installs the supplied display and grid settings by reference. */
   setTimeState(state: TimeState): void {
     this.timeState = state;
   }
 
+  /** Returns the editable chain applied to collected notes after generating the layer groups. */
   getNoteProcessorChain(): NoteProcessorChain {
     return this.npc;
   }
@@ -124,6 +136,7 @@ export class Score extends Array<LayerGroup<Layer>> {
     }
   }
 
+  /** Replaces the score-level processor chain with the supplied instance. */
   setNoteProcessorChain(npc: NoteProcessorChain): void {
     this.npc = npc;
   }
@@ -156,6 +169,15 @@ export class Score extends Array<LayerGroup<Layer>> {
     return { ...options, processWithSolo };
   }
 
+  /**
+   * Collects notes from layer groups and applies the score-level processor chain.
+   *
+   * @param compileData - Mutable render context shared with the layer groups.
+   * @param startTime - Start of the render window in Csound beats.
+   * @param endTime - End of the render window in Csound beats. Use a negative value for an open-ended window.
+   * @param generationOptions - Score-generation options or a legacy boolean for solo filtering.
+   * @returns The collected notes after score-level processing.
+   */
   generateForCSD(
     compileData: CompileData,
     startTime: number,
@@ -181,6 +203,15 @@ export class Score extends Array<LayerGroup<Layer>> {
     });
   }
 
+  /**
+   * Collects and processes notes, awaiting asynchronous generators and note processors.
+   *
+   * @param compileData - Mutable render context, including any attached script runtimes.
+   * @param startTime - Start of the render window in Csound beats.
+   * @param endTime - End of the render window in Csound beats. Use a negative value for an open-ended window.
+   * @param generationOptions - Score-generation options or a legacy boolean for solo filtering.
+   * @returns The collected notes after asynchronous score-level processing.
+   */
   async generateForCSDAsync(
     compileData: CompileData,
     startTime: number,
@@ -235,6 +266,7 @@ export class Score extends Array<LayerGroup<Layer>> {
     });
   }
 
+  /** Runs supported synchronous on-load hooks in polyphonic groups and track groups. */
   processOnLoad(session?: JavaScriptSession): void {
     const context = this.timeContext;
     for (const lg of this) {
@@ -246,6 +278,7 @@ export class Score extends Array<LayerGroup<Layer>> {
     }
   }
 
+  /** Runs on-load hooks in score order, using the supplied host runtime for Java-backed hooks. */
   async processOnLoadAsync(
     session?: JavaScriptSession,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -262,6 +295,7 @@ export class Score extends Array<LayerGroup<Layer>> {
 
   // ─── XML Serialization ───
 
+  /** Writes the score, settings, processor chain, and layer groups into a new XML element. */
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('score');
     const timing = this.timeContext.saveAsXML().setName('timeContext');
@@ -280,6 +314,7 @@ export class Score extends Array<LayerGroup<Layer>> {
     return elem;
   }
 
+  /** Reads score settings and layer groups using the supplied object references and optional XML diagnostic context. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

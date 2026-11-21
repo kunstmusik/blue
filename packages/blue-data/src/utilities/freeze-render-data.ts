@@ -13,6 +13,7 @@ import { BlueData } from '../blue-data';
 import { PolyObject } from '../sound-objects/poly-object';
 import type { SoundObject } from '../sound-objects/sound-object';
 
+/** Prepared temporary project and timing metadata for rendering a frozen sound object. */
 export interface FreezeRenderDataResult {
   /** Temporary project for CSD generation and rendering. */
   tempData: BlueData;

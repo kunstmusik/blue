@@ -45,6 +45,7 @@ export class PythonObject extends AbstractSoundObject {
   private _pythonCode = '';
   private _onLoadProcessable = false;
 
+  /** Creates a Python sound object with default timeline and source settings. */
   constructor() {
     super();
     this.setName('PythonObject');
@@ -52,25 +53,31 @@ export class PythonObject extends AbstractSoundObject {
     this._backgroundColor = 0x404040;
   }
 
+  /** Returns the Python code stored on the Python object. */
   getPythonCode(): string {
     return this._pythonCode;
   }
+  /** Sets the Python code stored on the Python object. */
   setPythonCode(code: string): void {
     this._pythonCode = code;
   }
 
+  /** Reports whether the Python object runs its script during on-load processing. */
   isOnLoadProcessable(): boolean {
     return this._onLoadProcessable;
   }
+  /** Sets the on load processable stored on the Python object. */
   setOnLoadProcessable(val: boolean): void {
     this._onLoadProcessable = val;
   }
 
+  /** Skips the Python on-load script and logs a warning when enabled. Use the async method with a Jython-capable runtime client to execute it. */
   processOnLoad(_context: TimeContext): void {
     if (!this._onLoadProcessable) return;
     console.warn('PythonObject.processOnLoad skipped: requires Java runtime');
   }
 
+  /** Evaluates the enabled Python on-load script through the supplied Java runtime client. */
   async processOnLoadAsync(
     context: TimeContext,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -103,6 +110,7 @@ export class PythonObject extends AbstractSoundObject {
     return new NoteList();
   }
 
+  /** Generates the Python object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -149,6 +157,7 @@ export class PythonObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the Python object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

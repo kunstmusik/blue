@@ -32,6 +32,7 @@ export class FrozenSoundObject extends AbstractSoundObject {
   private _frozenWaveFileName = '';
   private _numChannels = 0;
 
+  /** Creates a default frozen sound object or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: FrozenSoundObject, mode: CopyMode = 'duplication') {
     super();
     if (other) {
@@ -42,23 +43,29 @@ export class FrozenSoundObject extends AbstractSoundObject {
     }
   }
 
+  /** Returns the frozen sound object stored on the frozen sound object. */
   getFrozenSoundObject(): SoundObject | null {
     return this._frozenSoundObject;
   }
+  /** Sets the frozen sound object stored on the frozen sound object. */
   setFrozenSoundObject(sObj: SoundObject | null): void {
     this._frozenSoundObject = sObj;
   }
 
+  /** Returns the frozen wave file name stored on the frozen sound object. */
   getFrozenWaveFileName(): string {
     return this._frozenWaveFileName;
   }
+  /** Sets the frozen wave file name stored on the frozen sound object. */
   setFrozenWaveFileName(name: string): void {
     this._frozenWaveFileName = name;
   }
 
+  /** Returns the num channels stored on the frozen sound object. */
   getNumChannels(): number {
     return this._numChannels;
   }
+  /** Sets the num channels stored on the frozen sound object. */
   setNumChannels(n: number): void {
     this._numChannels = n;
   }
@@ -67,6 +74,7 @@ export class FrozenSoundObject extends AbstractSoundObject {
     return TimeBehavior.NOT_SUPPORTED;
   }
 
+  /** Returns the known frozen playback origin for selected-range rendering, in beats. */
   getRangeOriginBeats(context: TimeContext): number | null | undefined {
     if (this.getNoteProcessorChain().getProcessors().length > 0) return undefined;
     if (!this._frozenWaveFileName) return null;
@@ -215,6 +223,7 @@ export class FrozenSoundObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the frozen sound object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

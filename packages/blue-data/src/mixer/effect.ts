@@ -33,71 +33,90 @@ export class Effect implements BlueDataObject {
   private _opcodeList = new OpcodeList();
   private _comments = '';
 
+  /** Returns the name stored on the effect. */
   getName(): string {
     return this._name;
   }
+  /** Sets the name stored on the effect. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Reports whether the effect is enabled. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Sets the enabled stored on the effect. */
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
   }
 
+  /** Returns the num ins stored on the effect. */
   getNumIns(): number {
     return this._numIns;
   }
+  /** Sets the num ins stored on the effect. */
   setNumIns(n: number): void {
     this._numIns = n;
   }
 
+  /** Returns the num outs stored on the effect. */
   getNumOuts(): number {
     return this._numOuts;
   }
+  /** Sets the num outs stored on the effect. */
   setNumOuts(n: number): void {
     this._numOuts = n;
   }
 
+  /** Returns the Csound code authored for the effect. */
   getCode(): string {
     return this._code;
   }
+  /** Replaces the Csound code used by the effect. */
   setCode(code: string): void {
     this._code = code;
   }
 
+  /** Returns the comments stored on the effect. */
   getComments(): string {
     return this._comments;
   }
+  /** Sets the comments stored on the effect. */
   setComments(comments: string): void {
     this._comments = comments;
   }
 
+  /** Returns the style stored on the effect. */
   getStyle(): UDOStyle {
     return this._style;
   }
+  /** Sets the style stored on the effect. */
   setStyle(style: UDOStyle): void {
     this._style = style;
   }
 
+  /** Returns the editable BlueSynthBuilder graphics model. */
   getGraphicInterface(): BSBGraphicInterface {
     return this._graphicInterface;
   }
 
+  /** Returns the editable automation parameters owned by the effect. */
   getParameters(): Parameter[] {
     return [...this._parameters];
   }
 
+  /** Replaces the effect's collection of automation parameters. */
   setParameters(parameters: Parameter[]): void {
     this._parameters = [...parameters];
   }
 
+  /** Adds an automation parameter to the effect. */
   addParameter(parameter: Parameter): void {
     this._parameters.push(parameter);
   }
 
+  /** Returns the collection of user-defined Csound opcodes. */
   getOpcodeList(): OpcodeList {
     return this._opcodeList;
   }
@@ -221,6 +240,7 @@ export class Effect implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the effect from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Effect {
     const ctx = context ?? new XmlLoadContext(data);
     checkRoot(data, 'effect', ctx);

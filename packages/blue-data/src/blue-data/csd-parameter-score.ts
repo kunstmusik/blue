@@ -22,6 +22,7 @@ import {
 import { getNotes } from '../utilities/score';
 import { formatBlueNumber } from '../utilities/number-format';
 
+/** Selects the realtime or disk settings used by standard CSD generation. */
 export type CsdRenderProfile = 'realtime' | 'disk';
 
 export function buildOrchestraHeader(

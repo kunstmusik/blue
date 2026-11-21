@@ -33,7 +33,7 @@ export interface LayerGroup<T extends Layer> extends Array<T>, DeepCopyable<Laye
    * @param compileData Compilation context for accumulating CSD parts
    * @param startTime Start of render window in beats
    * @param endTime End of render window in beats (-1 for no end)
-   * @param processWithSolo If true, only process solo-enabled layers
+   * @param options Score generation options, including whether to process solo-enabled layers only.
    */
   generateForCSD(
     context: TimeContext,

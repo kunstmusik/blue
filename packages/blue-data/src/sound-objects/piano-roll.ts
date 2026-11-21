@@ -112,6 +112,7 @@ export class PianoRoll extends AbstractSoundObject {
   private _secondaryRulerEnabled = false;
   private _historicalRulerInterval: number | null = null;
 
+  /** Creates a default piano roll or copies a supplied instance. */
   constructor(other?: PianoRoll) {
     super();
     this.setName('PianoRoll');
@@ -160,117 +161,150 @@ export class PianoRoll extends AbstractSoundObject {
     }
   }
 
+  /** Returns the tuning scale used to interpret note pitches. */
   getScale(): Scale {
     return this._scale;
   }
+  /** Sets the tuning scale used to interpret note pitches. */
   setScale(s: Scale): void {
     this._scale = s;
   }
 
+  /** Returns the notes currently stored in the piano roll. */
   getNotes(): PianoNote[] {
     return [...this._notes];
   }
+  /** Sets the notes stored on the piano roll. */
   setNotes(notes: PianoNote[]): void {
     this._notes = notes;
   }
+  /** Adds a note and prepares its per-note field values. */
   addNote(note: PianoNote): void {
     this._notes.push(note);
   }
+  /** Removes the supplied note from the piano roll. */
   removeNote(index: number): void {
     this._notes.splice(index, 1);
   }
 
+  /** Returns the Csound text template expanded for each generated note. */
   getNoteTemplate(): string {
     return this._noteTemplate;
   }
+  /** Sets the Csound text template expanded for each generated note. */
   setNoteTemplate(t: string): void {
     this._noteTemplate = t;
   }
 
+  /** Returns the instrument ID stored on the piano roll. */
   getInstrumentId(): string {
     return this._instrumentId;
   }
+  /** Sets the instrument ID stored on the piano roll. */
   setInstrumentId(id: string): void {
     this._instrumentId = id;
   }
 
+  /** Returns the pitch representation selector. Values 0, 1, and 2 select frequency, octave.pitch-class, and MIDI pitch. */
   getPchGenerationMethod(): number {
     return this._pchGenerationMethod;
   }
+  /** Selects how generated notes encode pitch. Use 0 for frequency, 1 for octave.pitch-class, or 2 for MIDI pitch. */
   setPchGenerationMethod(m: number): void {
     this._pchGenerationMethod = m;
   }
 
+  /** Returns the transposition stored on the piano roll. */
   getTransposition(): number {
     return this._transposition;
   }
+  /** Sets the transposition stored on the piano roll. */
   setTransposition(t: number): void {
     this._transposition = t;
   }
 
+  /** Returns definitions shared by the notes in this piano roll. */
   getFieldDefinitions(): FieldDef[] {
     return [...this._fieldDefinitions];
   }
+  /** Replaces the field definitions associated with the piano roll. */
   setFieldDefinitions(fieldDefs: FieldDef[]): void {
     this._fieldDefinitions = fieldDefs.map(cloneFieldDef);
     this._notes = this._notes.map((note) => rebuildPianoNoteFields(note, this._fieldDefinitions));
   }
+  /** Adds a field definition and initializes that field on existing notes. */
   addFieldDef(fd: FieldDef): void {
     this._fieldDefinitions.push(fd);
   }
 
+  /** Returns the horizontal editor scale in pixels per second. */
   getPixelSecond(): number {
     return this._pixelSecond;
   }
+  /** Sets the horizontal editor scale in pixels per second. */
   setPixelSecond(v: number): void {
     this._pixelSecond = v;
   }
 
+  /** Returns the note display height in pixels. */
   getNoteHeight(): number {
     return this._noteHeight;
   }
+  /** Sets the note display height in pixels. */
   setNoteHeight(v: number): void {
     this._noteHeight = v;
   }
 
+  /** Reports whether the piano roll snaps edits to its grid. */
   isSnapEnabled(): boolean {
     return this._snapEnabled;
   }
+  /** Enables or disables snapping to the piano-roll edit grid. */
   setSnapEnabled(v: boolean): void {
     this._snapEnabled = v;
   }
 
+  /** Returns the snap value enum stored on the piano roll. */
   getSnapValueEnum(): SnapValueName {
     return this._snapValueEnum;
   }
+  /** Sets the snap value enum stored on the piano roll. */
   setSnapValueEnum(v: SnapValueName): void {
     this._snapValueEnum = v;
   }
 
+  /** Reports whether the piano roll uses the project ruler settings. */
   isUseGlobalRuler(): boolean {
     return this._useGlobalRuler;
   }
+  /** Controls whether the piano roll takes its ruler units from the project. */
   setUseGlobalRuler(v: boolean): void {
     this._useGlobalRuler = v;
   }
 
+  /** Returns the primary time display stored on the piano roll. */
   getPrimaryTimeDisplay(): TimeBase {
     return this._primaryTimeDisplay;
   }
+  /** Sets the primary time display stored on the piano roll. */
   setPrimaryTimeDisplay(v: TimeBase): void {
     this._primaryTimeDisplay = v;
   }
 
+  /** Returns the secondary time display stored on the piano roll. */
   getSecondaryTimeDisplay(): TimeBase {
     return this._secondaryTimeDisplay;
   }
+  /** Sets the secondary time display stored on the piano roll. */
   setSecondaryTimeDisplay(v: TimeBase): void {
     this._secondaryTimeDisplay = v;
   }
 
+  /** Reports whether the secondary piano-roll ruler is displayed. */
   isSecondaryRulerEnabled(): boolean {
     return this._secondaryRulerEnabled;
   }
+  /** Shows or hides the secondary piano-roll ruler. */
   setSecondaryRulerEnabled(v: boolean): void {
     this._secondaryRulerEnabled = v;
   }
@@ -423,6 +457,7 @@ export class PianoRoll extends AbstractSoundObject {
     return nl;
   }
 
+  /** Generates the piano roll’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -463,10 +498,12 @@ export class PianoRoll extends AbstractSoundObject {
     return elem;
   }
 
+  /** Returns the historical ruler interval stored on the piano roll. */
   getHistoricalRulerInterval(): number | null {
     return this._historicalRulerInterval;
   }
 
+  /** Reconstructs the piano roll from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

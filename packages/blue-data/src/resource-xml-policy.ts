@@ -11,7 +11,9 @@ import { Preset } from './instruments/blue-synth-builder/preset';
 import { PresetGroup } from './instruments/blue-synth-builder/preset-group';
 import { checkRoot } from './utilities/xml';
 
+/** Standalone XML formats accepted by {@link readResourceXml}. A preset can be a single preset or a preset group. */
 export type XmlResourceKind = 'instrument' | 'effect' | 'soundObject' | 'udo' | 'preset';
+/** Model returned by a successful standalone resource load. The concrete type depends on the resource kind and root element. */
 export type XmlResource =
   | Instrument
   | Effect
@@ -20,7 +22,14 @@ export type XmlResource =
   | Preset
   | PresetGroup;
 
-/** Disk, library and BlueShare-shaped resources use local owners without project migrations. */
+/**
+ * Loads a standalone resource from disk, library, or BlueShare XML using its resource-specific rules.
+ *
+ * @param kind - Resource kind to validate against. `preset` accepts both preset and preset-group roots.
+ * @param xml - Source XML text for the standalone resource.
+ * @param source - Caller-supplied metadata attached to the diagnostics.
+ * @returns The loaded resource and any warnings, or error diagnostics if the XML was rejected.
+ */
 export function readResourceXml(
   kind: XmlResourceKind,
   xml: string,

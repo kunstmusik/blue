@@ -13,7 +13,9 @@ import { moveChildElements } from '../xml-migration-utils';
 import { XmlLoadContext } from '../../serialization/xml-load';
 import { readText } from '../../utilities/xml';
 
+/** Migrates historical project XML to version 2.3.0. */
 export class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
+  /** Creates the migration targeting Blue XML version 2.3.0. */
   constructor() {
     super('2.3.0');
   }

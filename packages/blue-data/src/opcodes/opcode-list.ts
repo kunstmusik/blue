@@ -8,16 +8,19 @@ import { XmlLoadContext, requireXmlValue } from '../serialization/xml-load';
 import type { XmlDiagnosticSink } from '../serialization/xml-load';
 import { checkRoot, checkShape } from '../utilities/xml';
 
+/** Collects reusable Csound user-defined opcodes and allocates unique names at compilation. */
 export class OpcodeList {
   private _opcodes: OpcodeDefinition[] = [];
   private _counter = 0;
 
+  /** Creates a default opcode list or copies a supplied instance. */
   constructor(other?: OpcodeList) {
     if (other) {
       this._opcodes = other.getOpcodes().map((opcode) => opcode.deepCopy() as OpcodeDefinition);
     }
   }
 
+  /** Appends a user-defined opcode to the list. */
   addOpcode(opcode: OpcodeDefinition): void {
     this._opcodes.push(opcode);
   }
@@ -80,15 +83,18 @@ export class OpcodeList {
     }
   }
 
+  /** Returns the number of entries stored in the opcode list. */
   size(): number {
     return this._opcodes.length;
   }
 
+  /** Returns the entry at the supplied index in the opcode list’s opcodes. */
   getOpcode(index: number): OpcodeDefinition | null {
     if (index < 0 || index >= this._opcodes.length) return null;
     return this._opcodes[index];
   }
 
+  /** Returns the opcode definitions in their stored order. */
   getOpcodes(): OpcodeDefinition[] {
     return [...this._opcodes];
   }
@@ -107,6 +113,7 @@ export class OpcodeList {
     return null;
   }
 
+  /** Checks whether the supplied opcode name is unused by this list. */
   isNameUnique(name: string): boolean {
     for (const udo of this._opcodes) {
       if (udo.getName() === name) return false;
@@ -114,6 +121,7 @@ export class OpcodeList {
     return true;
   }
 
+  /** Finds an unused opcode name starting from the supplied base name. */
   getUniqueName(): string {
     let uniqueName = `uniqueUDO${this._counter++}`;
     while (!this.isNameUnique(uniqueName)) {
@@ -122,6 +130,7 @@ export class OpcodeList {
     return uniqueName;
   }
 
+  /** Serializes the opcode list and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('opcodeList');
     for (const opcode of this._opcodes) {
@@ -130,6 +139,7 @@ export class OpcodeList {
     return elem;
   }
 
+  /** Reconstructs the opcode list from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,

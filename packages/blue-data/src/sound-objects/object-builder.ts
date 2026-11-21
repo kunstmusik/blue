@@ -24,6 +24,7 @@ import { executeJavaScriptCode } from './javascript-object';
 import { getExternalCommandExecutor } from './external';
 import type { CopyMode } from '../deep-copyable';
 
+/** Script or external execution backends supported by ObjectBuilder. */
 export type ObjectBuilderLanguageType = 'PYTHON' | 'JAVASCRIPT' | 'CLOJURE' | 'EXTERNAL';
 
 const OBJECT_BUILDER_LANGUAGE_TYPES: ReadonlySet<string> = new Set([
@@ -55,6 +56,7 @@ export class ObjectBuilder extends AbstractSoundObject {
   private comment = '';
   private languageType: ObjectBuilderLanguageType = 'PYTHON';
 
+  /** Creates a default object builder or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: ObjectBuilder, mode: CopyMode = 'duplication') {
     super();
     this.setName('ObjectBuilder');
@@ -71,58 +73,72 @@ export class ObjectBuilder extends AbstractSoundObject {
     }
   }
 
+  /** Returns the editable BlueSynthBuilder graphics model. */
   getGraphicInterface(): BSBGraphicInterface {
     return this.graphicInterface;
   }
 
+  /** Sets the editable BlueSynthBuilder graphics model. */
   setGraphicInterface(graphicInterface: BSBGraphicInterface): void {
     this.graphicInterface = graphicInterface;
   }
 
+  /** Returns the preset hierarchy. */
   getPresetGroup(): PresetGroup {
     return this.presetGroup;
   }
 
+  /** Sets the preset hierarchy. */
   setPresetGroup(presetGroup: PresetGroup): void {
     this.presetGroup = presetGroup;
   }
 
+  /** Returns the authored generator source for the selected backend. */
   getCode(): string {
     return this.code;
   }
 
+  /** Sets the source passed to the selected generator backend. */
   setCode(code: string): void {
     this.code = code ?? '';
   }
 
+  /** Returns the command-line text supplied to the generator. */
   getCommandLine(): string {
     return this.commandLine;
   }
 
+  /** Sets the command-line text supplied to the generator. */
   setCommandLine(commandLine: string): void {
     this.commandLine = commandLine ?? '';
   }
 
+  /** Reports whether the object builder allows editing the graphic interface. */
   isEditEnabled(): boolean {
     return this.editEnabled;
   }
 
+  /** Enables or disables editing the ObjectBuilder interface. */
   setEditEnabled(editEnabled: boolean): void {
     this.editEnabled = editEnabled;
   }
 
+  /** Returns the comment stored on the object builder. */
   getComment(): string {
     return this.comment;
   }
 
+  /** Replaces the descriptive comment attached to the ObjectBuilder. */
   setComment(comment: string): void {
     this.comment = comment ?? '';
   }
 
+  /** Returns the language type stored on the object builder. */
   getLanguageType(): ObjectBuilderLanguageType {
     return this.languageType;
   }
 
+  /** Selects the backend used to evaluate the ObjectBuilder. */
   setLanguageType(languageType: string): void {
     const normalized = (languageType ?? '').trim().toUpperCase();
     this.languageType = OBJECT_BUILDER_LANGUAGE_TYPES.has(normalized)
@@ -130,10 +146,12 @@ export class ObjectBuilder extends AbstractSoundObject {
       : 'PYTHON';
   }
 
+  /** Reports whether this ObjectBuilder uses the Python backend. */
   isPythonLanguage(): boolean {
     return this.languageType === 'PYTHON';
   }
 
+  /** Reports whether the selected backend requires the host Java adapter. */
   usesJavaRuntime(): boolean {
     return this.languageType === 'PYTHON' || this.languageType === 'CLOJURE';
   }
@@ -200,6 +218,7 @@ export class ObjectBuilder extends AbstractSoundObject {
     return this.finishNoteList(processed, context);
   }
 
+  /** Generates the object builder’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -268,6 +287,7 @@ export class ObjectBuilder extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the object builder from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

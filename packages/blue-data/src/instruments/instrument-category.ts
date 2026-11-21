@@ -12,6 +12,7 @@ import type { XmlDiagnosticSink } from '../serialization/xml-load';
 import { checkRoot, checkShape, parseXmlBoolean } from '../utilities/xml';
 import type { CopyMode } from '../deep-copyable';
 
+/** Named instrument-library folder containing instruments and child categories. */
 export class InstrumentCategory {
   private _categoryName: string;
   private _isRoot: boolean;
@@ -23,26 +24,33 @@ export class InstrumentCategory {
     this._isRoot = isRoot;
   }
 
+  /** Returns the category name stored on the instrument category. */
   getCategoryName(): string {
     return this._categoryName;
   }
+  /** Sets the category name stored on the instrument category. */
   setCategoryName(name: string): void {
     this._categoryName = name;
   }
 
+  /** Reports whether this category is designated as the library root. */
   isRoot(): boolean {
     return this._isRoot;
   }
+  /** Sets the top-level element or container. */
   setRoot(root: boolean): void {
     this._isRoot = root;
   }
 
+  /** Returns the sub categories stored on the instrument category. */
   getSubCategories(): InstrumentCategory[] {
     return this._subCategories;
   }
+  /** Appends the supplied subcategory to this folder. */
   addSubCategory(cat: InstrumentCategory): void {
     this._subCategories.push(cat);
   }
+  /** Removes the supplied child category by object identity. */
   removeSubCategory(cat: InstrumentCategory): boolean {
     const idx = this._subCategories.indexOf(cat);
     if (idx !== -1) {
@@ -52,12 +60,15 @@ export class InstrumentCategory {
     return false;
   }
 
+  /** Returns the instruments stored on the instrument category. */
   getInstruments(): Instrument[] {
     return this._instruments;
   }
+  /** Appends the supplied instrument to this category. */
   addInstrument(instr: Instrument): void {
     this._instruments.push(instr);
   }
+  /** Removes the supplied instrument instance when present. */
   removeInstrument(instr: Instrument): boolean {
     const idx = this._instruments.indexOf(instr);
     if (idx !== -1) {
@@ -92,6 +103,7 @@ export class InstrumentCategory {
 
   // ─── XML ───
 
+  /** Serializes the instrument category and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('instrumentCategory');
     elem.setAttribute('categoryName', this._categoryName);

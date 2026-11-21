@@ -11,15 +11,25 @@ import { Parameter } from '../../automation/parameter';
 import { formatBlueNumber } from '../../utilities/number-format';
 
 export class BSBXYController extends BSBWidget {
+  /** Current value along the horizontal control axis. */
   xValue = 0.5;
+  /** Current value along the vertical control axis. */
   yValue = 0.5;
+  /** Lower bound of the horizontal control axis. */
   xMin = 0;
+  /** Upper bound of the horizontal control axis. */
   xMax = 1;
+  /** Lower bound of the vertical control axis. */
   yMin = 0;
+  /** Upper bound of the vertical control axis. */
   yMax = 1;
+  /** Width in pixels. */
   width = 100;
+  /** Height in pixels. */
   height = 80;
+  /** Whether the widget displays its current value. */
   valueDisplayEnabled = true;
+  /** Whether this widget participates in value randomization. */
   randomizable = true;
 
   override getPresetValue(): string {
@@ -57,6 +67,7 @@ export class BSBXYController extends BSBWidget {
     this.addCompilationReplacement(unit, yName, formatBlueNumber(this.yValue), parameters);
   }
 
+  /** Reconstructs the XY controller from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const versionAttribute = data.getAttribute('version');
@@ -88,6 +99,7 @@ export class BSBXYController extends BSBWidget {
     }
   }
 
+  /** Picks a new XY controller value when randomization is enabled. */
   randomize(): void {
     if (!this.randomizable) return;
     this.xValue = this.xMin + Math.random() * (this.xMax - this.xMin);

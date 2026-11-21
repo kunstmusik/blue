@@ -17,6 +17,7 @@ import { readTimeNumber } from './time-xml';
 /** Default PPQ (pulses per quarter note). */
 const DEFAULT_PPQ = 960;
 
+/** Immutable time span in a specific {@link TimeBase}. Bar and beat counts are zero-based and convert using the first meter. */
 export class TimeDuration {
   private readonly _timeBase: TimeBase;
 
@@ -82,15 +83,18 @@ export class TimeDuration {
 
   // ─── Static constants ───
 
+  /** Zero-length span expressed in Csound beats. */
   static readonly ZERO = new TimeDuration(TimeBase.BEATS, { csoundBeats: 0 });
 
   // ─── Factory methods ───
 
+  /** Creates a nonnegative duration in Csound beats, where one quarter note is one beat. */
   static beats(csoundBeats: number): TimeDuration {
     if (csoundBeats < 0) throw new Error(`Invalid csoundBeats: ${csoundBeats} (must be >= 0)`);
     return new TimeDuration(TimeBase.BEATS, { csoundBeats });
   }
 
+  /** Creates a span from zero-based bar and beat counts and ticks. */
   static bbt(bar: number, beat: number, ticks: number): TimeDuration {
     if (bar < 0) throw new Error(`Invalid bar: ${bar} (must be >= 0)`);
     if (beat < 0) throw new Error(`Invalid beat: ${beat} (must be >= 0)`);
@@ -98,6 +102,7 @@ export class TimeDuration {
     return new TimeDuration(TimeBase.BBT, { bar, beat, ticks });
   }
 
+  /** Creates a span from zero-based bars, beats, and sixteenths (0–3), with remaining ticks. */
   static bbst(bar: number, beat: number, sixteenth: number, ticks: number): TimeDuration {
     if (bar < 0) throw new Error(`Invalid bar: ${bar} (must be >= 0)`);
     if (beat < 0) throw new Error(`Invalid beat: ${beat} (must be >= 0)`);
@@ -107,6 +112,7 @@ export class TimeDuration {
     return new TimeDuration(TimeBase.BBST, { bar, beat, sixteenth, ticks });
   }
 
+  /** Creates a span in zero-based bars and beats plus a fraction in hundredths (0–99). */
   static bbf(bar: number, beat: number, fraction: number): TimeDuration {
     if (bar < 0) throw new Error(`Invalid bar: ${bar} (must be >= 0)`);
     if (beat < 0) throw new Error(`Invalid beat: ${beat} (must be >= 0)`);
@@ -115,6 +121,7 @@ export class TimeDuration {
     return new TimeDuration(TimeBase.BBF, { bar, beat, fraction });
   }
 
+  /** Creates a wall-clock span from hours, minutes, seconds, and milliseconds. */
   static timeValue(
     hours: number,
     minutes: number,
@@ -129,11 +136,12 @@ export class TimeDuration {
     return new TimeDuration(TimeBase.TIME, { hours, minutes, seconds, milliseconds });
   }
 
-  /** Alias for timeValue matching Java TimeDuration.time(). */
+  /** Alias for {@link TimeDuration.timeValue}. */
   static time(hours: number, minutes: number, seconds: number, milliseconds: number): TimeDuration {
     return TimeDuration.timeValue(hours, minutes, seconds, milliseconds);
   }
 
+  /** Creates a duration from nonnegative elapsed seconds without splitting it into clock fields. */
   static seconds(totalSeconds: number): TimeDuration {
     if (totalSeconds < 0) throw new Error(`Invalid totalSeconds: ${totalSeconds} (must be >= 0)`);
     if (!isFinite(totalSeconds))
@@ -141,10 +149,7 @@ export class TimeDuration {
     return new TimeDuration(TimeBase.SECONDS, { totalSeconds });
   }
 
-  /**
-   * Create a DurationTime from total seconds.
-   * Decomposes totalSeconds into hours/minutes/seconds/milliseconds.
-   */
+  /** Converts elapsed seconds to clock fields and rounded milliseconds. Negative input is treated as zero. */
   static fromSeconds(totalSeconds: number): TimeDuration {
     if (totalSeconds < 0) totalSeconds = 0;
     const hours = Math.floor(totalSeconds / 3600);
@@ -156,6 +161,7 @@ export class TimeDuration {
     return new TimeDuration(TimeBase.TIME, { hours, minutes, seconds, milliseconds });
   }
 
+  /** Creates a duration in audio sample frames. Use a {@link TimeContext} to convert it to seconds. */
   static frames(frameCount: number): TimeDuration {
     if (frameCount < 0) throw new Error(`Invalid frameCount: ${frameCount} (must be >= 0)`);
     return new TimeDuration(TimeBase.FRAME, { frameCount });
@@ -163,10 +169,12 @@ export class TimeDuration {
 
   // ─── Accessors ───
 
+  /** Returns the representation used for this duration. */
   getTimeBase(): TimeBase {
     return this._timeBase;
   }
 
+  /** Returns the stored scalar for beats, seconds, or audio frames. Use a conversion method for other time bases. */
   getValue(): number {
     if (this._timeBase === TimeBase.BEATS) return this._csoundBeats;
     if (this._timeBase === TimeBase.SECONDS) return this._totalSeconds;
@@ -174,39 +182,51 @@ export class TimeDuration {
     return this._csoundBeats;
   }
 
+  /** Returns the stored beat count for the `BEATS` representation. */
   getCsoundBeats(): number {
     return this._csoundBeats;
   }
+  /** Returns the stored bar count for bar-based durations. */
   getBar(): number {
     return this._bar;
   }
+  /** Returns the stored beat count for bar-based durations. */
   getBeat(): number {
     return this._beat;
   }
+  /** Returns the stored tick remainder for tick-based durations. */
   getTicks(): number {
     return this._ticks;
   }
+  /** Returns the stored sixteenth count for `BBST` durations. */
   getSixteenth(): number {
     return this._sixteenth;
   }
+  /** Returns the stored fraction in hundredths of a beat for `BBF` durations. */
   getFraction(): number {
     return this._fraction;
   }
+  /** Returns the hours component of a wall-clock duration. */
   getHours(): number {
     return this._hours;
   }
+  /** Returns the minutes component of a wall-clock duration. */
   getMinutes(): number {
     return this._minutes;
   }
+  /** Returns the seconds component of a wall-clock duration. Use `toSeconds(context)` for total seconds. */
   getSeconds(): number {
     return this._seconds;
   }
+  /** Returns the milliseconds component of a wall-clock duration. */
   getMilliseconds(): number {
     return this._milliseconds;
   }
+  /** Returns the stored scalar for the `SECONDS` representation. */
   getTotalSeconds(): number {
     return this._totalSeconds;
   }
+  /** Returns the stored frame count for the `FRAME` representation. */
   getFrameCount(): number {
     return this._frameCount;
   }
@@ -223,7 +243,7 @@ export class TimeDuration {
 
   // ─── Conversions ───
 
-  /** Convert to Csound beats using the provided context. */
+  /** Converts to Csound beats. Bar-based spans use the first meter entry. Clock and audio-frame spans use the tempo map. */
   toBeats(context: TimeContext): number {
     switch (this._timeBase) {
       case TimeBase.BEATS:
@@ -304,15 +324,18 @@ export class TimeDuration {
   }
 
   // Aliases matching Java naming (plural forms for duration 0-based)
+  /** Alias for {@link TimeDuration.getBar}. */
   getBars(): number {
     return this._bar;
   }
+  /** Alias for {@link TimeDuration.getBeat}. */
   getBeats(): number {
     return this._beat;
   }
 
   // ─── Equality ───
 
+  /** Compares the time base and its stored fields. Equivalent spans in different time bases compare unequal. */
   equals(other: TimeDuration): boolean {
     if (this._timeBase !== other._timeBase) return false;
     switch (this._timeBase) {
@@ -351,6 +374,7 @@ export class TimeDuration {
     }
   }
 
+  /** Returns a hash based on the same representation used by {@link TimeDuration.equals}. */
   hashCode(): number {
     const h = (n: number) => ((n >>> 0) * 2654435761) | 0;
     switch (this._timeBase) {
@@ -377,6 +401,7 @@ export class TimeDuration {
 
   // ─── XML Serialization ───
 
+  /** Serializes this duration using its stored time representation. */
   saveAsXML(): Element {
     const elem = new Element('timeDuration');
 
@@ -427,6 +452,7 @@ export class TimeDuration {
     return elem;
   }
 
+  /** Loads a supported duration representation using the supplied XML diagnostic context. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): TimeDuration {
     const type = data.getAttribute('type') ?? '';
     switch (type) {

@@ -10,6 +10,7 @@ import { Parameter } from '../../automation/parameter';
 import { formatBlueNumber } from '../../utilities/number-format';
 
 export class BSBValue extends BSBWidget {
+  /** Initial value when no explicit value is supplied. */
   defaultValue = 0;
 
   override getPresetValue(): string {
@@ -37,6 +38,7 @@ export class BSBValue extends BSBWidget {
     );
   }
 
+  /** Reconstructs the value widget from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const dv = data.getTextString('defaultValue');

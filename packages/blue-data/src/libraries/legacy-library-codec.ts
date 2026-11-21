@@ -186,6 +186,7 @@ export function validateLegacyLibraryEnvelope(
   readLegacyLibraryEnvelope(source, sourceInfo);
 }
 
+/** Parses historical library XML into a classified tree and import diagnostics. */
 export function parseLegacyLibraryDocument(
   source: string,
   sourceInfo: XmlSource = { kind: 'library', label: 'in-memory library' },
@@ -261,6 +262,7 @@ function serializeLibraryDocument(
   return `<${plan.descriptor.rootElement}>${serializeFolder(plan.descriptor, plan.root, validatePayload)}</${plan.descriptor.rootElement}>`;
 }
 
+/** Builds historical library XML from the supplied resource tree. */
 export function exportLegacyLibraryDocument(plan: LegacyLibraryDocumentPlan): string {
   return serializeLibraryDocument(plan);
 }

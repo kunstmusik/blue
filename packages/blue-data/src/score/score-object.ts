@@ -9,6 +9,7 @@ import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 import { TimeContext } from '../time/time-context';
 
+/** Editable timeline object with a placement, duration, display color, and resize contract. */
 export interface ScoreObject {
   /** Get the name of this score object. */
   getName(): string;
@@ -35,6 +36,7 @@ export interface ScoreObject {
    * Returns [leftLimit, rightLimit] in beats.
    */
   getResizeLeftLimits(context: TimeContext): number[];
+  /** Returns the permitted offsets for moving the right edge, in beats. */
   getResizeRightLimits(context: TimeContext): number[];
 
   /** Resize the left edge to the new start time. */

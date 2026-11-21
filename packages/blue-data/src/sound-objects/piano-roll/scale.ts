@@ -6,12 +6,18 @@ import { Element } from '../../serialization/xml-reader';
 import { XmlLoadContext } from '../../serialization/xml-load';
 import { checkRoot, checkShape, readText, readDouble } from '../../utilities/xml';
 
+/** Musical tuning defined by a reference frequency, period ratio, and scale-degree ratios. */
 export class Scale {
+  /** Display name of the tuning scale. */
   scaleName = '12TET';
+  /** Reference pitch frequency in hertz. */
   baseFrequency = 261.625565; // Middle C (C4)
+  /** Frequency ratio of one complete scale period. */
   octave = 2.0;
+  /** Ordered frequency ratios for degrees within the scale period. */
   ratios: number[];
 
+  /** Creates a default scale or copies a supplied instance. */
   constructor(other?: Scale) {
     if (other) {
       this.scaleName = other.scaleName;
@@ -57,10 +63,12 @@ export class Scale {
     return newBase * this.ratios[pitchIndex];
   }
 
+  /** Returns the number of degree ratios in one period of the scale. */
   getNumScaleDegrees(): number {
     return this.ratios.length;
   }
 
+  /** Serializes the scale and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('scale');
     elem.addElement('scaleName').setText(this.scaleName);
@@ -73,6 +81,7 @@ export class Scale {
     return elem;
   }
 
+  /** Reconstructs the scale from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): Scale {
     checkRoot(data, 'scale', context);
     checkShape(data, [], ['scaleName', 'baseFrequency', 'octave', 'ratios'], context);

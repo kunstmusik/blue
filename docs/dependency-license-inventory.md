@@ -177,6 +177,8 @@ Standalone npm archives and the GitHub-installed `blue-projects` skill have narr
   - `@rgrove/parse-xml` `4.2.3` (`ISC`)
   - `quickjs-emscripten` `0.32.0` (`MIT`, plus `@jitl/quickjs-ffi-types`, `@jitl/quickjs-wasmfile-debug-asyncify`, `@jitl/quickjs-wasmfile-debug-sync`, `@jitl/quickjs-wasmfile-release-asyncify`, `@jitl/quickjs-wasmfile-release-sync`, and `quickjs-emscripten-core` at `0.32.0`, all `MIT` — listed in [Production dependencies through `@blue/data`](#production-dependencies-through-bluedata)).
 
+- **Documentation build tool**: [TypeDoc 0.28.20](https://github.com/TypeStrong/typedoc/tree/v0.28.20) (Apache-2.0) is a development dependency. Its generated HTML and theme assets are outside the npm archive.
+
 ### `@kunstmusik/blue-cli` (`packages/blue-cli`)
 
 - **Package license field**: `SEE LICENSE IN THIRD_PARTY_NOTICES.md`, separating the JavaScript CLI bundle, externalized npm runtime dependencies, and separate-process Java helper scopes.

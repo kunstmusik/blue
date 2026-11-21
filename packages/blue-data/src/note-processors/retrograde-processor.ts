@@ -6,8 +6,11 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.RetrogradeProcessor';
 
+/** Reverses the temporal placement of notes in a score. */
 export class RetrogradeProcessor extends NoteProcessor {
+  /** Creates a retrograde processor initialized with its default settings. */
   constructor();
+  /** Creates a retrograde processor using the source instance’s settings. */
   constructor(_src: RetrogradeProcessor);
   constructor(_src?: RetrogradeProcessor) {
     super();
@@ -42,6 +45,7 @@ export class RetrogradeProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the retrograde processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(_data: Element, context = new XmlLoadContext(_data)): RetrogradeProcessor {
     validateProcessorXml(_data, 'RetrogradeProcessor', context);
     return new RetrogradeProcessor();

@@ -17,16 +17,20 @@ import {
   setScoreStart,
 } from '../utilities/score';
 
+/** Host adapter that executes an external score generator and returns its output. */
 export interface ExternalCommandExecutor {
+  /** Runs the configured command with the score source and optional working directory, returning generated score text. */
   execute(commandLine: string, textBody: string, projectDir: string | null): string;
 }
 
 let _executor: ExternalCommandExecutor | null = null;
 
+/** Registers the host adapter used to run external score commands. */
 export function setExternalCommandExecutor(executor: ExternalCommandExecutor | null): void {
   _executor = executor;
 }
 
+/** Returns the registered host adapter for external score commands. */
 export function getExternalCommandExecutor(): ExternalCommandExecutor | null {
   return _executor;
 }
@@ -36,6 +40,7 @@ export class External extends AbstractSoundObject {
   private _text = '';
   private _syntaxType = 'Python';
 
+  /** Creates a default external or copies a supplied instance. */
   constructor(other?: External) {
     super();
     this.setName('External');
@@ -49,23 +54,29 @@ export class External extends AbstractSoundObject {
     }
   }
 
+  /** Returns the command-line text supplied to the generator. */
   getCommandLine(): string {
     return this._commandLine;
   }
+  /** Sets the command-line text supplied to the generator. */
   setCommandLine(cmd: string): void {
     this._commandLine = cmd;
   }
 
+  /** Returns the authored text. */
   getText(): string {
     return this._text;
   }
+  /** Sets the authored text. */
   setText(text: string): void {
     this._text = text;
   }
 
+  /** Returns the syntax type stored on the external score object. */
   getSyntaxType(): string {
     return this._syntaxType;
   }
+  /** Sets the syntax type stored on the external score object. */
   setSyntaxType(type: string): void {
     this._syntaxType = type;
   }
@@ -113,6 +124,7 @@ export class External extends AbstractSoundObject {
     return processed;
   }
 
+  /** Generates the external score object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -164,6 +176,7 @@ export class External extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the external score object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

@@ -18,6 +18,7 @@ import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 export class Comment extends AbstractSoundObject {
   private _commentText = '';
 
+  /** Creates a default comment or copies a supplied instance. */
   constructor(other?: Comment) {
     super();
     this.setName('Comment');
@@ -28,9 +29,11 @@ export class Comment extends AbstractSoundObject {
     }
   }
 
+  /** Returns the authored text. */
   getText(): string {
     return this._commentText;
   }
+  /** Sets the authored text. */
   setText(text: string): void {
     this._commentText = text;
   }
@@ -54,6 +57,7 @@ export class Comment extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the comment from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

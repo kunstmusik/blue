@@ -31,6 +31,7 @@ export class Instance extends AbstractSoundObject {
   private _soundObject: SoundObject | null = null;
   private _libraryId = '';
 
+  /** Creates a default instance or copies a supplied instance. */
   constructor(other?: Instance) {
     super();
     this.setName('Instance: ');
@@ -42,6 +43,7 @@ export class Instance extends AbstractSoundObject {
     }
   }
 
+  /** Returns the sound object stored on the linked sound-object instance. */
   getSoundObject(): SoundObject | null {
     return this._soundObject;
   }
@@ -50,9 +52,11 @@ export class Instance extends AbstractSoundObject {
     this._soundObject = sObj;
   }
 
+  /** Returns the library ID stored on the linked sound-object instance. */
   getLibraryId(): string {
     return this._libraryId;
   }
+  /** Sets the library ID stored on the linked sound-object instance. */
   setLibraryId(id: string): void {
     this._libraryId = id;
   }
@@ -126,6 +130,7 @@ export class Instance extends AbstractSoundObject {
     );
   }
 
+  /** Generates the linked sound-object instance’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -212,6 +217,7 @@ export class Instance extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the linked sound-object instance from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

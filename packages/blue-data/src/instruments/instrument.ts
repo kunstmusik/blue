@@ -7,31 +7,38 @@ import { Element } from '../serialization/xml-reader';
 import type { CompileData } from '../compile-data';
 import type { Parameter } from '../automation/parameter';
 
+/** Base class for authored instruments that contribute Csound code and compile-time resources. */
 export abstract class Instrument implements DeepCopyable<Instrument> {
   protected _name = '';
   protected _enabled = true;
   protected _comment = '';
 
+  /** Returns the instrument's editable display name. */
   getName(): string {
     return this._name;
   }
 
+  /** Sets the instrument's display name independently of its Csound assignment ID. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Returns this instrument's own enabled flag. An arrangement assignment has a separate flag. */
   isEnabled(): boolean {
     return this._enabled;
   }
 
+  /** Sets this instrument's own enabled flag. */
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
   }
 
+  /** Returns the stored instrument notes. */
   getComment(): string {
     return this._comment;
   }
 
+  /** Replaces the stored instrument notes. */
   setComment(comment: string): void {
     this._comment = comment ?? '';
   }
@@ -54,6 +61,7 @@ export abstract class Instrument implements DeepCopyable<Instrument> {
   /** Generate the instrument's orchestra code. */
   abstract generateInstrument(): string;
 
+  /** Generates the instrument body, allowing implementing instruments to await a host runtime. */
   async generateInstrumentAsync(
     _compileData?: CompileData,
     parameters?: Parameter[],
@@ -85,7 +93,9 @@ export abstract class Instrument implements DeepCopyable<Instrument> {
     // Default: no-op
   }
 
+  /** Copies the concrete instrument with the requested identity policy. */
   abstract deepCopy(mode?: CopyMode): Instrument;
 
+  /** Writes the concrete instrument type and its authored settings to XML. */
   abstract saveAsXML(): Element;
 }

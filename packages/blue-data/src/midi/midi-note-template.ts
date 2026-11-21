@@ -1,9 +1,14 @@
 import { formatJavaDouble } from '../utilities/number-format';
 
+/** Paired MIDI event with a start and end tick, note number, and attack velocity. */
 export interface MidiImportNote {
+  /** Note-on timestamp in absolute MIDI ticks. */
   startTick: number;
+  /** Note-off timestamp in absolute MIDI ticks. */
   endTick: number;
+  /** MIDI pitch number. */
   noteNumber: number;
+  /** MIDI velocity value. */
   velocity: number;
 }
 
@@ -31,6 +36,7 @@ function getTemplateValues(
   };
 }
 
+/** Substitutes MIDI note data and timing values into a Csound note template. */
 export function expandMidiNoteTemplate(
   template: string,
   instrumentId: string,

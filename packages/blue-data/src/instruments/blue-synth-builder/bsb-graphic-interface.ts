@@ -45,13 +45,20 @@ import {
   normalizeBsbWidgetIds,
 } from './bsb-identity';
 
+/** Visual style used to draw the BlueSynthBuilder editing grid. */
 export type GridStyle = 'NONE' | 'DOT' | 'LINE';
 
+/** BlueSynthBuilder editor grid visibility, snapping, spacing, and appearance. */
 export interface GridSettingsData {
+  /** Whether the editing grid is displayed. */
   enabled: boolean;
+  /** Whether widget edits snap to the grid. */
   snapEnabled: boolean;
+  /** Horizontal spacing between grid lines or points, in pixels. */
   width: number;
+  /** Vertical spacing between grid lines or points, in pixels. */
   height: number;
+  /** Visual representation of the editor grid. */
   gridStyle: GridStyle;
 }
 
@@ -79,37 +86,49 @@ function createDefaultGridSettings(): GridSettingsData {
   return { enabled: false, snapEnabled: true, width: 10, height: 10, gridStyle: 'DOT' };
 }
 
+/** Root of the editable BlueSynthBuilder widget tree with grid and editing settings. */
 export class BSBGraphicInterface {
+  /** Live group containing all widgets in this interface. */
   rootGroup = new BSBGroup();
+  /** Legacy raw grid settings retained for compatibility. */
   gridSettingsRaw = '';
+  /** Structured grid settings used by the editor. */
   gridSettingsData: GridSettingsData = createDefaultGridSettings();
+  /** Whether the editor allows widget position and size edits. */
   editEnabled = true;
 
+  /** Returns the root group stored on the BlueSynthBuilder graphic interface. */
   getRootGroup(): BSBGroup {
     return this.rootGroup;
   }
 
+  /** Returns the current grid settings object. */
   getGridSettings(): GridSettingsData {
     return this.gridSettingsData;
   }
 
+  /** Merges the supplied settings into the current grid configuration. */
   setGridSettings(settings: Partial<GridSettingsData>): void {
     this.gridSettingsData = { ...this.gridSettingsData, ...settings };
     this.gridSettingsRaw = '';
   }
 
+  /** Reports whether the BlueSynthBuilder graphic interface allows editing the graphic interface. */
   isEditEnabled(): boolean {
     return this.editEnabled;
   }
 
+  /** Enables or disables widget editing in the graphic interface. */
   setEditEnabled(enabled: boolean): void {
     this.editEnabled = enabled;
   }
 
+  /** Collects compilation token values from the widget tree. */
   collectReplacements(unit: BSBCompilationUnit, parameters?: Parameter[]): void {
     this.rootGroup.collectReplacements(unit, parameters);
   }
 
+  /** Replaces the graphic interface from validated XML and returns any widget ID repairs. */
   loadFromXML(
     data: Element,
     context?: XmlLoadContext,
@@ -246,6 +265,7 @@ export class BSBGraphicInterface {
     };
   }
 
+  /** Serializes the BlueSynthBuilder graphic interface and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('graphicInterface');
     elem.setAttribute('editEnabled', this.editEnabled.toString());
@@ -261,6 +281,7 @@ export class BSBGraphicInterface {
     return elem;
   }
 
+  /** Copies the BlueSynthBuilder graphic interface and its editable state. The copy mode controls which identities are retained. */
   deepCopy(mode: CopyMode = 'duplication'): BSBGraphicInterface {
     const copy = new BSBGraphicInterface();
     copy.rootGroup = this.rootGroup.deepCopy(mode);
@@ -273,10 +294,12 @@ export class BSBGraphicInterface {
     return copy;
   }
 
+  /** Searches the widget tree for the supplied persistent identifier. */
   findWidgetById(id: string): BSBWidget | null {
     return findBsbWidgetById(this.rootGroup, id);
   }
 
+  /** Creates a widget of the registered type and attaches it to the interface. */
   createWidgetByType(typeName: string): BSBWidget | null {
     const Ctor = WIDGET_TYPE_REGISTRY[typeName];
     if (!Ctor) return null;
@@ -287,6 +310,7 @@ export class BSBGraphicInterface {
     return widget;
   }
 
+  /** Removes the widget with the supplied ID from the group that contains it. */
   removeWidget(widgetId: string): boolean {
     const remove = (parent: BSBGroup): boolean => {
       if (parent.removeChildById(widgetId)) return true;

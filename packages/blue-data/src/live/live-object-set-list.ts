@@ -9,22 +9,27 @@ import { LiveObjectBins } from './live-object-bins';
 export class LiveObjectSetList implements BlueDataObject {
   private _sets: LiveObjectSet[] = [];
 
+  /** Creates an empty list of saved Blue Live selections. */
   constructor() {}
 
+  /** Returns the sets stored on the Live object set list. */
   getSets(): LiveObjectSet[] {
     return this._sets;
   }
 
+  /** Appends a saved set of Live cells to the list. */
   add(set: LiveObjectSet): void {
     this._sets.push(set);
   }
 
+  /** Removes the saved set at the supplied index. */
   removeAt(index: number): boolean {
     if (index < 0 || index >= this._sets.length) return false;
     this._sets.splice(index, 1);
     return true;
   }
 
+  /** Changes the display name of the set at the supplied index. */
   rename(index: number, name: string): boolean {
     if (index < 0 || index >= this._sets.length) return false;
     if (this._sets[index].getName() === name) return false;
@@ -32,6 +37,7 @@ export class LiveObjectSetList implements BlueDataObject {
     return true;
   }
 
+  /** Moves a saved set to a new position. */
   move(from: number, to: number): boolean {
     if (from < 0 || from >= this._sets.length) return false;
     if (to < 0 || to >= this._sets.length || from === to) return false;
@@ -40,6 +46,7 @@ export class LiveObjectSetList implements BlueDataObject {
     return true;
   }
 
+  /** Saves the grid's current selection of enabled Live cells. */
   captureEnabledSet(bins: LiveObjectBins, name: string): LiveObjectSet {
     const set = new LiveObjectSet();
     set.setName(name);
@@ -49,6 +56,7 @@ export class LiveObjectSetList implements BlueDataObject {
     return set;
   }
 
+  /** Makes the saved set the grid's current enabled selection. */
   applySet(index: number, bins: LiveObjectBins): boolean {
     if (index < 0 || index >= this._sets.length) return false;
     const objects = this._sets[index].resolveLiveObjects(bins);
@@ -63,6 +71,7 @@ export class LiveObjectSetList implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the Live object set list from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     bins: LiveObjectBins,

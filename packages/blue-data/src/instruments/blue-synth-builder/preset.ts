@@ -7,39 +7,50 @@ import type { BSBGraphicInterface } from './bsb-graphic-interface';
 import type { BSBWidget } from './bsb-widget';
 import { BSBGroup } from './bsb-group';
 
+/** A named snapshot of BlueSynthBuilder control values keyed by widget name. */
 export class Preset {
+  /** Editable display name of the preset. */
   presetName = '';
+  /** Persistent identifier. */
   uniqueId = generatePrefixedUuid('preset');
   private _valuesMap = new Map<string, string>();
 
+  /** Returns the preset name stored on the preset. */
   getPresetName(): string {
     return this.presetName;
   }
 
+  /** Sets the preset name stored on the preset. */
   setPresetName(name: string): void {
     this.presetName = name;
   }
 
+  /** Returns the persistent identifier. */
   getUniqueId(): string {
     return this.uniqueId;
   }
 
+  /** Returns a copy of the mapping from widget object name to preset value. */
   getValuesMap(): Map<string, string> {
     return new Map(this._valuesMap);
   }
 
+  /** Replaces the stored widget values with a copy of the supplied mapping. */
   setValuesMap(values: Map<string, string>): void {
     this._valuesMap = new Map(values);
   }
 
+  /** Returns the stored preset value for the named widget, or undefined when absent. */
   getValue(objectName: string): string | undefined {
     return this._valuesMap.get(objectName);
   }
 
+  /** Stores one preset value keyed by the widget's object name. */
   setValue(objectName: string, value: string): void {
     this._valuesMap.set(objectName, value);
   }
 
+  /** Replaces the preset values with the current values provided by named widgets in the graphic interface. */
   updatePresets(gInterface: any): void {
     this._valuesMap.clear();
     const visit = (widgets: any[]): void => {
@@ -111,6 +122,7 @@ export class Preset {
     addMissing(graphicInterface.getRootGroup().getChildren());
   }
 
+  /** Serializes the preset and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('preset');
     elem.setAttribute('name', this.presetName);
@@ -124,6 +136,7 @@ export class Preset {
     return elem;
   }
 
+  /** Reconstructs the preset from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): Preset {
     checkRoot(data, 'preset', context);
     checkShape(data, ['name', 'uniqueId'], ['setting'], context, ['setting']);
@@ -154,6 +167,7 @@ export class Preset {
     return preset;
   }
 
+  /** Copies the preset and its editable state. The copy mode controls which identities are retained. */
   deepCopy(presetIdMap?: Map<string, string>, mode: CopyMode = 'duplication'): Preset {
     const copy = new Preset();
     copy.presetName = this.presetName;

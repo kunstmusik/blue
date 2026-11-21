@@ -16,11 +16,16 @@ import {
 import { snapToResolutionJava } from '../../automation/java-decimal';
 
 export class BSBHSlider extends BSBWidget {
+  /** Slider width in pixels. */
   sliderWidth = 150;
+  /** Exact Java-compatible decimal step used for value quantization. */
   resolutionDecimal: JavaDecimal = defaultBsbResolution();
+  /** Whether the widget displays its current value. */
   valueDisplayEnabled = true;
+  /** Whether this widget participates in value randomization. */
   randomizable = true;
 
+  /** Reconstructs the horizontal slider from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const w = data.getTextString('sliderWidth');
@@ -48,6 +53,7 @@ export class BSBHSlider extends BSBWidget {
     this.value = snapToResolutionJava(clamped, this.minimum, this.maximum, this.resolutionDecimal);
   }
 
+  /** Picks a new horizontal slider value when randomization is enabled. */
   randomize(): void {
     if (!this.randomizable) return;
     const range = this.maximum - this.minimum;
@@ -55,17 +61,21 @@ export class BSBHSlider extends BSBWidget {
     this.value = this.minimum + snapToResolutionJava(raw, 0, range, this.resolutionDecimal);
   }
 
+  /** Returns the numeric value step. */
   get resolution(): number {
     return this.resolutionDecimal.doubleValue;
   }
+  /** Sets the numeric value step. */
   set resolution(value: number) {
     const parsed = parseLegacyBsbResolution(String(value));
     this.setResolutionText(parsed.canonicalText);
   }
 
+  /** Returns the exact decimal text for the value step. */
   getResolutionText(): string {
     return this.resolutionDecimal.canonicalText;
   }
+  /** Sets the exact decimal text for the value step. */
   setResolutionText(text: string): void {
     const next = parseExactBsbResolution(text);
     this.resolutionDecimal = next;

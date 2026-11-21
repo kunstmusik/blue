@@ -23,14 +23,21 @@ import {
   snapToResolutionJava,
 } from './java-decimal';
 
+/** One authored point in a parameter's automation line. */
 export interface AutomationPoint {
+  /** Position of the point in the automation line's beat domain. */
   time: number;
+  /** Authored parameter value at this point. */
   value: number;
 }
 
+/** Interpolation rule between adjacent automation points. */
 export enum AutomationCurve {
+  /** Holds the earlier value until the next point. */
   STEP = 'STEP',
+  /** Interpolates linearly with Java Blue's evaluation and quantization rules. */
   LINEAR = 'LINEAR',
+  /** Interpolates exponentially between values with a positive floor. */
   EXPONENTIAL = 'EXPONENTIAL',
 }
 
@@ -193,6 +200,7 @@ function rescale(
   return snapToResolutionJava(nextValue, newMinimum, newMaximum, resolution);
 }
 
+/** A Csound control value with optional timed automation, editable bounds, and Java-compatible decimal resolution. */
 export class Parameter implements BlueDataObject {
   private _uniqueId = Parameter.generateUniqueId();
   private _name = '';
@@ -219,30 +227,38 @@ export class Parameter implements BlueDataObject {
     return s + '.0';
   }
 
+  /** Returns the parameter name used to match its source widget or control. */
   getName(): string {
     return this._name;
   }
+  /** Sets the source parameter name independently of its persistent ID. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Returns the persistent ID used by automation associations. */
   getUniqueId(): string {
     return this._uniqueId;
   }
+  /** Replaces the persistent ID. Callers are responsible for updating references to the old ID. */
   setUniqueId(id: string): void {
     this._uniqueId = id;
   }
 
+  /** Returns the label stored with the parameter. */
   getLabel(): string {
     return this._label;
   }
+  /** Sets the stored display label without changing the name used for binding. */
   setLabel(label: string): void {
     this._label = label;
   }
 
+  /** Returns the lower bound used when adjusting or snapping automation values. */
   getMinimum(): number {
     return this._minimum;
   }
+  /** Changes the lower bound, rescaling existing values by default. Pass `truncate` to clamp instead, then apply the current resolution. */
   setMinimum(v: number, truncate = false): void {
     if (this._minimum === v) {
       return;
@@ -287,9 +303,11 @@ export class Parameter implements BlueDataObject {
         );
   }
 
+  /** Returns the upper bound used when adjusting or snapping automation values. */
   getMaximum(): number {
     return this._maximum;
   }
+  /** Changes the upper bound, rescaling existing values by default. Pass `truncate` to clamp instead, then apply the current resolution. */
   setMaximum(v: number, truncate = false): void {
     if (this._maximum === v) {
       return;
@@ -334,25 +352,31 @@ export class Parameter implements BlueDataObject {
         );
   }
 
+  /** Returns the interpolation rule used between points. */
   getCurve(): AutomationCurve {
     return this._curve;
   }
+  /** Changes how the stored points are interpolated without rewriting them. */
   setCurve(c: AutomationCurve): void {
     this._curve = c;
   }
 
+  /** Returns the number of authored points, including points at the same time. */
   getPointCount(): number {
     return this._points.length;
   }
 
+  /** Returns detached copies of the stored automation points in their current order. */
   getPoints(): AutomationPoint[] {
     return this._points.map((point) => ({ time: point.time, value: point.value }));
   }
+  /** Replaces the line with copies of the supplied points in their supplied order. */
   setPoints(points: AutomationPoint[]): void {
     this._points = points.map((point) => ({ time: point.time, value: point.value }));
     this._pointsSorted = isPointsAscendingByTime(this._points);
   }
 
+  /** Adds an automation point, retaining insertion order among points at the same time. */
   addPoint(time: number, value: number): void {
     const point: AutomationPoint = { time, value };
     if (!this._pointsSorted || Number.isNaN(time)) {
@@ -383,9 +407,11 @@ export class Parameter implements BlueDataObject {
     }
   }
 
+  /** Reports whether evaluation uses automation instead of the fixed value. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Sets whether evaluation uses the automation line or the fixed value. */
   setEnabled(e: boolean): void {
     this._enabled = e;
   }
@@ -459,9 +485,11 @@ export class Parameter implements BlueDataObject {
     this.setResolutionDecimal(parsed.value);
   }
 
+  /** Returns the generated Csound variable name, or `null` before assignment. */
   getCompilationVarName(): string | null {
     return this._compilationVarName;
   }
+  /** Stores the generated Csound variable name for the current compilation. */
   setCompilationVarName(name: string): void {
     this._compilationVarName = name;
   }
@@ -472,19 +500,22 @@ export class Parameter implements BlueDataObject {
   getFixedValue(): number {
     return this._fixedValue;
   }
+  /** Sets the value used when automation is disabled. */
   setFixedValue(v: number): void {
     this._fixedValue = v;
   }
 
+  /** Returns the stored packed color used for drawing the automation line. */
   getLineColor(): number {
     return this._lineColor;
   }
+  /** Sets the packed display color for the automation line. */
   setLineColor(c: number): void {
     this._lineColor = c;
   }
 
   /**
-   * Check if this parameter has automation enabled (has points).
+   * Reports the automation flag independently of how many points the line contains.
    */
   isAutomationEnabled(): boolean {
     return this._enabled;
@@ -559,6 +590,7 @@ export class Parameter implements BlueDataObject {
     return quantizeEvaluatedValue(y, a.value, b.value, this._resolution);
   }
 
+  /** Writes the authored settings and points, including exact decimal resolution, to a new XML element. */
   saveAsXML(): Element {
     const elem = new Element('parameter');
     elem.setAttribute('uniqueId', this._uniqueId);
@@ -590,6 +622,7 @@ export class Parameter implements BlueDataObject {
     return elem;
   }
 
+  /** Validates and loads an automation parameter, including its line and exact resolution. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): Parameter {
     checkShape(
       data,

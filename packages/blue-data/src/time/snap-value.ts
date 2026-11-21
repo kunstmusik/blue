@@ -23,12 +23,18 @@ export type SnapValueName =
   | 'SAMPLE'
   | 'AUTO';
 
+/** Unit family for a named timeline snapping interval. */
 export type SnapCategory = 'MUSICAL' | 'TRIPLET' | 'TIME' | 'SMPTE' | 'SAMPLE' | 'AUTO';
 
+/** Named snapping interval with its display label, numeric value, and unit category. */
 export interface SnapValueDefinition {
+  /** Name associated with the snap value definition. */
   readonly name: SnapValueName;
+  /** Human-readable display label. */
   readonly displayName: string;
+  /** Numeric interval in the units given by its category. */
   readonly baseValue: number;
+  /** Unit family used to interpret the numeric snap interval. */
   readonly category: SnapCategory;
 }
 
@@ -67,16 +73,20 @@ const SNAP_VALUES: ReadonlyMap<SnapValueName, SnapValueDefinition> = new Map([
   ['AUTO', { name: 'AUTO', displayName: 'Auto', baseValue: 0.0, category: 'AUTO' }],
 ]);
 
+/** Available named snapping intervals in catalog order. */
 export const ALL_SNAP_VALUES: ReadonlyArray<SnapValueDefinition> = [...SNAP_VALUES.values()];
 
+/** Looks up the snapping interval with the supplied catalog name. */
 export function getSnapValue(name: SnapValueName): SnapValueDefinition {
   return SNAP_VALUES.get(name) ?? SNAP_VALUES.get('BEAT')!;
 }
 
+/** Checks whether the supplied value is a supported valid snap value name. */
 export function isValidSnapValueName(name: string): name is SnapValueName {
   return SNAP_VALUES.has(name as SnapValueName);
 }
 
+/** Converts the snapping interval to beats in the supplied timing context. */
 export function snapValueToBeats(
   snapValue: SnapValueName,
   tempo: number,
@@ -114,6 +124,7 @@ function roundToNearestSnapValue(rawValue: number): number {
   return 0.0625;
 }
 
+/** Finds the catalog interval nearest the supplied value. */
 export function closestSnapValueMatch(legacyValue: number): SnapValueName {
   let best: SnapValueName = 'BEAT';
   let bestDiff = Number.MAX_VALUE;

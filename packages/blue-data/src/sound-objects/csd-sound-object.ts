@@ -20,9 +20,11 @@ import { initBasicFromXML, getBasicXML } from './sound-object-utilities';
 export class CSDSoundObject extends AbstractSoundObject {
   private _csdText = '';
 
+  /** Returns the CSD text stored on the CSD sound object. */
   getCsdText(): string {
     return this._csdText;
   }
+  /** Sets the CSD text stored on the CSD sound object. */
   setCsdText(text: string): void {
     this._csdText = text;
   }
@@ -43,6 +45,7 @@ export class CSDSoundObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the CSD sound object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

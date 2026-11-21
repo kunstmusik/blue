@@ -54,6 +54,7 @@ export class ProjectVersion {
     return this.beta && !other.beta;
   }
 
+  /** Formats the numeric version components as text. */
   toString(): string {
     const parts = this.versionParts.length > 0 ? this.versionParts.join('.') : 'Empty';
     return `Version:${parts}${this.beta ? ' BETA' : ''}`;

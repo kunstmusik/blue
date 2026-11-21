@@ -49,6 +49,7 @@ import { loadSoundObjectFromXML } from '../../sound-objects/sound-object-registr
 import { rebaseScoreToRenderStart } from '../../utilities/score';
 import { generateUuid } from '../../utilities/uuid';
 
+/** An audio clip or a compatible sound object stored on a track. */
 export type TrackItem = AudioClip | SoundObject;
 
 interface TrackGenerationEntry {
@@ -96,8 +97,11 @@ function remapCopiedInstrumentParameterIds(
   return remapped;
 }
 
+/** Ordered timeline items with track-level note processing, automation associations, and an optional owned instrument. */
 export class Track extends Array<TrackItem> implements AutomatableLayer {
+  /** Highest supported zero-based track height preset index. */
   static readonly HEIGHT_MAX_INDEX = 9;
+  /** Makes array operations such as `slice` return plain arrays of items. */
   static get [Symbol.species](): ArrayConstructor {
     return Array;
   }
@@ -113,6 +117,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
   private _npc = new NoteProcessorChain();
   private _instrument: Instrument | null = null;
 
+  /** Creates an empty track, an array of the given length, or a copy of another track with the same track ID. */
   constructor(other?: Track | number, mode: CopyMode = 'duplication') {
     super(typeof other === 'number' ? other : 0);
     if (other instanceof Track) {
@@ -139,18 +144,23 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     }
   }
 
+  /** Returns the track's editable display name. */
   getName(): string {
     return this._name;
   }
+  /** Sets the display name without changing the track ID. */
   setName(name: string): void {
     this._name = name;
   }
+  /** Returns the effective editor height in pixels after applying any custom override. */
   getLayerHeight(): number {
     return resolveEffectiveHeight(this._heightIndex, this._customHeight);
   }
+  /** Returns the custom pixel height, or `undefined` when the track uses a preset. */
   getCustomHeight(): number | undefined {
     return this._customHeight;
   }
+  /** Applies a valid custom height in pixels. An absent or invalid height clears the override. */
   setCustomHeight(customHeight: number | undefined): void {
     if (customHeight !== undefined) {
       const parsed = parseCustomHeight(customHeight);
@@ -161,6 +171,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     }
     this._customHeight = undefined;
   }
+  /** Selects a preset or custom height to match the requested pixels. Returns whether the effective height changed. */
   setExplicitHeight(height: number): boolean {
     const currentEffective = this.getLayerHeight();
     const parsed = parseCustomHeight(height);
@@ -171,15 +182,19 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     this._customHeight = customHeight;
     return true;
   }
+  /** Returns the stored track color as a packed RGB integer. */
   getBackgroundColor(): number {
     return this._backgroundColor;
   }
+  /** Sets the track color after applying the shared layer color normalization. */
   setBackgroundColor(color: number): void {
     this._backgroundColor = normalizeLayerColor(color);
   }
+  /** Returns the index of the selected layer-height preset. */
   getHeightIndex(): number {
     return this._heightIndex;
   }
+  /** Selects a height preset, clamping the index to the supported range. */
   setHeightIndex(index: number): void {
     const oldEffective = this.getLayerHeight();
     const clamped = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index));
@@ -189,35 +204,45 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
       this._customHeight = undefined;
     }
   }
+  /** Returns the stable track ID used to associate mixer and compilation state. */
   getUniqueId(): string {
     return this._uniqueId;
   }
+  /** Replaces the track ID with a nonblank identifier after trimming surrounding whitespace. */
   setUniqueId(uniqueId: string): void {
     if (uniqueId.trim()) this._uniqueId = uniqueId.trim();
   }
+  /** Reports the track's mute flag. The score's mode determines whether it affects events or audio. */
   isMuted(): boolean {
     return this._muted;
   }
+  /** Sets the stored mute flag for the track. */
   setMuted(muted: boolean): void {
     this._muted = muted;
   }
+  /** Reports the track's solo flag. The score's mode determines whether it affects events or audio. */
   isSolo(): boolean {
     return this._solo;
   }
+  /** Sets the stored solo flag for the track. */
   setSolo(solo: boolean): void {
     this._solo = solo;
   }
+  /** Returns the live collection of parameter IDs assigned to the track. */
   getAutomationParameters(): ParameterIdList {
     return this._automationParameters;
   }
 
+  /** Returns the live chain applied to the track's collected notes. */
   getNoteProcessorChain(): NoteProcessorChain {
     return this._npc;
   }
+  /** Replaces the track processor chain by reference. */
   setNoteProcessorChain(chain: NoteProcessorChain): void {
     this._npc = chain;
   }
 
+  /** Returns the live track-owned instrument, or `null` when the track has none. */
   getInstrument(): Instrument | null {
     return this._instrument;
   }
@@ -232,22 +257,26 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     this._instrument = instrument;
   }
 
+  /** Removes and returns the previous owned instrument, or `null` if there was none. */
   clearInstrument(): Instrument | null {
     const previous = this._instrument;
     this._instrument = null;
     return previous;
   }
 
+  /** Checks whether the score object is an audio clip or a sound object that supports placement on tracks. */
   accepts(object: ScoreObject): boolean {
     if (object instanceof AudioClip) return true;
     if (!isSoundObject(object)) return false;
     return getTrackPlacementForSoundObject(object).compatible;
   }
 
+  /** Checks whether this exact object instance is on the track. */
   contains(object: ScoreObject): boolean {
     return Array.prototype.includes.call(this, object);
   }
 
+  /** Removes the first occurrence of the exact object instance and returns whether it was present. */
   remove(object: ScoreObject): boolean {
     const index = Array.prototype.indexOf.call(this, object);
     if (index < 0) return false;
@@ -255,13 +284,16 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     return true;
   }
 
+  /** Clears all timeline items while keeping track settings and the instrument. */
   clearScoreObjects(): void {
     this.length = 0;
   }
+  /** Copies track content with the requested identity policy. The track ID itself is preserved. */
   deepCopy(mode: CopyMode = 'duplication'): Track {
     return new Track(this, mode);
   }
 
+  /** Generates notes for the track window in Csound beats, rebases them to the render start, and runs track-level processors. */
   generateForCSD(
     context: TimeContext,
     compileData: CompileData,
@@ -288,6 +320,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     });
   }
 
+  /** Generates track notes while awaiting asynchronous item generators and note processors. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -405,6 +438,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     return notes;
   }
 
+  /** Writes track settings, its owned instrument, and ordered timeline items to XML. */
   saveAsXML(objRefMap?: ObjRefSaveMap): Element {
     const root = new Element('track');
     root.setAttribute('name', this._name);
@@ -428,6 +462,7 @@ export class Track extends Array<TrackItem> implements AutomatableLayer {
     return root;
   }
 
+  /** Loads a track and its items using the supplied XML context and sound object references. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

@@ -10,9 +10,13 @@ export type CodeRepositoryNodeKind = 'root' | 'group' | 'snippet';
 
 /** A single repository node in the ordered tree. */
 export interface CodeRepositoryNode {
+  /** Stable identifier used to refer to this node within the repository. */
   readonly id: string;
+  /** Discriminant identifying the code repository node variant. */
   readonly kind: CodeRepositoryNodeKind;
+  /** Name associated with the code repository node. */
   readonly name: string;
+  /** Identifier of the containing node. */
   readonly parentId: string | null;
   /** Sibling ordering position, non-negative. */
   readonly order: number;
@@ -24,6 +28,7 @@ export interface CodeRepositoryNode {
 
 /** The complete repository tree plus its durable revision. */
 export interface CodeRepositoryDocument {
+  /** Top-level element or container. */
   readonly root: CodeRepositoryNode;
   /** Monotonic version bumped after every committed mutation. */
   readonly contentRevision: number;
@@ -39,7 +44,9 @@ export type CodeRepositoryErrorCode =
   | 'export-failed'
   | 'not-initialized';
 
+/** Reserved identifier of the code repository's top-level group. */
 export const CODE_REPOSITORY_ROOT_ID = '00000000-0000-4000-8000-000000000001';
+/** Default name of the code repository's top-level group. */
 export const CODE_REPOSITORY_ROOT_NAME = 'Code Repository';
 
 /** Maximum supported nesting depth for groups (defensive; UI is the real limit). */
@@ -91,23 +98,106 @@ export function isCodeRepositoryDocument(value: unknown): value is CodeRepositor
 
 /** Describes why a tree failed validation. */
 export type CodeRepositoryValidationError =
-  | { readonly code: 'no-root' }
-  | { readonly code: 'multiple-roots' }
-  | { readonly code: 'root-id'; readonly nodeId: string }
-  | { readonly code: 'root-kind'; readonly nodeId: string }
-  | { readonly code: 'root-name'; readonly nodeId: string }
-  | { readonly code: 'root-has-parent'; readonly nodeId: string }
-  | { readonly code: 'root-order'; readonly nodeId: string }
-  | { readonly code: 'missing-parent'; readonly nodeId: string }
-  | { readonly code: 'snippet-has-children'; readonly nodeId: string }
-  | { readonly code: 'snippet-missing-code'; readonly nodeId: string }
-  | { readonly code: 'group-has-code'; readonly nodeId: string }
-  | { readonly code: 'invalid-parent-kind'; readonly nodeId: string; readonly parentId: string }
-  | { readonly code: 'empty-name'; readonly nodeId: string }
-  | { readonly code: 'duplicate-id'; readonly nodeId: string }
-  | { readonly code: 'cycle'; readonly nodeId: string }
-  | { readonly code: 'order-gap'; readonly parentId: string | null }
-  | { readonly code: 'depth-exceeded'; readonly nodeId: string };
+  | {
+      /** Diagnostic code for no root. */
+      readonly code: 'no-root';
+    }
+  | {
+      /** Diagnostic code for multiple roots. */
+      readonly code: 'multiple-roots';
+    }
+  | {
+      /** Diagnostic code for root ID. */
+      readonly code: 'root-id';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for root kind. */
+      readonly code: 'root-kind';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for root name. */
+      readonly code: 'root-name';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for root has parent. */
+      readonly code: 'root-has-parent';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for root order. */
+      readonly code: 'root-order';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for missing parent. */
+      readonly code: 'missing-parent';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for snippet has children. */
+      readonly code: 'snippet-has-children';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for snippet missing code. */
+      readonly code: 'snippet-missing-code';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for group has code. */
+      readonly code: 'group-has-code';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for invalid parent kind. */
+      readonly code: 'invalid-parent-kind';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+      /** Identifier of the containing node. */
+      readonly parentId: string;
+    }
+  | {
+      /** Diagnostic code for empty name. */
+      readonly code: 'empty-name';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for duplicate ID. */
+      readonly code: 'duplicate-id';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for cycle. */
+      readonly code: 'cycle';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    }
+  | {
+      /** Diagnostic code for order gap. */
+      readonly code: 'order-gap';
+      /** Identifier of the containing node. */
+      readonly parentId: string | null;
+    }
+  | {
+      /** Diagnostic code for depth exceeded. */
+      readonly code: 'depth-exceeded';
+      /** Identifier of the node associated with the diagnostic. */
+      readonly nodeId: string;
+    };
 
 /**
  * Validate a repository tree against the invariants in the data model.

@@ -11,18 +11,27 @@ import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { Parameter } from '../../automation/parameter';
 import { parseLegacySwingHtmlFont, stripLegacySwingHtml } from './legacy-swing-html';
 
+/** One selectable option in a BlueSynthBuilder dropdown. */
 export interface BSBDropdownItem {
+  /** Display text for the option. */
   name: string;
+  /** Text substituted into Csound source when the option is selected. */
   value: string;
+  /** Persistent identifier. */
   uniqueId: string;
 }
 
 export class BSBDropdown extends BSBWidget {
+  /** Zero-based index of the selected item. */
   selectedIndex = 0;
+  /** Label font size. */
   fontSize = 12;
+  /** Whether this widget participates in value randomization. */
   randomizable = true;
+  /** Selectable dropdown entries in display order. */
   dropdownItems: BSBDropdownItem[] = [];
 
+  /** Sets the label font size. */
   setFontSize(size: number): void {
     this.fontSize = Math.max(8, Math.min(36, Math.round(size)));
   }
@@ -84,6 +93,7 @@ export class BSBDropdown extends BSBWidget {
     unit.addReplacementValue(this.objectName, item?.value ?? '0');
   }
 
+  /** Reconstructs the dropdown widget from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const versionAttr = data.getAttribute('version');
@@ -133,6 +143,7 @@ export class BSBDropdown extends BSBWidget {
     }
   }
 
+  /** Picks a new dropdown widget value when randomization is enabled. */
   randomize(): void {
     if (!this.randomizable || this.dropdownItems.length === 0) return;
     this.setValue(Math.floor(Math.random() * this.dropdownItems.length));

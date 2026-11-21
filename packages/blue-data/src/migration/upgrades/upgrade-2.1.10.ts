@@ -10,7 +10,9 @@ import { XmlLoadContext } from '../../serialization/xml-load';
 import { ProjectProperties } from '../../project-properties';
 import { checkShape, readBoolean, readText } from '../../utilities/xml';
 
+/** Migrates historical project XML to version 2.1.10. */
 export class ProjectUpgrader_2_1_10 extends ProjectUpgrader {
+  /** Creates the migration targeting Blue XML version 2.1.10. */
   constructor() {
     super('2.1.10');
   }

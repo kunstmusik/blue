@@ -11,14 +11,17 @@ type JavaScriptCompileState = {
   context: QuickJSContext;
 };
 
+/** Owns a reusable QuickJS context so related on-load and compilation scripts can share definitions. */
 export class JavaScriptSession {
   private _context: QuickJSContext | null = null;
 
+  /** Creates a session after {@link initializeJavaScriptRuntime} has resolved. */
   constructor() {
     const quickJS = getQuickJSSync();
     this._context = quickJS.newContext();
   }
 
+  /** Returns the borrowed context. The session owns its disposal and throws if it has been disposed. */
   getContext(): QuickJSContext {
     if (!this._context) {
       throw new Error('JavaScriptSession has been disposed');
@@ -26,6 +29,7 @@ export class JavaScriptSession {
     return this._context;
   }
 
+  /** Replaces the context with an empty one, discarding definitions and invalidating previous handles. */
   reinitialize(): void {
     if (this._context) {
       this._context.dispose();
@@ -34,6 +38,7 @@ export class JavaScriptSession {
     this._context = quickJS.newContext();
   }
 
+  /** Releases the current context. Repeated calls are safe. */
   dispose(): void {
     if (this._context) {
       this._context.dispose();
@@ -41,15 +46,18 @@ export class JavaScriptSession {
     }
   }
 
+  /** Reports whether this session currently has no context. */
   isDisposed(): boolean {
     return this._context === null;
   }
 }
 
+/** Supplies a caller-owned QuickJS session for a compilation. */
 export function setJavaScriptSession(compileData: CompileData, session: JavaScriptSession): void {
   compileData.setCompilationVariable(JAVASCRIPT_SESSION_KEY, session);
 }
 
+/** Returns the caller-owned session attached to a compilation, if one was supplied. */
 export function getJavaScriptSession(compileData: CompileData): JavaScriptSession | undefined {
   const val = compileData.getCompilationVariable(JAVASCRIPT_SESSION_KEY);
   return val instanceof JavaScriptSession ? val : undefined;
@@ -71,10 +79,12 @@ function getStoredCompileState(compileData: CompileData): JavaScriptCompileState
   return undefined;
 }
 
+/** Loads QuickJS before the first script-backed operation. Await this before constructing a session. */
 export async function initializeJavaScriptRuntime(): Promise<void> {
   await getQuickJS();
 }
 
+/** Tests whether QuickJS is available for synchronous use without starting initialization. */
 export function isJavaScriptRuntimeInitialized(): boolean {
   try {
     getQuickJSSync();
@@ -109,6 +119,7 @@ export function getJavaScriptCompileContext(compileData: CompileData): QuickJSCo
   return state.context;
 }
 
+/** Releases the implicit QuickJS context for a compilation. A caller-supplied session is left to its owner. */
 export function disposeJavaScriptCompileState(compileData: CompileData): void {
   const session = getJavaScriptSession(compileData);
   if (session) {

@@ -8,11 +8,14 @@ import { ValueTimeMapper } from './value-time-mapper';
 
 const JAVA_TYPE = 'blue.noteProcessor.LineAddProcessor';
 
+/** Adds a value from a beat/value curve to a p-field on each note. */
 export class LineAddProcessor extends NoteProcessor {
   private _lineAddString = '0 0';
   private _pfield = 4;
 
+  /** Creates a line add processor initialized with its default settings. */
   constructor();
+  /** Creates a line add processor using the source instance’s settings. */
   constructor(src: LineAddProcessor);
   constructor(src?: LineAddProcessor) {
     super();
@@ -22,16 +25,20 @@ export class LineAddProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the line add string stored on the line add processor. */
   getLineAddString(): string {
     return this._lineAddString;
   }
+  /** Sets the line add string stored on the line add processor. */
   setLineAddString(lineAddString: string): void {
     this._lineAddString = lineAddString;
   }
@@ -78,6 +85,7 @@ export class LineAddProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the line add processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): LineAddProcessor {
     validateProcessorXml(data, 'LineAddProcessor', context);
     const proc = new LineAddProcessor();

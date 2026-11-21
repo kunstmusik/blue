@@ -193,6 +193,7 @@ function loadJMaskSnapshotValue(value: unknown): unknown {
   return plainObject;
 }
 
+/** Reconstructs a JMask field from its serialized snapshot. */
 export function loadFieldFromSnapshot(snapshot: Record<string, unknown>): Field {
   return loadFieldSnapshot(snapshot);
 }

@@ -36,6 +36,7 @@ export class TrackerObject extends AbstractSoundObject {
   private _keyboardOctave = 0;
   private _historicalObjectiveDuration: number | null = null;
 
+  /** Creates a default tracker object or copies a supplied instance. */
   constructor(other?: TrackerObject) {
     super();
     this.setName('Tracker');
@@ -51,40 +52,50 @@ export class TrackerObject extends AbstractSoundObject {
     }
   }
 
+  /** Returns the steps per beat stored on the tracker object. */
   getStepsPerBeat(): number {
     return this._stepsPerBeat;
   }
+  /** Sets the steps per beat stored on the tracker object. */
   setStepsPerBeat(s: number): void {
     this._stepsPerBeat = s;
   }
 
+  /** Returns the tracks stored on the tracker object. */
   getTracks(): TrackList {
     return this._tracks;
   }
+  /** Sets the tracks stored on the tracker object. */
   setTracks(tracks: TrackList): void {
     this._tracks = tracks;
   }
 
+  /** Returns the historical objective duration stored on the tracker object. */
   getHistoricalObjectiveDuration(): number | null {
     return this._historicalObjectiveDuration;
   }
 
+  /** Sets the historical objective duration stored on the tracker object. */
   setHistoricalObjectiveDuration(value: number | null): void {
     if (value !== null && !Number.isFinite(value))
       throw new RangeError('Historical objective duration must be finite.');
     this._historicalObjectiveDuration = value;
   }
 
+  /** Reports whether the tracker interprets keyboard input as pitch entry. */
   isKeyboardNotesEnabled(): boolean {
     return this._keyboardNotesEnabled;
   }
+  /** Enables or disables pitch entry from the computer keyboard. */
   setKeyboardNotesEnabled(enabled: boolean): void {
     this._keyboardNotesEnabled = enabled;
   }
 
+  /** Returns the keyboard octave stored on the tracker object. */
   getKeyboardOctave(): number {
     return this._keyboardOctave;
   }
+  /** Sets the octave used by tracker keyboard note entry. */
   setKeyboardOctave(octave: number): void {
     if (!Number.isFinite(octave)) return;
     this._keyboardOctave = Math.max(-8, Math.min(8, Math.trunc(octave)));
@@ -115,6 +126,7 @@ export class TrackerObject extends AbstractSoundObject {
     return this.finalizeGeneratedNotes(nl, context);
   }
 
+  /** Generates the tracker object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -139,6 +151,7 @@ export class TrackerObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the tracker object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

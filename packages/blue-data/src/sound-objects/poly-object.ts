@@ -93,22 +93,27 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
   private _defaultHeightIndex = 0;
   private _timeState = new TimeState();
 
+  /** Returns the default height index stored on the polyphonic sound object. */
   getDefaultHeightIndex(): number {
     return this._defaultHeightIndex;
   }
 
+  /** Sets the display-height preset used for new layers. */
   setDefaultHeightIndex(index: number): void {
     this._defaultHeightIndex = Math.max(0, Math.min(SOUND_LAYER_MAX_HEIGHT_INDEX, index));
   }
 
+  /** Returns the time state stored on the polyphonic sound object. */
   getTimeState(): TimeState {
     return this._timeState;
   }
 
+  /** Sets the time state stored on the polyphonic sound object. */
   setTimeState(value: TimeState): void {
     this._timeState = value;
   }
 
+  /** Creates an empty polyphonic sound object, optionally designated as a root score group. */
   constructor(isRoot = false) {
     super();
     this._backgroundColor = 0x666699;
@@ -154,6 +159,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
   getResizeLeftLimits(_ctx: TimeContext): number[] {
     return [-Infinity, 0];
   }
+  /** Returns the permitted offsets for changing the object's right edge. */
   getResizeRightLimits(_ctx: TimeContext): number[] {
     return [0, Infinity];
   }
@@ -187,6 +193,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     this._repeatPoint = rp;
   }
 
+  /** Collects direct child sound objects. Muted layers are skipped by default. */
   getSoundObjects(grabMutedSoundObjects = false): SoundObject[] {
     const sObjects: SoundObject[] = [];
     for (const layer of this) {
@@ -198,12 +205,14 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     return sObjects;
   }
 
+  /** Appends a sound object to the supplied zero-based layer index. An invalid index is ignored. */
   addSoundObject(layerIndex: number, sObj: SoundObject): void {
     if (layerIndex >= 0 && layerIndex < this.length) {
       this[layerIndex].push(sObj);
     }
   }
 
+  /** Removes the object from the first matching layer and returns its index, or -1 if absent. */
   removeSoundObject(sObj: SoundObject): number {
     for (let i = 0; i < this.length; i += 1) {
       const layer = this[i];
@@ -215,6 +224,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     return -1;
   }
 
+  /** Moves the first start among unmuted children to beat zero and sets this object’s duration to cover the shifted children. */
   normalizeSoundObjects(context: TimeContext): void {
     const sObjects = this.getSoundObjects(false);
     if (sObjects.length === 0) {
@@ -647,6 +657,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     // No-op — use processOnLoad() for OnLoadProcessable support
   }
 
+  /** Runs on-load processing for the polyphonic sound object using the supplied JavaScript session when present. */
   processOnLoad(context: TimeContext, session?: JavaScriptSession): void {
     for (const layer of this) {
       for (const sObj of layer) {
@@ -670,6 +681,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     }
   }
 
+  /** Runs on-load processing for the polyphonic sound object, awaiting the required script runtime. */
   async processOnLoadAsync(
     context: TimeContext,
     session?: JavaScriptSession,
@@ -734,6 +746,7 @@ export class PolyObject extends Array<SoundLayer> implements SoundObject, LayerG
     return elem;
   }
 
+  /** Reconstructs the polyphonic sound object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

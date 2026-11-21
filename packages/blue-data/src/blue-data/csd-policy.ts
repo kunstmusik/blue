@@ -80,10 +80,21 @@ import {
 export { buildScoreText };
 import { computeDiskPruningSet, getEffectiveTrackLayerMuteSoloMode } from './csd-disk-pruning';
 
+/** Generated Csound text and render-local bindings that a host can use to control the compiled snapshot. */
 export type RenderCsdResult = {
+  /** Complete generated Csound document. */
   csdText: string;
+  /** Automation parameters collected for this compilation, when available. */
   parameters?: Parameter[];
-  stringChannels?: Array<{ objectName: string; value: string; channelName: string }>;
+  /** Initial string channel values and their generated Csound channel names. */
+  stringChannels?: Array<{
+    /** Name of the object that supplies this string. */
+    objectName: string;
+    /** Initial value to send to Csound. */
+    value: string;
+    /** Generated Csound name for the string channel. */
+    channelName: string;
+  }>;
   /**
    * Spec 067 disposable compiled MIDI target catalog: the exact enabled base Track
    * and Orchestra instruments compiled into this CSD snapshot, keyed by stable
@@ -97,6 +108,7 @@ export type RenderCsdResult = {
    * when the project has no BlueX7 instruments.
    */
   blueX7Bindings: readonly CompiledBlueX7Binding[];
+  /** Meter channels for this snapshot when metering was enabled. */
   meterBindingMap?: MeterBindingMap;
   /**
    * Spec 111 disposable compiled mixer gate bindings for realtime/BlueLive
@@ -557,6 +569,7 @@ function cleanupStandardCSDState(
   }
 }
 
+/** Generates a disk or realtime CSD and its bindings synchronously. Use the async variant for Java-backed code. */
 export function buildStandardCSD(
   blueData: BlueData,
   profile: CsdRenderProfile,
@@ -599,6 +612,7 @@ export function buildStandardCSD(
   }
 }
 
+/** Generates a disk or realtime CSD and its bindings, optionally using a host-supplied Java client. */
 export async function buildStandardCSDAsync(
   blueData: BlueData,
   profile: CsdRenderProfile,
@@ -642,6 +656,7 @@ export async function buildStandardCSDAsync(
   }
 }
 
+/** Synchronously generates the CSD and runtime bindings for a Blue Live performance. */
 export function toBlueLiveCSD(
   blueData: BlueData,
   session?: JavaScriptSession,
@@ -651,6 +666,7 @@ export function toBlueLiveCSD(
   return buildBlueLiveCSD(blueData, session, emitMetering, layoutManifest) as RenderCsdResult;
 }
 
+/** Generates a Blue Live CSD with asynchronous support for Java-backed orchestra generation. */
 export async function toBlueLiveCSDAsync(
   blueData: BlueData,
   session?: JavaScriptSession,

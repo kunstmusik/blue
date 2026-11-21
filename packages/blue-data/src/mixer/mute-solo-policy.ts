@@ -21,25 +21,34 @@ import { Channel } from './channel';
 import { Send } from './send';
 import { Mixer } from './mixer';
 
+/** Mixer role of a route node. */
 export type MixerRouteChannelKind = 'source' | 'sub' | 'master';
 
+/** One source, subchannel, or master node in the compiled mixer routing graph. */
 export interface MixerRouteNode {
   /** Compile ordinal: sources in mixer order, then render-ordered subs, then master. */
   readonly ordinal: number;
+  /** Discriminant identifying the mixer route node variant. */
   readonly kind: MixerRouteChannelKind;
   /** Stable channel identity captured before any render snapshot cloning. */
   readonly identity: string;
+  /** Name associated with the mixer route node. */
   readonly name: string;
+  /** Whether the mixer route node is marked muted. */
   readonly muted: boolean;
   /** Raw stored flag. Master solo is retained data, never discovery input. */
   readonly solo: boolean;
 }
 
+/** A mixer output or send connection controlled by a compiled gate. */
 export interface MixerRouteEdge {
   /** Deterministic gate ordinal across the whole graph. */
   readonly gateOrdinal: number;
+  /** Ordinal of the source in the mixer routing graph. */
   readonly sourceOrdinal: number;
+  /** Discriminant identifying the mixer route edge variant. */
   readonly kind: 'output' | 'send';
+  /** Whether this send is in the pre- or post-fader chain. */
   readonly chainKind: 'pre' | 'post';
   /** Position of the send within its effects chain. */
   readonly chainIndex: number;
@@ -53,9 +62,13 @@ export interface MixerRouteEdge {
   readonly enabled: boolean;
 }
 
+/** Mixer routing topology with stable ordering for computing mute and solo state. */
 export interface MixerRouteGraph {
+  /** Routing nodes belonging to this mixer route graph, in stored order. */
   readonly nodes: readonly MixerRouteNode[];
+  /** Connections belonging to this mixer route graph, in stored order. */
   readonly edges: readonly MixerRouteEdge[];
+  /** Whether this state was computed for an enabled mixer. */
   readonly mixerEnabled: boolean;
   /** True when any send/output names a channel that does not exist. */
   readonly hasUnresolvedRoutes: boolean;
@@ -63,10 +76,15 @@ export interface MixerRouteGraph {
   readonly acyclic: boolean;
 }
 
+/** Computed mute, solo, and route state for an individual mixer channel. */
 export interface MixerChannelRouteIndicator {
+  /** Ordinal of the channel in the compiled mixer graph. */
   readonly ordinal: number;
+  /** Discriminant identifying the mixer channel route indicator variant. */
   readonly kind: MixerRouteChannelKind;
+  /** Name associated with the mixer channel route indicator. */
   readonly name: string;
+  /** Whether the mixer channel route indicator is marked muted. */
   readonly muted: boolean;
   /** Raw stored solo flag, including an ignored legacy master solo. */
   readonly solo: boolean;
@@ -78,7 +96,9 @@ export interface MixerChannelRouteIndicator {
   readonly outputIncluded: boolean;
   /** Output is gated and the cause is solo exclusion, not this channel's own mute. */
   readonly outputExcludedBySolo: boolean;
+  /** Whether any of the channel’s sends remains included. */
   readonly hasIncludedSend: boolean;
+  /** Whether the channel has a resolved audible route. */
   readonly hasAudibleRoute: boolean;
   /**
    * True when an included route from this channel still reaches the master
@@ -89,12 +109,17 @@ export interface MixerChannelRouteIndicator {
   readonly reachesAudibleOutput: boolean;
 }
 
+/** Gate targets and derived mixer-channel state for a resolved mute and solo configuration. */
 export interface MixerGateState {
+  /** Whether this state was computed for an enabled mixer. */
   readonly mixerEnabled: boolean;
   /** 0/1 target per gate ordinal; empty when the mixer is disabled. */
   readonly gates: ReadonlyArray<0 | 1>;
+  /** Channels belonging to this mixer gate state, in stored order. */
   readonly channels: readonly MixerChannelRouteIndicator[];
+  /** Whether at least one route has no resolved destination. */
   readonly hasUnresolvedRoutes: boolean;
+  /** Whether the routing graph contains no cycles. */
   readonly acyclic: boolean;
 }
 
@@ -548,9 +573,12 @@ export function computeMixerGateStateForMixer(mixer: Mixer): MixerGateState {
  * complete gate vector derived from current channel flags, or null when the
  * mixer is disabled (no gate publication applies).
  */
-export function resolveMixerGateIntent(
-  mixer: Mixer,
-): { signature: string; values: ReadonlyArray<0 | 1> } | null {
+export function resolveMixerGateIntent(mixer: Mixer): {
+  /** Signature identifying the graph topology for this gate vector. */
+  signature: string;
+  /** Resolved gate targets in compiled gate order. */
+  values: ReadonlyArray<0 | 1>;
+} | null {
   if (!mixer.isEnabled()) return null;
   const graph = buildMixerRouteGraph(mixer);
   const state = computeMixerGateState(graph);

@@ -9,30 +9,51 @@
  */
 import type { BlueX7Voice } from '../blue-x7';
 
+/** Whether a parameter update affects active notes or only later notes. */
 export type BlueX7UpdateClass = 'active-note' | 'next-note';
 
+/** Value categories used to coerce and display BlueX7 controls. */
 export type BlueX7ParameterKind = 'continuous-integer' | 'boolean' | 'categorical';
 
+/** Editor section associated with a BlueX7 parameter. */
 export type BlueX7ParameterGroup =
   | 'Common'
   | 'LFO'
   | 'Pitch Envelope'
   | `Operator ${1 | 2 | 3 | 4 | 5 | 6}`;
 
+/** Catalog entry defining a BlueX7 control's range, voice slot, and update behavior. */
 export interface BlueX7ParameterDescriptor {
   /** Stable semantic name, independent of the instrument display name. */
   key: string;
+  /** Editor section containing the control. */
   group: BlueX7ParameterGroup;
+  /** Human-readable label for the control. */
   label: string;
+  /** Inclusive lower bound in the control's value domain. */
   minimum: number;
+  /** Inclusive upper bound in the control's value domain. */
   maximum: number;
+  /** Step size for coercing values to the control's domain. */
   resolution: '1';
+  /** Discriminant identifying the BlueX7 parameter descriptor variant. */
   kind: BlueX7ParameterKind;
   /** Whether changes apply to sounding notes or from the next note. */
   updateClass: BlueX7UpdateClass;
+  /** How the parameter is represented in the voice transport. */
   transport:
-    | { kind: 'voice'; slot: number }
-    | { kind: 'operator-enable'; operator: 1 | 2 | 3 | 4 | 5 | 6 };
+    | {
+        /** Discriminant identifying the `voice` variant. */
+        kind: 'voice';
+        /** Zero-based slot containing the numeric control value in the packed voice. */
+        slot: number;
+      }
+    | {
+        /** Discriminant identifying the `operator-enable` variant. */
+        kind: 'operator-enable';
+        /** One-based operator number addressed by this mask control. */
+        operator: 1 | 2 | 3 | 4 | 5 | 6;
+      };
 }
 
 interface BlueX7CatalogEntry extends BlueX7ParameterDescriptor {
@@ -614,6 +635,7 @@ export const BLUE_X7_PARAMETER_DESCRIPTORS: readonly BlueX7ParameterDescriptor[]
 
 const entriesByKey = new Map(entries.map((entry) => [entry.key, entry]));
 
+/** Looks up a control by its semantic key, or returns undefined if there is no match. */
 export function getBlueX7Descriptor(key: string): BlueX7ParameterDescriptor | undefined {
   return entriesByKey.get(key);
 }

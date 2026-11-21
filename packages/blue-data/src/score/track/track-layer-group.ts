@@ -33,6 +33,7 @@ import {
 import { generateUuid } from '../../utilities/uuid';
 
 export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
+  /** Uses plain arrays for derived operations such as slicing or mapping. */
   static get [Symbol.species](): ArrayConstructor {
     return Array;
   }
@@ -40,6 +41,7 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   private _uniqueId = generateUuid();
   private _defaultHeightIndex = 0;
 
+  /** Creates an empty track layer group, copies a source instance, or allocates the requested number of array slots. */
   constructor(other?: TrackLayerGroup | number, mode: CopyMode = 'duplication') {
     super(typeof other === 'number' ? other : 0);
     if (other instanceof TrackLayerGroup) {
@@ -56,15 +58,19 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   setName(name: string): void {
     this._name = name;
   }
+  /** Returns the persistent identifier. */
   getUniqueId(): string {
     return this._uniqueId;
   }
+  /** Sets the persistent identifier. */
   setUniqueId(uniqueId: string): void {
     if (uniqueId.trim()) this._uniqueId = uniqueId.trim();
   }
+  /** Returns the default height index stored on the track layer group. */
   getDefaultHeightIndex(): number {
     return this._defaultHeightIndex;
   }
+  /** Sets the preset used when creating new tracks in this group. */
   setDefaultHeightIndex(index: number): void {
     this._defaultHeightIndex = Math.max(0, Math.min(Track.HEIGHT_MAX_INDEX, index));
   }
@@ -96,6 +102,7 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     }
   }
 
+  /** Runs on-load processing for the track layer group, awaiting the required script runtime. */
   async processOnLoadAsync(
     context: TimeContext,
     session?: JavaScriptSession,
@@ -150,6 +157,7 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     });
   }
 
+  /** Generates the track layer group’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -193,6 +201,7 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
     return root;
   }
 
+  /** Reconstructs the track layer group from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,
@@ -277,9 +286,11 @@ export class TrackLayerGroup extends Array<Track> implements LayerGroup<Track> {
   deepCopy(mode: CopyMode = 'duplication'): TrackLayerGroup {
     return new TrackLayerGroup(this, mode);
   }
+  /** Returns the sum of the track display heights in pixels. */
   getTotalHeight(): number {
     return this.reduce((height, track) => height + track.getLayerHeight(), 0);
   }
+  /** Finds the track covering the supplied group-relative vertical coordinate. */
   getLayerNumForY(y: number): number {
     let running = 0;
     for (let i = 0; i < this.length; i++) {

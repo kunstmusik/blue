@@ -50,11 +50,17 @@ function createUnitRangeParameter(name: string, fixedValue: number): Parameter {
 }
 
 export class Channel implements BlueDataObject {
+  /** Reserved name used when routing audio to the master channel. */
   static readonly MASTER = 'Master';
+  /** Property name used to identify changes to the name. */
   static readonly NAME = 'name';
+  /** Property name used to identify changes to the channel gain in decibels. */
   static readonly LEVEL = 'level';
+  /** Property name used to identify changes to the solo. */
   static readonly SOLO = 'solo';
+  /** Property name used to identify changes to the muted. */
   static readonly MUTED = 'muted';
+  /** Property name used to identify changes to the out channel. */
   static readonly OUT_CHANNEL = 'outChannel';
 
   private _name = 'Channel';
@@ -80,6 +86,7 @@ export class Channel implements BlueDataObject {
   /** Disposable identity used to bind compiled route gates to this object. */
   private _runtimeIdentity = `channel-${nextRuntimeIdentity++}`;
 
+  /** Creates a default mixer channel and its editable gain and panning parameters. */
   constructor() {
     this._levelParameter = new Parameter();
     this._levelParameter.setName('Volume');
@@ -98,37 +105,47 @@ export class Channel implements BlueDataObject {
     );
   }
 
+  /** Returns the name stored on the channel. */
   getName(): string {
     return this._name;
   }
+  /** Sets the name stored on the channel. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Returns the name of the destination mixer channel. */
   getOutChannel(): string {
     return this._outChannel;
   }
+  /** Sets the name of the destination mixer channel. */
   setOutChannel(ch: string): void {
     this._outChannel = ch;
   }
 
+  /** Reports whether the channel is muted. */
   isMuted(): boolean {
     return this._muted;
   }
+  /** Sets the muted stored on the channel. */
   setMuted(m: boolean): void {
     this._muted = m;
   }
 
+  /** Reports whether the channel is marked for solo playback. */
   isSolo(): boolean {
     return this._solo;
   }
+  /** Sets the solo stored on the channel. */
   setSolo(s: boolean): void {
     this._solo = s;
   }
 
+  /** Returns the channel gain in decibels. */
   getLevel(): number {
     return this._level;
   }
+  /** Sets channel gain in decibels and updates the fixed parameter value when automation is disabled. */
   setLevel(v: number): void {
     this._level = v;
     if (!this._levelParameter.isAutomationEnabled()) {
@@ -136,16 +153,20 @@ export class Channel implements BlueDataObject {
     }
   }
 
+  /** Returns the volume stored on the channel. */
   getVolume(): number {
     return this._volume;
   }
+  /** Sets the volume stored on the channel. */
   setVolume(v: number): void {
     this._volume = v;
   }
 
+  /** Returns the normalized left-to-right pan position. */
   getPan(): number {
     return this._pan;
   }
+  /** Sets the normalized left-to-right pan position. */
   setPan(p: number): void {
     if (!isValidPan(p)) return;
     this._pan = p;
@@ -154,24 +175,30 @@ export class Channel implements BlueDataObject {
     }
   }
 
+  /** Returns the pan parameter stored on the channel. */
   getPanParameter(): Parameter {
     return this._panParameter;
   }
+  /** Sets the pan parameter stored on the channel. */
   setPanParameter(param: Parameter): void {
     this._panParameter = param;
   }
 
+  /** Returns the stereo pan mode stored on the channel. */
   getStereoPanMode(): StereoPanMode {
     return this._stereoPanMode;
   }
+  /** Sets the stereo pan mode stored on the channel. */
   setStereoPanMode(mode: StereoPanMode): void {
     if (!isValidStereoPanMode(mode)) return;
     this._stereoPanMode = mode;
   }
 
+  /** Returns the normalized stereo spread. */
   getPanWidth(): number {
     return this._panWidth;
   }
+  /** Sets the normalized stereo spread. */
   setPanWidth(w: number): void {
     if (!isValidPanWidth(w)) return;
     this._panWidth = w;
@@ -180,16 +207,20 @@ export class Channel implements BlueDataObject {
     }
   }
 
+  /** Returns the pan width parameter stored on the channel. */
   getPanWidthParameter(): Parameter {
     return this._panWidthParameter;
   }
+  /** Sets the pan width parameter stored on the channel. */
   setPanWidthParameter(param: Parameter): void {
     this._panWidthParameter = param;
   }
 
+  /** Returns the dual pan left stored on the channel. */
   getDualPanLeft(): number {
     return this._dualPanLeft;
   }
+  /** Sets the dual pan left stored on the channel. */
   setDualPanLeft(p: number): void {
     if (!isValidDualPan(p)) return;
     this._dualPanLeft = p;
@@ -198,16 +229,20 @@ export class Channel implements BlueDataObject {
     }
   }
 
+  /** Returns the dual pan left parameter stored on the channel. */
   getDualPanLeftParameter(): Parameter {
     return this._dualPanLeftParameter;
   }
+  /** Sets the dual pan left parameter stored on the channel. */
   setDualPanLeftParameter(param: Parameter): void {
     this._dualPanLeftParameter = param;
   }
 
+  /** Returns the dual pan right stored on the channel. */
   getDualPanRight(): number {
     return this._dualPanRight;
   }
+  /** Sets the dual pan right stored on the channel. */
   setDualPanRight(p: number): void {
     if (!isValidDualPan(p)) return;
     this._dualPanRight = p;
@@ -216,23 +251,29 @@ export class Channel implements BlueDataObject {
     }
   }
 
+  /** Returns the dual pan right parameter stored on the channel. */
   getDualPanRightParameter(): Parameter {
     return this._dualPanRightParameter;
   }
+  /** Sets the dual pan right parameter stored on the channel. */
   setDualPanRightParameter(param: Parameter): void {
     this._dualPanRightParameter = param;
   }
 
+  /** Returns the pre effects stored on the channel. */
   getPreEffects(): EffectsChain {
     return this._preEffects;
   }
+  /** Returns the post effects stored on the channel. */
   getPostEffects(): EffectsChain {
     return this._postEffects;
   }
+  /** Returns the effects chain stored on the channel. */
   getEffectsChain(): EffectsChain {
     return this._effectsChain;
   }
 
+  /** Collects sends from the channel's effects chains. */
   getSends(): Send[] {
     return [
       ...this._preEffects.getSends(),
@@ -241,28 +282,35 @@ export class Channel implements BlueDataObject {
     ];
   }
 
+  /** Returns the persistent association with a project source. */
   getAssociation(): string {
     return this._association;
   }
+  /** Sets the persistent association with a project source. */
   setAssociation(a: string): void {
     this._association = a;
   }
 
+  /** Returns the stable runtime identity used in compiled bindings. */
   getRuntimeIdentity(): string {
     return this._runtimeIdentity;
   }
 
+  /** Sets the stable runtime identity used in compiled bindings. */
   setRuntimeIdentity(identity: string): void {
     this._runtimeIdentity = identity;
   }
 
+  /** Returns the level parameter stored on the channel. */
   getLevelParameter(): Parameter {
     return this._levelParameter;
   }
+  /** Sets the level parameter stored on the channel. */
   setLevelParameter(param: Parameter): void {
     this._levelParameter = param;
   }
 
+  /** Finds an automation parameter by its name on this channel. */
   getChannelParameter(): Parameter {
     return this._levelParameter;
   }
@@ -304,6 +352,7 @@ export class Channel implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the channel from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Channel {
     const ctx = context ?? new XmlLoadContext(data);
     checkRoot(data, 'channel', ctx);

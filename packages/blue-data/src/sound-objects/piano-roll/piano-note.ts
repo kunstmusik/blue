@@ -7,14 +7,21 @@ import { Element } from '../../serialization/xml-reader';
 import { XmlLoadContext } from '../../serialization/xml-load';
 import { checkRoot, checkShape, readText, readInt, readDouble } from '../../utilities/xml';
 
+/** Pitched piano-roll event with a start, duration, and per-note field values. */
 export class PianoNote {
+  /** Octave component of the note's scale-based pitch. */
   octave = 8;
+  /** Degree within the selected scale period. */
   scaleDegree = 0;
+  /** Note start relative to the piano roll, in beats. */
   start = 0;
+  /** Note duration in beats. */
   duration = 1;
+  /** Per-note score template override, or null to use the piano-roll template. */
   noteTemplate: string | null = null;
   private _fields: Field[] = [];
 
+  /** Creates a default piano note or copies a supplied instance. */
   constructor(other?: PianoNote) {
     if (other) {
       this.octave = other.octave;
@@ -31,45 +38,57 @@ export class PianoNote {
     }
   }
 
+  /** Returns the note's duration in beats. */
   getDuration(): number {
     return this.duration;
   }
+  /** Sets the note's duration in beats. */
   setDuration(v: number): void {
     this.duration = v;
   }
 
+  /** Returns the octave stored on the piano note. */
   getOctave(): number {
     return this.octave;
   }
+  /** Sets the octave stored on the piano note. */
   setOctave(v: number): void {
     this.octave = v;
   }
 
+  /** Returns the degree of the selected scale. */
   getScaleDegree(): number {
     return this.scaleDegree;
   }
+  /** Sets the degree of the selected scale. */
   setScaleDegree(v: number): void {
     this.scaleDegree = v;
   }
 
+  /** Returns the start stored on the piano note. */
   getStart(): number {
     return this.start;
   }
+  /** Sets the start stored on the piano note. */
   setStart(v: number): void {
     this.start = v;
   }
 
+  /** Returns the Csound text template expanded for each generated note. */
   getNoteTemplate(): string | null {
     return this.noteTemplate;
   }
+  /** Sets the Csound text template expanded for each generated note. */
   setNoteTemplate(t: string | null): void {
     this.noteTemplate = t;
   }
 
+  /** Returns stored values for the piano roll's custom field definitions. */
   getFields(): Field[] {
     return [...this._fields];
   }
 
+  /** Initializes this note's custom fields using the supplied definitions. */
   initFields(fieldDefs: FieldDef[]): void {
     this._fields = fieldDefs.map((fd) => {
       const f = new Field(fd);
@@ -77,6 +96,7 @@ export class PianoNote {
     });
   }
 
+  /** Associates the note's field values with the current definitions. */
   relinkFields(definitions: Map<string, FieldDef>): void {
     this._fields = this._fields.map((field) => {
       const definition = definitions.get(field.getFieldDef().getFieldName());
@@ -87,6 +107,7 @@ export class PianoNote {
     });
   }
 
+  /** Serializes the piano note and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('pianoNote');
     elem.addElement('octave').setText(this.octave.toString());
@@ -102,6 +123,7 @@ export class PianoNote {
     return elem;
   }
 
+  /** Reconstructs the piano note from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     fieldTypes: Map<string, FieldDef>,

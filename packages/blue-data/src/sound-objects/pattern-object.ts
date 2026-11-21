@@ -32,6 +32,7 @@ export class PatternObject extends AbstractSoundObject {
   private _subDivisions = 4;
   private _patterns: Pattern[] = [];
 
+  /** Creates a default pattern object or copies a supplied instance. */
   constructor(other?: PatternObject) {
     super();
     this.setName('Pattern');
@@ -44,20 +45,25 @@ export class PatternObject extends AbstractSoundObject {
     }
   }
 
+  /** Returns the beats stored on the pattern object. */
   getBeats(): number {
     return this._beats;
   }
+  /** Sets the duration of one pattern cycle in beats. */
   setBeats(b: number): void {
     this.setTime(b, this._subDivisions);
   }
 
+  /** Returns the sub divisions stored on the pattern object. */
   getSubDivisions(): number {
     return this._subDivisions;
   }
+  /** Sets the number of steps per beat. */
   setSubDivisions(s: number): void {
     this.setTime(this._beats, s);
   }
 
+  /** Updates the pattern timing using the supplied beat and subdivision counts. */
   setTime(beats: number, subDivisions: number): void {
     if (this._beats === beats && this._subDivisions === subDivisions) return;
     const preserveSteps = this._subDivisions === subDivisions;
@@ -75,12 +81,15 @@ export class PatternObject extends AbstractSoundObject {
     this._subDivisions = subDivisions;
   }
 
+  /** Returns the number of entries stored in the pattern object. */
   size(): number {
     return this._patterns.length;
   }
+  /** Returns the entry at the supplied index in the pattern object’s patterns. */
   getPattern(index: number): Pattern {
     return this._patterns[index];
   }
+  /** Adds a pattern to this object's ordered pattern list. */
   addPattern(pattern: Pattern): void {
     this._patterns.push(pattern);
   }
@@ -150,6 +159,7 @@ export class PatternObject extends AbstractSoundObject {
     return tempNoteList;
   }
 
+  /** Generates the pattern object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -175,6 +185,7 @@ export class PatternObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the pattern object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

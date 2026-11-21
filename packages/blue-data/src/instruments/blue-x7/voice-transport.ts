@@ -13,6 +13,7 @@ import {
   readBlueX7VoiceValue,
 } from './parameter-catalog';
 
+/** Numeric voice data and operator enable mask passed to the BlueX7 synthesis target. */
 export interface BlueX7VoiceTransport {
   /** Length 155; slots 0..144 are synthesized, 145..154 are name bytes. */
   voice: readonly number[];

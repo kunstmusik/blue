@@ -17,14 +17,21 @@ import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
 import { loadSoundObjectFromXML } from './sound-object-registry';
 
+/** Persistent library identity and the corresponding shared sound object. */
 export interface SoundObjectLibraryEntry {
+  /** Stable identifier used by references to this entry. */
   libraryId: string;
+  /** Shared sound object owned by the library entry. */
   object: SoundObject;
 }
 
+/** Content metadata used to compare sound-object library entries. */
 export interface SoundObjectFingerprint {
+  /** Hash of the canonicalized sound-object content. */
   canonicalHash: string;
+  /** Human-readable display label. */
   displayName: string;
+  /** Runtime class name used in fingerprint comparisons. */
   objectType: string;
 }
 
@@ -42,6 +49,7 @@ export class SoundObjectLibrary implements BlueDataObject {
   private _idMap = new Map<SoundObject, string>();
   private _nextId = 0;
 
+  /** Creates a default sound object library or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: SoundObjectLibrary, mode: CopyMode = 'duplication') {
     if (other) {
       for (const obj of other._objects) {
@@ -56,6 +64,7 @@ export class SoundObjectLibrary implements BlueDataObject {
     }
   }
 
+  /** Stores a sound object and assigns or records its library ID. */
   addObject(obj: SoundObject): string {
     const id = this.generateId();
     this._objects.push(obj);
@@ -63,10 +72,12 @@ export class SoundObjectLibrary implements BlueDataObject {
     return id;
   }
 
+  /** Returns the entry at the supplied index in the sound object library’s objects. */
   getObject(index: number): SoundObject | undefined {
     return this._objects[index];
   }
 
+  /** Finds the sound object stored under the supplied library ID. */
   getObjectById(id: string, objRefMap?: ObjRefLoadMap): SoundObject | undefined {
     if (objRefMap) {
       const obj = objRefMap.get(id);
@@ -80,14 +91,17 @@ export class SoundObjectLibrary implements BlueDataObject {
     return undefined;
   }
 
+  /** Returns library sound objects in their current order. */
   getAllObjects(): SoundObject[] {
     return [...this._objects];
   }
 
+  /** Returns the number of entries stored in the sound object library. */
   size(): number {
     return this._objects.length;
   }
 
+  /** Removes the supplied sound object from the library. */
   removeObject(index: number): boolean {
     if (index < 0 || index >= this._objects.length) return false;
     const obj = this._objects[index];
@@ -96,11 +110,13 @@ export class SoundObjectLibrary implements BlueDataObject {
     return true;
   }
 
+  /** Removes the entry with the supplied library ID. */
   removeObjectById(id: string): boolean {
     const index = this._objects.findIndex((object) => this._idMap.get(object) === id);
     return this.removeObject(index);
   }
 
+  /** Replaces the sound object associated with an existing library ID. */
   replaceObjectById(id: string, replacement: SoundObject): boolean {
     const index = this._objects.findIndex((object) => this._idMap.get(object) === id);
     if (index < 0) return false;
@@ -111,6 +127,7 @@ export class SoundObjectLibrary implements BlueDataObject {
     return true;
   }
 
+  /** Returns the library entries with their persistent IDs. */
   getEntries(): SoundObjectLibraryEntry[] {
     return this._objects.map((obj, i) => ({
       libraryId: this._idMap.get(obj) ?? `lib_${i}`,
@@ -118,10 +135,12 @@ export class SoundObjectLibrary implements BlueDataObject {
     }));
   }
 
+  /** Finds the library ID associated with the supplied object instance. */
   findIdForObject(object: SoundObject): string | null {
     return this._idMap.get(object) ?? null;
   }
 
+  /** Reports whether the supplied object instance is already in the library. */
   containsObject(object: SoundObject): boolean {
     return this._idMap.has(object);
   }
@@ -135,6 +154,7 @@ export class SoundObjectLibrary implements BlueDataObject {
     return copy;
   }
 
+  /** Creates content comparison metadata for a library sound object. */
   createFingerprint(object: SoundObject): SoundObjectFingerprint {
     return {
       canonicalHash: hashText(object.saveAsXML().toXml()),
@@ -143,6 +163,11 @@ export class SoundObjectLibrary implements BlueDataObject {
     };
   }
 
+  /**
+   * Matches by content hash, display name, and runtime class.
+   *
+   * @returns The live library object if exactly one matches, or `undefined` if none or several match.
+   */
   findUniqueByFingerprint(fingerprint: SoundObjectFingerprint): SoundObject | undefined {
     const matches = this._objects.filter((object) => {
       const candidate = this.createFingerprint(object);
@@ -155,6 +180,7 @@ export class SoundObjectLibrary implements BlueDataObject {
     return matches.length === 1 ? matches[0] : undefined;
   }
 
+  /** Copies missing source objects into the library and updates instances to share the corresponding library entry. */
   checkAndAddInstanceSoundObjects(instanceSoundObjects: Instance[]): void {
     const originalToCopyMap = new Map<SoundObject, SoundObject>();
 
@@ -208,6 +234,7 @@ export class SoundObjectLibrary implements BlueDataObject {
     return root;
   }
 
+  /** Reconstructs the sound object library from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,
@@ -308,6 +335,7 @@ export class SoundObjectLibrary implements BlueDataObject {
   }
 }
 
+/** Collects shared source objects referenced within a sound-object tree. */
 export function collectInstanceSoundObjects(sObjs: SoundObject[]): Instance[] {
   const instances: Instance[] = [];
   for (const sObj of sObjs) {

@@ -9,9 +9,13 @@ import { BSBWidget } from './bsb-widget';
 import { validateBsbFont } from './bsb-xml';
 import { formatBlueNumber } from '../../utilities/number-format';
 
+/** Font settings shared by BlueSynthBuilder widgets. */
 export interface BSBFont {
+  /** Font family name. */
   name: string;
+  /** Font size stored by the widget. */
   size: number;
+  /** Java-compatible font style bits for plain, bold, and italic rendering. */
   style: number;
 }
 
@@ -38,11 +42,17 @@ export function saveFontToXML(font: BSBFont): Element {
 }
 
 export class BSBKnob extends BSBWidget {
+  /** Knob width in pixels. */
   knobWidth = 60;
+  /** Whether the widget displays its current value. */
   valueDisplayEnabled = true;
+  /** Whether this widget participates in value randomization. */
   randomizable = true;
+  /** Text displayed on or near the knob. */
   label = 'label';
+  /** Whether the knob label is visible. */
   labelEnabled = true;
+  /** Font used for the widget label. */
   labelFont: BSBFont = { name: 'Roboto', size: 12, style: 0 };
 
   override getPresetValue(): string {
@@ -66,6 +76,7 @@ export class BSBKnob extends BSBWidget {
     }
   }
 
+  /** Reconstructs the knob widget from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const versionAttribute = data.getAttribute('version');
@@ -89,6 +100,7 @@ export class BSBKnob extends BSBWidget {
     }
   }
 
+  /** Picks a new knob widget value when randomization is enabled. */
   randomize(): void {
     if (!this.randomizable) return;
     this.value = this.minimum + Math.random() * (this.maximum - this.minimum);

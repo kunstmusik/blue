@@ -19,9 +19,11 @@ import { Channel } from './mixer/channel';
 import { Tables } from './tables';
 import type { CopyMode } from './deep-copyable';
 
+/** Ordered assignments mapping Csound instrument IDs to project instruments. */
 export class Arrangement {
   private arrangement: InstrumentAssignment[] = [];
 
+  /** Creates an empty arrangement or copies the supplied assignments according to the identity policy. */
   constructor(other?: Arrangement, mode: CopyMode = 'duplication') {
     if (other) {
       for (const ia of other.arrangement) {
@@ -30,12 +32,14 @@ export class Arrangement {
     }
   }
 
+  /** Copies all assignments and the instruments they own using the requested identity policy. */
   deepCopy(mode: CopyMode = 'duplication'): Arrangement {
     return new Arrangement(this, mode);
   }
 
   // ─── Instrument management ───
 
+  /** Adds and sorts an assignment, choosing a numeric ID when none is supplied. Returns the new assignment count. */
   addInstrument(instrument: Instrument, instrumentId?: string): number {
     const id = instrumentId || this.getNextInstrumentId();
     const ia = new InstrumentAssignment();
@@ -46,6 +50,7 @@ export class Arrangement {
     return this.arrangement.length;
   }
 
+  /** Appends an assignment using one more than the largest existing numeric ID and returns that number. */
   addInstrumentAtEnd(instrument: Instrument): number {
     let max = 0;
 
@@ -65,6 +70,7 @@ export class Arrangement {
     return nextId;
   }
 
+  /** Appends an assignment with the supplied ID and sorts it by default. The caller owns ID uniqueness. */
   addInstrumentWithId(instrument: Instrument, instrumentId: string, sort = true): void {
     const ia = new InstrumentAssignment();
     ia.arrangementId = instrumentId;
@@ -76,6 +82,7 @@ export class Arrangement {
     }
   }
 
+  /** Inserts at the given zero-based index, clamped to the list bounds, and returns the assigned ID. */
   addInstrumentAtIndex(instrument: Instrument, index: number, instrumentId?: string): string {
     const assignmentId = instrumentId ?? this.getNextInstrumentId();
     const assignment = new InstrumentAssignment();
@@ -86,40 +93,49 @@ export class Arrangement {
     return assignmentId;
   }
 
+  /** Returns the number of assignments, including disabled ones. */
   size(): number {
     return this.arrangement.length;
   }
 
+  /** Looks up the ID at a zero-based index. Returns an empty string when the index has no assignment. */
   getInstrumentId(index: number): string {
     return this.arrangement[index]?.arrangementId ?? '';
   }
 
+  /** Returns the live instrument at a valid zero-based assignment index. Use {@link Arrangement.getInstrumentById} for an optional ID lookup. */
   getInstrument(index: number): Instrument {
     return this.arrangement[index]?.instr;
   }
 
+  /** Returns the first instrument assigned to the given ID, or `undefined` when there is no match. */
   getInstrumentById(id: string): Instrument | undefined {
     return this.arrangement.find((ia) => ia.arrangementId === id)?.instr;
   }
 
+  /** Returns a shallow snapshot of the assignment order. The assignment objects remain shared. */
   getArrangement(): InstrumentAssignment[] {
     return [...this.arrangement];
   }
 
+  /** Removes disabled assignments from this arrangement. */
   clearUnusedInstrAssignments(): void {
     this.arrangement = this.arrangement.filter((ia) => ia.enabled);
   }
 
+  /** Removes the assignment at the given index and returns its instrument, or `null` if none was removed. Negative indices count from the end. */
   removeInstrument(index: number): Instrument | null {
     return this.arrangement.splice(index, 1)[0]?.instr ?? null;
   }
 
+  /** Removes the first assignment with the given ID and returns its instrument, or `null` if the ID is absent. */
   removeInstrumentById(arrangementId: string): Instrument | null {
     const index = this.arrangement.findIndex((ia) => ia.arrangementId === arrangementId);
     if (index < 0) return null;
     return this.removeInstrument(index);
   }
 
+  /** Replaces the instrument for the given ID while preserving its assignment. Returns whether the assignment exists. */
   replaceInstrument(arrangementId: string, instrument: Instrument): boolean {
     const assignment = this.arrangement.find((ia) => ia.arrangementId === arrangementId);
     if (!assignment) return false;
@@ -127,6 +143,7 @@ export class Arrangement {
     return true;
   }
 
+  /** Changes the enabled flag and/or ID. A blank or duplicate new ID is ignored. Returns whether any change was applied. */
   updateAssignment(
     arrangementId: string,
     patch: { enabled?: boolean; nextArrangementId?: string },
@@ -152,6 +169,7 @@ export class Arrangement {
     return changed;
   }
 
+  /** Returns one more than the largest numeric assignment ID as a string. */
   getNextInstrumentId(): string {
     let max = 0;
     for (const ia of this.arrangement) {
@@ -231,6 +249,7 @@ export class Arrangement {
     return buffer.join('');
   }
 
+  /** Generates orchestra text for enabled assignments, awaiting each instrument's generator so it can use host-backed runtimes. */
   async generateOrchestraAsync(
     compileData: CompileData,
     mixer?: Mixer,
@@ -322,6 +341,7 @@ export class Arrangement {
     }
   }
 
+  /** Lets enabled instruments append their user-defined opcodes to the supplied collection. */
   generateUserDefinedOpcodes(udoList: unknown): void {
     for (const ia of this.arrangement) {
       if (!ia.enabled) continue;
@@ -481,6 +501,7 @@ export class Arrangement {
 
   // ─── XML Serialization ───
 
+  /** Serializes the current assignment order into a new arrangement element. */
   saveAsXML(): Element {
     const elem = new Element('arrangement');
     for (const ia of this.arrangement) {
@@ -489,6 +510,7 @@ export class Arrangement {
     return elem;
   }
 
+  /** Loads an arrangement and validates its assignments using the supplied context. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): Arrangement {
     checkRoot(data, 'arrangement', context);
     checkShape(data, [], ['instrumentAssignment'], context, ['instrumentAssignment']);
@@ -503,6 +525,7 @@ export class Arrangement {
     return arr;
   }
 
+  /** Compatibility entry point for reading an arrangement. The library argument is unused. */
   static loadFromXMLWithLibrary(data: Element, _iLibrary: unknown): Arrangement {
     return Arrangement.loadFromXML(data);
   }

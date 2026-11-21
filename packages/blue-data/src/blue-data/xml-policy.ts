@@ -94,10 +94,12 @@ export function readProjectXml(
  */
 const LEGACY_MIXER_STATE_AT_LOAD = new WeakMap<object, true>();
 
+/** Records that legacy mute or solo state was present when this project was loaded. The marker is process-local. */
 export function markLegacyMixerStateAtLoad(data: BlueData): void {
   LEGACY_MIXER_STATE_AT_LOAD.set(data, true);
 }
 
+/** Reports whether load-time legacy mixer state was recorded for this project instance. */
 export function hasLegacyMixerStateAtLoad(data: BlueData): boolean {
   return LEGACY_MIXER_STATE_AT_LOAD.has(data);
 }

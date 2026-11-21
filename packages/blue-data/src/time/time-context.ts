@@ -22,12 +22,14 @@ import { resolveSmpteRate } from './smpte-timecode';
 /** Default sample rate. */
 const DEFAULT_SAMPLE_RATE = 44100;
 
+/** Project tempo, meter, sample rate, and SMPTE presentation rate used to interpret positions and durations. */
 export class TimeContext {
   private tempoMap = new TempoMap();
   private meterMap = new MeterMap();
   private sampleRate = DEFAULT_SAMPLE_RATE;
   private smpteFrameRate = 30;
 
+  /** Creates the default timing context or copies another context, including independent tempo and meter maps. */
   constructor(other?: TimeContext) {
     if (other) {
       this.tempoMap = new TempoMap(other.tempoMap);
@@ -40,34 +42,42 @@ export class TimeContext {
 
   // ─── Accessors ───
 
+  /** Returns the mutable tempo map used to convert between Csound beats and elapsed seconds. */
   getTempoMap(): TempoMap {
     return this.tempoMap;
   }
 
+  /** Replaces the tempo map with the supplied instance. */
   setTempoMap(tempoMap: TempoMap): void {
     this.tempoMap = tempoMap;
   }
 
+  /** Returns the mutable meter map used to resolve bar and beat coordinates. */
   getMeterMap(): MeterMap {
     return this.meterMap;
   }
 
+  /** Replaces the meter map with the supplied instance. */
   setMeterMap(meterMap: MeterMap): void {
     this.meterMap = meterMap;
   }
 
+  /** Returns the audio sample rate in samples per second. */
   getSampleRate(): number {
     return this.sampleRate;
   }
 
+  /** Sets the audio sample rate used for sample-frame conversions. */
   setSampleRate(rate: number): void {
     this.sampleRate = rate;
   }
 
+  /** Returns the SMPTE presentation rate, independent of the audio sample rate. */
   getSmpteFrameRate(): number {
     return this.smpteFrameRate;
   }
 
+  /** Sets the SMPTE presentation rate in frames per second. */
   setSmpteFrameRate(rate: number): void {
     this.smpteFrameRate = rate;
   }
@@ -104,6 +114,7 @@ export class TimeContext {
 
   // ─── XML Serialization ───
 
+  /** Writes musical timing and SMPTE presentation settings. The project supplies the audio sample rate separately. */
   saveAsXML(): Element {
     const elem = new Element('timeContext');
     elem.addElement(this.tempoMap.saveAsXML().setName('tempoMap'));
@@ -112,6 +123,7 @@ export class TimeContext {
     return elem;
   }
 
+  /** Reads project timing settings from a `timeContext` element. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,

@@ -11,15 +11,22 @@ import { BSBWidget } from './bsb-widget';
 import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { Parameter } from '../../automation/parameter';
 
+/** String-valued widget channel before or after assignment of its Csound name. */
 export interface StringChannel {
+  /** Name of the widget supplying the string. */
   objectName: string;
+  /** Current string supplied by the widget. */
   value: string;
+  /** Compiled channel name, or null before assignment. */
   channelName: string | null;
 }
 
 export class BSBFileSelector extends BSBWidget {
+  /** Configured path to the selected file. */
   fileName = '';
+  /** Width of the text entry field in pixels. */
   textFieldWidth = 100;
+  /** Whether to expose the selected filename through a Csound string channel. */
   stringChannelEnabled = true;
   private stringChannel: StringChannel = {
     objectName: '',
@@ -36,6 +43,7 @@ export class BSBFileSelector extends BSBWidget {
     this.syncStringChannels();
   }
 
+  /** Reconstructs the file-selector widget from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const fn = data.getTextString('fileName');
@@ -59,6 +67,7 @@ export class BSBFileSelector extends BSBWidget {
     unit.addReplacementValue(this.objectName, fileNameValue);
   }
 
+  /** Returns the string channel stored on the file-selector widget. */
   getStringChannel(): StringChannel | null {
     if (!this.stringChannelEnabled) return null;
     this.syncStringChannel();

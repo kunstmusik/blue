@@ -122,6 +122,7 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
   // Plugin data (preserved opaquely for round-trip)
   private pluginDataXml: Element[] = [];
 
+  /** Creates an empty composition with Blue’s default project and timing settings. */
   constructor() {
     // Wire projectProperties into score.timeContext (Java parity)
     this.score
@@ -131,107 +132,137 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
 
   // ─── Accessors ───
 
+  /** Returns the project XML format version recorded on this model. */
   getVersion(): string {
     return this.version;
   }
+  /** Sets the model’s version field. Serializing still writes the current {@link BLUE_VERSION}. */
   setVersion(v: string): void {
     this.version = v;
   }
 
+  /** Returns the live arrangement of instrument assignments. */
   getArrangement(): Arrangement {
     return this.arrangement;
   }
+  /** Replaces the project arrangement with the supplied instance. */
   setArrangement(a: Arrangement): void {
     this.arrangement = a;
   }
 
+  /** Returns the live project properties, including separate realtime and disk-render settings. */
   getProjectProperties(): ProjectProperties {
     return this.projectProperties;
   }
+  /** Replaces project properties with the supplied instance. */
   setProjectProperties(p: ProjectProperties): void {
     this.projectProperties = p;
   }
 
+  /** Returns the project-owned library used by reusable sound object instances. */
   getSoundObjectLibrary(): SoundObjectLibrary {
     return this.sObjLib;
   }
+  /** Replaces the sound object library. This setter does not remap existing instance references. */
   setSoundObjectLibrary(s: SoundObjectLibrary): void {
     this.sObjLib = s;
   }
 
+  /** Returns the live model for project-wide Csound orchestra and score text. */
   getGlobalOrcSco(): GlobalOrcSco {
     return this.globalOrcSco;
   }
+  /** Replaces the project-wide orchestra and score model. */
   setGlobalOrcSco(g: GlobalOrcSco): void {
     this.globalOrcSco = g;
   }
 
+  /** Returns the project’s Csound function table definitions. */
   getTableSet(): Tables {
     return this.tableSet;
   }
+  /** Replaces the project’s function table definitions. */
   setTableSet(t: Tables): void {
     this.tableSet = t;
   }
 
+  /** Returns the live score, including layer groups and its musical timing context. */
   getScore(): Score {
     return this.score;
   }
+  /** Replaces the score with the supplied instance and its timing context. */
   setScore(s: Score): void {
     this.score = s;
   }
 
+  /** Returns the live Blue Live performance configuration and object bins. */
   getLiveData(): LiveData {
     return this.liveData;
   }
+  /** Replaces the project’s Blue Live data. */
   setLiveData(l: LiveData): void {
     this.liveData = l;
   }
 
+  /** Returns the editable scratch pad stored with this project. */
   getScratchPadData(): ScratchPadData {
     return this.scratchData;
   }
+  /** Replaces the project’s scratch pad data. */
   setScratchPadData(s: ScratchPadData): void {
     this.scratchData = s;
   }
 
+  /** Returns the map of reusable named note-processor chains saved with the project. */
   getNoteProcessorChainMap(): NoteProcessorChainMap {
     return this.noteProcessorChainMap;
   }
+  /** Replaces the collection of reusable note-processor chains. */
   setNoteProcessorChainMap(n: NoteProcessorChainMap): void {
     this.noteProcessorChainMap = n;
   }
 
+  /** Returns the project timeline’s marker list. */
   getMarkersList(): MarkersList {
     return this.markersList;
   }
+  /** Replaces the project timeline’s marker list. */
   setMarkersList(m: MarkersList): void {
     this.markersList = m;
   }
 
+  /** Returns the project’s MIDI input mapping configuration. */
   getMidiInputProcessor(): MidiInputProcessor {
     return this.midiInputProcessor;
   }
+  /** Replaces the project’s MIDI input mapping configuration. */
   setMidiInputProcessor(m: MidiInputProcessor): void {
     this.midiInputProcessor = m;
   }
 
+  /** Returns the live mixer model, including channels, routing, and effects. */
   getMixer(): Mixer {
     return this.mixer;
   }
+  /** Replaces the project mixer with the supplied instance. */
   setMixer(m: Mixer): void {
     this.mixer = m;
   }
 
+  /** Returns the project-owned user-defined Csound opcodes. */
   getOpcodeList(): OpcodeList {
     return this.opcodeList;
   }
+  /** Replaces the project’s user-defined opcodes. */
   setOpcodeList(o: OpcodeList): void {
     this.opcodeList = o;
   }
 
+  /** Returns the start of the render window in Csound beats. */
   getRenderStartTime(): number {
     return this.renderStartTime;
   }
+  /** Sets the render start in Csound beats and clears any end at or before it. */
   setRenderStartTime(t: number): void {
     this.renderStartTime = t;
     if (this.renderStartTime >= this.renderEndTime) {
@@ -239,35 +270,44 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     }
   }
 
+  /** Returns the render end in Csound beats, or `-1` when there is no explicit end. */
   getRenderEndTime(): number {
     return this.renderEndTime;
   }
+  /** Sets the render end in Csound beats. Values at or before the start clear the end. */
   setRenderEndTime(t: number): void {
     this.renderEndTime = t <= this.renderStartTime ? -1 : t;
   }
 
+  /** Reports the stored loop-rendering preference. */
   isLoopRendering(): boolean {
     return this.loopRendering;
   }
+  /** Sets the loop-rendering preference used by the host. */
   setLoopRendering(l: boolean): void {
     this.loopRendering = l;
   }
 
+  /** Returns the project instrument library, or `null` when the project has none. */
   getInstrumentLibrary(): InstrumentLibrary | null {
     return this.instrumentLibrary;
   }
+  /** Replaces the project instrument library, or clears it when passed `null`. */
   setInstrumentLibrary(l: InstrumentLibrary | null): void {
     this.instrumentLibrary = l;
   }
 
+  /** Returns detached clones of the preserved project plug-in XML entries. */
   getPluginDataXml(): Element[] {
     return this.pluginDataXml.map((element) => element.clone());
   }
 
+  /** Reads Clojure project settings from the stored plug-in XML, or returns `null` if absent. */
   getClojureProjectData(): ClojureProjectData | null {
     return loadClojureProjectDataFromPluginData(this.pluginDataXml);
   }
 
+  /** Replaces the Clojure settings, or removes them for `null`, preserving other plug-in entries. */
   setClojureProjectData(projectData: ClojureProjectData | null): void {
     this.pluginDataXml = replaceClojureProjectDataInPluginData(this.pluginDataXml, projectData);
   }
@@ -551,6 +591,7 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
 
   // ─── DeepCopy ───
 
+  /** Copies the project graph and remaps library references within the copy. See {@link CopyMode}. */
   deepCopy(mode: CopyMode = 'duplication'): BlueData {
     return this.cloneProject(mode, true);
   }
@@ -623,6 +664,7 @@ export class BlueData implements BlueDataObject, DeepCopyable<BlueData>, History
     return copy;
   }
 
+  /** Copies the project graph for history while preserving its stable identities. */
   historyCopy(): BlueData {
     return this.deepCopy('history') as BlueData;
   }

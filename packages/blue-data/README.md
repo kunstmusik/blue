@@ -8,6 +8,7 @@ Portable TypeScript/JavaScript data model, `.blue` XML loader/migrator/serialize
 
 - **Node.js**: `>= 22` (native ESM and CommonJS supported; ESM and CJS share `BlueData` model identity)
 - **TypeScript**: Declarations included (`dist/esm/index.d.ts` and `dist/cjs/index.d.ts`, tested with strict `NodeNext` and bundler resolution)
+  - If you check dependency declarations with an explicit `lib` list, include `DOM` and `ESNext.Disposable` for the WebAssembly and disposal types used by QuickJS.
 - **Browsers**: Portable ESM output with zero `node:*` built-ins for Vite, esbuild, and other ESM bundlers
 
 ```bash
@@ -259,13 +260,35 @@ const xml = data.saveToString();
 
 ## CSD Generation & Runtime Requirements
 
+### Generate a CSD from a Project in Node.js
+
+For a project with ordinary Csound instruments and score objects, load the XML, check diagnostics,
+and write the generated disk-render CSD. CSD generation returns text. Run that text through Csound
+separately to produce audio.
+
+```javascript
+import { readFileSync, writeFileSync } from 'node:fs';
+import { readProjectXml } from '@kunstmusik/blue-data';
+
+const input = 'input.blue';
+const report = readProjectXml(readFileSync(input, 'utf8'), { kind: 'project', label: input });
+for (const diagnostic of report.diagnostics) {
+  console.error(`[${diagnostic.severity}] ${diagnostic.path}: ${diagnostic.message}`);
+}
+if (!report.ok) process.exit(1);
+
+writeFileSync('output.csd', report.value.toDiskCSD(), { encoding: 'utf8', flag: 'wx' });
+```
+
+This example expects the project's Csound code to work as authored without host-provided assets or
+script runtimes. For projects that need those services, see the runtime sections below or use the CLI.
+
 ### QuickJS Initialization for `JavaScriptObject`
 
-If a project contains `JavaScriptObject` sound objects (or JavaScript `ObjectBuilder` objects), await `initializeJavaScriptRuntime()` once before calling `toCSD()`, `toDiskCSD()`, `toRealtimePlaybackCSD()`, `toBlueLiveCSD()`, their `*Async` counterparts, or instantiating `JavaScriptSession`:
+If a project contains JavaScript generators, such as `JavaScriptObject`, `JavaScriptInstrument`, or JavaScript `ObjectBuilder` objects, await `initializeJavaScriptRuntime()` once before calling `toCSD()`, `toDiskCSD()`, `toRealtimePlaybackCSD()`, `toBlueLiveCSD()`, their `*Async` counterparts, or instantiating `JavaScriptSession`:
 
 ```typescript
 import {
-  BlueData,
   CompileData,
   JavaScriptObject,
   TimeContext,
@@ -305,19 +328,20 @@ try {
 import {
   JavaScriptSession,
   initializeJavaScriptRuntime,
+  type BlueData,
   type JavaRuntimeClientContract,
 } from '@kunstmusik/blue-data';
 
-await initializeJavaScriptRuntime();
-const session = new JavaScriptSession();
-const runtimeClient: JavaRuntimeClientContract = /* provided by host runtime */;
+async function compile(project: BlueData, runtimeClient: JavaRuntimeClientContract) {
+  await initializeJavaScriptRuntime();
+  const session = new JavaScriptSession();
 
-try {
-  await project.processOnLoadAsync(session, runtimeClient);
-  const csd = await project.toDiskCSDAsync(session, runtimeClient);
-  console.log(csd);
-} finally {
-  session.dispose();
+  try {
+    await project.processOnLoadAsync(session, runtimeClient);
+    return await project.toDiskCSDAsync(session, runtimeClient);
+  } finally {
+    session.dispose();
+  }
 }
 ```
 
@@ -367,6 +391,24 @@ For example, bundling with `esbuild`:
 ```bash
 npx esbuild src/main.js --bundle --platform=browser --format=esm --outfile=dist/bundle.js
 ```
+
+## API Reference
+
+From a Blue source checkout, build the searchable reference with:
+
+```sh
+pnpm --filter @blue/data docs:api
+```
+
+Open `packages/blue-data/build/api/index.html`. The package module lists supported root exports.
+The **Supporting types** module explains additional types that appear in those signatures. These
+types are available to consumers through the signatures that use them. Repository-only test-support
+subpaths are outside the reference. Generated HTML stays outside the npm package.
+
+The build fails if a public declaration, member, or explicit constructor overload is missing a
+TSDoc comment, a referenced type is missing, or a documentation link cannot be resolved. Document
+contracts at the declaration so the same information is available in editors. Explain units,
+defaults, diagnostics, ownership, mutation, exceptions, and runtime prerequisites where they apply.
 
 ## Supported Package-Root API Groups
 

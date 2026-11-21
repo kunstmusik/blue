@@ -75,8 +75,11 @@ export function beatsToTimePosition(
 }
 
 /**
- * Convert a TimePosition from one base to another.
- * Returns the same instance if the bases match.
+ * Converts a timeline position between time bases.
+ *
+ * @param targetBase - Desired time base. SMPTE selects a clock-time position for display.
+ * @param context - Supplies the tempo, meter, and audio sample rate used as needed during conversion.
+ * @returns The original position instance when its base already matches, or the converted position.
  */
 export function convertTimePosition(
   position: TimePosition,

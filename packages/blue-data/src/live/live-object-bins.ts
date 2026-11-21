@@ -9,6 +9,7 @@ import type { CopyMode } from '../deep-copyable';
 export class LiveObjectBins implements BlueDataObject {
   private _cells: Array<Array<LiveObject | null>>;
 
+  /** Creates an empty rectangular grid, with one column and eight rows by default. */
   constructor(columns = 1, rows = 8) {
     this._cells = [];
     for (let c = 0; c < columns; c++) {
@@ -20,32 +21,38 @@ export class LiveObjectBins implements BlueDataObject {
     }
   }
 
+  /** Wraps the supplied column-major cell array without copying it. */
   static fromGrid(grid: Array<Array<LiveObject | null>>): LiveObjectBins {
     const bins = Object.create(LiveObjectBins.prototype) as LiveObjectBins;
     bins._cells = grid;
     return bins;
   }
 
+  /** Returns the number of columns in the Blue Live grid. */
   getColumnCount(): number {
     return this._cells.length;
   }
 
+  /** Returns the number of rows in the Blue Live grid. */
   getRowCount(): number {
     return this._cells.length > 0 ? this._cells[0].length : 0;
   }
 
+  /** Returns the cell at the supplied zero-based column and row, or null when empty or out of range. */
   getLiveObject(column: number, row: number): LiveObject | null {
     if (column < 0 || column >= this._cells.length) return null;
     if (row < 0 || row >= this._cells[column].length) return null;
     return this._cells[column][row];
   }
 
+  /** Sets or clears the cell at the supplied grid coordinates. */
   setLiveObject(column: number, row: number, obj: LiveObject | null): void {
     if (column < 0 || column >= this._cells.length) return;
     if (row < 0 || row >= this._cells[column].length) return;
     this._cells[column][row] = obj;
   }
 
+  /** Inserts an empty row at the supplied position. */
   insertRow(index: number): boolean {
     if (index < 0) index = 0;
     const rows = this.getRowCount();
@@ -56,6 +63,7 @@ export class LiveObjectBins implements BlueDataObject {
     return true;
   }
 
+  /** Removes the row at the supplied position. */
   removeRow(index: number): boolean {
     if (index < 0 || index >= this.getRowCount() || this.getRowCount() <= 1) return false;
     for (let c = 0; c < this._cells.length; c++) {
@@ -64,6 +72,7 @@ export class LiveObjectBins implements BlueDataObject {
     return true;
   }
 
+  /** Inserts an empty column at the supplied position. */
   insertColumn(index: number): boolean {
     if (index < 0) index = 0;
     if (index > this._cells.length) index = this._cells.length;
@@ -76,12 +85,14 @@ export class LiveObjectBins implements BlueDataObject {
     return true;
   }
 
+  /** Removes the column at the supplied position. */
   removeColumn(index: number): boolean {
     if (index < 0 || index >= this._cells.length || this._cells.length <= 1) return false;
     this._cells.splice(index, 1);
     return true;
   }
 
+  /** Captures the currently enabled cells as a Live object set. */
   getEnabledLiveObjectSet(): LiveObject[] {
     const result: LiveObject[] = [];
     for (const col of this._cells) {
@@ -94,6 +105,7 @@ export class LiveObjectBins implements BlueDataObject {
     return result;
   }
 
+  /** Updates the grid's enable flags using the cell identities stored in the set. */
   setEnabledFromLiveObjectSet(set: LiveObject[]): boolean {
     const setIds = new Set(set.map((o) => o.getUniqueId()));
     let changed = false;
@@ -111,6 +123,7 @@ export class LiveObjectBins implements BlueDataObject {
     return changed;
   }
 
+  /** Finds a populated cell by its persistent identifier. */
   getLiveObjectByUniqueId(uniqueId: string | null): LiveObject | null {
     if (!uniqueId) return null;
     for (const col of this._cells) {
@@ -123,6 +136,7 @@ export class LiveObjectBins implements BlueDataObject {
     return null;
   }
 
+  /** Returns the zero-based column of the supplied cell instance, or -1 if absent. */
   getColumnForObject(liveObject: LiveObject | null): number {
     if (!liveObject) return -1;
     for (let c = 0; c < this._cells.length; c++) {
@@ -133,6 +147,7 @@ export class LiveObjectBins implements BlueDataObject {
     return -1;
   }
 
+  /** Returns the zero-based row of the supplied cell instance, or -1 if absent. */
   getRowForObject(liveObject: LiveObject | null): number {
     if (!liveObject) return -1;
     for (const col of this._cells) {
@@ -163,6 +178,7 @@ export class LiveObjectBins implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the Blue Live grid from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

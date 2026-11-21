@@ -6,6 +6,7 @@ import { Element } from '../../serialization/xml-reader';
 import { XmlLoadContext } from '../../serialization/xml-load';
 import { checkRoot, checkShape, parseXmlNumber } from '../../utilities/xml';
 
+/** Defines a named piano-roll field, its numeric bounds, and its default value. */
 export class FieldDef {
   private _fieldName = 'field';
   private _minValue = 0.0;
@@ -13,41 +14,52 @@ export class FieldDef {
   private _defaultValue = 1.0;
   private _fieldType: FieldType = FieldType.CONTINUOUS;
 
+  /** Returns the field name stored on the field def. */
   getFieldName(): string {
     return this._fieldName;
   }
+  /** Sets the field name stored on the field def. */
   setFieldName(name: string): void {
     this._fieldName = name;
   }
 
+  /** Returns the lower bound for configured values. */
   getMinValue(): number {
     return this._minValue;
   }
+  /** Sets the lower bound for configured values. */
   setMinValue(v: number): void {
     this._minValue = v;
   }
 
+  /** Returns the upper bound for configured values. */
   getMaxValue(): number {
     return this._maxValue;
   }
+  /** Sets the upper bound for configured values. */
   setMaxValue(v: number): void {
     this._maxValue = v;
   }
 
+  /** Returns the initial value when no explicit value is supplied. */
   getDefaultValue(): number {
     return this._defaultValue;
   }
+  /** Sets the initial value when no explicit value is supplied. */
   setDefaultValue(v: number): void {
     this._defaultValue = v;
   }
 
+  /** Returns the field type stored on the field def. */
   getFieldType(): FieldType {
     return this._fieldType;
   }
+  /** Sets the field type stored on the field def. */
   setFieldType(t: FieldType): void {
     this._fieldType = t;
   }
 
+  /** Converts a numeric field value to the representation used by the selected field type. */
   convertToFieldType(val: number): number {
     if (this._fieldType === FieldType.DISCRETE) {
       return Math.round(val);
@@ -55,6 +67,7 @@ export class FieldDef {
     return val;
   }
 
+  /** Serializes the field def and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('fieldDef');
     elem.setAttribute('name', this._fieldName);
@@ -65,6 +78,7 @@ export class FieldDef {
     return elem;
   }
 
+  /** Reconstructs the field def from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): FieldDef {
     checkRoot(data, 'fieldDef', context);
     checkShape(data, ['name', 'fieldType', 'min', 'max', 'default'], [], context);

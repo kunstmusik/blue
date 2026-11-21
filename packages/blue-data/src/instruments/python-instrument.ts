@@ -32,6 +32,7 @@ export class PythonInstrument extends Instrument {
   private _opcodeList = new OpcodeList();
   private _udoReplacementValues: Map<string, string> | null = null;
 
+  /** Creates a default Python instrument or copies a supplied instance. */
   constructor(other?: PythonInstrument) {
     super();
     this.setName('PythonInstrument');
@@ -46,30 +47,37 @@ export class PythonInstrument extends Instrument {
     }
   }
 
+  /** Returns the authored text. */
   getText(): string {
     return this._text;
   }
 
+  /** Sets the authored text. */
   setText(text: string): void {
     this._text = text ?? '';
   }
 
+  /** Returns the project-wide Csound orchestra source contributed by the instrument. */
   getGlobalOrc(): string {
     return this._globalOrc;
   }
 
+  /** Sets the project-wide Csound orchestra source contributed by the instrument. */
   setGlobalOrc(globalOrc: string): void {
     this._globalOrc = globalOrc ?? '';
   }
 
+  /** Returns the project-wide Csound score source contributed by the instrument. */
   getGlobalSco(): string {
     return this._globalSco;
   }
 
+  /** Sets the project-wide Csound score source contributed by the instrument. */
   setGlobalSco(globalSco: string): void {
     this._globalSco = globalSco ?? '';
   }
 
+  /** Returns the collection of user-defined Csound opcodes. */
   getOpcodeList(): OpcodeList {
     return this._opcodeList;
   }
@@ -135,6 +143,7 @@ export class PythonInstrument extends Instrument {
     return elem;
   }
 
+  /** Reconstructs the Python instrument from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,

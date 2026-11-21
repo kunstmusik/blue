@@ -3,6 +3,7 @@
  * Mirrors the Java LineColors class (30 colors from Cecilia).
  */
 export class LineColors {
+  /** Default packed RGB colors used when assigning automation lines. */
   static readonly DEFAULT_COLORS: number[] = [
     0x20dd00, // green
     0x0000ff, // blue
@@ -38,14 +39,17 @@ export class LineColors {
 
   private _colors: number[] = [...LineColors.DEFAULT_COLORS];
 
+  /** Returns a copy of the current line-color palette. */
   getColors(): number[] {
     return [...this._colors];
   }
 
+  /** Returns the packed display color. */
   getColor(index: number): number {
     return this._colors[index % this._colors.length];
   }
 
+  /** Replaces the palette with a copy of the supplied packed colors. */
   setColors(colors: number[]): void {
     this._colors = [...colors];
   }

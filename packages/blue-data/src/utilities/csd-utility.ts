@@ -16,9 +16,13 @@ import { parseUDODeclaration } from '../opcodes/udo-utilities';
 import { OpcodeDefinition } from '../opcodes/opcode-definition';
 import { getNotes, getTotalDuration } from './score';
 
+/** Controls where imported Csound score statements are stored in a Blue project. */
 export enum CSDImportMode {
+  /** Place imported score statements into the project-wide score. */
   IMPORT_GLOBAL = 0,
+  /** Place imported score statements in one sound object. */
   IMPORT_SINGLE_SOUNDOBJECT = 1,
+  /** Group imported score statements by instrument into separate sound objects. */
   IMPORT_SOUNDOBJECT_PER_INSTRUMENT = 2,
 }
 
@@ -45,6 +49,7 @@ export function getTextBetweenTags(tagName: string, text: string): string | null
   return text.substring(contentStart, endIdx);
 }
 
+/** Imports Csound orchestra and score source into a Blue project. */
 export function convertOrcScoToBlue(
   orcText: string,
   scoText: string,
@@ -66,6 +71,7 @@ export function convertOrcScoToBlue(
   return data;
 }
 
+/** Imports a unified Csound document into the Blue project model. */
 export function convertCSDtoBlue(
   csdText: string,
   importMode: CSDImportMode = CSDImportMode.IMPORT_GLOBAL,
@@ -93,6 +99,7 @@ export function convertCSDtoBlue(
   return data;
 }
 
+/** Parses an orchestra document into configuration, global code, and instrument definitions. */
 export function parseCsOrc(data: BlueData, orc: string): void {
   const lines = orc.split('\n');
 
@@ -270,6 +277,7 @@ export function parseCsOrc(data: BlueData, orc: string): void {
   data.getGlobalOrcSco().setGlobalOrc(globalOrch);
 }
 
+/** Parses Csound score statements for Blue project import. */
 export function parseCsScore(data: BlueData, scoreText: string, importMode: CSDImportMode): void {
   let tables = '';
   let iStatements = '';

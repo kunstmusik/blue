@@ -6,8 +6,11 @@ interface OpenNote {
   velocity: number;
 }
 
+/** Pairs MIDI note-on and note-off events and reports incomplete or invalid events. */
 export function pairMidiImportStream(stream: MidiImportStream): {
+  /** Paired notes ready for conversion to score time. */
   notes: MidiImportNote[];
+  /** Recoverable problems encountered during processing. */
   warnings: MidiImportWarning[];
 } {
   const warnings = [...stream.warnings];

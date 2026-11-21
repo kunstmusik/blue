@@ -13,6 +13,7 @@ export class ScratchPadData implements BlueDataObject {
   private _scratchText = '';
   private _wordWrapEnabled = true;
 
+  /** Creates a default scratch pad data or copies a supplied instance. */
   constructor(other?: ScratchPadData) {
     if (other) {
       this._scratchText = other._scratchText;
@@ -20,18 +21,22 @@ export class ScratchPadData implements BlueDataObject {
     }
   }
 
+  /** Returns the scratch text stored on the project scratch pad. */
   getScratchText(): string {
     return this._scratchText;
   }
 
+  /** Sets the scratch text stored on the project scratch pad. */
   setScratchText(text: string): void {
     this._scratchText = text;
   }
 
+  /** Reports whether the editor wraps the scratch-pad text. */
   isWordWrapEnabled(): boolean {
     return this._wordWrapEnabled;
   }
 
+  /** Toggles line wrapping in the scratch-pad editor. */
   setWordWrapEnabled(enabled: boolean): void {
     this._wordWrapEnabled = enabled;
   }
@@ -43,6 +48,7 @@ export class ScratchPadData implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the project scratch pad from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): ScratchPadData {
     checkRoot(data, 'scratchPadData', context);
     checkShape(data, [], ['isWordWrapEnabled', 'scratchText'], context);

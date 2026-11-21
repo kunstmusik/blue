@@ -32,6 +32,7 @@ export class JMask extends AbstractSoundObject {
   private _seed = '0';
   private _field = new Field();
 
+  /** Creates a default j mask or copies a supplied instance. */
   constructor(other?: JMask) {
     super();
     this.setName('JMask');
@@ -44,31 +45,39 @@ export class JMask extends AbstractSoundObject {
     }
   }
 
+  /** Returns the generation mode stored on the JMask sound object. */
   getGenerationMode(): JMaskGenerationMode {
     return this._generationMode;
   }
 
+  /** Sets the generation mode stored on the JMask sound object. */
   setGenerationMode(mode: JMaskGenerationMode): void {
     this._generationMode = mode;
   }
 
+  /** Reports whether the JMask sound object uses the configured random seed. */
   isSeedUsed(): boolean {
     return this._seedUsed;
   }
+  /** Controls whether generation uses the configured seed. */
   setSeedUsed(val: boolean): void {
     this._seedUsed = val;
   }
 
+  /** Returns the pseudo-random seed. */
   getSeed(): string {
     return this._seed;
   }
+  /** Sets the pseudo-random seed. */
   setSeed(val: number | string): void {
     this._seed = canonicalSeed(val);
   }
 
+  /** Returns the field stored on the JMask sound object. */
   getField(): Field {
     return this._field;
   }
+  /** Sets the field stored on the JMask sound object. */
   setField(field: Field): void {
     this._field = field;
   }
@@ -96,6 +105,7 @@ export class JMask extends AbstractSoundObject {
     return notes;
   }
 
+  /** Generates notes from the configured JMask fields and timing rules. */
   generateNotes(context: TimeContext, _renderStart = 0, _renderEnd = -1): NoteList {
     const { notes, duration } = this.generateRawNotes(context);
     return this.finalizeGeneratedNotes(
@@ -114,6 +124,7 @@ export class JMask extends AbstractSoundObject {
     return this.generateNotes(context, startTime, endTime);
   }
 
+  /** Generates the JMask sound object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -137,6 +148,7 @@ export class JMask extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the JMask sound object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

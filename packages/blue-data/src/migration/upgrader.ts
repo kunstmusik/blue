@@ -9,12 +9,15 @@ import { Element } from '../serialization/xml-reader';
 import { ProjectVersion } from './project-version';
 import type { XmlLoadContext } from '../serialization/xml-load';
 
+/** Base contract for an in-place XML migration to a specific Blue project version. */
 export abstract class ProjectUpgrader {
+  /** Target project XML version produced by this migration. */
   readonly version: ProjectVersion;
 
   /**
    * @param versionString The version this upgrader migrates TO.
    */
+  /** Creates a migration targeting the supplied Blue XML version. */
   constructor(versionString: string) {
     this.version = ProjectVersion.parse(versionString);
   }

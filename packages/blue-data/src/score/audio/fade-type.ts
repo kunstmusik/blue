@@ -9,10 +9,15 @@
  * - SLOW: Slow attack/release curve
  */
 export enum FadeType {
+  /** Gain changes linearly across the fade. */
   LINEAR = 'Linear',
+  /** Amplitude follows a constant-power curve. */
   CONSTANT_POWER = 'Constant Power',
+  /** Gain eases in and out over the fade. */
   S_CURVE = 'S-Curve',
+  /** Fade curve that changes gain more quickly near one end of the interval. */
   FAST = 'Fast',
+  /** Fade curve that changes gain more slowly near one end of the interval. */
   SLOW = 'Slow',
 }
 
@@ -25,10 +30,12 @@ export const FADE_TYPE_MAP: Map<string, FadeType> = new Map([
   ['Slow', FadeType.SLOW],
 ]);
 
+/** Reads the fade-curve setting from its persisted name. */
 export function fadeTypeFromString(str: string): FadeType | undefined {
   return FADE_TYPE_MAP.get(str);
 }
 
+/** Returns the persisted name of the selected fade curve. */
 export function fadeTypeToString(ft: FadeType): string {
   return ft;
 }

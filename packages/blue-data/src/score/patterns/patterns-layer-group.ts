@@ -27,6 +27,7 @@ import {
 } from '../score-generation-options';
 
 export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGroup<PatternLayer> {
+  /** Uses plain arrays for derived operations such as slicing or mapping. */
   static get [Symbol.species](): ArrayConstructor {
     return Array;
   }
@@ -35,6 +36,7 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
   private _patternBeatsLength = 4;
   private _npc = new NoteProcessorChain();
 
+  /** Creates a default patterns layer group or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: PatternsLayerGroup, mode: CopyMode = 'duplication') {
     super();
     if (other) {
@@ -56,9 +58,11 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     this._name = name;
   }
 
+  /** Returns the pattern beats length stored on the pattern layer group. */
   getPatternBeatsLength(): number {
     return this._patternBeatsLength;
   }
+  /** Sets the pattern beats length stored on the pattern layer group. */
   setPatternBeatsLength(length: number): void {
     this._patternBeatsLength = length;
   }
@@ -66,6 +70,7 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
   getNoteProcessorChain(): NoteProcessorChain {
     return this._npc;
   }
+  /** Replaces the processor chain used for the group. */
   setNoteProcessorChain(npc: NoteProcessorChain): void {
     this._npc = npc;
   }
@@ -131,6 +136,7 @@ export class PatternsLayerGroup extends Array<PatternLayer> implements LayerGrou
     return root;
   }
 
+  /** Reconstructs the pattern layer group from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

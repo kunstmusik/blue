@@ -15,10 +15,12 @@ import { Element } from '../../serialization/xml-reader';
 
 const BLOCK_SIZE = 16;
 
+/** Mutable set of enabled pattern steps with a cached last selected index. */
 export class PatternData {
   private _patterns: boolean[] = Array.from({ length: BLOCK_SIZE }, () => false);
   private _maxSelected = -1;
 
+  /** Creates a default pattern data or copies a supplied instance. */
   constructor(other?: PatternData) {
     if (other) {
       this._patterns = [...other._patterns];
@@ -100,6 +102,7 @@ export class PatternData {
 
   // ─── XML Serialization ───
 
+  /** Serializes the pattern data and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('patternData');
 
@@ -117,6 +120,7 @@ export class PatternData {
     return elem;
   }
 
+  /** Reconstructs the pattern data from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): PatternData {
     checkRoot(data, 'patternData', context);
     const patternData = new PatternData();

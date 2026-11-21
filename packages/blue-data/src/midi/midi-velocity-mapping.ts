@@ -15,44 +15,56 @@ export class MidiVelocityMapping implements BlueDataObject {
   private _minValue = 0;
   private _maxValue = 1;
 
+  /** Reports whether the MIDI velocity mapping is enabled. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Sets the enabled stored on the MIDI velocity mapping. */
   setEnabled(e: boolean): void {
     this._enabled = e;
   }
 
+  /** Returns the p field index stored on the MIDI velocity mapping. */
   getPFieldIndex(): number {
     return this._pFieldIndex;
   }
+  /** Sets the p field index stored on the MIDI velocity mapping. */
   setPFieldIndex(idx: number): void {
     this._pFieldIndex = idx;
   }
 
+  /** Returns the min velocity stored on the MIDI velocity mapping. */
   getMinVelocity(): number {
     return this._minVelocity;
   }
+  /** Sets the min velocity stored on the MIDI velocity mapping. */
   setMinVelocity(v: number): void {
     this._minVelocity = v;
   }
 
+  /** Returns the max velocity stored on the MIDI velocity mapping. */
   getMaxVelocity(): number {
     return this._maxVelocity;
   }
+  /** Sets the max velocity stored on the MIDI velocity mapping. */
   setMaxVelocity(v: number): void {
     this._maxVelocity = v;
   }
 
+  /** Returns the lower bound for configured values. */
   getMinValue(): number {
     return this._minValue;
   }
+  /** Sets the lower bound for configured values. */
   setMinValue(v: number): void {
     this._minValue = v;
   }
 
+  /** Returns the upper bound for configured values. */
   getMaxValue(): number {
     return this._maxValue;
   }
+  /** Sets the upper bound for configured values. */
   setMaxValue(v: number): void {
     this._maxValue = v;
   }
@@ -68,6 +80,7 @@ export class MidiVelocityMapping implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the MIDI velocity mapping from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): MidiVelocityMapping {
     checkRoot(data, 'midiVelocityMapping', context);
     checkShape(

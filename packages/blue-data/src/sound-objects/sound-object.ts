@@ -78,5 +78,6 @@ export interface SoundObject extends ScoreObject, DeepCopyable<SoundObject> {
  * Each SoundObject implementation must provide a static loadFromXML method.
  */
 export interface SoundObjectStatic<T extends SoundObject> {
+  /** Reconstructs the sound object static from its Blue XML element. */
   loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): Promise<T> | T;
 }

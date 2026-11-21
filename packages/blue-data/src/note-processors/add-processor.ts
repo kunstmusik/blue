@@ -7,20 +7,25 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.AddProcessor';
 
+/** Adds a constant to a numeric p-field on each note. */
 export class AddProcessor extends NoteProcessor {
   private _pfield = 4;
   private _value = 0;
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the numeric offset as editable text. */
   getVal(): string {
     return this._value.toString();
   }
+  /** Parses the numeric offset to add to each note's selected p-field. */
   setVal(val: string): void {
     this._value = parseFloat(val);
   }
@@ -60,6 +65,7 @@ export class AddProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the add processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): AddProcessor {
     validateProcessorXml(data, 'AddProcessor', context);
     const proc = new AddProcessor();

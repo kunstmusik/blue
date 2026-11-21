@@ -9,6 +9,7 @@ import { readResourceXml } from '../resource-xml-policy';
 import type { XmlDiagnostic, XmlSource } from '../serialization/xml-load';
 import { TimeBase } from '../time/time-base';
 
+/** Computes the deterministic text fingerprint used to compare library payloads. */
 export function stableTextHash(value: string): string {
   let hash = 0x811c9dc5;
   for (const byte of new TextEncoder().encode(value)) {
@@ -44,6 +45,7 @@ function determineObjectType(libraryType: LibraryType, node: RawXmlElement): str
       : 'Effect';
 }
 
+/** Inspects the resource XML to determine its type, metadata, and compatibility status. */
 export function classifyLibraryPayload(
   libraryType: LibraryType,
   node: RawXmlElement,

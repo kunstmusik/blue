@@ -24,20 +24,33 @@ import { LineMultiplyProcessor } from './line-multiply-processor';
 import { TuningProcessor } from './tuning-processor';
 import { PythonProcessor } from './python-processor';
 
+/** Serializable editor representation of one processor and its capability status. */
 export interface NoteProcessorEntrySnapshot {
+  /** Editor identifier of this processor occurrence. */
   id: string;
+  /** Registered processor type identifier. */
   processorType: string;
+  /** Human-readable display label. */
   displayName: string;
+  /** Indicates whether the processor type has a supported implementation. */
   supported: boolean;
+  /** Indicates whether runtime support for the processor is deferred. */
   deferred: boolean;
+  /** Human-readable summary suitable for displaying the processor in an editor. */
   summary: string;
+  /** Values available to the note processor editor. */
   parameters: Record<string, string | number | boolean>;
+  /** Serialized XML used to reconstitute the processor. */
   serializedXml: string;
 }
 
+/** Serializable processor chain with aggregate capability flags. */
 export interface NoteProcessorChainSnapshot {
+  /** Processors in execution order. */
   processors: NoteProcessorEntrySnapshot[];
+  /** Whether any entry has an unsupported processor type. */
   hasUnsupportedProcessors: boolean;
+  /** Whether any entry uses a deferred implementation. */
   hasDeferredProcessors: boolean;
 }
 
@@ -116,6 +129,7 @@ function getProcessorParameters(proc: NoteProcessor): Record<string, string | nu
 }
 
 let _nextId = 1;
+/** Resets the generated ID counter used by note-processor snapshots. */
 export function resetSnapshotIdCounter(): void {
   _nextId = 1;
 }
@@ -124,6 +138,7 @@ function generateId(): string {
   return `np-${_nextId++}`;
 }
 
+/** Captures one processor's editor fields and serializable state. */
 export function createNoteProcessorEntrySnapshot(proc: NoteProcessor): NoteProcessorEntrySnapshot {
   if (proc instanceof UnsupportedProcessor) {
     const originalType = proc.getOriginalType();
@@ -178,6 +193,7 @@ function buildSummary(
   return `${proc.getDisplayName()} (${parts.join(', ')})`;
 }
 
+/** Captures the ordered editor representation of a processor chain. */
 export function createNoteProcessorChainSnapshot(
   chain: NoteProcessorChain,
 ): NoteProcessorChainSnapshot {
@@ -199,6 +215,7 @@ export function createNoteProcessorChainSnapshot(
   };
 }
 
+/** Reconstructs a configured processor from the supplied snapshot. */
 export function reifyProcessorFromSnapshot(
   entry: NoteProcessorEntrySnapshot,
 ): NoteProcessor | null {
@@ -232,6 +249,7 @@ export function reifyProcessorFromSnapshot(
   return proc;
 }
 
+/** Reconstructs the ordered list of processors represented by the snapshot. */
 export function reifyChainFromSnapshot(snapshot: NoteProcessorChainSnapshot): NoteProcessorChain {
   const chain = new NoteProcessorChain();
   for (const entry of snapshot.processors) {

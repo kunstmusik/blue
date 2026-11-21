@@ -1,7 +1,9 @@
 import { Element } from './xml-reader';
 import { XmlError } from '@rgrove/parse-xml';
 
+/** Caller-supplied XML provenance used in diagnostics. A native path is a label for the host, not a file to open. */
 export type XmlSource = Readonly<{
+  /** Identifies which kind of Blue resource produced the diagnostic. */
   kind:
     | 'project'
     | 'instrument'
@@ -11,41 +13,79 @@ export type XmlSource = Readonly<{
     | 'preset'
     | 'library'
     | 'primitive';
+  /** Human-readable identifier shown in diagnostic messages. */
   label: string;
+  /** Optional host-native source path for callers that can open the associated file. */
   nativePath?: string;
+  /** Optional identifier for the originating item in a resource library. */
   libraryItemId?: string;
 }>;
 
+/** One XML validation issue with a source, element or member location, and a suggested recovery action. */
 export type XmlDiagnostic = Readonly<{
+  /** Machine-readable diagnostic category, such as `shape` or `value`. */
   code: string;
+  /** An error rejects the load. A warning can accompany a usable value. */
   severity: 'warning' | 'error';
+  /** Identifies the input responsible for this diagnostic. */
   source: XmlSource;
+  /** Slash-delimited XML location with one-based indices for sibling elements of the same name. */
   path: string;
+  /** Attribute or member associated with the issue when available. */
   member?: string;
+  /** Original text associated with the issue when available. */
   value?: string;
+  /** Description of what the loader found. */
   message: string;
+  /** Suggested action for correcting the source or proceeding. */
   recovery: string;
+  /** Source line when supplied by the XML parser. */
   line?: number;
+  /** Source column when supplied by the XML parser. */
   column?: number;
 }>;
 
+/** Result of a load operation. Narrow on `ok` before reading `value`. Successful results can include warnings. */
 export type XmlLoadResult<T> =
-  | Readonly<{ ok: true; value: T; diagnostics: readonly XmlDiagnostic[] }>
-  | Readonly<{ ok: false; diagnostics: readonly XmlDiagnostic[] }>;
+  | Readonly<{
+      /** The XML was accepted. */
+      ok: true;
+      /** The validated and migrated value. */
+      value: T;
+      /** Warnings recorded while accepting the input. */
+      diagnostics: readonly XmlDiagnostic[];
+    }>
+  | Readonly<{
+      /** The XML was rejected. */
+      ok: false;
+      /** Errors and any earlier warnings encountered during the load. */
+      diagnostics: readonly XmlDiagnostic[];
+    }>;
 
+/** Receives diagnostics from throwing convenience loaders when XML is accepted with warnings. */
 export type XmlDiagnosticSink = (diagnostics: readonly XmlDiagnostic[]) => void;
-type DiagnosticInput = Omit<XmlDiagnostic, 'source' | 'path'>;
-type Operation = {
+/** Diagnostic fields supplied by a loader before a context attaches source metadata and an XML path. */
+export type DiagnosticInput = Omit<XmlDiagnostic, 'source' | 'path'>;
+/** Shared state behind the element-specific views of one XML load. */
+export type Operation = {
+  /** Source metadata shared by all diagnostics from this load. */
   source: XmlSource;
+  /** Original element locations indexed before structural migration changes the tree. */
   paths: WeakMap<Element, string>;
+  /** Diagnostics collected while processing the input. */
   diagnostics: XmlDiagnostic[];
+  /** Whether the operation has already recorded source paths. */
   indexed: boolean;
+  /** Callback that stops the source-path mutation observer, when active. */
   disposeObserver?: () => void;
 };
 
+/** XML load failure carrying the structured diagnostics used to build its error message. */
 export class XmlLoadError extends Error {
+  /** A snapshot of the diagnostics supplied when this error was constructed. */
   readonly diagnostics: readonly XmlDiagnostic[];
 
+  /** Creates an error whose message includes each diagnostic’s source, path, and recovery. */
   constructor(diagnostics: readonly XmlDiagnostic[]) {
     super(
       diagnostics.map((d) => `${d.source.label}: ${d.path}: ${d.message} ${d.recovery}`).join('\n'),
@@ -59,6 +99,7 @@ export class XmlLoadError extends Error {
 export class XmlLoadContext {
   private readonly operation: Operation;
 
+  /** Starts a diagnostic context for an XML element. Use {@link XmlLoadContext.at} to share the operation with child elements. */
   constructor(
     private readonly element: Element,
     source?: XmlSource,
@@ -91,6 +132,7 @@ export class XmlLoadContext {
     this.index(root, `/${root.getName()}`);
   }
 
+  /** Stops observing XML mutations for this load operation. Nested contexts share the observer. */
   disposeObserver(): void {
     this.operation.disposeObserver?.();
     this.operation.disposeObserver = undefined;
@@ -118,10 +160,12 @@ export class XmlLoadContext {
     }
   }
 
+  /** Returns the current XML location, using the original source path when migration anchored the element. */
   get path(): string {
     return this.pathOf(this.element);
   }
 
+  /** Creates an element-specific context that shares diagnostics and source anchors with this operation. */
   at(element: Element): XmlLoadContext {
     return new XmlLoadContext(element, this.operation.source, this.operation);
   }
@@ -131,6 +175,7 @@ export class XmlLoadContext {
     this.index(generated, this.at(original).path);
   }
 
+  /** Records and returns a diagnostic attributed to the current element or its named attribute. */
   diagnostic(input: DiagnosticInput): XmlDiagnostic {
     const diagnostic: XmlDiagnostic = {
       ...input,
@@ -141,10 +186,12 @@ export class XmlLoadContext {
     return diagnostic;
   }
 
+  /** Records an error diagnostic and returns an {@link XmlLoadError} for the caller to throw. */
   error(input: Omit<DiagnosticInput, 'severity'>): XmlLoadError {
     return new XmlLoadError([this.diagnostic({ ...input, severity: 'error' })]);
   }
 
+  /** Completes a load, returning the supplied value only if no error diagnostics were recorded. */
   result<T>(value: T): XmlLoadResult<T> {
     const diagnostics = [...this.operation.diagnostics];
     return diagnostics.some((d) => d.severity === 'error')
@@ -152,6 +199,7 @@ export class XmlLoadContext {
       : { ok: true, value, diagnostics };
   }
 
+  /** Returns a failed result, merging structured load errors or converting an unexpected exception into a diagnostic. */
   reject(error: unknown): XmlLoadResult<never> {
     if (error instanceof XmlLoadError) {
       for (const diagnostic of error.diagnostics) {

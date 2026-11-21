@@ -1,12 +1,16 @@
 import { type BlueX7Voice, createDefaultBlueX7Voice } from './blue-x7';
 
+/** Byte length of a framed single-voice DX7 System Exclusive message. */
 export const SINGLE_SYSEX_SIZE = 163;
+/** Byte length of a framed DX7 bank System Exclusive message. */
 export const BANK_SYSEX_SIZE = 4104;
 export const SYSEX_START_OFFSET = 6;
 export const BANK_NAME_OFFSET = 118;
 
+/** Supported DX7 System Exclusive payload forms. */
 export type BlueX7SysexType = 'single' | 'bank';
 
+/** Machine-readable reason for rejecting a DX7 System Exclusive payload. */
 export type BlueX7SysexValidationCode =
   | 'invalid-size'
   | 'invalid-framing'
@@ -15,9 +19,12 @@ export type BlueX7SysexValidationCode =
   | 'invalid-checksum'
   | 'invalid-data';
 
+/** Reports why a Yamaha DX7 System Exclusive message could not be imported. */
 export class BlueX7SysexValidationError extends Error {
+  /** Machine-readable reason for the diagnostic. */
   readonly code: BlueX7SysexValidationCode;
 
+  /** Creates a validation error with a stable diagnostic code and human-readable message. */
   constructor(code: BlueX7SysexValidationCode, message: string) {
     super(message);
     this.name = 'BlueX7SysexValidationError';
@@ -260,7 +267,12 @@ export function getBankVoiceNames(data: Uint8Array): string[] {
 /**
  * Decode a single-voice DX7 SysEx binary into a BlueX7Voice and name.
  */
-export function decodeSingleVoice(data: Uint8Array): { voice: BlueX7Voice; name: string } {
+export function decodeSingleVoice(data: Uint8Array): {
+  /** Decoded model for the single voice in the message. */
+  voice: BlueX7Voice;
+  /** Name associated with the decode single voice. */
+  name: string;
+} {
   validateBlueX7Sysex(data, 'single');
 
   const voice = createDefaultBlueX7Voice();
@@ -360,7 +372,12 @@ export function decodeSingleVoice(data: Uint8Array): { voice: BlueX7Voice; name:
 export function decodeBankVoice(
   data: Uint8Array,
   slotIndex: number,
-): { voice: BlueX7Voice; name: string } {
+): {
+  /** Decoded model for the requested bank slot. */
+  voice: BlueX7Voice;
+  /** Name associated with the decode bank voice. */
+  name: string;
+} {
   validateBlueX7Sysex(data, 'bank');
   if (slotIndex < 0 || slotIndex >= 32) {
     throw new Error(`Invalid slot index ${slotIndex}, must be 0..31`);

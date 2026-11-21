@@ -15,22 +15,35 @@ import { formatBlueNumber } from '../../utilities/number-format';
 import { generatePrefixedUuid } from '../../utilities/uuid';
 import type { CopyMode } from '../../deep-copyable';
 
+/** Base for BlueSynthBuilder controls that supply preset values and orchestra template replacements. */
 export abstract class BSBWidget {
+  /** Name used to look up the widget's orchestra template replacement and automation parameter. */
   objectName = '';
+  /** Horizontal position in the containing widget group, in pixels. */
   x = 0;
+  /** Vertical position in the containing widget group, in pixels. */
   y = 0;
+  /** Optional descriptive text stored with the widget. */
   comment = '';
+  /** Whether the widget allows its value to be controlled by automation. */
   automationAllowed = true;
+  /** Current numeric value. Widgets with specialized state use their own value accessors. */
   value = 0;
+  /** Configured lower bound for widgets with a numeric range. */
   minimum = 0;
+  /** Configured upper bound for widgets with a numeric range. */
   maximum = 1;
+  /** Optional stored parameter name associated with the widget. */
   parameterName: string | null = null;
+  /** Persistent widget identifier when assigned. An empty string denotes an unassigned ID. */
   id = '';
 
+  /** Encodes the current value for a preset. Subclasses can use specialized formats or return `null` to omit a value. */
   getPresetValue(): string | null {
     return String(this.value);
   }
 
+  /** Applies a serialized preset value. The base implementation applies a finite numeric prefix when one is present. */
   setPresetValue(val: string): void {
     const parsed = parseFloat(val);
     if (Number.isFinite(parsed)) {
@@ -118,6 +131,7 @@ export abstract class BSBWidget {
     if (param) widget.parameterName = param;
   }
 
+  /** Reads common XML attributes and fields into this widget instance. */
   loadFromXMLCommon(data: Element, context = new XmlLoadContext(data)): void {
     BSBWidget.loadCommonFromXML(this, data, context);
   }
@@ -172,6 +186,7 @@ export abstract class BSBWidget {
     return clone;
   }
 
+  /** Copies the concrete widget including nested values. History preserves IDs, and duplication regenerates assigned IDs. */
   deepCopy(mode: CopyMode = 'duplication'): this {
     return this.cloneWidget(mode);
   }

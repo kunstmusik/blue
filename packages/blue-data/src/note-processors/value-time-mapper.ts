@@ -1,7 +1,10 @@
+/** Evaluates a piecewise linear mapping from a beat/value specification. */
 export class ValueTimeMapper {
   private _timeMap: BeatValuePair[] = [];
 
+  /** Creates a value time mapper initialized with its default settings. */
   constructor();
+  /** Creates a value time mapper using the source instance’s settings. */
   constructor(src: ValueTimeMapper);
   constructor(src?: ValueTimeMapper) {
     if (src && src._timeMap.length > 0) {
@@ -14,6 +17,7 @@ export class ValueTimeMapper {
     }
   }
 
+  /** Builds a beat-to-value map from the supplied time/value pairs. */
   static createValueTimeMapper(beatValueString: string): ValueTimeMapper | null {
     const tokens = beatValueString.trim().split(/\s+/);
 
@@ -46,6 +50,7 @@ export class ValueTimeMapper {
     return tm;
   }
 
+  /** Evaluates the value curve at the given Csound beat. */
   getValueForBeat(beat: number): number {
     if (this._timeMap.length === 0) return NaN;
 

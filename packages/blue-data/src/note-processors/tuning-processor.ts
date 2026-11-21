@@ -3,8 +3,11 @@ import { readText, parseXmlNumber } from '../utilities/xml';
 import { validateProcessorXml } from './xml-policy';
 import { Scale } from '../sound-objects/piano-roll/scale';
 
+/** External tuning scale path with an optional reference frequency override. */
 export interface TuningScaleReference {
+  /** Path of the tuning file as stored with the project. */
   filename: string;
+  /** Optional reference pitch override in hertz. */
   baseFrequency?: number;
 }
 import { NoteProcessor } from './note-processor';
@@ -19,12 +22,15 @@ for (let i = 0; i < 12; i++) {
   TWELVE_TET_RATIOS.push(Math.pow(2, i / 12));
 }
 
+/** Converts note pitches through an editable tuning scale. */
 export class TuningProcessor extends NoteProcessor {
   private _pfield = 4;
   private _scale = new Scale();
   private _scaleReference: TuningScaleReference | null = null;
 
+  /** Creates a tuning processor initialized with its default settings. */
   constructor();
+  /** Creates a tuning processor using the source instance’s settings. */
   constructor(src: TuningProcessor);
   constructor(src?: TuningProcessor) {
     super();
@@ -37,9 +43,11 @@ export class TuningProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     const p = parseInt(pfield, 10);
     if (p > 3) {
@@ -47,9 +55,11 @@ export class TuningProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the active tuning scale's reference frequency in hertz. */
   getBaseFrequency(): string {
     return this._scale.baseFrequency.toString();
   }
+  /** Updates the tuning scale's reference frequency in hertz. */
   setBaseFrequency(baseFrequency: string): void {
     const value = Number(baseFrequency);
     if (!Number.isFinite(value) || value <= 0)
@@ -59,9 +69,11 @@ export class TuningProcessor extends NoteProcessor {
     if (this._scaleReference) this._scaleReference.baseFrequency = value;
   }
 
+  /** Returns the active scale's degree ratios. */
   getRatios(): number[] {
     return this._scale.ratios;
   }
+  /** Changes the degree ratios used to convert pitches. */
   setRatios(ratios: number[]): void {
     this._scale.ratios = ratios;
   }
@@ -94,10 +106,12 @@ export class TuningProcessor extends NoteProcessor {
     );
   }
 
+  /** Returns the stored reference to an external tuning scale, when present. */
   getScaleReference(): TuningScaleReference | null {
     return this._scaleReference ? { ...this._scaleReference } : null;
   }
 
+  /** Uses the supplied host resolver to load a referenced tuning scale for processing. */
   resolveScale(scale: Scale): void {
     this._scale = Scale.loadFromXML(scale.saveAsXML());
     if (this._scaleReference?.baseFrequency !== undefined)
@@ -150,6 +164,7 @@ export class TuningProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the tuning processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): TuningProcessor {
     validateProcessorXml(data, 'TuningProcessor', context);
     const proc = new TuningProcessor();

@@ -13,6 +13,7 @@ import { OpcodeList } from '../opcodes/opcode-list';
 import { appendUserDefinedOpcodes } from '../opcodes/udo-utilities';
 import { replaceOpcodeNames } from '../utilities/text';
 
+/** Csound instrument written directly as orchestra text, with optional global source and user-defined opcodes. */
 export class GenericInstrument extends Instrument implements DeepCopyable<GenericInstrument> {
   private _text = '';
   private _globalOrc = '';
@@ -20,43 +21,53 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
   private _opcodeList = new OpcodeList();
   private _udoReplacementValues: Map<string, string> | null = null;
 
+  /** Creates an untitled instrument with empty source text. */
   constructor() {
     super();
     this.setName('untitled');
   }
 
+  /** Returns the authored instrument body before opcode renaming. */
   getText(): string {
     return this._text;
   }
 
+  /** Sets the instrument body. Supply code to go inside the generated `instr` and `endin` wrapper. */
   setText(text: string): void {
     this._text = text ?? '';
   }
 
+  /** Returns the orchestra source contributed to the global orchestra section. */
   getGlobalOrc(): string {
     return this._globalOrc;
   }
 
+  /** Sets the global orchestra source associated with this instrument. */
   setGlobalOrc(globalOrc: string): void {
     this._globalOrc = globalOrc ?? '';
   }
 
+  /** Returns the score source contributed to the global score section. */
   getGlobalSco(): string {
     return this._globalSco;
   }
 
+  /** Sets the global score source associated with this instrument. */
   setGlobalSco(globalSco: string): void {
     this._globalSco = globalSco ?? '';
   }
 
+  /** Returns the live collection of user-defined opcodes owned by the instrument. */
   getOpcodeList(): OpcodeList {
     return this._opcodeList;
   }
 
+  /** Replaces this instrument's opcode list with the supplied instance. */
   setOpcodeList(opcodeList: OpcodeList): void {
     this._opcodeList = opcodeList;
   }
 
+  /** Appends the instrument's opcodes to the shared list and records renamed entries for the next generation. */
   override generateUserDefinedOpcodes(udoList: unknown): void {
     if (!(udoList instanceof OpcodeList)) {
       return;
@@ -65,14 +76,17 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
     this._udoReplacementValues = appendUserDefinedOpcodes(this._opcodeList, udoList);
   }
 
+  /** Returns the global orchestra contribution, or `null` if empty. */
   override generateGlobalOrc(): string | null {
     return this._globalOrc || null;
   }
 
+  /** Returns the global score contribution, or `null` if empty. */
   override generateGlobalSco(): string | null {
     return this._globalSco || null;
   }
 
+  /** Returns the source body with the pending user-defined opcode renames applied for this compilation. */
   override generateInstrument(): string {
     let instrumentText = this._text;
     if (this._udoReplacementValues && this._udoReplacementValues.size > 0) {
@@ -85,6 +99,7 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
 
   // ─── XML ───
 
+  /** Serializes the authored instrument, including its global code and opcodes. */
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('instrument');
     elem.setAttribute('type', 'blue.orchestra.GenericInstrument');
@@ -98,6 +113,7 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
     return elem;
   }
 
+  /** Loads and validates a generic instrument from an XML element. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,
@@ -144,6 +160,7 @@ export class GenericInstrument extends Instrument implements DeepCopyable<Generi
     return context ? instr : requireXmlValue(ctx.result(instr), sink);
   }
 
+  /** Copies the authored code, metadata, and opcodes into an independent instrument. */
   deepCopy(): GenericInstrument {
     const copy = new GenericInstrument();
     copy._name = this._name;

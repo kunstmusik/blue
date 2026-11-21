@@ -152,6 +152,7 @@ function stripSingleLineComments(line: string): string {
 
 // ─── Style Conversion ───
 
+/** Converts a user-defined opcode declaration to Csound's named-argument syntax. */
 export function convertToModern(udo: OpcodeDefinition): void {
   let convertedInputArguments = getInputArgumentsFromCodeBody(udo.getCode());
   if (convertedInputArguments.trim().length === 0) {
@@ -167,6 +168,7 @@ export function convertToModern(udo: OpcodeDefinition): void {
   udo.setStyle(UDOStyle.MODERN);
 }
 
+/** Converts a user-defined opcode declaration to Csound's positional syntax. */
 export function convertToClassic(udo: OpcodeDefinition): void {
   const derivedInTypes = getInTypesFromInputArguments(udo.getInputArguments());
   if (derivedInTypes.length > 0) {

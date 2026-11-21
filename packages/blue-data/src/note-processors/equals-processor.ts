@@ -7,11 +7,14 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.EqualsProcessor';
 
+/** Replaces a selected p-field on each note with a constant string. */
 export class EqualsProcessor extends NoteProcessor {
   private _value = '2.0';
   private _pfield = 4;
 
+  /** Creates an equals processor initialized with its default settings. */
   constructor();
+  /** Creates an equals processor using the source instance’s settings. */
   constructor(src: EqualsProcessor);
   constructor(src?: EqualsProcessor) {
     super();
@@ -21,16 +24,20 @@ export class EqualsProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the replacement p-field text. */
   getVal(): string {
     return this._value;
   }
+  /** Sets the exact text written to the selected p-field. */
   setVal(value: string): void {
     this._value = value;
   }
@@ -66,6 +73,7 @@ export class EqualsProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the equals processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): EqualsProcessor {
     validateProcessorXml(data, 'EqualsProcessor', context);
     const proc = new EqualsProcessor();

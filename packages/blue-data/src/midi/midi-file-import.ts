@@ -14,87 +14,151 @@ export { expandMidiNoteTemplate } from './midi-note-template';
 export { pairMidiImportStream } from './midi-note-pairing';
 export type { MidiImportNote } from './midi-note-template';
 
+/** Standard MIDI File format number. */
 export type MidiImportFormat = 0 | 1 | 2;
 
+/** Timing basis for MIDI ticks, expressed as ticks per beat or SMPTE frames and ticks. */
 export type MidiImportDivision =
-  | { kind: 'ppq'; ticksPerBeat: number }
-  | { kind: 'smpte'; framesPerSecond: number; ticksPerFrame: number };
+  | {
+      /** Discriminant identifying the `ppq` variant. */
+      kind: 'ppq';
+      /** Number of MIDI ticks in a quarter note. */
+      ticksPerBeat: number;
+    }
+  | {
+      /** Discriminant identifying the `smpte` variant. */
+      kind: 'smpte';
+      /** Frame rate of the MIDI file timing division. */
+      framesPerSecond: number;
+      /** Number of MIDI ticks in a SMPTE frame. */
+      ticksPerFrame: number;
+    };
 
+/** Stable category for a recoverable MIDI import warning. */
 export type MidiImportWarningCode =
   | 'unmatched-note-off'
   | 'dangling-note-on'
   | 'invalid-note'
   | 'unsupported-event';
 
+/** Recoverable warning associated with a MIDI track and optionally a channel and tick. */
 export interface MidiImportWarning {
+  /** Machine-readable reason for the diagnostic. */
   code: MidiImportWarningCode;
+  /** Human-readable diagnostic text. */
   message: string;
+  /** Index of the MIDI track associated with the warning. */
   trackIndex: number;
+  /** MIDI channel associated with this event or stream. */
   channel?: number;
+  /** MIDI tick associated with the diagnostic. */
   tick?: number;
 }
 
+/** An absolute-tick MIDI note-on or note-off event for one channel stream. */
 export interface MidiImportNoteEvent {
+  /** Timestamp in ticks from the start of the MIDI track. */
   absoluteTick: number;
+  /** Whether the event starts or releases a note. */
   type: 'noteOn' | 'noteOff';
+  /** MIDI pitch number. */
   noteNumber: number;
+  /** MIDI velocity value. */
   velocity: number;
 }
 
+/** Events for one MIDI track and channel, plus counts and tick bounds. */
 export interface MidiImportStream {
+  /** Key identifying the source MIDI track and channel pair. */
   streamKey: string;
+  /** Index of the MIDI source track. */
   trackIndex: number;
+  /** MIDI channel associated with this event or stream. */
   channel: number;
+  /** Note events in the order available to MIDI import. */
   events: MidiImportNoteEvent[];
+  /** Count of note-on events with nonzero velocity, before note pairing. */
   noteCount: number;
+  /** First tick occupied by the stream. */
   firstTick?: number;
+  /** Last tick occupied by the stream. */
   lastTick?: number;
+  /** Recoverable problems encountered during processing. */
   warnings: MidiImportWarning[];
 }
 
+/** Parsed MIDI track with channel streams and tempo events. */
 export interface MidiImportTrack {
+  /** Index of the MIDI source track. */
   trackIndex: number;
+  /** Name associated with the MIDI import track. */
   name?: string;
+  /** MIDI note streams split by channel. */
   streams: MidiImportStream[];
+  /** Tempo changes encountered in this track. */
   tempoChanges: MidiImportTempoChange[];
+  /** Last absolute tick covered by the track. */
   lastTick: number;
 }
 
+/** Tempo change at an absolute tick in a MIDI track. */
 export interface MidiImportTempoChange {
+  /** Absolute MIDI tick at which the new tempo starts. */
   absoluteTick: number;
+  /** Tempo introduced by this event, in beats per minute. */
   bpm: number;
+  /** Index of the MIDI source track. */
   trackIndex: number;
 }
 
+/** Parsed MIDI file data consumed by the project conversion pipeline. */
 export interface MidiImportDocument {
+  /** MIDI file format number from its header. */
   format: MidiImportFormat;
+  /** Header timing division that gives tick values their meaning. */
   division: MidiImportDivision;
+  /** Parsed tracks in MIDI file order. */
   tracks: MidiImportTrack[];
+  /** Tempo events available to the overall project conversion. */
   tempoChanges: MidiImportTempoChange[];
 }
 
+/** Per-stream controls for instrument assignment, note text, and time trimming. */
 export interface MidiImportSettings {
+  /** Identifies the source stream these settings apply to. */
   streamKey: string;
+  /** Csound instrument ID substituted into this stream's note template. */
   instrumentId: string;
+  /** Csound text template expanded once per imported note. */
   noteTemplate: string;
+  /** Whether to remove leading time before the selected stream starts. */
   trimTime: boolean;
 }
 
+/** Generated Blue project together with warnings encountered during MIDI conversion. */
 export interface MidiImportConversionResult {
+  /** Blue project constructed from the selected MIDI streams. */
   data: BlueData;
+  /** Warnings collected while building the generated project. */
   warnings: MidiImportWarning[];
 }
 
+/** Whether MIDI import creates tracks or a polyphonic sound-object group. */
 export type MidiImportLayerGroupType = 'TRACK' | 'SOUND_OBJECT';
 
+/** Selects the representation used for imported MIDI streams. */
 export interface MidiImportBuildOptions {
+  /** Destination layer group family for the generated notes. */
   layerGroupType?: MidiImportLayerGroupType;
 }
 
+/** Default Csound note template used for each imported MIDI stream. */
 export const MIDI_IMPORT_DEFAULT_NOTE_TEMPLATE = 'i<INSTR_ID> <START> <DUR> <KEY> <VELOCITY>';
 
+/** Tempo used when importing MIDI with no initial tempo event, in beats per minute. */
 export const MIDI_IMPORT_DEFAULT_TEMPO_BPM = 120;
 
+/** Recognized placeholders in MIDI import note templates. */
 export const MIDI_IMPORT_PLACEHOLDERS = [
   '<INSTR_ID>',
   '<START>',
@@ -107,6 +171,7 @@ export const MIDI_IMPORT_PLACEHOLDERS = [
   '<VELOCITY_AMP>',
 ] as const;
 
+/** Checks whether the supplied instrument ID denotes numeric instrument zero. */
 export function isMidiImportInstrumentIdZero(instrumentId: string): boolean {
   const trimmed = instrumentId.trim();
   if (trimmed.length === 0) return false;
@@ -114,6 +179,7 @@ export function isMidiImportInstrumentIdZero(instrumentId: string): boolean {
   return Number.isFinite(numericValue) && numericValue === 0;
 }
 
+/** Creates a key for a MIDI track and channel pair. */
 export function createMidiImportStreamKey(trackIndex: number, channel: number): string {
   return `${trackIndex}:${channel}`;
 }
@@ -155,6 +221,7 @@ function validateDocument(document: MidiImportDocument): void {
   }
 }
 
+/** Checks settings before converting a parsed MIDI stream to Csound notes. */
 export function validateMidiImportSettings(
   document: MidiImportDocument,
   settings: readonly MidiImportSettings[],
@@ -236,6 +303,15 @@ function configureMidiImportTempoMap(
   tempoMap.setEnabled(true);
 }
 
+/**
+ * Converts selected beat-based MIDI streams into a new Blue project.
+ *
+ * @param document - Parsed Standard MIDI File with a ticks-per-beat timing division.
+ * @param settings - Per-stream selection, instrument assignment, note template, and trimming settings.
+ * @param options - Selects track layers or a polyphonic sound-object group. Defaults to the sound-object group.
+ * @returns A new project and recoverable warnings from pairing note events.
+ * @throws Error when import settings are invalid or no selected stream yields importable notes.
+ */
 export function buildMidiImportProject(
   document: MidiImportDocument,
   settings: readonly MidiImportSettings[],

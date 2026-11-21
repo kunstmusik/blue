@@ -20,10 +20,12 @@ export type InstrumentLoader = (data: Element, context?: XmlLoadContext) => Inst
 
 const registry = new Map<string, InstrumentLoader>();
 
+/** Registers or replaces a loader. The XML dispatcher only accepts its supported persisted type names. */
 export function registerInstrumentType(type: string, loader: InstrumentLoader): void {
   registry.set(type, loader);
 }
 
+/** Loads the registered instrument type and reports XML diagnostics using the supplied context or sink. */
 export function loadInstrumentFromXML(
   data: Element,
   context?: XmlLoadContext,

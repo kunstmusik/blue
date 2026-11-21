@@ -27,19 +27,34 @@ import { TimeBehavior } from '../sound-objects/time-behavior';
 import { TimePosition } from '../time/time-position';
 import { TimeDuration } from '../time/time-duration';
 
+/** Expected fixture target identified by its persistent ID and display name. */
 export interface ExpectedLiveObjectTarget {
+  /** Persistent identifier. */
   uniqueId: string;
+  /** Human-readable display label. */
   displayName: string;
 }
 
+/** Expected tempo and note-timing output for a Blue Live trigger fixture. */
 export interface ExpectedScalingCase {
+  /** Tempo used by this fixture, in beats per minute. */
   tempo: number;
   /** Exactly 60 / tempo, captured for deterministic comparison. */
   tempoScale: number;
   /** Base (tempo 60) p2/p3 values per generated note. */
-  baseNote: { p2: number; p3: number };
+  baseNote: {
+    /** Expected unscaled note start in Csound beats. */
+    p2: number;
+    /** Expected unscaled note duration in Csound beats. */
+    p3: number;
+  };
   /** Expected p2/p3 after scaling. */
-  scaledNote: { p2: number; p3: number };
+  scaledNote: {
+    /** Expected note start after tempo scaling. */
+    p2: number;
+    /** Expected note duration after tempo scaling. */
+    p3: number;
+  };
 }
 
 /**
@@ -123,12 +138,14 @@ export function createModernLiveData(): LiveData {
   return ld;
 }
 
+/** Enabled cells in trigger order for the modern Blue Live fixture. */
 export const MODERN_ENABLED_TARGET_ORDER: ReadonlyArray<ExpectedLiveObjectTarget> = [
   { uniqueId: 'lo-01', displayName: 'Cell B' },
   { uniqueId: 'lo-10', displayName: 'Cell C' },
   { uniqueId: 'lo-12', displayName: 'Cell E' },
 ];
 
+/** All populated cells in trigger order for the modern Blue Live fixture. */
 export const MODERN_ALL_POPULATED_TARGET_ORDER: ReadonlyArray<ExpectedLiveObjectTarget> = [
   { uniqueId: 'lo-00', displayName: 'Cell A' },
   { uniqueId: 'lo-01', displayName: 'Cell B' },
@@ -173,6 +190,7 @@ export function createOldFormatLiveData(): LiveData {
   return ld;
 }
 
+/** Enabled cells in trigger order for the historical Blue Live fixture. */
 export const OLD_FORMAT_ENABLED_TARGET_ORDER: ReadonlyArray<ExpectedLiveObjectTarget> = [
   { uniqueId: 'old-0', displayName: 'Legacy A' },
   { uniqueId: 'old-1', displayName: 'Legacy B' },
@@ -213,6 +231,7 @@ export function createSparseGridLiveData(): LiveData {
   return ld;
 }
 
+/** Enabled cells in trigger order for the sparse Blue Live fixture. */
 export const SPARSE_GRID_ENABLED_TARGET_ORDER: ReadonlyArray<ExpectedLiveObjectTarget> = [
   { uniqueId: 'sparse-a', displayName: 'Sparse A' },
   { uniqueId: 'sparse-c', displayName: 'Sparse C' },
@@ -267,6 +286,7 @@ export function createMultiEnabledLiveData(): LiveData {
   return ld;
 }
 
+/** Enabled cells in trigger order for the multi-target Blue Live fixture. */
 export const MULTI_ENABLED_TARGET_ORDER: ReadonlyArray<ExpectedLiveObjectTarget> = [
   { uniqueId: 'me-00', displayName: 'ME A' },
   { uniqueId: 'me-01', displayName: 'ME B' },
@@ -281,12 +301,17 @@ export const MULTI_ENABLED_TARGET_ORDER: ReadonlyArray<ExpectedLiveObjectTarget>
  * the copied Instance points at the copied library object.
  */
 export interface LibraryInstanceFixture {
+  /** Project containing the library entry and its linked Live target. */
   data: BlueData;
+  /** Shared sound object stored in the fixture's library. */
   libraryObject: SoundObject;
+  /** Linked instance referring to the shared library object. */
   instance: Instance;
+  /** Blue Live cell holding the linked instance. */
   liveObject: LiveObject;
 }
 
+/** Builds a fixture for triggering a linked library instance from Blue Live. */
 export function createLibraryInstanceLiveData(): LibraryInstanceFixture {
   const data = new BlueData();
   const ld = data.getLiveData();
@@ -321,13 +346,19 @@ export function createLibraryInstanceLiveData(): LibraryInstanceFixture {
  * the test fake runtimes can evaluate.
  */
 export interface RuntimeBackedFixture {
+  /** Project containing targets backed by script runtimes. */
   data: BlueData;
+  /** Clojure sound object. */
   clojureObject: ClojureObject;
+  /** Python sound object. */
   pythonObject: PythonObject;
+  /** JavaScript sound object. */
   javaScriptObject: JavaScriptObject;
+  /** ObjectBuilder sound object. */
   objectBuilder: ObjectBuilder;
 }
 
+/** Builds a fixture for testing Clojure, Python, JavaScript, and ObjectBuilder Live targets. */
 export function createRuntimeBackedLiveData(): RuntimeBackedFixture {
   const data = new BlueData();
   const ld = data.getLiveData();

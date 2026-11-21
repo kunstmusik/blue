@@ -10,7 +10,9 @@ import { loadFontFromXML, type BSBFont } from './bsb-knob';
 import { parseLegacySwingHtmlFont, stripLegacySwingHtml } from './legacy-swing-html';
 
 export class BSBLabel extends BSBWidget {
+  /** Text displayed by the label widget. */
   label = 'label';
+  /** Font used to render the label text. */
   font: BSBFont = { name: 'Roboto', size: 12, style: 0 };
 
   override getPresetValue(): string | null {
@@ -21,6 +23,7 @@ export class BSBLabel extends BSBWidget {
 
   override collectReplacements(_unit: BSBCompilationUnit): void {}
 
+  /** Reconstructs the label widget from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const versionAttr = data.getAttribute('version');

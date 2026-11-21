@@ -34,19 +34,23 @@ function findLastEntryAtOrBefore<T>(
   return best;
 }
 
+/** Ordered meter changes keyed by one-based measure, with conversions to and from Csound beats. */
 export class MeterMap {
   private entries: MeasureMeterPair[] = [new MeasureMeterPair(1, new Meter(4, 4))];
   private measureStartBeats: number[] = [0.0];
   private listeners: Array<() => void> = [];
 
+  /** Returns the number of stored meter changes, including the initial entry. */
   size(): number {
     return this.entries.length;
   }
 
+  /** Returns the live meter change at a valid zero-based index. */
   get(index: number): MeasureMeterPair {
     return this.entries[index];
   }
 
+  /** Returns a read-only view of the stored changes in measure order. */
   getEntries(): ReadonlyArray<MeasureMeterPair> {
     return this.entries;
   }
@@ -107,6 +111,7 @@ export class MeterMap {
     this.fireListeners();
   }
 
+  /** Registers a callback to run when the meter map notifies listeners of a change. */
   addListener(listener: () => void): void {
     this.listeners.push(listener);
   }
@@ -177,7 +182,14 @@ export class MeterMap {
   beatsToBBT(
     beats: number,
     ppq: number = DEFAULT_PPQ,
-  ): { bar: number; beat: number; ticks: number } {
+  ): {
+    /** One-based bar number. */
+    bar: number;
+    /** One-based beat within the bar. */
+    beat: number;
+    /** Ticks within the indicated subdivision at 960 ticks per quarter note. */
+    ticks: number;
+  } {
     if (this.entries.length === 0) {
       throw new Error('MeterMap is empty');
     }
@@ -236,7 +248,16 @@ export class MeterMap {
   beatsToBBST(
     beats: number,
     ppq: number = DEFAULT_PPQ,
-  ): { bar: number; beat: number; sixteenth: number; ticks: number } {
+  ): {
+    /** One-based bar number. */
+    bar: number;
+    /** One-based beat within the bar. */
+    beat: number;
+    /** One-based sixteenth-note subdivision within the beat. */
+    sixteenth: number;
+    /** Ticks within the indicated subdivision at 960 ticks per quarter note. */
+    ticks: number;
+  } {
     const bbt = this.beatsToBBT(beats, ppq);
     const sixteenthTicks = ppq / 4;
     const sixteenth = Math.floor(bbt.ticks / sixteenthTicks) + 1;
@@ -249,7 +270,14 @@ export class MeterMap {
    * Returns {bar, beat, fraction} where fraction is canonical hundredths.
    * Rounding overflow carries to the next beat, matching Java Blue 2.10.2.
    */
-  beatsToBBF(beats: number): { bar: number; beat: number; fraction: number } {
+  beatsToBBF(beats: number): {
+    /** One-based bar number. */
+    bar: number;
+    /** One-based beat within the bar. */
+    beat: number;
+    /** Hundredths within the indicated beat. */
+    fraction: number;
+  } {
     if (this.entries.length === 0) {
       throw new Error('MeterMap is empty');
     }
@@ -292,6 +320,7 @@ export class MeterMap {
     return { bar, beat, fraction };
   }
 
+  /** Compares meter entries by value and order. */
   equals(other: MeterMap): boolean {
     if (this.entries.length !== other.entries.length) return false;
     for (let i = 0; i < this.entries.length; i++) {
@@ -300,6 +329,7 @@ export class MeterMap {
     return true;
   }
 
+  /** Computes a hash from the ordered meter entries. */
   hashCode(): number {
     let h = 0;
     for (const entry of this.entries) {
@@ -310,6 +340,7 @@ export class MeterMap {
 
   // ─── XML Serialization ───
 
+  /** Serializes the ordered meter changes into a new XML element. */
   saveAsXML(): Element {
     const elem = new Element('meterMap');
     for (const entry of this.entries) {
@@ -318,6 +349,7 @@ export class MeterMap {
     return elem;
   }
 
+  /** Reads meter changes and updates their cached start beats. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): MeterMap {
     checkRoot(data, 'meterMap', context);
     checkShape(data, [], ['measureMeterPair'], context, ['measureMeterPair']);

@@ -12,13 +12,20 @@ import {
 import { ObjRefLoadMap } from '../../serialization/obj-ref-map';
 import { getBaseTen } from '../../utilities/score';
 
+/** Tracker column that defines how a step value is interpreted and emitted into a note. */
 export class Column {
+  /** Tracker column type code for Csound octave.pitch-class values. */
   public static readonly TYPE_PCH = 0;
+  /** Tracker column type code for Blue scale-degree pitch values. */
   public static readonly TYPE_BLUE_PCH = 1;
+  /** Tracker column type code for MIDI pitch number values. */
   public static readonly TYPE_MIDI = 2;
+  /** Tracker column type code for literal string values. */
   public static readonly TYPE_STR = 3;
+  /** Tracker column type code for numeric values. */
   public static readonly TYPE_NUM = 4;
 
+  /** Names of the supported tracker column types in type-code order. */
   public static readonly TYPES = ['PCH', 'blue PCH', 'MIDI', 'String', 'Number'];
 
   private _scale: Scale;
@@ -30,6 +37,7 @@ export class Column {
   private _restrictedToInteger = false;
   private _usingRange = false;
 
+  /** Creates a default column or copies a supplied instance. */
   constructor(other?: Column) {
     if (other) {
       this._scale = new Scale(other._scale);
@@ -45,62 +53,79 @@ export class Column {
     }
   }
 
+  /** Returns the name stored on the column. */
   getName(): string {
     return this._name;
   }
+  /** Sets the name stored on the column. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Returns the type stored on the column. */
   getType(): number {
     return this._type;
   }
+  /** Sets the type stored on the column. */
   setType(type: number): void {
     this._type = type;
   }
 
+  /** Reports whether the column accepts only whole numeric values. */
   isRestrictedToInteger(): boolean {
     return this._restrictedToInteger;
   }
+  /** Sets the restricted to integer stored on the column. */
   setRestrictedToInteger(restricted: boolean): void {
     this._restrictedToInteger = restricted;
   }
 
+  /** Reports whether the column limits values to its configured bounds. */
   isUsingRange(): boolean {
     return this._usingRange;
   }
+  /** Sets the using range stored on the column. */
   setUsingRange(using: boolean): void {
     this._usingRange = using;
   }
 
+  /** Returns the range min stored on the column. */
   getRangeMin(): number {
     return this._rangeMin;
   }
+  /** Sets the range min stored on the column. */
   setRangeMin(min: number): void {
     this._rangeMin = min;
   }
 
+  /** Returns the range max stored on the column. */
   getRangeMax(): number {
     return this._rangeMax;
   }
+  /** Sets the range max stored on the column. */
   setRangeMax(max: number): void {
     this._rangeMax = max;
   }
 
+  /** Returns the tuning scale used to interpret note pitches. */
   getScale(): Scale {
     return this._scale;
   }
+  /** Sets the tuning scale used to interpret note pitches. */
   setScale(scale: Scale): void {
     this._scale = scale;
   }
 
+  /** Reports whether pitch values are emitted as frequency. */
   isOutputFrequency(): boolean {
     return this._outputFrequency;
   }
+  /** Sets the output frequency stored on the column. */
   setOutputFrequency(output: boolean): void {
     this._outputFrequency = output;
   }
 
+  /** Checks whether supplied text is valid for this column's type and bounds. */
   isValid(input: string): boolean {
     const val = input.trim();
     if (val.length === 0) return true;
@@ -168,6 +193,7 @@ export class Column {
     return retVal;
   }
 
+  /** Returns the initial value when no explicit value is supplied. */
   getDefaultValue(): string {
     switch (this._type) {
       case Column.TYPE_PCH:
@@ -187,6 +213,7 @@ export class Column {
     }
   }
 
+  /** Returns the value produced by stepping the supplied cell value up. */
   getIncrementValue(val: string): string | null {
     switch (this._type) {
       case Column.TYPE_PCH: {
@@ -224,6 +251,7 @@ export class Column {
     }
   }
 
+  /** Returns the value produced by stepping the supplied cell value down. */
   getDecrementValue(val: string): string | null {
     switch (this._type) {
       case Column.TYPE_PCH: {
@@ -261,6 +289,7 @@ export class Column {
     }
   }
 
+  /** Serializes the column and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('column');
     retVal.addElement('name').setText(this._name);
@@ -274,6 +303,7 @@ export class Column {
     return retVal;
   }
 
+  /** Reconstructs the column from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

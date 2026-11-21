@@ -70,27 +70,33 @@ export function normalizeProcessorType(typeAttr: string): string {
   return FULL_CLASS_NAME_MAP[typeAttr] ?? typeAttr;
 }
 
+/** Applies editable note processors in order to a note list. */
 export class NoteProcessorChain {
   private _processors: NoteProcessor[] = [];
 
+  /** Creates a default note processor chain or copies a supplied instance. */
   constructor(other?: NoteProcessorChain) {
     if (other) {
       this._processors = other._processors.map((p) => p.deepCopy());
     }
   }
 
+  /** Returns the processors in the order they are applied. */
   getProcessors(): NoteProcessor[] {
     return [...this._processors];
   }
 
+  /** Appends a processor to the execution order. */
   addProcessor(proc: NoteProcessor): void {
     this._processors.push(proc);
   }
 
+  /** Removes all processors from the chain. */
   clear(): void {
     this._processors = [];
   }
 
+  /** Applies processors in order, forwarding each output list to the next processor. */
   apply(notes: NoteList): NoteList {
     let result = notes;
     for (const proc of this._processors) {
@@ -110,6 +116,7 @@ export class NoteProcessorChain {
     return result;
   }
 
+  /** Applies processors in order using the supplied context for runtime-backed steps. */
   async applyAsync(notes: NoteList, compileData?: CompileData): Promise<NoteList> {
     let result = notes;
     for (const proc of this._processors) {
@@ -129,6 +136,7 @@ export class NoteProcessorChain {
     return result;
   }
 
+  /** Serializes the note processor chain and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('noteProcessorChain');
     for (const proc of this._processors) {
@@ -139,6 +147,7 @@ export class NoteProcessorChain {
     return elem;
   }
 
+  /** Reconstructs the note processor chain from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): NoteProcessorChain {
     checkRoot(data, 'noteProcessorChain', context);
     checkShape(data, [], ['noteProcessor'], context, ['noteProcessor']);
@@ -155,6 +164,7 @@ export class NoteProcessorChain {
     return chain;
   }
 
+  /** Copies the note processor chain and its editable state. */
   deepCopy(): NoteProcessorChain {
     return new NoteProcessorChain(this);
   }

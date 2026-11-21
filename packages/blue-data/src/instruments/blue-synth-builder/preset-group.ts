@@ -5,46 +5,61 @@ import type { CopyMode } from '../../deep-copyable';
 import type { BSBGraphicInterface } from './bsb-graphic-interface';
 import { Preset } from './preset';
 
+/** Hierarchical collection of BlueSynthBuilder presets with selection and dirty-state tracking. */
 export class PresetGroup {
+  /** Display name of this preset group. */
   presetGroupName = 'Presets';
+  /** Child preset groups belonging to this preset group, in stored order. */
   subGroups: PresetGroup[] = [];
+  /** Presets belonging to this preset group, in stored order. */
   presets: Preset[] = [];
+  /** Identifier of the currently selected preset. */
   currentPresetUniqueId = '';
+  /** Whether the selected preset has unsaved value changes. */
   currentPresetModified = false;
   private _childOrder: Array<Preset | PresetGroup> = [];
 
+  /** Returns the preset group name stored on the preset group. */
   getPresetGroupName(): string {
     return this.presetGroupName;
   }
 
+  /** Sets the preset group name stored on the preset group. */
   setPresetGroupName(name: string): void {
     this.presetGroupName = name;
   }
 
+  /** Returns a shallow snapshot of direct child groups. */
   getSubGroups(): PresetGroup[] {
     return [...this.subGroups];
   }
 
+  /** Returns a shallow snapshot of the presets directly in this group. */
   getPresets(): Preset[] {
     return [...this.presets];
   }
 
+  /** Returns the identifier of the currently selected preset. */
   getCurrentPresetUniqueId(): string {
     return this.currentPresetUniqueId;
   }
 
+  /** Sets the identifier of the currently selected preset. */
   setCurrentPresetUniqueId(id: string): void {
     this.currentPresetUniqueId = id;
   }
 
+  /** Reports whether the selected preset has unsaved changes. */
   isCurrentPresetModified(): boolean {
     return this.currentPresetModified;
   }
 
+  /** Sets the whether the selected preset has unsaved value changes. */
   setCurrentPresetModified(modified: boolean): void {
     this.currentPresetModified = modified;
   }
 
+  /** Searches this group and its descendants for the first preset with the given ID, or returns null. */
   findPresetByUniqueId(uniqueId: string): Preset | null {
     for (const preset of this.presets) {
       if (preset.getUniqueId() === uniqueId) return preset;
@@ -82,6 +97,7 @@ export class PresetGroup {
     this._childOrder.push(...presets, ...groups);
   }
 
+  /** Serializes the preset group and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('presetGroup');
     elem.setAttribute('name', this.presetGroupName);
@@ -99,6 +115,7 @@ export class PresetGroup {
     return elem;
   }
 
+  /** Reconstructs the preset group from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): PresetGroup {
     checkRoot(data, 'presetGroup', context);
     const read = (node: Element): PresetGroup => {
@@ -189,6 +206,7 @@ export class PresetGroup {
     }
   }
 
+  /** Copies the preset group and its editable state. The copy mode controls which identities are retained. */
   deepCopy(mode: CopyMode = 'duplication'): PresetGroup {
     if (mode === 'history') {
       const copy = new PresetGroup();
