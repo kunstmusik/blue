@@ -30,9 +30,11 @@ import {
   setScoreStart,
 } from '../utilities/score';
 
+/** Sound object containing authored Csound note statements that can be placed and processed on the score timeline. */
 export class GenericScore extends AbstractSoundObject implements SoundObject {
   private _scoreText = '';
 
+  /** Creates a GenericScore with a sample `i` statement. */
   constructor() {
     super();
     this.setName('GenericScore');
@@ -50,6 +52,7 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
     this._scoreText = text;
   }
 
+  /** Returns the first authored note position in Csound beats when safe to resolve without generation. Returns `null` for an empty score and `undefined` when it cannot establish a stable origin. */
   getRangeOriginBeats(context: TimeContext): number | null | undefined {
     if (
       this.getTimeBehavior() !== TimeBehavior.NONE ||
@@ -91,6 +94,7 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
 
   // ─── SoundObject implementation ───
 
+  /** Parses note statements, runs the processor chain, applies the object's time behavior, and offsets the notes to its start. */
   override generateForCSD(
     context: TimeContext,
     _compileData: CompileData,
@@ -111,6 +115,7 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
     return processed;
   }
 
+  /** Generates notes while awaiting asynchronous note processors through the compilation context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -137,12 +142,14 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
 
   // ─── XML Serialization ───
 
+  /** Serializes the authored score text and common sound-object properties into a new XML element. */
   override saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = getBasicXML(this, 'blue.soundObject.GenericScore');
     elem.addElement('score').setText(this._scoreText);
     return elem;
   }
 
+  /** Loads and validates a generic score, including supported legacy score text forms. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,
@@ -179,6 +186,7 @@ export class GenericScore extends AbstractSoundObject implements SoundObject {
     return providedContext ? sObj : requireXmlValue(context.result(sObj), sink);
   }
 
+  /** Copies the authored score text, common properties, and its processor chain. */
   override deepCopy(): GenericScore {
     const copy = new GenericScore();
     copy.copyFrom(this);

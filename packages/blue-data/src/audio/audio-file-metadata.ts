@@ -10,8 +10,11 @@
  */
 
 export interface AudioFileMetadata {
+  /** Audio container format identified from the file header. */
   format: 'WAV' | 'AIFF' | 'AIFC';
+  /** Number of audio channels declared in the header. */
   channels: number;
+  /** Audio samples per second in each channel. */
   sampleRate: number;
   /** Duration in seconds, derived from byte length / (sampleRate * frameSize). */
   durationSeconds: number;
@@ -29,7 +32,9 @@ export interface AudioFileMetadata {
   unavailableFields: string[];
 }
 
+/** Reports an audio header or format error that prevents metadata extraction. */
 export class AudioFileMetadataError extends Error {
+  /** Creates a metadata error describing the file header or format problem. */
   constructor(message: string) {
     super(message);
     this.name = 'AudioFileMetadataError';

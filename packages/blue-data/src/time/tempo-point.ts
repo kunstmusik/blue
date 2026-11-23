@@ -12,11 +12,17 @@ import { Element } from '../serialization/xml-reader';
 import { XmlLoadContext } from '../serialization/xml-load';
 import { checkRoot, checkShape, parseXmlNumber } from '../utilities/xml';
 
+/** One tempo change with an authored timeline position and an outgoing interpolation curve. */
 export class TempoPoint {
+  /** Authored position of the tempo change in its original time base. */
   position: TimePosition;
+  /** Tempo at the point in beats per minute. */
   tempo: number;
+  /** Interpolation from this point toward the next tempo point. */
   curveType: CurveType;
+  /** In-memory enabled flag. Tempo conversion is controlled by the enclosing map. */
   enabled: boolean = true;
+  /** In-memory visibility flag. Individual visibility is omitted from tempo point XML. */
   visible: boolean = false;
 
   /** Cached beat position, computed by TempoMap.recalculateAccumulatedTimes(). */
@@ -46,6 +52,7 @@ export class TempoPoint {
 
   // ─── XML Serialization ───
 
+  /** Writes the authored position, tempo, and curve to a new XML element. */
   saveAsXML(): Element {
     const elem = new Element('tempoPoint');
     elem.setAttribute('tempo', this.tempo.toString());
@@ -54,6 +61,7 @@ export class TempoPoint {
     return elem;
   }
 
+  /** Validates and loads a tempo point, accepting the legacy beat attribute when applicable. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): TempoPoint {
     checkRoot(data, 'tempoPoint', context);
     checkShape(data, ['tempo', 'curve', 'beat'], ['timePosition'], context);

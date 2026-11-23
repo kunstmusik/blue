@@ -8,11 +8,14 @@ import { getBaseTen } from '../utilities/score';
 
 const JAVA_TYPE = 'blue.noteProcessor.PchAddProcessor';
 
+/** Transposes values in Csound octave.pitch-class notation. */
 export class PchAddProcessor extends NoteProcessor {
   private _value = 0;
   private _pfield = 4;
 
+  /** Creates a pitch-class add processor initialized with its default settings. */
   constructor();
+  /** Creates a pitch-class add processor using the source instance’s settings. */
   constructor(src: PchAddProcessor);
   constructor(src?: PchAddProcessor) {
     super();
@@ -22,9 +25,11 @@ export class PchAddProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     const p = parseInt(pfield, 10);
     if (p > 3) {
@@ -32,9 +37,11 @@ export class PchAddProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the pitch-class transposition amount as text. */
   getVal(): string {
     return this._value.toString();
   }
+  /** Sets the pitch-class interval added to the selected p-field. */
   setVal(value: string): void {
     this._value = parseInt(value, 10);
   }
@@ -80,6 +87,7 @@ export class PchAddProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the pitch-class transposition processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): PchAddProcessor {
     validateProcessorXml(data, 'PchAddProcessor', context);
     const proc = new PchAddProcessor();

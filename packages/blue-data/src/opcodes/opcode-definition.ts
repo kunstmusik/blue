@@ -28,58 +28,74 @@ export class OpcodeDefinition implements BlueDataObject {
   private _comments = '';
   private _commentText: string | null = null;
 
+  /** Returns the name stored on the opcode definition. */
   getName(): string {
     return this._name;
   }
+  /** Sets the name stored on the opcode definition. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Returns the style stored on the opcode definition. */
   getStyle(): UDOStyle {
     return this._style;
   }
+  /** Sets the style stored on the opcode definition. */
   setStyle(style: UDOStyle): void {
     this._style = style;
   }
 
+  /** Returns the out types stored on the opcode definition. */
   getOutTypes(): string {
     return this._outTypes;
   }
+  /** Sets the out types stored on the opcode definition. */
   setOutTypes(types: string): void {
     this._outTypes = types;
   }
 
+  /** Returns the in types stored on the opcode definition. */
   getInTypes(): string {
     return this._inTypes;
   }
+  /** Sets the in types stored on the opcode definition. */
   setInTypes(types: string): void {
     this._inTypes = types;
   }
 
+  /** Returns the input arguments stored on the opcode definition. */
   getInputArguments(): string {
     return this._inputArguments;
   }
+  /** Sets the input arguments stored on the opcode definition. */
   setInputArguments(args: string): void {
     this._inputArguments = args;
   }
 
+  /** Returns the Csound body of the user-defined opcode. */
   getCode(): string {
     return this._code;
   }
+  /** Replaces the Csound body of the user-defined opcode. */
   setCode(code: string): void {
     this._code = code;
   }
 
+  /** Returns the comments stored on the opcode definition. */
   getComments(): string {
     return this._comments;
   }
+  /** Sets the comments stored on the opcode definition. */
   setComments(comments: string): void {
     this._comments = comments;
   }
 
+  /** Returns the comment text stored on the opcode definition. */
   getCommentText(): string | null {
     return this._commentText;
   }
+  /** Sets the comment text stored on the opcode definition. */
   setCommentText(text: string | null): void {
     this._commentText = text;
   }
@@ -196,6 +212,7 @@ export class OpcodeDefinition implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the opcode definition from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,

@@ -16,10 +16,15 @@ import { formatBlueNumber } from '../utilities/number-format';
 /** Java float literal `.0001f` widened to double. */
 const FLOAT_0001: number = Math.fround(0.0001);
 
-interface ParameterScoreContext {
+/** Inputs for generating the Csound score statements that drive one automation parameter. */
+export interface ParameterScoreContext {
+  /** Automation parameter whose points supply the score statements. */
   readonly parameter: Parameter;
+  /** Compiled Csound instrument number used to apply the automation. */
   readonly instrumentId: number;
+  /** Render window start used in Java-compatible parameter score generation. */
   readonly renderStart: number;
+  /** Render window end. Nonpositive values leave the end unrestricted. */
   readonly renderEnd: number;
 }
 
@@ -196,7 +201,12 @@ function createParamNote(
 export function buildParameterInitStatementJava(
   parameter: Parameter,
   renderStartTime: number,
-): { text: string; initialVal: number } {
+): {
+  /** Generated initialization statements for the parameter. */
+  text: string;
+  /** Initial numeric control value sent to Csound. */
+  initialVal: number;
+} {
   const initialVal = parameter.isAutomationEnabled()
     ? parameter.getValue(renderStartTime)
     : parameter.getFixedValue();

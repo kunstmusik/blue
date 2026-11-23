@@ -83,6 +83,7 @@ export class JavaScriptObject extends AbstractSoundObject {
   private _javaScriptCode = '';
   private _onLoadProcessable = false;
 
+  /** Creates a JavaScript sound object with default timeline and script settings. */
   constructor() {
     super();
     this.setName('javaScriptObject');
@@ -90,20 +91,25 @@ export class JavaScriptObject extends AbstractSoundObject {
     this._backgroundColor = 0x404040;
   }
 
+  /** Returns the Java script code stored on the JavaScript object. */
   getJavaScriptCode(): string {
     return this._javaScriptCode;
   }
+  /** Sets the Java script code stored on the JavaScript object. */
   setJavaScriptCode(code: string): void {
     this._javaScriptCode = code;
   }
 
+  /** Reports whether the JavaScript object runs its script during on-load processing. */
   isOnLoadProcessable(): boolean {
     return this._onLoadProcessable;
   }
+  /** Sets the on load processable stored on the JavaScript object. */
   setOnLoadProcessable(val: boolean): void {
     this._onLoadProcessable = val;
   }
 
+  /** Runs on-load processing for the JavaScript object using the supplied JavaScript session when present. */
   processOnLoad(context: TimeContext, session?: JavaScriptSession): void {
     if (!this._onLoadProcessable || !session) return;
 
@@ -139,6 +145,7 @@ export class JavaScriptObject extends AbstractSoundObject {
     return processed;
   }
 
+  /** Generates the JavaScript object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -172,6 +179,7 @@ export class JavaScriptObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the JavaScript object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

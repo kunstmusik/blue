@@ -5,22 +5,33 @@
 
 import { Effect } from '../../mixer/effect';
 
+/** Audio source classifications supported by layout resolution. */
 export type SourceChannelCount = 1 | 2 | 'unsupported';
 
+/** Outcome of the host's audio metadata inspection. */
 export type SourceObservationStatus = 'verified' | 'unreadable' | 'missing' | 'unsupported';
 
+/** Host metadata and classification for one source audio file. */
 export interface AudioFileLayoutObservation {
+  /** Native path identifying the inspected source file. */
   readonly filePath: string;
+  /** Observed channel count, or the unsupported-format sentinel. */
   readonly channels: SourceChannelCount;
+  /** Outcome of the host's inspection. */
   readonly status: SourceObservationStatus;
+  /** Sample rate in hertz when the host could determine it. */
   readonly sampleRate?: number;
+  /** Source duration in seconds when available. */
   readonly duration?: number;
 }
 
+/** Host-supplied observations used to resolve channel layouts without file I/O in Blue Data. */
 export interface AudioLayoutManifest {
+  /** Host observations indexed by the source path used during layout resolution. */
   readonly observations: ReadonlyMap<string, AudioFileLayoutObservation>;
 }
 
+/** Indexes host-provided source metadata by file path for channel layout resolution. */
 export function createAudioLayoutManifest(
   entries?:
     | Iterable<[string, AudioFileLayoutObservation]>
@@ -39,10 +50,14 @@ export function createAudioLayoutManifest(
   return { observations: new Map(Object.entries(entries)) };
 }
 
+/** Resolved track layout, with stereo and uncertain sources treated conservatively. */
 export type EffectiveTrackLayout = 'mono' | 'stereo-or-unknown';
 
+/** Additional upstream constraints for resolving a track's channel layout. */
 export interface EffectiveLayoutResolutionOptions {
+  /** A stereo or unknown source requires conservative stereo routing. */
   readonly hasStereoOrUnclassifiedSource?: boolean;
+  /** Upstream effects prevent the resolver from assuming a mono signal. */
   readonly hasUpstreamEffects?: boolean;
 }
 
@@ -93,12 +108,18 @@ export function resolveEffectiveTrackLayout(
   return 'mono';
 }
 
+/** Reports audio metadata that prevents resolution of a track's channel layout. */
 export class AudioLayoutCompileError extends Error {
+  /** Machine-readable layout diagnostic identifier. */
   readonly code: string;
+  /** Path of the affected audio source, when available. */
   readonly filePath?: string;
+  /** Number or classification of the input channels, when available. */
   readonly observedChannels?: number | 'unsupported';
+  /** Output channel count associated with the rejected layout, when available. */
   readonly outputChannels?: number;
 
+  /** Creates a compile error with optional source path and channel metadata. */
   constructor(
     message: string,
     options?: {

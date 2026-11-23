@@ -51,54 +51,93 @@ const BOOLEAN_FIELDS = [
   'copyToMediaFileOnImport',
 ] as const;
 
+/** Project metadata and Csound configuration for realtime and disk rendering. Numeric settings are stored as strings to preserve editable project values. */
 export class ProjectProperties {
+  /** Editable project title. */
   title = '';
+  /** Editable author credit stored with the project. */
   author = '';
+  /** Free-form project notes stored in XML. */
   notes = '';
 
+  /** Realtime audio sample rate in Hz. */
   sampleRate = '44100';
+  /** Realtime number of audio samples per Csound control period. */
   ksmps = '64';
   private _channels = '2';
 
+  /** Whether realtime CSD generation writes an explicit `0dbfs` value. */
   useZeroDbFS = false;
+  /** Realtime amplitude representing full scale when the override is enabled. */
   zeroDbFS = '1';
 
+  /** Disk-render sample rate in Hz. */
   diskSampleRate = '44100';
+  /** Disk-render audio samples per Csound control period. */
   diskKsmps = '1';
+  /** Disk-render channel count. */
   diskChannels = '2';
+  /** Whether disk CSD generation writes an explicit `0dbfs` value. */
   diskUseZeroDbFS = false;
+  /** Disk-render full-scale amplitude when the override is enabled. */
   diskZeroDbFS = '1';
 
+  /** Enables realtime audio output through Csound's default output device. */
   useAudioOut = true;
+  /** Enables realtime audio input through Csound's default input device. */
   useAudioIn = false;
+  /** Stores the project's realtime MIDI input preference for the host. */
   useMidiIn = false;
+  /** Stores the project's realtime MIDI output preference for the host. */
   useMidiOut = false;
+  /** Includes note amplitude messages in the realtime Csound message level. */
   noteAmpsEnabled = true;
+  /** Includes out-of-range messages in the realtime Csound message level. */
   outOfRangeEnabled = true;
+  /** Includes warnings in the realtime Csound message level. */
   warningsEnabled = true;
+  /** Includes timing information in the realtime Csound message level. */
   benchmarkEnabled = true;
+  /** Extra realtime Csound options, or all option tokens when `completeOverride` is enabled. */
   advancedSettings = '';
+  /** Uses only the configured realtime option text and skips the generated defaults. */
   completeOverride = false;
 
+  /** Configured output filename for disk rendering. */
   fileName = '';
+  /** Stores the host preference to prompt for disk-render output. */
   askOnRender = false;
+  /** Includes note amplitude messages in the disk-render Csound message level. */
   diskNoteAmpsEnabled = true;
+  /** Includes out-of-range messages in the disk-render Csound message level. */
   diskOutOfRangeEnabled = true;
+  /** Includes warnings in the disk-render Csound message level. */
   diskWarningsEnabled = true;
+  /** Includes timing information in the disk-render Csound message level. */
   diskBenchmarkEnabled = true;
+  /** Stores advanced Csound option text for disk rendering. */
   diskAdvancedSettings = '';
+  /** Stores whether disk rendering should use the configured command options as a complete override. */
   diskCompleteOverride = false;
+  /** Uses the full project for disk rendering instead of the saved render window. */
   diskAlwaysRenderEntireProject = false;
 
+  /** Configured project media folder. Hosts resolve paths and perform file operations. */
   mediaFolder = '';
+  /** Host preference to copy imported media into the configured project media folder. */
   copyToMediaFileOnImport = true;
 
   // Legacy compatibility fields retained for existing callers and file formats.
+  /** Legacy realtime command text used as a fallback when the complete override has no advanced settings. */
   commandLine = '';
+  /** Legacy disk-render command line stored for compatibility with existing projects and callers. */
   diskCommandLine = '';
+  /** Legacy output format string retained in project XML. */
   oFormat = '';
+  /** Legacy audio output string retained in project XML. */
   audioOutput = '';
 
+  /** Creates default settings or a copy of the supplied project properties. */
   constructor(other?: ProjectProperties) {
     if (other) {
       this.title = other.title;
@@ -142,18 +181,22 @@ export class ProjectProperties {
     }
   }
 
+  /** Gets the realtime audio channel count. */
   get channels(): string {
     return this._channels;
   }
 
+  /** Sets the realtime audio channel count. */
   set channels(value: string) {
     this._channels = value;
   }
 
+  /** Gets the realtime audio channel count through the Csound-style alias. */
   get nchnls(): string {
     return this._channels;
   }
 
+  /** Sets the realtime audio channel count through the Csound-style alias. */
   set nchnls(value: string) {
     this._channels = value;
   }
@@ -191,6 +234,7 @@ export class ProjectProperties {
     return options;
   }
 
+  /** Encodes the realtime message preferences as a Csound `-m` option. */
   getRealtimeMessageLevelFlag(): string {
     let level = 0;
 
@@ -228,6 +272,7 @@ export class ProjectProperties {
 
   // ─── XML ───
 
+  /** Writes project properties and both render profiles into a new XML element. */
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('projectProperties');
 
@@ -280,6 +325,7 @@ export class ProjectProperties {
     return elem;
   }
 
+  /** Reads persisted settings, defaulting fields absent from the source and validating known XML members. */
   static loadFromXML(
     data: Element,
     providedContext?: XmlLoadContext,

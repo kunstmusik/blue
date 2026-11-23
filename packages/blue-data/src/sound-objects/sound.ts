@@ -52,6 +52,7 @@ export class Sound extends AbstractSoundObject {
     return legacy;
   }
 
+  /** Creates a default sound or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: Sound, mode: CopyMode = 'duplication') {
     super();
     this.setName('Sound');
@@ -62,23 +63,29 @@ export class Sound extends AbstractSoundObject {
     }
   }
 
+  /** Returns the comment stored on the scripted Sound object. */
   getComment(): string {
     return this._comment;
   }
+  /** Sets the comment stored on the scripted Sound object. */
   setComment(text: string): void {
     this._comment = text;
   }
 
+  /** Returns the blue synth builder stored on the scripted Sound object. */
   getBlueSynthBuilder(): BlueSynthBuilder {
     return this._blueSynthBuilder;
   }
+  /** Sets the blue synth builder stored on the scripted Sound object. */
   setBlueSynthBuilder(bsb: BlueSynthBuilder): void {
     this._blueSynthBuilder = bsb;
   }
 
+  /** Returns the embedded BlueSynthBuilder instrument as serialized XML text. */
   getBSBInstrumentText(): string {
     return this._blueSynthBuilder.saveAsXML().toXml();
   }
+  /** Replaces the embedded BlueSynthBuilder instrument from serialized XML or legacy plain Csound text. */
   setBSBInstrumentText(text: string): void {
     this._blueSynthBuilder = Sound.loadBlueSynthBuilderFromText(text);
   }
@@ -87,6 +94,7 @@ export class Sound extends AbstractSoundObject {
     return TimeBehavior.NOT_SUPPORTED;
   }
 
+  /** Returns the source origin when it can be determined for selected-range generation. */
   getRangeOriginBeats(context: TimeContext): number | null | undefined {
     if (this.getNoteProcessorChain().getProcessors().length > 0) return undefined;
     const duration = this.getSubjectiveDuration().toBeats(context);
@@ -158,6 +166,7 @@ export class Sound extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the scripted Sound object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

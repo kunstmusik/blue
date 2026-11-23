@@ -60,6 +60,7 @@ export function remainder(value: number, mod: number): number {
   return shifted;
 }
 
+/** Java-compatible deterministic random stream for JMask generators. */
 export class JavaRandom {
   private _seed = 0n;
 
@@ -67,6 +68,7 @@ export class JavaRandom {
     this.setSeed(seed);
   }
 
+  /** Sets the pseudo-random seed. */
   setSeed(seed: number | bigint): void {
     this._seed =
       ((typeof seed === 'bigint' ? seed : BigInt(Math.trunc(seed))) ^ JAVA_MULTIPLIER) & JAVA_MASK;
@@ -77,6 +79,7 @@ export class JavaRandom {
     return Number(this._seed >> BigInt(48 - bits));
   }
 
+  /** Draws a Java-compatible pseudorandom number in the half-open interval from zero to one. */
   nextDouble(): number {
     const high = this.next(26);
     const low = this.next(27);
@@ -84,12 +87,18 @@ export class JavaRandom {
   }
 }
 
+/** Mode that controls how JMask generates note timing. */
 export type JMaskGenerationMode = 1 | 2;
 
+/** JMask value source with initialization, sampling, persistence, and copying. */
 export interface Generator {
+  /** Prepares the generator for the supplied generation duration. */
   initialize(duration: number): void;
+  /** Samples a value at the supplied time using the shared random stream when needed. */
   getValue(time: number, rnd: JavaRandom): number;
+  /** Serializes the generator and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element;
+  /** Copies the generator and its editable state. */
   deepCopy(): Generator;
 }
 
@@ -102,8 +111,11 @@ export interface ProbabilityGenerator extends Generator {
   deepCopy(): ProbabilityGenerator;
 }
 
+/** One editable time/value point in a JMask control table. */
 export class TablePoint {
+  /** Time coordinate in the table's authored domain. */
   time = 0.0;
+  /** Control value at the point's time coordinate. */
   value = 0.5;
 
   constructor(other?: TablePoint) {
@@ -121,6 +133,7 @@ export class TablePoint {
     return point;
   }
 
+  /** Serializes the table point and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('point');
     elem.setAttribute('time', String(this.time));
@@ -128,22 +141,27 @@ export class TablePoint {
     return elem;
   }
 
+  /** Returns the authored time coordinate. */
   getTime(): number {
     return this.time;
   }
 
+  /** Changes the authored time coordinate. */
   setTime(time: number): void {
     this.time = time;
   }
 
+  /** Returns the value stored at this point. */
   getValue(): number {
     return this.value;
   }
 
+  /** Changes the value stored at this point. */
   setValue(value: number): void {
     this.value = value;
   }
 
+  /** Changes both the time coordinate and control value. */
   setLocation(time: number, value: number): void {
     this.time = time;
     this.value = value;
@@ -164,16 +182,22 @@ interface TableCache {
 const tableCaches = new WeakMap<Table, TableCache>();
 const generationTables = new WeakSet<Table>();
 
+/** Editable time/value curve used by JMask generators and modifiers. */
 export class Table {
   static readonly OFF = 0;
   static readonly ON = 1;
   static readonly COS = 2;
   static readonly TYPES = ['Off', 'On', 'Cosine'];
 
+  /** Control points belonging to this table, in stored order. */
   points: TablePoint[] = [];
+  /** Lower bound used when editing table values. */
   min = 0.0;
+  /** Upper bound used when editing table values. */
   max = 1.0;
+  /** Selects stepped, shaped, or cosine interpolation. */
   interpolationType = Table.ON;
+  /** Shaping control for the standard interpolation mode. Zero gives linear interpolation. */
   interpolation = 0.0;
 
   constructor(sourceOrInit: boolean | Table = true) {
@@ -311,45 +335,55 @@ export class Table {
     return x1 * y1 + (Math.pow(x1, 1.0 + pw2) * (y2 - y1)) / ((1.0 + pw2) * Math.pow(xe, pw2));
   }
 
+  /** Returns the entry at the supplied index in the table’s points. */
   getPoint(index: number): TablePoint {
     return this.points[index]!;
   }
 
+  /** Returns the live control point at the supplied zero-based index. */
   getTablePoint(index: number): TablePoint {
     return this.getPoint(index);
   }
 
+  /** Inserts the supplied control point at the given zero-based position. */
   addPoint(index: number, point: TablePoint): void {
     this.points.splice(index, 0, point);
   }
 
+  /** Removes the point at the supplied index if it exists. */
   removePoint(index: number): void {
     if (index >= 0 && index < this.points.length) {
       this.points.splice(index, 1);
     }
   }
 
+  /** Removes the supplied point by identity if this table contains it. */
   removePointByPoint(selectedPoint: TablePoint): void {
     this.removePoint(this.points.indexOf(selectedPoint));
   }
 
+  /** Returns the number of editable control points. */
   getRowCount(): number {
     return this.points.length;
   }
 
+  /** Returns two columns, one for time and one for value. */
   getColumnCount(): number {
     return 2;
   }
 
+  /** Returns the editor label for the time or value column. */
   getColumnName(columnIndex: number): string {
     return columnIndex === 0 ? 'Time' : 'Value';
   }
 
+  /** Reads the time or value cell for the supplied point index. */
   getValueAt(rowIndex: number, columnIndex: number): number {
     const point = this.getPoint(rowIndex);
     return columnIndex === 0 ? point.time : point.value;
   }
 
+  /** Edits a numeric editor cell while preserving the fixed endpoint times. */
   setValueAt(aValue: unknown, rowIndex: number, columnIndex: number): void {
     if (typeof aValue !== 'number') {
       return;
@@ -380,26 +414,32 @@ export class Table {
     point.value = aValue;
   }
 
+  /** Returns the interpolation stored on the table. */
   getInterpolation(): number {
     return this.interpolation;
   }
 
+  /** Sets the interpolation stored on the table. */
   setInterpolation(interpolation: number): void {
     this.interpolation = interpolation;
   }
 
+  /** Returns the interpolation type stored on the table. */
   getInterpolationType(): number {
     return this.interpolationType;
   }
 
+  /** Sets the interpolation type stored on the table. */
   setInterpolationType(interpolationType: number): void {
     this.interpolationType = interpolationType;
   }
 
+  /** Returns the minimum random value. */
   getMin(): number {
     return this.min;
   }
 
+  /** Sets the minimum random value. */
   setMin(min: number, truncate: boolean): void {
     if (this.min === min) {
       return;
@@ -416,10 +456,12 @@ export class Table {
     }
   }
 
+  /** Returns the maximum random value. */
   getMax(): number {
     return this.max;
   }
 
+  /** Sets the maximum random value. */
   setMax(max: number, truncate: boolean): void {
     if (this.max === max) {
       return;
@@ -436,6 +478,7 @@ export class Table {
     }
   }
 
+  /** Samples the table at the supplied time, interpolating between control points. */
   getValue(time: number): number {
     const { sorted } = this.getOrBuildCache();
     const size = sorted.length;
@@ -562,6 +605,7 @@ export class Table {
     return elapsed * from + width * (to - from) * area;
   }
 
+  /** Returns the legacy integrated phase for the requested table time. */
   getphs(xt: number): number {
     const xtr = roundTo(xt, 10);
     const { sorted, prefixPhs } = this.getOrBuildCache();
@@ -615,6 +659,7 @@ export class Table {
     return phsum;
   }
 
+  /** Serializes the table and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('table');
     retVal.addElement(writeDouble('min', this.getMin()));
@@ -685,15 +730,25 @@ export class DoubleOrTable {
   }
 }
 
+/** Remaps a generator output between lower and upper bounds with optional shaping. */
 export class Mask {
+  /** Constant upper bound used when the upper table is disabled. */
   high = 1.0;
+  /** Constant lower bound used when the lower table is disabled. */
   low = 0.0;
+  /** Shaping exponent for remapping values between the bounds. */
   mapValue = 0.0;
+  /** Whether the upper bound is read from its table. */
   highTableEnabled = false;
+  /** Whether the lower bound is read from its table. */
   lowTableEnabled = false;
+  /** Time-varying upper bound for the remapped value. */
   highTable = new Table();
+  /** Time-varying lower bound for the remapped value. */
   lowTable = new Table();
+  /** Whether this mask participates in generation. */
   enabled = false;
+  /** Total render duration used to scale table lookup time. */
   duration = 1.0;
 
   constructor(other?: Mask) {
@@ -752,6 +807,7 @@ export class Mask {
     return mask;
   }
 
+  /** Serializes the mask and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('mask');
     retVal.addElement(writeBoolean('highTableEnabled', this.highTableEnabled));
@@ -775,6 +831,7 @@ export class Mask {
     return this.mapValue === 0.0 ? value : Math.pow(value, this.mapValue);
   }
 
+  /** Remaps the supplied value using bounds resolved at the current render time. */
   getValue(time: number, value: number): number {
     if (!this.enabled) {
       return value;
@@ -787,17 +844,29 @@ export class Mask {
   }
 }
 
+/** Moves a generated value toward the nearest point on a numeric grid. */
 export class Quantizer {
+  /** Spacing between quantization grid points when its table is disabled. */
   gridSize = 1.0;
+  /** Amount of quantization applied when its table is disabled. */
   strength = 1.0;
+  /** Position of the grid origin when its table is disabled. */
   offset = 0.0;
+  /** Whether the grid spacing is read from its table. */
   gridSizeTableEnabled = false;
+  /** Whether the quantization strength is read from its table. */
   strengthTableEnabled = false;
+  /** Whether the grid origin is read from its table. */
   offsetTableEnabled = false;
+  /** Time-varying spacing between grid points. */
   gridSizeTable = new Table();
+  /** Time-varying amount of quantization. */
   strengthTable = new Table();
+  /** Time-varying grid origin. */
   offsetTable = new Table();
+  /** Whether this quantizer participates in generation. */
   enabled = false;
+  /** Total render duration used to scale table lookup time. */
   duration = 1.0;
 
   constructor(other?: Quantizer) {
@@ -874,6 +943,7 @@ export class Quantizer {
     return quantizer;
   }
 
+  /** Serializes the quantizer and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('quantizer');
     retVal.addElement(writeDouble('gridSize', this.gridSize));
@@ -898,6 +968,7 @@ export class Quantizer {
     return retVal;
   }
 
+  /** Quantizes a generated value using the grid settings at the current render time. */
   getValue(time: number, value: number): number {
     if (!this.enabled) {
       return value;
@@ -925,6 +996,7 @@ export class Quantizer {
   }
 }
 
+/** Stateful JMask modifier that combines successive inputs and applies a bound policy. */
 export class Accumulator {
   static readonly ON = 0;
   static readonly LIMIT = 1;
@@ -932,17 +1004,29 @@ export class Accumulator {
   static readonly WRAP = 3;
   static readonly MODES = ['On', 'Limit', 'Mirror', 'Wrap'];
 
+  /** Time-varying upper bound for the running value. */
   highTable = new Table();
+  /** Time-varying lower bound for the running value. */
   lowTable = new Table();
+  /** Whether the upper bound is read from its table. */
   highTableEnabled = false;
+  /** Whether the lower bound is read from its table. */
   lowTableEnabled = false;
+  /** Policy for handling accumulated values outside the configured bounds. */
   mode = Accumulator.ON;
+  /** Constant lower bound used when the lower table is disabled. */
   low = 0.0;
+  /** Constant upper bound used when the upper table is disabled. */
   high = 1.0;
+  /** Value used to initialize the running state. */
   initialValue = 0.0;
+  /** Whether this accumulator participates in generation. */
   enabled = false;
+  /** Current accumulated value during generation. */
   runningValue = 0.0;
+  /** Whether the current run has yet to process its first input. */
   firstTime = true;
+  /** Total render duration used to scale table lookup time. */
   duration = 1.0;
 
   constructor(other?: Accumulator) {
@@ -1004,6 +1088,7 @@ export class Accumulator {
     return accumulator;
   }
 
+  /** Serializes the accumulator and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('accumulator');
 
@@ -1025,6 +1110,7 @@ export class Accumulator {
     return retVal;
   }
 
+  /** Updates the running value for this event using the bounds and accumulation mode. */
   getValue(time: number, value: number): number {
     if (!this.enabled) {
       return value;

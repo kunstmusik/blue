@@ -79,23 +79,34 @@ export function loadBsbWidgetFromXML(data: Element, context = new XmlLoadContext
 
 export class BSBGroup extends BSBWidget {
   private _children: BSBWidget[] = [];
+  /** Text displayed as the widget group's title. */
   groupName = 'Group';
+  /** Packed color used to display the object. */
   backgroundColor = 'rgba(0,0,0,0.2)';
+  /** Packed color used for the group border. */
   borderColor = '#000000';
+  /** Packed color used to draw the group title. */
   labelTextColor = '#FFFFFF';
+  /** Whether the widget group draws its title. */
   titleEnabled = true;
+  /** Width in pixels. */
   width = 20;
+  /** Height in pixels. */
   height = 20;
+  /** Font used to draw the group title. */
   font: BSBFont = { name: 'Roboto', size: 12, style: 0 };
 
+  /** Returns a shallow snapshot of the group order. The widgets remain shared. */
   getChildren(): BSBWidget[] {
     return [...this._children];
   }
 
+  /** Appends the supplied widget instance to this group. */
   addChild(widget: BSBWidget): void {
     this._children.push(widget);
   }
 
+  /** Removes the first direct child with the supplied ID and reports whether it found one. */
   removeChildById(id: string): boolean {
     for (let i = 0; i < this._children.length; i++) {
       if (this._children[i].id === id) {
@@ -106,10 +117,12 @@ export class BSBGroup extends BSBWidget {
     return false;
   }
 
+  /** Removes every direct child from the group. */
   clearChildren(): void {
     this._children.length = 0;
   }
 
+  /** Randomizes eligible child widget values. */
   randomize(): void {
     for (const child of this._children) {
       if ('randomize' in child && typeof (child as any).randomize === 'function') {
@@ -130,6 +143,7 @@ export class BSBGroup extends BSBWidget {
 
   override setPresetValue(_val: string): void {}
 
+  /** Reconstructs the widget group from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     this.clearChildren();
@@ -169,6 +183,7 @@ export class BSBGroup extends BSBWidget {
     super.loadFromXMLCommon(data, context);
   }
 
+  /** Serializes the widget group and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     return saveBsbWidgetAsXML(this);
   }

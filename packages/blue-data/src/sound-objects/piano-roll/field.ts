@@ -6,6 +6,7 @@ import { Element } from '../../serialization/xml-reader';
 import { XmlLoadContext } from '../../serialization/xml-load';
 import { checkRoot, checkShape, parseXmlNumber } from '../../utilities/xml';
 
+/** Mutable value for one custom field on a piano-roll note. */
 export class Field {
   private _fieldDef: FieldDef;
   private _value: number;
@@ -15,14 +16,17 @@ export class Field {
     this._value = fieldDef.convertToFieldType(fieldDef.getDefaultValue());
   }
 
+  /** Returns the field def stored on the piano roll field. */
   getFieldDef(): FieldDef {
     return this._fieldDef;
   }
 
+  /** Returns this note's stored numeric field value. */
   getValue(): number {
     return this._fieldDef.convertToFieldType(this._value);
   }
 
+  /** Changes this note's value using the field definition's conversion rules. */
   setValue(value: number): void {
     const clamped = Math.max(
       this._fieldDef.getMinValue(),
@@ -31,6 +35,7 @@ export class Field {
     this._value = this._fieldDef.convertToFieldType(clamped);
   }
 
+  /** Serializes the piano roll field and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('field');
     elem.setAttribute('name', this._fieldDef.getFieldName());

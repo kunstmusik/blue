@@ -8,6 +8,7 @@
 import { ScoreObject } from '../score-object';
 import { DeepCopyable } from '../../deep-copyable';
 
+/** Default height of a score layer in pixels. */
 export const LAYER_HEIGHT = 22; // Default layer height in pixels
 
 export interface Layer extends DeepCopyable<Layer> {

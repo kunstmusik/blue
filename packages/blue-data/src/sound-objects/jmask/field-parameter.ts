@@ -38,12 +38,19 @@ import {
   supportsAccumulator,
 } from './generators';
 
+/** One JMask p-field generator with optional modifiers for its output. */
 export class Parameter {
+  /** Whether the parameter appears in editing views. */
   visible = true;
+  /** Primary source of p-field values, or null when unset. */
   generator: Generator | null = null;
+  /** Optional transform that remaps generated values into a bounded range. */
   mask: Mask | null = null;
+  /** Optional transform that snaps generated values to configured increments. */
   quantizer: Quantizer | null = null;
+  /** Optional transform that carries state forward between generated values. */
   accumulator: Accumulator | null = null;
+  /** Name associated with the j mask parameter. */
   name = '';
 
   constructor(other?: Parameter, forGeneration = false) {
@@ -112,6 +119,7 @@ export class Parameter {
     return parameter;
   }
 
+  /** Sets the generator stored on the j mask parameter. */
   setGenerator(generator: Generator): void {
     this.generator = generator;
 
@@ -134,50 +142,62 @@ export class Parameter {
     }
   }
 
+  /** Returns the generator stored on the j mask parameter. */
   getGenerator(): Generator | null {
     return this.generator;
   }
 
+  /** Sets the mask stored on the j mask parameter. */
   setMask(mask: Mask | null): void {
     this.mask = mask;
   }
 
+  /** Returns the mask stored on the j mask parameter. */
   getMask(): Mask | null {
     return this.mask;
   }
 
+  /** Sets the quantizer stored on the j mask parameter. */
   setQuantizer(quantizer: Quantizer | null): void {
     this.quantizer = quantizer;
   }
 
+  /** Returns the quantizer stored on the j mask parameter. */
   getQuantizer(): Quantizer | null {
     return this.quantizer;
   }
 
+  /** Sets the accumulator stored on the j mask parameter. */
   setAccumulator(accumulator: Accumulator | null): void {
     this.accumulator = accumulator;
   }
 
+  /** Returns the accumulator stored on the j mask parameter. */
   getAccumulator(): Accumulator | null {
     return this.accumulator;
   }
 
+  /** Sets the name stored on the j mask parameter. */
   setName(name: string): void {
     this.name = name;
   }
 
+  /** Returns the name stored on the j mask parameter. */
   getName(): string {
     return this.name;
   }
 
+  /** Sets the visible stored on the j mask parameter. */
   setVisible(visible: boolean): void {
     this.visible = visible;
   }
 
+  /** Reports whether this parameter is enabled for display. */
   isVisible(): boolean {
     return this.visible;
   }
 
+  /** Initializes the generator and enabled modifiers for the render duration. */
   initialize(duration: number, mode: JMaskGenerationMode = 1): void {
     if (mode === 2 && this.generator instanceof Oscillator) {
       this.generator.initialize(duration, mode);
@@ -195,6 +215,7 @@ export class Parameter {
     }
   }
 
+  /** Samples the generator and applies the enabled modifiers in generation order. */
   getValue(time: number, rnd: JavaRandom): number {
     if (!this.generator) {
       return 0.0;
@@ -213,6 +234,7 @@ export class Parameter {
     return value;
   }
 
+  /** Serializes the j mask parameter and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('parameter');
     retVal.setAttribute('visible', String(this.visible));
@@ -234,6 +256,7 @@ export class Parameter {
     return retVal;
   }
 
+  /** Copies the j mask parameter and its editable state. */
   deepCopy(): Parameter {
     return new Parameter(this);
   }
@@ -320,7 +343,9 @@ function prepareGenerator(generator: Generator, duration: number): Generator {
   }
 }
 
+/** Ordered JMask p-field configuration used to generate Csound notes. */
 export class Field {
+  /** Parameters belonging to this j mask field, in stored order. */
   parameters: Parameter[] = [];
 
   constructor(other?: Field | boolean) {
@@ -354,26 +379,32 @@ export class Field {
     return field;
   }
 
+  /** Returns the number of configured p-field parameters. */
   getSize(): number {
     return this.parameters.length;
   }
 
+  /** Returns the entry at the supplied index in the j mask field’s parameters. */
   getElementAt(index: number): Parameter {
     return this.parameters[index]!;
   }
 
+  /** Returns the entry at the supplied index in the j mask field’s parameters. */
   getParameter(index: number): Parameter {
     return this.parameters[index]!;
   }
 
+  /** Inserts a parameter using the supplied generator before the zero-based index. */
   addParameterBefore(index: number, generator: Generator): void {
     this.parameters.splice(index, 0, Parameter.create(generator));
   }
 
+  /** Inserts a parameter using the supplied generator after the zero-based index. */
   addParameterAfter(index: number, generator: Generator): void {
     this.parameters.splice(index + 1, 0, Parameter.create(generator));
   }
 
+  /** Removes and returns the parameter at the supplied index, or null for an invalid index. */
   removeParameter(index: number): Parameter | null {
     if (index < 0 || index >= this.parameters.length) {
       return null;
@@ -381,6 +412,7 @@ export class Field {
     return this.parameters.splice(index, 1)[0] ?? null;
   }
 
+  /** Moves the selected parameter one position earlier when possible. */
   pushUp(index: number): void {
     if (index > 0 && index < this.parameters.length) {
       const value = this.parameters.splice(index, 1)[0]!;
@@ -388,6 +420,7 @@ export class Field {
     }
   }
 
+  /** Moves the selected parameter one position later when possible. */
   pushDown(index: number): void {
     if (index >= 0 && index < this.parameters.length - 1) {
       const value = this.parameters.splice(index + 1, 1)[0]!;
@@ -395,6 +428,7 @@ export class Field {
     }
   }
 
+  /** Replaces the generator used by the parameter at the selected index. */
   changeParameter(index: number, generator: Generator): void {
     if (index < 0 || index >= this.parameters.length) {
       return;
@@ -442,6 +476,7 @@ export class Field {
     return field.generateNotes(duration, rnd, mode);
   }
 
+  /** Evaluates the configured p-fields over the requested duration to generate Csound notes. */
   generateNotes(duration: number, rnd: JavaRandom, mode: JMaskGenerationMode = 1): NoteList {
     const noteList = new NoteList();
     if (this.parameters.length === 0) {
@@ -507,6 +542,7 @@ export class Field {
     return noteList;
   }
 
+  /** Serializes the j mask field and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('field');
     for (const parameter of this.parameters) {
@@ -515,6 +551,7 @@ export class Field {
     return retVal;
   }
 
+  /** Copies the j mask field and its editable state. */
   deepCopy(): Field {
     return new Field(this);
   }

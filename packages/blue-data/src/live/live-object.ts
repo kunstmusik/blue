@@ -26,54 +26,67 @@ export class LiveObject implements BlueDataObject {
   private _enabled = false;
   private _soundObject: SoundObject | null = null;
 
+  /** Creates an unassigned Live cell with a persistent ID. */
   constructor() {
     this._uniqueId = generateUniqueId();
   }
 
+  /** Returns the persistent identifier. */
   getUniqueId(): string {
     return this._uniqueId;
   }
 
+  /** Sets the persistent identifier. */
   setUniqueId(id: string): void {
     this._uniqueId = id;
   }
 
+  /** Returns the key trigger stored on the Blue Live cell. */
   getKeyTrigger(): number {
     return this._keyTrigger;
   }
 
+  /** Sets the key trigger stored on the Blue Live cell. */
   setKeyTrigger(v: number): void {
     this._keyTrigger = v;
   }
 
+  /** Returns the MIDI trigger stored on the Blue Live cell. */
   getMidiTrigger(): number {
     return this._midiTrigger;
   }
 
+  /** Sets the MIDI trigger stored on the Blue Live cell. */
   setMidiTrigger(v: number): void {
     this._midiTrigger = v;
   }
 
+  /** Reports whether the Blue Live cell is enabled. */
   isEnabled(): boolean {
     return this._enabled;
   }
 
+  /** Sets the enabled stored on the Blue Live cell. */
   setEnabled(v: boolean): void {
     this._enabled = v;
   }
 
+  /** Returns the sound object stored on the Blue Live cell. */
   getSoundObject(): SoundObject | null {
     return this._soundObject;
   }
 
+  /** Sets the sound object stored on the Blue Live cell. */
   setSoundObject(sObj: SoundObject | null): void {
     this._soundObject = sObj;
   }
 
+  /** Returns the human-readable display label. */
   getDisplayName(): string {
     return this._soundObject?.getName() ?? '';
   }
 
+  /** Reports the type of sound object currently assigned to this cell. */
   getSoundObjectType(): string {
     if (!this._soundObject) return '';
     return (
@@ -81,6 +94,7 @@ export class LiveObject implements BlueDataObject {
     );
   }
 
+  /** Returns the has sound object. */
   get hasSoundObject(): boolean {
     return this._soundObject !== null;
   }
@@ -97,6 +111,7 @@ export class LiveObject implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the Blue Live cell from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

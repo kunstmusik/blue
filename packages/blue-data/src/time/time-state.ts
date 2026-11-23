@@ -27,6 +27,7 @@ import { resolveSmpteRate, isValidSmpteFormat } from './smpte-timecode';
 
 const CURRENT_FORMAT_VERSION = 2;
 
+/** Score editor preferences for timeline rulers, snapping, visibility, zoom, and SMPTE labeling. */
 export class TimeState {
   private snapEnabled = false;
   private snapValue: SnapValueName = 'BEAT';
@@ -41,6 +42,7 @@ export class TimeState {
   private zoomIterations = 0;
   private historicalRulerInterval: number | null = null;
 
+  /** Creates the default editor state or copies the supplied state. */
   constructor(other?: TimeState) {
     if (other) {
       this.snapEnabled = other.snapEnabled;
@@ -58,100 +60,126 @@ export class TimeState {
     }
   }
 
+  /** Returns the display scale in pixels per second. Zero zoom steps gives 100, and every 32 steps doubles it. */
   getPixelSecond(): number {
     return 100 * Math.exp(Math.log(2) * (this.zoomIterations / 32.0));
   }
 
+  /** Reports whether score editing snaps to the configured grid. */
   isSnapEnabled(): boolean {
     return this.snapEnabled;
   }
+  /** Enables or disables grid snapping without changing the chosen grid interval. */
   setSnapEnabled(value: boolean): void {
     this.snapEnabled = value;
   }
 
+  /** Returns the named musical grid interval used for snapping. */
   getSnapValue(): SnapValueName {
     return this.snapValue;
   }
+  /** Selects the named musical grid interval used for snapping. */
   setSnapValue(value: SnapValueName): void {
     this.snapValue = value;
   }
 
+  /** Returns the primary ruler's display unit. */
   getTimeDisplay(): TimeBase {
     return this.timeDisplay;
   }
+  /** Sets the primary ruler's display unit without converting any stored positions. */
   setTimeDisplay(value: TimeBase): void {
     this.timeDisplay = value;
   }
 
+  /** Returns the secondary ruler's display unit. */
   getSecondaryTimeDisplay(): TimeBase {
     return this.secondaryTimeDisplay;
   }
+  /** Sets the secondary ruler's display unit independently of its visibility. */
   setSecondaryTimeDisplay(value: TimeBase): void {
     this.secondaryTimeDisplay = value;
   }
 
+  /** Reports whether the secondary ruler is visible. */
   isSecondaryRulerEnabled(): boolean {
     return this.secondaryRulerEnabled;
   }
+  /** Shows or hides the secondary ruler without changing its unit. */
   setSecondaryRulerEnabled(value: boolean): void {
     this.secondaryRulerEnabled = value;
   }
 
+  /** Reports whether the tempo row is visible. */
   isTempoRowVisible(): boolean {
     return this.tempoRowVisible;
   }
+  /** Shows or hides the tempo row without changing the tempo map. */
   setTempoRowVisible(value: boolean): void {
     this.tempoRowVisible = value;
   }
 
+  /** Reports whether the meter row is visible. */
   isMeterRowVisible(): boolean {
     return this.meterRowVisible;
   }
+  /** Shows or hides the meter row without changing the meter map. */
   setMeterRowVisible(value: boolean): void {
     this.meterRowVisible = value;
   }
 
+  /** Reports whether the markers row is visible. */
   isMarkersRowVisible(): boolean {
     return this.markersRowVisible;
   }
+  /** Shows or hides the markers row without changing project markers. */
   setMarkersRowVisible(value: boolean): void {
     this.markersRowVisible = value;
   }
 
+  /** Returns the configured SMPTE timecode rate. */
   getSmpteFrameRate(): number {
     return this.smpteFrameRate;
   }
+  /** Sets a supported SMPTE rate, clearing drop-frame mode if incompatible. Throws for an unsupported rate. */
   setSmpteFrameRate(value: number): void {
     if (!resolveSmpteRate(value)) throw new Error('Unsupported SMPTE rate');
     this.smpteFrameRate = value;
     if (!isValidSmpteFormat(value, this.smpteDropFrame)) this.smpteDropFrame = false;
   }
 
+  /** Reports whether the SMPTE ruler uses drop-frame numbering. */
   isSmpteDropFrame(): boolean {
     return this.smpteDropFrame;
   }
+  /** Sets drop-frame numbering. Throws if the requested format is incompatible with the current rate. */
   setSmpteDropFrame(value: boolean): void {
     if (!isValidSmpteFormat(this.smpteFrameRate, value))
       throw new Error('Unsupported SMPTE format');
     this.smpteDropFrame = value;
   }
 
+  /** Returns the zoom step count relative to the default scale. */
   getZoomIterations(): number {
     return this.zoomIterations;
   }
+  /** Sets the zoom step count relative to the default scale. */
   setZoomIterations(value: number): void {
     this.zoomIterations = value;
   }
 
+  /** Zooms out by one step. */
   lowerPixelSecond(): void {
     this.zoomIterations--;
   }
+  /** Zooms in by one step. */
   raisePixelSecond(): void {
     this.zoomIterations++;
   }
 
   // ─── XML Serialization ───
 
+  /** Writes the current timeline display settings in the versioned XML format. */
   saveAsXML(): Element {
     const elem = new Element('timeState');
     elem.setAttribute('version', CURRENT_FORMAT_VERSION.toString());
@@ -171,6 +199,7 @@ export class TimeState {
     return elem;
   }
 
+  /** Reads and validates timeline display settings, including supported legacy forms. */
   static loadFromXML(
     data: Element,
     providedContext?: XmlLoadContext,

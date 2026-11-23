@@ -27,6 +27,7 @@ export class AudioFile extends AbstractSoundObject {
   private _useCustomWindowSize = false;
   private _windowSize = 8;
 
+  /** Creates a default audio file or copies a supplied instance. */
   constructor(other?: AudioFile) {
     super();
     this.setName('Audio File');
@@ -44,30 +45,38 @@ export class AudioFile extends AbstractSoundObject {
     }
   }
 
+  /** Returns the sound file name stored on the audio file. */
   getSoundFileName(): string {
     return this._soundFileName;
   }
+  /** Sets the sound file name stored on the audio file. */
   setSoundFileName(name: string): void {
     this._soundFileName = name;
   }
 
+  /** Returns the Csound code appended after the generated synthesis body. */
   getCsoundPostCode(): string {
     return this._csoundPostCode;
   }
+  /** Sets the Csound code appended after the generated synthesis body. */
   setCsoundPostCode(code: string): void {
     this._csoundPostCode = code;
   }
 
+  /** Reports whether this sound object uses its own audio analysis window size. */
   useCustomWindowSize(): boolean {
     return this._useCustomWindowSize;
   }
+  /** Selects whether playback uses the configured window size. */
   setUseCustomWindowSize(val: boolean): void {
     this._useCustomWindowSize = val;
   }
 
+  /** Returns the configured analysis window size used when the custom window is enabled. */
   getWindowSize(): number {
     return this._windowSize;
   }
+  /** Sets the window size used when the custom window is enabled. */
   setWindowSize(size: number): void {
     this._windowSize = size;
   }
@@ -76,6 +85,7 @@ export class AudioFile extends AbstractSoundObject {
     return TimeBehavior.NOT_SUPPORTED;
   }
 
+  /** Returns the known source origin for selected-range rendering, in beats. */
   getRangeOriginBeats(context: TimeContext): number | null | undefined {
     if (this.getNoteProcessorChain().getProcessors().length > 0) return undefined;
     if (!this._soundFileName) return null;
@@ -119,6 +129,7 @@ export class AudioFile extends AbstractSoundObject {
     return notes;
   }
 
+  /** Builds the Csound instrument body used to play the audio file. */
   generateInstrument(): GenericInstrument | null {
     const instrText = this.generateInstrumentText();
     if (!instrText) {
@@ -196,6 +207,7 @@ export class AudioFile extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the audio file from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

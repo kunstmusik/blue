@@ -10,8 +10,11 @@ import { BSBCompilationUnit } from './bsb-compilation-unit';
 import { Parameter } from '../../automation/parameter';
 
 export class BSBCheckBox extends BSBWidget {
+  /** Text displayed beside the checkbox. */
   label = 'label';
+  /** Whether the checkbox is checked. */
   selected = false;
+  /** Whether this widget participates in value randomization. */
   randomizable = true;
 
   override getPresetValue(): string {
@@ -39,6 +42,7 @@ export class BSBCheckBox extends BSBWidget {
     this.addCompilationReplacement(unit, this.objectName, this.selected ? '1' : '0', parameters);
   }
 
+  /** Reconstructs the checkbox widget from its Blue XML element, using the supplied diagnostic context when provided. */
   loadFromXML(data: Element, context = new XmlLoadContext(data)): void {
     this.loadFromXMLCommon(data, context);
     const lbl = data.getTextString('label');
@@ -49,6 +53,7 @@ export class BSBCheckBox extends BSBWidget {
     if (rand) this.randomizable = readBoolean(rand, context);
   }
 
+  /** Picks a new checkbox widget value when randomization is enabled. */
   randomize(): void {
     if (!this.randomizable) return;
     this.setValue(Math.random() >= 0.5 ? 1 : 0);

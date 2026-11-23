@@ -18,6 +18,7 @@ export class MidiInputProcessor implements BlueDataObject {
   private _ampConstant = '';
   private _scale: Scale | null = new Scale();
 
+  /** Creates a default MIDI input processor or copies a supplied instance. */
   constructor(other?: MidiInputProcessor) {
     if (other) {
       this._keyMapping = other._keyMapping;
@@ -28,42 +29,52 @@ export class MidiInputProcessor implements BlueDataObject {
     }
   }
 
+  /** Returns the key mapping stored on the MIDI input processor. */
   getKeyMapping(): string {
     return this._keyMapping;
   }
 
+  /** Sets the key mapping stored on the MIDI input processor. */
   setKeyMapping(mapping: string): void {
     this._keyMapping = mapping;
   }
 
+  /** Returns the model used to map MIDI velocities to Csound amplitude values. */
   getVelocityMapping(): string {
     return this._velMapping;
   }
 
+  /** Changes the rule used to map MIDI velocities. */
   setVelocityMapping(mapping: string): void {
     this._velMapping = mapping;
   }
 
+  /** Returns the pitch constant stored on the MIDI input processor. */
   getPitchConstant(): string {
     return this._pitchConstant;
   }
 
+  /** Sets the pitch constant stored on the MIDI input processor. */
   setPitchConstant(value: string): void {
     this._pitchConstant = value;
   }
 
+  /** Returns the amp constant stored on the MIDI input processor. */
   getAmpConstant(): string {
     return this._ampConstant;
   }
 
+  /** Sets the amp constant stored on the MIDI input processor. */
   setAmpConstant(value: string): void {
     this._ampConstant = value;
   }
 
+  /** Returns the tuning scale used to interpret note pitches. */
   getScale(): Scale | null {
     return this._scale;
   }
 
+  /** Sets the tuning scale used to interpret note pitches. */
   setScale(scale: Scale | null): void {
     this._scale = scale ? new Scale(scale) : null;
   }
@@ -78,6 +89,7 @@ export class MidiInputProcessor implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the MIDI input processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): MidiInputProcessor {
     checkRoot(data, 'midiInputProcessor', context);
     checkShape(

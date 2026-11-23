@@ -1,0 +1,364 @@
+name: Documentation Pages
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/actions/setup-blue-build/action.yml'
+      - '.github/workflows/docs-pages.yml'
+      - 'LICENSING.md'
+      - 'docs/manual/**'
+      - 'docs/site/**'
+      - 'packages/blue-cli/**'
+      - 'packages/blue-data/**'
+      - 'scripts/build-docs-site.mjs'
+      - 'scripts/docs-pages-workflow.test.mjs'
+      - 'scripts/docs-site-*.mjs'
+      - 'scripts/render-docs-*.mjs'
+      - 'scripts/verify-docs-site.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - '.github/actions/setup-blue-build/action.yml'
+      - '.github/workflows/docs-pages.yml'
+      - 'LICENSING.md'
+      - 'docs/manual/**'
+      - 'docs/site/**'
+      - 'packages/blue-cli/**'
+      - 'packages/blue-data/**'
+      - 'scripts/build-docs-site.mjs'
+      - 'scripts/docs-pages-workflow.test.mjs'
+      - 'scripts/docs-site-*.mjs'
+      - 'scripts/render-docs-*.mjs'
+      - 'scripts/verify-docs-site.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+    inputs:
+      first_deploy:
+        description: Allow the first publication when the site and both baseline files return HTTP 404
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# PRs are isolated by number. Only the trusted repository's develop push or
+# dispatch shares the production lock. Other dispatch refs get unique groups,
+# so they cannot replace or cancel a queued production run.
+concurrency:
+  group: >-
+    ${{ github.event_name == 'pull_request' && format('docs-pages-pr-{0}', github.event.pull_request.number) ||
+        github.event_name == 'workflow_dispatch' &&
+          (github.repository != 'kunstmusik/blue' || github.ref != 'refs/heads/develop') &&
+          format('docs-pages-untrusted-{0}', github.run_id) ||
+        'docs-pages-production' }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  validate-pull-request:
+    name: Validate documentation candidate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Setup pnpm 12.8.1
+        uses: pnpm/action-setup@v6
+        with:
+          version: '12.8.1'
+          run_install: false
+
+      - name: Setup Quarto 1.10.18
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: '1.10.18'
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check strict Blue Data API coverage
+        run: pnpm --filter @blue/data docs:api
+
+      - name: Build and verify documentation site
+        env:
+          BLUE_DOCS_RELEASE_TOKEN: ${{ github.token }}
+        run: pnpm docs:site:build
+
+      - name: Install Chromium for browser smoke
+        run: pnpm --filter @blue/app exec playwright install --with-deps chromium
+
+      - name: Smoke-test documentation navigation
+        run: pnpm docs:site:smoke
+
+      - name: Upload inspectable pull-request artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-site-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: build/docs-site
+          if-no-files-found: error
+          retention-days: 14
+
+  build-production:
+    name: Build trusted production artifact
+    if: >-
+      ${{ github.repository == 'kunstmusik/blue' &&
+          ((github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+           (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')) }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      run_attempt: ${{ steps.record-attempt.outputs.run_attempt }}
+    steps:
+      # Resolve the current develop head when this queued job starts; do not
+      # publish the possibly stale event SHA from an earlier push or dispatch.
+      - name: Checkout current develop
+        uses: actions/checkout@v7
+        with:
+          ref: refs/heads/develop
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Record verified run attempt
+        id: record-attempt
+        run: echo "run_attempt=${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Setup pnpm 12.8.1
+        uses: pnpm/action-setup@v6
+        with:
+          version: '12.8.1'
+          run_install: false
+
+      - name: Setup Quarto 1.10.18
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: '1.10.18'
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check strict Blue Data API coverage
+        run: pnpm --filter @blue/data docs:api
+
+      - name: Resolve live publication baseline
+        id: live-baseline
+        shell: bash
+        env:
+          SITE_URL: https://kunstmusik.github.io/blue/
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          REPOSITORY: ${{ github.repository }}
+          FIRST_DEPLOY: ${{ inputs.first_deploy }}
+        run: |
+          set -euo pipefail
+          baseline_dir="${RUNNER_TEMP}/docs-pages-baseline"
+          mkdir -p "$baseline_dir"
+          cache_key="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          root_status="$(curl --silent --show-error --location \
+            --output "${baseline_dir}/home.html" \
+            --write-out '%{http_code}' \
+            "${SITE_URL}?run-id=${cache_key}-home")"
+
+          case "$root_status" in
+            200)
+              for file in publication-inventory.json publication-catalog.json; do
+                status="$(curl --fail --silent --show-error --location \
+                  --output "${baseline_dir}/${file}" \
+                  --write-out '%{http_code}' \
+                  "${SITE_URL}${file}?run-id=${cache_key}")"
+                if [[ "$status" != '200' ]]; then
+                  echo "::error::Expected HTTP 200 for ${SITE_URL}${file}, got ${status}."
+                  exit 1
+                fi
+              done
+              node --input-type=module -e \
+                "import { readFileSync } from 'node:fs'; for (const file of process.argv.slice(1)) JSON.parse(readFileSync(file, 'utf8'));" \
+                "${baseline_dir}/publication-inventory.json" \
+                "${baseline_dir}/publication-catalog.json"
+              echo 'first-deploy=false' >> "$GITHUB_OUTPUT"
+              ;;
+            404)
+              for file in publication-inventory.json publication-catalog.json; do
+                status="$(curl --silent --show-error --location \
+                  --output /dev/null \
+                  --write-out '%{http_code}' \
+                  "${SITE_URL}${file}?run-id=${cache_key}")"
+                if [[ "$status" != '404' ]]; then
+                  echo "::error::The site root returned 404, but ${SITE_URL}${file} returned ${status}; first deployment requires all three URLs to be absent."
+                  exit 1
+                fi
+              done
+              if [[ "$EVENT_NAME" != 'workflow_dispatch' || \
+                    "$GIT_REF" != 'refs/heads/develop' || \
+                    "$REPOSITORY" != 'kunstmusik/blue' || \
+                    "$FIRST_DEPLOY" != 'true' ]]; then
+                echo '::error::First deployment requires the explicit first_deploy input on trusted develop and HTTP 404 from the home page and both baseline files.'
+                exit 1
+              fi
+              echo 'first-deploy=true' >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::Unexpected HTTP ${root_status} from ${SITE_URL}; refusing to choose a publication baseline."
+              exit 1
+              ;;
+          esac
+
+      - name: Build complete documentation site
+        env:
+          BLUE_DOCS_RELEASE_TOKEN: ${{ github.token }}
+        run: pnpm docs:site:build
+
+      - name: Verify retained publication history
+        if: steps.live-baseline.outputs.first-deploy == 'false'
+        shell: bash
+        run: >-
+          pnpm docs:site:verify
+          --baseline "${RUNNER_TEMP}/docs-pages-baseline/publication-inventory.json"
+          --baseline-catalog "${RUNNER_TEMP}/docs-pages-baseline/publication-catalog.json"
+
+      - name: Verify explicit first deployment
+        if: >-
+          steps.live-baseline.outputs.first-deploy == 'true' &&
+          inputs.first_deploy &&
+          github.repository == 'kunstmusik/blue' &&
+          github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/develop'
+        run: pnpm docs:site:verify --first-deploy
+
+      - name: Install Chromium for browser smoke
+        run: pnpm --filter @blue/app exec playwright install --with-deps chromium
+
+      - name: Smoke-test documentation navigation
+        run: pnpm docs:site:smoke
+
+      - name: Upload inspectable production artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-site-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/docs-site
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload complete Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/docs-site
+          retention-days: 7
+
+  deploy:
+    name: Deploy verified Pages artifact
+    if: >-
+      ${{ github.repository == 'kunstmusik/blue' &&
+          ((github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+           (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')) }}
+    needs: build-production
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Reject a stale verified build attempt
+        if: needs.build-production.outputs.run_attempt != github.run_attempt
+        env:
+          VERIFIED_ATTEMPT: ${{ needs.build-production.outputs.run_attempt }}
+          CURRENT_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          echo "::error::The verified Pages artifact is from run attempt ${VERIFIED_ATTEMPT}, not ${CURRENT_ATTEMPT}. Dispatch a fresh workflow run on develop instead of rerunning failed jobs."
+          exit 1
+
+      - name: Deploy Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+  verify-live-publication:
+    name: Verify deployed publication snapshot
+    if: >-
+      ${{ github.repository == 'kunstmusik/blue' &&
+          ((github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+           (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/develop')) }}
+    needs: deploy
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Download this run's inspection artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: docs-site-inspection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/docs-site-candidate
+
+      - name: Compare published baselines with the deployed candidate
+        shell: bash
+        env:
+          SITE_URL: https://kunstmusik.github.io/blue/
+          CANDIDATE_DIR: ${{ runner.temp }}/docs-site-candidate
+        run: |
+          set -euo pipefail
+          cache_key="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          live_dir="${RUNNER_TEMP}/docs-pages-live"
+          mkdir -p "$live_dir"
+
+          if ! home_status="$(curl --fail --silent --show-error --location \
+            --max-time 30 \
+            --output "${live_dir}/home.html" \
+            --write-out '%{http_code}' \
+            "${SITE_URL}?run-id=${cache_key}-home")"; then
+            echo "::error::Could not fetch the deployed home page from ${SITE_URL}."
+            exit 1
+          fi
+          if [[ "$home_status" != '200' ]] || \
+            ! grep --fixed-strings --quiet '<title>Blue Documentation</title>' "${live_dir}/home.html"; then
+            echo "::error::The deployed home page returned ${home_status} or did not contain the expected title."
+            exit 1
+          fi
+
+          for file in publication-inventory.json publication-catalog.json; do
+            matched=false
+            for attempt in {1..12}; do
+              if status="$(curl --fail --silent --show-error --location \
+                --max-time 30 \
+                --output "${live_dir}/${file}" \
+                --write-out '%{http_code}' \
+                "${SITE_URL}${file}?run-id=${cache_key}-${attempt}")" && \
+                [[ "$status" == '200' ]] && \
+                cmp --silent "${CANDIDATE_DIR}/${file}" "${live_dir}/${file}"; then
+                matched=true
+                break
+              fi
+              sleep 5
+            done
+            if [[ "$matched" != 'true' ]]; then
+              echo "::error::The deployed ${file} did not match this run's verified candidate after 12 cache-busted requests."
+              exit 1
+            fi
+          done

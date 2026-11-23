@@ -177,6 +177,8 @@ Standalone npm archives and the GitHub-installed `blue-projects` skill have narr
   - `@rgrove/parse-xml` `4.2.3` (`ISC`)
   - `quickjs-emscripten` `0.32.0` (`MIT`, plus `@jitl/quickjs-ffi-types`, `@jitl/quickjs-wasmfile-debug-asyncify`, `@jitl/quickjs-wasmfile-debug-sync`, `@jitl/quickjs-wasmfile-release-asyncify`, `@jitl/quickjs-wasmfile-release-sync`, and `quickjs-emscripten-core` at `0.32.0`, all `MIT` — listed in [Production dependencies through `@blue/data`](#production-dependencies-through-bluedata)).
 
+- **Documentation build tool**: [TypeDoc 0.28.20](https://github.com/TypeStrong/typedoc/tree/v0.28.20) (Apache-2.0) is a development dependency. Its generated HTML and theme assets are outside the npm archive.
+
 ### `@kunstmusik/blue-cli` (`packages/blue-cli`)
 
 - **Package license field**: `SEE LICENSE IN THIRD_PARTY_NOTICES.md`, separating the JavaScript CLI bundle, externalized npm runtime dependencies, and separate-process Java helper scopes.
@@ -206,3 +208,17 @@ Standalone npm archives and the GitHub-installed `blue-projects` skill have narr
 
 - **License**: repository-default `GPL-3.0-or-later` (declared in [skills/blue-projects/SKILL.md](../skills/blue-projects/SKILL.md)).
 - **Shipped license file**: [skills/blue-projects/LICENSE](../skills/blue-projects/LICENSE) (verbatim copy of root [LICENSE](../LICENSE)) packaged alongside `SKILL.md`, `references/node.md`, and the original asset-free fixture `assets/example.blue`.
+
+## Workspace build/test-only dependencies
+
+These lockfile entries belong to the repository's build and test toolchain.
+They are not production runtime dependencies and their code is not emitted in
+the documentation site. The Quarto manual's generated runtime assets have a
+separate version-pinned inventory in
+[`docs/site/quarto-1.10.18-NOTICES.md`](site/quarto-1.10.18-NOTICES.md).
+
+| Package                                                               | Version | License | Scope                                  |
+| --------------------------------------------------------------------- | ------- | ------- | -------------------------------------- |
+| [parse5](https://github.com/inikulin/parse5/tree/v8.0.1)              | 8.0.1   | MIT     | Direct root devDependency (build/test) |
+| [yaml](https://github.com/eemeli/yaml/tree/v2.9.1)                    | 2.9.1   | ISC     | Build-tool dependency                  |
+| [http-server](https://github.com/http-party/http-server/tree/v14.1.1) | 14.1.1  | MIT     | Local documentation preview only       |

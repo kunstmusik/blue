@@ -15,18 +15,22 @@ export class ChannelList extends Array<Channel> implements BlueDataObject {
   private _listName = '';
   private _listNameEditSupported = true;
 
+  /** Returns the persistent association with a project source. */
   getAssociation(): string | null {
     return this._association;
   }
 
+  /** Sets the persistent association with a project source. */
   setAssociation(association: string | null): void {
     this._association = association;
   }
 
+  /** Returns the list name stored on the channel list. */
   getListName(): string {
     return this._listName;
   }
 
+  /** Sets the list name stored on the channel list. */
   setListName(listName: string): void {
     if (!this._listNameEditSupported) {
       throw new Error(
@@ -36,10 +40,12 @@ export class ChannelList extends Array<Channel> implements BlueDataObject {
     this._listName = listName;
   }
 
+  /** Reports whether the host should let users rename the list. */
   isListNameEditSupported(): boolean {
     return this._listNameEditSupported;
   }
 
+  /** Sets the list name edit supported stored on the channel list. */
   setListNameEditSupported(listNameEditSupported: boolean): void {
     this._listNameEditSupported = listNameEditSupported;
   }
@@ -56,6 +62,7 @@ export class ChannelList extends Array<Channel> implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the channel list from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,

@@ -68,6 +68,8 @@ export function assignParameterNames(parameters: Parameter[]): void {
  * Usage: import { ParameterHelper } from '@blue/data';
  */
 export const ParameterHelper = {
+  /** Collects automation parameters from their project owners. */
   getAllParameters,
+  /** Assigns generated Csound variable names for this compilation. */
   assignParameterNames,
 };

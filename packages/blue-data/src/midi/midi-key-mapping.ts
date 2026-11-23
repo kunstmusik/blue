@@ -13,30 +13,38 @@ export class MidiKeyMapping implements BlueDataObject {
   private _baseNote = 60; // Middle C
   private _range = 12; // One octave
 
+  /** Reports whether the MIDI key mapping is enabled. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Sets the enabled stored on the MIDI key mapping. */
   setEnabled(e: boolean): void {
     this._enabled = e;
   }
 
+  /** Returns the p field index stored on the MIDI key mapping. */
   getPFieldIndex(): number {
     return this._pFieldIndex;
   }
+  /** Sets the p field index stored on the MIDI key mapping. */
   setPFieldIndex(idx: number): void {
     this._pFieldIndex = idx;
   }
 
+  /** Returns the base note stored on the MIDI key mapping. */
   getBaseNote(): number {
     return this._baseNote;
   }
+  /** Sets the base note stored on the MIDI key mapping. */
   setBaseNote(n: number): void {
     this._baseNote = n;
   }
 
+  /** Returns the range stored on the MIDI key mapping. */
   getRange(): number {
     return this._range;
   }
+  /** Sets the range stored on the MIDI key mapping. */
   setRange(r: number): void {
     this._range = r;
   }
@@ -50,6 +58,7 @@ export class MidiKeyMapping implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the MIDI key mapping from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): MidiKeyMapping {
     checkRoot(data, 'midiKeyMapping', context);
     checkShape(data, [], ['enabled', 'pFieldIndex', 'baseNote', 'range'], context);

@@ -7,11 +7,14 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.InversionProcessor';
 
+/** Mirrors a numeric p-field around a configured center value. */
 export class InversionProcessor extends NoteProcessor {
   private _value = 10;
   private _pfield = 4;
 
+  /** Creates an inversion processor initialized with its default settings. */
   constructor();
+  /** Creates an inversion processor using the source instance’s settings. */
   constructor(src: InversionProcessor);
   constructor(src?: InversionProcessor) {
     super();
@@ -21,16 +24,20 @@ export class InversionProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the inversion center as editable text. */
   getVal(): string {
     return this._value.toString();
   }
+  /** Sets the numeric center around which the selected p-field is mirrored. */
   setVal(value: string): void {
     this._value = parseFloat(value);
   }
@@ -68,6 +75,7 @@ export class InversionProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the inversion processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): InversionProcessor {
     validateProcessorXml(data, 'InversionProcessor', context);
     const proc = new InversionProcessor();

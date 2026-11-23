@@ -7,20 +7,25 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.MultiplyProcessor';
 
+/** Multiplies a numeric p-field on each note by a constant. */
 export class MultiplyProcessor extends NoteProcessor {
   private _pfield = 4;
   private _value = 1;
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the factor as editable text. */
   getVal(): string {
     return this._value.toString();
   }
+  /** Sets the numeric factor applied to the selected p-field. */
   setVal(val: string): void {
     this._value = parseFloat(val);
   }
@@ -60,6 +65,7 @@ export class MultiplyProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the multiply processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): MultiplyProcessor {
     validateProcessorXml(data, 'MultiplyProcessor', context);
     const proc = new MultiplyProcessor();

@@ -79,6 +79,7 @@ function convertElement(source: string, node: XmlElement): RawXmlElement {
   };
 }
 
+/** Parses XML and indexes elements so callers can retrieve exact source slices. */
 export function parseRawXmlDocument(source: string): RawXmlDocument {
   if (DOCUMENT_TYPE_PATTERN.test(source)) {
     throw new Error('XML document type declarations are not allowed');
@@ -98,6 +99,7 @@ export function parseRawXmlDocument(source: string): RawXmlDocument {
   return { source, root: convertElement(source, root) };
 }
 
+/** Collects indexed elements matching the requested name. */
 export function findRawXmlElements(document: RawXmlDocument, name: string): RawXmlElement[] {
   const matches: RawXmlElement[] = [];
   const visit = (node: RawXmlElement): void => {

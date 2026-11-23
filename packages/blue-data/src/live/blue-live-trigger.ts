@@ -42,14 +42,32 @@ import type { JavaRuntimeClientContract } from '../java-runtime';
  * {@link PreparedScoreBatch}; any failure returns a {@link TriggerPreparationFailure}.
  */
 export type TriggerPreparationResult =
-  | { kind: 'prepared'; batch: PreparedScoreBatch }
-  | { kind: 'failure'; failure: TriggerPreparationFailure }
-  | { kind: 'empty'; empty: TriggerEmptyResult };
+  | {
+      /** Discriminant identifying the `prepared` variant. */
+      kind: 'prepared';
+      /** Prepared score batch for a trigger that generated events. */
+      batch: PreparedScoreBatch;
+    }
+  | {
+      /** Discriminant identifying the `failure` variant. */
+      kind: 'failure';
+      /** Diagnostic describing why trigger preparation failed. */
+      failure: TriggerPreparationFailure;
+    }
+  | {
+      /** Discriminant identifying the `empty` variant. */
+      kind: 'empty';
+      /** Timing and target information from a trigger that generated no events. */
+      empty: TriggerEmptyResult;
+    };
 
+/** Generated Csound score and context for one Blue Live trigger request. */
 export interface PreparedScoreBatch {
   /** Stable LiveObject IDs in deterministic column-major target order. */
   targetIds: string[];
+  /** Number of targets selected for the request. */
   targetCount: number;
+  /** Number of generated score notes in the batch. */
   noteCount: number;
   /** Score text; empty only when the generated note count is zero. */
   scoreText: string;
@@ -59,13 +77,19 @@ export interface PreparedScoreBatch {
   tempo: number;
 }
 
+/** A valid Blue Live trigger request that produced no score events. */
 export interface TriggerEmptyResult {
+  /** IDs of the selected cells, in trigger order. */
   targetIds: string[];
+  /** Number of selected trigger targets even though no notes were generated. */
   targetCount: number;
+  /** Requested tempo in beats per minute. */
   tempo: number;
+  /** Multiplier applied to beat-domain timing for this tempo. */
   tempoScale: number;
 }
 
+/** Machine-readable category for a Blue Live trigger preparation failure. */
 export type TriggerPreparationFailureCode =
   | 'invalid-request'
   | 'target-not-found'
@@ -73,8 +97,11 @@ export type TriggerPreparationFailureCode =
   | 'runtime-unavailable'
   | 'generation-failed';
 
+/** Reason a Blue Live trigger request could not be prepared for playback. */
 export interface TriggerPreparationFailure {
+  /** Machine-readable reason for the diagnostic. */
   code: TriggerPreparationFailureCode;
+  /** Human-readable diagnostic text. */
   message: string;
   /** Stable ID of the target that failed, when known. */
   targetId?: string;
@@ -86,7 +113,9 @@ export interface TriggerPreparationFailure {
  * both are absent, only synchronous generation is attempted.
  */
 export interface TriggerRuntimeContext {
+  /** Host-provided JavaScript session used while generating score. */
   javaScriptSession?: JavaScriptSession;
+  /** Host adapter for Clojure and Jython execution. */
   javaRuntimeClient?: JavaRuntimeClientContract | null;
 }
 
@@ -109,7 +138,15 @@ export function resolveTriggerTargets(
   bins: LiveObjectBins,
   mode: TriggerMode,
   liveObjectId?: string,
-): { targets: LiveObject[] } | { failure: TriggerPreparationFailure } {
+):
+  | {
+      /** Targets belonging to this resolve trigger targets, in stored order. */
+      targets: LiveObject[];
+    }
+  | {
+      /** Diagnostic returned when a requested target cannot be resolved. */
+      failure: TriggerPreparationFailure;
+    } {
   if (mode === 'selected') {
     if (!liveObjectId || liveObjectId.trim() === '') {
       return {

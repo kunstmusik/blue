@@ -30,79 +30,98 @@ export class LiveData implements BlueDataObject {
   private _liveObjectBins: LiveObjectBins;
   private _liveObjectSets: LiveObjectSetList;
 
+  /** Creates Blue Live project state with an empty performance grid and no saved selections. */
   constructor() {
     this._liveObjectBins = new LiveObjectBins();
     this._liveObjectSets = new LiveObjectSetList();
   }
 
+  /** Returns the command-line text supplied to the generator. */
   getCommandLine(): string {
     return this._commandLine;
   }
 
+  /** Sets the command-line text supplied to the generator. */
   setCommandLine(v: string): void {
     this._commandLine = v ?? '';
   }
 
+  /** Reports whether Blue Live uses its configured command line. */
   isCommandLineEnabled(): boolean {
     return this._commandLineEnabled;
   }
 
+  /** Controls whether Blue Live uses its configured command line. */
   setCommandLineEnabled(v: boolean): void {
     this._commandLineEnabled = v;
   }
 
+  /** Reports whether the configured command overrides the generated command line. */
   isCommandLineOverride(): boolean {
     return this._commandLineOverride;
   }
 
+  /** Controls whether the configured command line replaces the generated one. */
   setCommandLineOverride(v: boolean): void {
     this._commandLineOverride = v;
   }
 
+  /** Returns the tempo stored on the Blue Live performance state. */
   getTempo(): number {
     return this._tempo;
   }
 
+  /** Sets the tempo stored on the Blue Live performance state. */
   setTempo(v: number): void {
     this._tempo = v;
   }
 
+  /** Returns the repeat stored on the Blue Live performance state. */
   getRepeat(): number {
     return this._repeat;
   }
 
+  /** Sets the repeat stored on the Blue Live performance state. */
   setRepeat(v: number): void {
     this._repeat = v;
   }
 
+  /** Reports whether Blue Live is configured to repeat triggering. */
   isRepeatEnabled(): boolean {
     return this._repeatEnabled;
   }
 
+  /** Enables or disables repeat triggering in Blue Live. */
   setRepeatEnabled(v: boolean): void {
     this._repeatEnabled = v;
   }
 
+  /** Returns the editable Csound code stored with the Blue Live session. */
   getLiveCodeText(): string {
     return this._liveCodeText;
   }
 
+  /** Replaces the live Csound code stored in the project. */
   setLiveCodeText(v: string): void {
     this._liveCodeText = v ?? '';
   }
 
+  /** Returns the Live object bins stored on the Blue Live performance state. */
   getLiveObjectBins(): LiveObjectBins {
     return this._liveObjectBins;
   }
 
+  /** Sets the Live object bins stored on the Blue Live performance state. */
   setLiveObjectBins(bins: LiveObjectBins): void {
     this._liveObjectBins = bins;
   }
 
+  /** Returns the Live object sets stored on the Blue Live performance state. */
   getLiveObjectSets(): LiveObjectSetList {
     return this._liveObjectSets;
   }
 
+  /** Sets the Live object sets stored on the Blue Live performance state. */
   setLiveObjectSets(sets: LiveObjectSetList): void {
     this._liveObjectSets = sets;
   }
@@ -121,6 +140,7 @@ export class LiveData implements BlueDataObject {
     return retVal;
   }
 
+  /** Reconstructs the Blue Live performance state from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,

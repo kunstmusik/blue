@@ -13,6 +13,7 @@ import {
   parseXmlInteger,
 } from '../../utilities/xml';
 
+/** Tracker sequence with ordered columns, a note template, and an instrument assignment. */
 export class Track {
   private _name = '';
   private _noteTemplate = 'i <INSTR_ID> <START> <DUR> <pch> <db>';
@@ -20,6 +21,7 @@ export class Track {
   private _columns: Column[] = [];
   private _trackerNotes: TrackerNote[] = [];
 
+  /** Creates a tracker track with pitch and amplitude columns by default. Pass false to start without columns. */
   constructor(init = true) {
     if (init) {
       this.addColumn(new PitchColumn());
@@ -27,6 +29,7 @@ export class Track {
     }
   }
 
+  /** Creates a copy of an existing tracker track and its columns and steps. */
   static fromOther(other: Track): Track {
     const track = new Track(false);
     track._name = other._name;
@@ -41,6 +44,7 @@ export class Track {
     return track;
   }
 
+  /** Resizes the tracker sequence, adding blank steps or dropping excess steps. */
   resizeSteps(steps: number): void {
     if (steps < this._trackerNotes.length) {
       this._trackerNotes.splice(steps);
@@ -60,44 +64,55 @@ export class Track {
     return note;
   }
 
+  /** Returns the column definition at the supplied index. */
   getColumn(index: number): Column | null {
     if (index === 0) return null;
     return this._columns[index - 1] ?? null;
   }
 
+  /** Returns the number of columns in the tracker track. */
   getNumColumns(): number {
     return 1 + this._columns.length;
   }
 
+  /** Returns the number of steps in the tracker track. */
   getNumSteps(): number {
     return this._trackerNotes.length;
   }
 
+  /** Returns the entry at the supplied index in the tracker track’s tracker notes. */
   getTrackerNote(rowIndex: number): TrackerNote {
     return this._trackerNotes[rowIndex];
   }
 
+  /** Sets the name stored on the tracker track. */
   setName(name: string): void {
     this._name = name;
   }
+  /** Returns the name stored on the tracker track. */
   getName(): string {
     return this._name;
   }
 
+  /** Returns the Csound text template expanded for each generated note. */
   getNoteTemplate(): string {
     return this._noteTemplate;
   }
+  /** Sets the Csound text template expanded for each generated note. */
   setNoteTemplate(template: string): void {
     this._noteTemplate = template;
   }
 
+  /** Returns the instrument ID stored on the tracker track. */
   getInstrumentId(): string {
     return this._instrumentId;
   }
+  /** Sets the instrument ID stored on the tracker track. */
   setInstrumentId(id: string): void {
     this._instrumentId = id;
   }
 
+  /** Adds a column and expands the stored step values to match. */
   addColumn(col: Column): void {
     this._columns.push(col);
     for (const note of this._trackerNotes) {
@@ -105,6 +120,7 @@ export class Track {
     }
   }
 
+  /** Removes a column and its values from the tracker steps. */
   removeColumn(col: Column): void {
     const index = this._columns.indexOf(col);
     if (index < 0) return;
@@ -115,6 +131,7 @@ export class Track {
     this._columns.splice(index, 1);
   }
 
+  /** Generates Csound notes from the track's active steps and note template. */
   generateNotes(stepsPerBeat: number): NoteList {
     const retVal = new NoteList();
     let instrId = this._instrumentId;
@@ -182,6 +199,7 @@ export class Track {
     return retVal;
   }
 
+  /** Serializes the tracker track and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const retVal = new Element('track');
     retVal.addElement('name').setText(this._name);
@@ -201,6 +219,7 @@ export class Track {
     return retVal;
   }
 
+  /** Reconstructs the tracker track from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): Track {
     checkRoot(data, 'track', context);
     checkShape(
@@ -325,16 +344,19 @@ export class Track {
     return retVal;
   }
 
+  /** Inserts a tracker step at the supplied position. */
   insertNote(start: number): void {
     this._trackerNotes.splice(start, 0, this.createNewNote());
     this._trackerNotes.pop();
   }
 
+  /** Removes a tracker step at the supplied position. */
   removeNote(start: number): void {
     this._trackerNotes.splice(start, 1);
     this._trackerNotes.push(this.createNewNote());
   }
 
+  /** Clears the contents of the tracker steps. */
   clearNotes(): void {
     for (const note of this._trackerNotes) {
       note.clear();

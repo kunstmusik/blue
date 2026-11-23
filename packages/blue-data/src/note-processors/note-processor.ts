@@ -6,12 +6,14 @@ import type { CompileData } from '../compile-data';
 import { NoteList } from '../sound-objects/note-list';
 import { Element } from '../serialization/xml-reader';
 
+/** Base contract for transformations over generated Csound note lists. */
 export abstract class NoteProcessor {
   /**
    * Process a NoteList, potentially modifying or replacing notes.
    */
   abstract process(notes: NoteList): NoteList;
 
+  /** Runs the processor asynchronously. The base implementation delegates to synchronous processing. */
   async processAsync(notes: NoteList, _compileData?: CompileData): Promise<NoteList> {
     return this.process(notes);
   }

@@ -10,9 +10,13 @@ import {
   type PanLawDb,
 } from './mixer/channel-pan';
 
-interface StringChannelEntry {
+/** Allocated string channel and initial value for a single compile. */
+export interface StringChannelEntry {
+  /** Widget object name associated with this channel. */
   objectName: string;
+  /** Initial string value sent to Csound. */
   value: string;
+  /** Generated Csound channel name for the string. */
   channelName: string;
 }
 
@@ -23,10 +27,20 @@ interface StringChannelEntry {
  * only; it is never serialized into `.blue` XML.
  */
 export type CompiledMidiInstrumentTarget =
-  | { kind: 'track'; trackId: string; runtimeInstrumentId: number | string }
   | {
+      /** Discriminant identifying the `track` variant. */
+      kind: 'track';
+      /** Persistent identifier of the owning score track. */
+      trackId: string;
+      /** Csound instrument ID assigned for this render. */
+      runtimeInstrumentId: number | string;
+    }
+  | {
+      /** Discriminant identifying the `orchestra` variant. */
       kind: 'orchestra';
+      /** Project identifier of the orchestra assignment. */
       assignmentId: string;
+      /** Csound instrument ID assigned for this render. */
       runtimeInstrumentId: number | string;
     };
 
@@ -44,6 +58,7 @@ export type CompiledMidiInstrumentTarget =
 export interface CompiledBlueX7Binding {
   /** Stable location identity (never a display name). */
   ownerIdentity: string;
+  /** Csound instrument ID allocated to this compiled BlueX7 instance. */
   runtimeInstrumentId: string | number;
   /** Semantic parameter key -> compiled automation channel (gk_blue_autoN). */
   parameterChannels: ReadonlyMap<string, string>;
@@ -59,16 +74,25 @@ export interface CompiledBlueX7Binding {
  * Derived render output only; never serialized into `.blue` XML.
  */
 export interface CompiledMeterChannelBinding {
+  /** Mixer category of the metered channel. */
   readonly kind: 'source' | 'sub' | 'master';
+  /** Key included in the generated Csound meter channel names. */
   readonly csdKey: string;
+  /** Identifier used to associate meter readings with a mixer strip. */
   readonly stripId: string;
+  /** Channel name captured for this render's meter display. */
   readonly displayName: string;
+  /** Mixer channel from the render snapshot. */
   readonly channel: Channel;
+  /** Zero-based ordinal within the source or sub channel list. Omitted for the master. */
   readonly channelIndex?: number;
 }
 
+/** Meter bindings and output channel count associated with one compiled CSD. */
 export interface MeterBindingMap {
+  /** Ordered meter bindings for this render. */
   readonly entries: readonly CompiledMeterChannelBinding[];
+  /** Number of output audio channels in the compiled CSD. */
   readonly nchnls: number;
 }
 
@@ -80,16 +104,24 @@ export interface MeterBindingMap {
  * output only; never serialized into `.blue` XML.
  */
 export interface CompiledMixerGateBinding {
+  /** Deterministic index assigned to this gate for its compiled CSD. */
   readonly ordinal: number;
+  /** Csound channel names for the two banks of staged gate targets. */
   readonly bankSymbols: readonly [string, string];
+  /** Initial gain target, where zero mutes and one passes audio. */
   readonly initial: 0 | 1;
+  /** Mixer output or send associated with this gate. */
   readonly locator: CompiledMixerGateLocator;
 }
 
+/** Identifies an output or a send in the mixer graph captured for a render. */
 export type CompiledMixerGateLocator =
   | {
+      /** Discriminant identifying the `output` variant. */
       readonly route: 'output';
+      /** Assigned ordinal of the channel in the compiled mixer. */
       readonly channelOrdinal: number;
+      /** Role of the channel in the mixer graph. */
       readonly channelKind: 'source' | 'sub' | 'master';
       /** Stable channel identity captured from canonical mixer data. */
       readonly channelIdentity: string;
@@ -99,16 +131,23 @@ export type CompiledMixerGateLocator =
       readonly association: string;
     }
   | {
+      /** Discriminant identifying the `send` variant. */
       readonly route: 'send';
+      /** Assigned ordinal of the channel in the compiled mixer. */
       readonly channelOrdinal: number;
+      /** Role of the channel in the mixer graph. */
       readonly channelKind: 'source' | 'sub' | 'master';
       /** Stable channel identity captured from canonical mixer data. */
       readonly channelIdentity: string;
       /** Stable route-entry identity within that channel. */
       readonly entryIdentity: string;
+      /** Whether this send is in the pre- or post-fader chain. */
       readonly chainKind: 'pre' | 'post';
+      /** Zero-based send position in its effects chain. */
       readonly chainIndex: number;
+      /** Name of the destination mixer channel. */
       readonly targetName: string;
+      /** Persistent association with a project source. */
       readonly association: string;
     };
 
@@ -119,8 +158,11 @@ export type CompiledMixerGateLocator =
 export interface CompiledMixerGateBindings {
   /** Deterministic topology signature; live edits with a different topology are stale. */
   readonly signature: string;
+  /** Channel used to signal that the staged gate updates are ready. */
   readonly commitChannel: string;
+  /** Channel on which the engine reports the applied gate commit. */
   readonly appliedChannel: string;
+  /** All output and send gates allocated for this compiled CSD. */
   readonly gates: readonly CompiledMixerGateBinding[];
 }
 
@@ -133,11 +175,17 @@ export interface CompiledMixerGateBindings {
 export interface CompiledChannelPannerBinding {
   /** Channel runtime identity preserved by the render copy; never a display name. */
   readonly channelIdentity: string;
+  /** Deterministic index assigned to this channel for its compiled CSD. */
   readonly channelOrdinal: number;
+  /** Mixer category for the channel owning this panner. */
   readonly channelKind: 'source' | 'sub' | 'master';
+  /** Csound channel that selects the channel's panner mode. */
   readonly modeChannel: string;
+  /** Generated automation variable for stereo width, when assigned. */
   readonly widthVar?: string;
+  /** Generated automation variable for the left dual-pan position, when assigned. */
   readonly dualLeftVar?: string;
+  /** Generated automation variable for the right dual-pan position, when assigned. */
   readonly dualRightVar?: string;
 }
 
@@ -150,14 +198,18 @@ export interface CompiledChannelPannerBinding {
 export interface CompiledPannerBindings {
   /** Deterministic topology signature; live edits with a different topology are stale. */
   readonly signature: string;
+  /** Csound channel that selects the score mix's pan law. */
   readonly scoreLawChannel: string;
+  /** Csound channel that controls the score mix's off-center boost. */
   readonly scoreBoostChannel: string;
+  /** Panner bindings for the channels compiled into this render. */
   readonly channels: readonly CompiledChannelPannerBinding[];
 }
 
 /** Render-scoped registry key for compiled BlueX7 bindings. */
 export const BLUE_X7_BINDINGS_KEY = Symbol('blueX7.bindings');
 
+/** Mutable render-scoped state for generated instruments, tables, output routing, and runtime channel allocation. */
 export class CompileData {
   private arrangement: Arrangement;
   private tables: Tables;
@@ -180,7 +232,9 @@ export class CompileData {
   private nextStringChannelIndex = 0;
   private nextInstrumentNumber = 0;
 
+  /** Creates an empty compilation with automation and string channel collection disabled. */
   constructor();
+  /** Starts with the supplied arrangement and tables by reference. Enable `handleParameters` to assign runtime names to added parameters and string channels. */
   constructor(arrangement: Arrangement, tables: Tables, handleParameters?: boolean);
   constructor(arrangement?: Arrangement, tables?: Tables, handleParameters?: boolean) {
     this.arrangement = arrangement ?? new Arrangement();
@@ -188,18 +242,22 @@ export class CompileData {
     this.handleParametersAndChannels = handleParameters ?? false;
   }
 
+  /** Creates a compilation with its own empty arrangement and table set. */
   static createEmptyCompileData(): CompileData {
     return new CompileData(new Arrangement(), new Tables(), false);
   }
 
+  /** Returns the mutable arrangement being assembled for this compilation. */
   getArrangement(): Arrangement {
     return this.arrangement;
   }
 
+  /** Returns the mutable Csound table set being assembled for this compilation. */
   getTables(): Tables {
     return this.tables;
   }
 
+  /** Returns the live map assigning mixer channel objects to numeric compilation IDs. */
   getChannelIdAssignments(): Map<Channel, number> {
     return this.channelIdAssignments;
   }
@@ -213,50 +271,62 @@ export class CompileData {
     return this.mixerEnabled;
   }
 
+  /** Sets whether generators should route output through the compiled mixer. */
   setMixerEnabled(enabled: boolean): void {
     this.mixerEnabled = enabled;
   }
 
+  /** Reports whether the compilation uses channel panning. */
   isPanningEnabled(): boolean {
     return this.panningEnabled;
   }
 
+  /** Sets whether the compilation uses channel panning. */
   setPanningEnabled(enabled: boolean): void {
     this.panningEnabled = enabled;
   }
 
+  /** Returns the center attenuation in dB used when compiling panners. */
   getPanLawDb(): PanLawDb {
     return this.panLawDb;
   }
 
+  /** Sets the center attenuation in dB used when compiling panners. */
   setPanLawDb(lawDb: PanLawDb): void {
     this.panLawDb = lawDb;
   }
 
+  /** Reports whether the compiled panners boost levels off center. */
   isPanOffCenterBoost(): boolean {
     return this.panOffCenterBoost;
   }
 
+  /** Selects off-center boost for the compiled panners. */
   setPanOffCenterBoost(boost: boolean): void {
     this.panOffCenterBoost = boost;
   }
 
+  /** Returns host-supplied audio metadata, or `null` if no manifest was supplied. */
   getAudioLayoutManifest(): AudioLayoutManifest | null {
     return this.audioLayoutManifest;
   }
 
+  /** Attaches host-supplied audio metadata for layout resolution during compilation. */
   setAudioLayoutManifest(manifest: AudioLayoutManifest | null): void {
     this.audioLayoutManifest = manifest;
   }
 
+  /** Returns the output audio channel count used during compilation. */
   getNchnls(): number {
     return this.nchnls;
   }
 
+  /** Sets the output audio channel count used during compilation. */
   setNchnls(nchnls: number): void {
     this.nchnls = nchnls;
   }
 
+  /** Allocates the next numeric ID after existing and previously reserved instrument numbers. */
   reserveInstrumentNumber(): number {
     for (const assignment of this.arrangement.getArrangement()) {
       if (!/^-?\d+$/.test(assignment.arrangementId)) continue;
@@ -266,6 +336,7 @@ export class CompileData {
     return ++this.nextInstrumentNumber;
   }
 
+  /** Appends a generated instrument under the supplied or allocated numeric ID and returns that ID. When collection is enabled, assigns runtime parameter and string channel names. */
   addInstrument(instr: Instrument, instrId = this.reserveInstrumentNumber()): number {
     this.arrangement.addInstrumentWithId(instr, String(instrId), false);
     if (this.handleParametersAndChannels) {
@@ -306,6 +377,7 @@ export class CompileData {
     }
   }
 
+  /** Adds already allocated automation and string channels and advances the allocation counters to match. */
   registerExistingAutomationState(
     parameters: Parameter[],
     stringChannels: StringChannelEntry[],
@@ -316,51 +388,63 @@ export class CompileData {
     this.nextStringChannelIndex = this.stringChannels.length;
   }
 
+  /** Returns the live list of compiled string channel allocations. */
   getStringChannels(): StringChannelEntry[] {
     return this.stringChannels;
   }
 
+  /** Returns the live list of parameters collected for compilation, including their assigned channel names. */
   getOriginalParameters(): Parameter[] {
     return this.originalParameters;
   }
 
+  /** Reports whether adding an instrument allocates parameter and string channels. */
   isHandleParametersAndChannels(): boolean {
     return this.handleParametersAndChannels;
   }
 
+  /** Controls allocation of parameter and string channels for subsequently added instruments. */
   setHandleParametersAndChannels(handleParametersAndChannels: boolean): void {
     this.handleParametersAndChannels = handleParametersAndChannels;
   }
 
+  /** Retrieves an extension value scoped to the compilation, or `undefined` when absent. */
   getCompilationVariable(key: unknown): unknown {
     return this.compileMap.get(key);
   }
 
+  /** Associates an extension value with a key for the lifetime of the compilation. */
   setCompilationVariable(key: unknown, value: unknown): void {
     this.compileMap.set(key, value);
   }
 
+  /** Removes the extension value for the given key. */
   clearCompilationVariable(key: unknown): void {
     this.compileMap.delete(key);
   }
 
+  /** Returns an available Csound function table number from the compilation table set. */
   getOpenFTableNumber(): number {
     return this.tables.getOpenFTableNumber();
   }
 
+  /** Appends Csound function table definitions to the current table text. */
   appendTables(text: string): void {
     const current = this.tables.getTables();
     this.tables.setTables(current ? current + '\n' + text : text);
   }
 
+  /** Records the project source ID of a generated instrument instance. */
   addInstrSourceId(generated: Instrument, sourceId: string): void {
     this.instrSourceId.set(generated, sourceId);
   }
 
+  /** Resolves the project source ID recorded for this instance, or `undefined` when absent. */
   getInstrSourceId(instr: Instrument): string | undefined {
     return this.instrSourceId.get(instr);
   }
 
+  /** Records the compiled instrument ID for a track's stable project ID. */
   setTrackInstrumentId(trackId: string, instrumentId: number | string): void {
     this.compileMap.set(`track-instrument:${trackId}`, instrumentId);
   }
@@ -370,15 +454,18 @@ export class CompileData {
     this.compileMap.set(`track-root-group:${trackId}`, rootGroupId);
   }
 
+  /** Returns the recorded parent group ID for the track, or `undefined` when absent. */
   getTrackRootGroupId(trackId: string): string | undefined {
     const value = this.compileMap.get(`track-root-group:${trackId}`);
     return typeof value === 'string' ? value : undefined;
   }
+  /** Returns the track's compiled instrument ID, or `undefined` when absent. */
   getTrackInstrumentId(trackId: string): number | string | undefined {
     const value = this.compileMap.get(`track-instrument:${trackId}`);
     return typeof value === 'number' || typeof value === 'string' ? value : undefined;
   }
 
+  /** Returns a new map of registered track IDs to compiled instrument IDs. */
   getTrackInstrumentIds(): Map<string, number | string> {
     const result = new Map<string, number | string>();
     for (const [key, value] of this.compileMap) {
@@ -401,6 +488,7 @@ export class CompileData {
     registry.set(binding.ownerIdentity, binding);
   }
 
+  /** Looks up the compiled BlueX7 binding for an owner ID, or returns `undefined`. */
   getBlueX7Binding(ownerIdentity: string): CompiledBlueX7Binding | undefined {
     return this.blueX7BindingRegistry().get(ownerIdentity);
   }
@@ -511,6 +599,7 @@ export class CompileData {
     return targets;
   }
 
+  /** Appends generated global orchestra code and ensures it ends with a newline. */
   appendGlobalOrc(code: string): void {
     if (!code) {
       return;
@@ -521,10 +610,12 @@ export class CompileData {
     }
   }
 
+  /** Returns the accumulated generated global orchestra text. */
   getGlobalOrc(): string {
     return this.globalOrc;
   }
 
+  /** Resets allocations, collected channels, and generated code, replacing the arrangement and tables. Audio layout and panner settings are retained. */
   reset(): void {
     this.arrangement = new Arrangement();
     this.tables = new Tables();

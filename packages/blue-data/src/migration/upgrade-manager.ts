@@ -19,10 +19,12 @@ import {
 } from './migrate-project-time-context';
 import { migrateProjectPanning } from './migrate-project-panning';
 
+/** Coordinates ordered migrations of historical Blue project XML. */
 export class UpgradeManager {
   private upgraders: ProjectUpgrader[] = [];
   private static instance: UpgradeManager | null = null;
 
+  /** Initializes the sequence of built-in project XML migrations. */
   constructor() {
     // Register all upgraders in order
     this.upgraders.push(new ProjectUpgrader_2_1_10());

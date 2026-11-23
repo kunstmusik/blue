@@ -9,11 +9,16 @@ import { checkRoot, checkShape, parseXmlBoolean } from '../utilities/xml';
 import { loadInstrumentFromXML } from './instrument-registry';
 import type { CopyMode } from '../deep-copyable';
 
+/** Maps a Csound instrument identifier to an instrument and an arrangement-level enable flag. */
 export class InstrumentAssignment {
+  /** Csound identifier used to address the instrument from the score. */
   arrangementId = '0';
+  /** Instrument associated with this arrangement entry. */
   instr!: Instrument;
+  /** Whether this instrument assignment participates in generation. */
   enabled = true;
 
+  /** Creates a default instrument assignment or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: InstrumentAssignment, mode: CopyMode = 'duplication') {
     if (other) {
       this.arrangementId = other.arrangementId;
@@ -22,6 +27,7 @@ export class InstrumentAssignment {
     }
   }
 
+  /** Compares numeric IDs numerically when both can be parsed, falling back to text ordering otherwise. */
   compareTo(other: InstrumentAssignment): number {
     // Compare arrangement IDs numerically if possible
     const a = parseInt(this.arrangementId, 10);
@@ -32,6 +38,7 @@ export class InstrumentAssignment {
     return this.arrangementId.localeCompare(other.arrangementId);
   }
 
+  /** Serializes the instrument assignment and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('instrumentAssignment');
     elem.setAttribute('arrangementId', this.arrangementId);
@@ -42,6 +49,7 @@ export class InstrumentAssignment {
     return elem;
   }
 
+  /** Reconstructs the instrument assignment from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): InstrumentAssignment {
     checkRoot(data, 'instrumentAssignment', context);
     checkShape(data, ['arrangementId', 'id', 'isEnabled', 'enabled'], ['instrument'], context);

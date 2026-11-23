@@ -27,15 +27,18 @@ export class Elements implements Iterable<Element> {
   private _children: Element[];
   private _index: number;
 
+  /** Creates a cursor over the supplied child elements. */
   constructor(children: Element[] = []) {
     this._children = children;
     this._index = 0;
   }
 
+  /** Reports whether another element is available at the current cursor. */
   hasMoreElements(): boolean {
     return this._index < this._children.length;
   }
 
+  /** Returns the next element and advances the cursor. Throws when the cursor is exhausted. */
   next(): Element {
     if (this._index >= this._children.length) {
       throw new Error('No more elements');
@@ -44,16 +47,19 @@ export class Elements implements Iterable<Element> {
   }
 
   // Reset iterator
+  /** Moves the cursor back to the beginning of the element sequence. */
   reset(): void {
     this._index = 0;
   }
 
   // Get size
+  /** Number of elements in this view. */
   get size(): number {
     return this._children.length;
   }
 
   // Iterator protocol
+  /** Returns an iterator over the stored entries in order. */
   [Symbol.iterator](): Iterator<Element> {
     let i = 0;
     const children = this._children;
@@ -68,6 +74,7 @@ export class Elements implements Iterable<Element> {
   }
 
   // Convert to array
+  /** Returns a shallow snapshot of the element sequence. */
   toArray(): Element[] {
     return [...this._children];
   }
@@ -118,6 +125,7 @@ function notifyMutationObservers(element: Element): void {
   }
 }
 
+/** Host-neutral XML element with attributes, text, and ordered children. */
 export class Element {
   /** Register a one-shot hook fired before the first structural mutation inside root. */
   static registerRootMutationObserver(root: Element, hook: () => void): () => void {
@@ -152,6 +160,7 @@ export class Element {
   private _text: string | null;
   private _parent: Element | null;
 
+  /** Creates an empty element with the supplied XML name. */
   constructor(name: string) {
     this._name = name;
     this._attributes = new Map();

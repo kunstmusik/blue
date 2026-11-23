@@ -7,10 +7,13 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.TimeWarpProcessor';
 
+/** Transforms note timing using a score tempo specification. */
 export class TimeWarpProcessor extends NoteProcessor {
   private _timeWarpString = '0 60';
 
+  /** Creates a time warp processor initialized with its default settings. */
   constructor();
+  /** Creates a time warp processor using the source instance’s settings. */
   constructor(src: TimeWarpProcessor);
   constructor(src?: TimeWarpProcessor) {
     super();
@@ -19,9 +22,11 @@ export class TimeWarpProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the time warp string stored on the time warp processor. */
   getTimeWarpString(): string {
     return this._timeWarpString;
   }
+  /** Sets the time warp string stored on the time warp processor. */
   setTimeWarpString(timeWarpString: string): void {
     this._timeWarpString = timeWarpString;
   }
@@ -65,6 +70,7 @@ export class TimeWarpProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the time warp processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): TimeWarpProcessor {
     validateProcessorXml(data, 'TimeWarpProcessor', context);
     const proc = new TimeWarpProcessor();

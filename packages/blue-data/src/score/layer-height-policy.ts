@@ -1,15 +1,23 @@
 import { LAYER_HEIGHT } from './layers/layer';
 
+/** Smallest supported custom layer height in pixels. */
 export const LAYER_HEIGHT_MIN = 22;
+/** Largest supported custom layer height in pixels. */
 export const LAYER_HEIGHT_MAX = 660;
 
+/** Highest preset height index accepted for polyphonic sound layers. */
 export const SOUND_LAYER_MAX_HEIGHT_INDEX = 8;
+/** Highest preset height index accepted for tracks. */
 export const TRACK_MAX_HEIGHT_INDEX = 9;
 
+/** Available sound-layer heights in pixels, indexed from zero. */
 export const SOUND_LAYER_PRESET_HEIGHTS = [22, 44, 66, 88, 110, 132, 154, 176, 198] as const;
+/** Available track heights in pixels, indexed from zero. */
 export const TRACK_PRESET_HEIGHTS = [22, 44, 66, 88, 110, 132, 154, 176, 198, 220] as const;
+/** Pixel heights shared by track and sound-layer presets. */
 export const COMMON_PRESET_HEIGHTS = [22, 44, 66, 88, 110, 132, 154, 176, 198] as const;
 
+/** Layer families with distinct sets of supported height presets. */
 export type LayerHeightType = 'soundLayer' | 'track';
 
 /**
@@ -68,7 +76,12 @@ export function calculateNearestHeightIndex(height: number, layerType: LayerHeig
 export function resolveExplicitHeight(
   height: number,
   layerType: LayerHeightType,
-): { heightIndex: number; customHeight: number | undefined } {
+): {
+  /** Preset index used alongside the resolved height. */
+  heightIndex: number;
+  /** Explicit pixel height when the preset alone does not represent the request. */
+  customHeight: number | undefined;
+} {
   const clamped = Math.max(LAYER_HEIGHT_MIN, Math.min(LAYER_HEIGHT_MAX, Math.round(height)));
   const heightIndex = calculateNearestHeightIndex(clamped, layerType);
   const customHeight = isPresetHeight(clamped, layerType) ? undefined : clamped;

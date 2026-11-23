@@ -23,17 +23,29 @@ import {
 import { ObjRefSaveMap } from '../../serialization/obj-ref-map';
 import { readInt, readDouble, writeInt, writeDouble, writeBoolean } from '../../utilities/xml';
 
+/** Places and trims part of an audio file on a score track, with optional fades. */
 export class AudioClip implements ScoreObject {
+  /** Property name used to identify changes to the name. */
   static readonly NAME = 'name';
+  /** Property name used to identify changes to the start time. */
   static readonly START_TIME = 'startTime';
+  /** Property name used to identify changes to the duration. */
   static readonly DURATION = 'duration';
+  /** Property name used to identify changes to the packed display color. */
   static readonly COLOR = 'color';
+  /** Property name used to identify changes to the file start time. */
   static readonly FILE_START_TIME = 'fileStartTime';
+  /** Property name used to identify changes to the fade in. */
   static readonly FADE_IN = 'fadeIn';
+  /** Property name used to identify changes to the fade in type. */
   static readonly FADE_IN_TYPE = 'fadeInType';
+  /** Property name used to identify changes to the fade out. */
   static readonly FADE_OUT = 'fadeOut';
+  /** Property name used to identify changes to the fade out type. */
   static readonly FADE_OUT_TYPE = 'fadeOutType';
+  /** Property name used to identify changes to the looping. */
   static readonly LOOPING = 'looping';
+  /** Property name used to identify changes to the audio file. */
   static readonly AUDIO_FILE = 'audioFile';
 
   private _name = '';
@@ -53,6 +65,7 @@ export class AudioClip implements ScoreObject {
 
   private _cloneSourceHashCode = 0;
 
+  /** Creates a track clip with default placement and empty source path. */
   constructor() {}
 
   /** Copy constructor. */
@@ -112,6 +125,7 @@ export class AudioClip implements ScoreObject {
     return [leftLimit, durBeats];
   }
 
+  /** Returns the permitted offsets of the clip's right edge in beats for the supplied timing context. */
   getResizeRightLimits(context: TimeContext): number[] {
     const durBeats = this._durationUnit.toBeats(context);
     return this._looping
@@ -151,67 +165,85 @@ export class AudioClip implements ScoreObject {
 
   // ─── AudioClip-specific ───
 
+  /** Returns the configured path to the audio source. */
   getAudioFile(): string {
     return this._audioFile;
   }
+  /** Sets the configured path to the audio source. */
   setAudioFile(path: string): void {
     this._audioFile = path;
     // In Java, this reads the file to get numChannels/audioDuration.
     // In TS, caller must set these manually or we leave them at 0.
   }
 
+  /** Returns the num channels stored on the audio clip. */
   getNumChannels(): number {
     return this._numChannels;
   }
+  /** Sets the num channels stored on the audio clip. */
   setNumChannels(n: number): void {
     this._numChannels = n;
   }
 
+  /** Returns the recorded full source duration in seconds. */
   getAudioDuration(): number {
     return this._audioDuration;
   }
+  /** Sets the recorded full source duration in seconds. */
   setAudioDuration(d: number): void {
     this._audioDuration = d;
   }
 
+  /** Returns the offset into the source file in seconds. */
   getFileStartTime(): number {
     return this._fileStartTime;
   }
+  /** Sets the offset into the source file in seconds. */
   setFileStartTime(t: number): void {
     this._fileStartTime = t;
   }
 
+  /** Returns the fade-in duration in seconds. */
   getFadeIn(): number {
     return this._fadeIn;
   }
+  /** Sets the fade-in duration in seconds. */
   setFadeIn(t: number): void {
     this._fadeIn = t;
   }
 
+  /** Returns the fade-in gain curve. */
   getFadeInType(): FadeType {
     return this._fadeInType;
   }
+  /** Sets the fade-in gain curve. */
   setFadeInType(ft: FadeType): void {
     this._fadeInType = ft;
   }
 
+  /** Returns the fade-out duration in seconds. */
   getFadeOut(): number {
     return this._fadeOut;
   }
+  /** Sets the fade-out duration in seconds. */
   setFadeOut(t: number): void {
     this._fadeOut = t;
   }
 
+  /** Returns the fade-out gain curve. */
   getFadeOutType(): FadeType {
     return this._fadeOutType;
   }
+  /** Sets the fade-out gain curve. */
   setFadeOutType(ft: FadeType): void {
     this._fadeOutType = ft;
   }
 
+  /** Reports whether the audio clip repeats playback within the object duration. */
   isLooping(): boolean {
     return this._looping;
   }
+  /** Sets the looping stored on the audio clip. */
   setLooping(context: TimeContext | null, looping: boolean): void {
     this._looping = looping;
     if (!looping && context && this._audioDuration > 0) {
@@ -231,6 +263,7 @@ export class AudioClip implements ScoreObject {
 
   // ─── XML Serialization ───
 
+  /** Serializes the audio clip and its persisted settings to a new Blue XML element. */
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const root = new Element('audioClip');
 
@@ -251,6 +284,7 @@ export class AudioClip implements ScoreObject {
     return root;
   }
 
+  /** Reconstructs the audio clip from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     providedContext?: XmlLoadContext,
@@ -399,6 +433,7 @@ export class AudioClip implements ScoreObject {
 
   // ─── Helpers ───
 
+  /** Returns the clip's hash code for the model's identity tracking. */
   hashCode(): number {
     return this._cloneSourceHashCode || 0;
   }

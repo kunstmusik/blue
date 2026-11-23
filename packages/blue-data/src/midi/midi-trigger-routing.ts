@@ -2,17 +2,27 @@ import { Scale } from '../sound-objects/piano-roll/scale';
 import { formatBlueNumber, formatJavaDouble } from '../utilities/number-format';
 import { MidiInputProcessor } from './midi-input-processor';
 
+/** Note, velocity, and channel from an incoming MIDI trigger. */
 export interface MidiTriggerMappingInput {
+  /** Pitch number from the incoming MIDI event. */
   midiNote: number;
+  /** MIDI velocity value. */
   velocity: number;
+  /** MIDI channel associated with this event or stream. */
   channel: number;
 }
 
+/** Original MIDI trigger and values produced by the pitch and velocity mappings. */
 export interface MidiTriggerMappingResult {
+  /** Unchanged pitch number from the incoming MIDI event. */
   originalMidiNote: number;
+  /** Unchanged velocity from the incoming MIDI event. */
   originalVelocity: number;
+  /** MIDI channel associated with this event or stream. */
   channel: number;
+  /** Textual result of applying the pitch mapping. */
   mappedPitchValue: string;
+  /** Textual result of applying the velocity mapping. */
   mappedAmplitudeValue: string;
 }
 
@@ -100,6 +110,7 @@ function processVelocity(processor: MidiInputProcessor, velocity: number): strin
   }
 }
 
+/** Applies configured key and velocity rules to an incoming MIDI trigger. */
 export function mapMidiTrigger(
   processor: MidiInputProcessor,
   input: MidiTriggerMappingInput,

@@ -22,14 +22,30 @@ export type JavaDecimalDiagnosticCode =
   | 'DECIMAL_WORKSPACE_UNAVAILABLE'
   | 'NON_FINITE_AUTOMATION_INPUT';
 
+/** Structured error from parsing or converting a Java-compatible decimal value. */
 export interface JavaDecimalDiagnostic {
+  /** Machine-readable reason for the diagnostic. */
   readonly code: JavaDecimalDiagnosticCode;
+  /** Human-readable diagnostic text. */
   readonly message: string;
 }
 
+/** Successful Java-compatible decimal value or a parse failure with a diagnostic code. */
 export type JavaDecimalResult =
-  | { readonly ok: true; readonly value: JavaDecimal }
-  | { readonly ok: false; readonly code: JavaDecimalDiagnosticCode; readonly message: string };
+  | {
+      /** Discriminant indicating whether parsing succeeded. */
+      readonly ok: true;
+      /** Value associated with the successful result. */
+      readonly value: JavaDecimal;
+    }
+  | {
+      /** Discriminant indicating whether parsing failed. */
+      readonly ok: false;
+      /** Machine-readable reason for the diagnostic. */
+      readonly code: JavaDecimalDiagnosticCode;
+      /** Human-readable diagnostic text. */
+      readonly message: string;
+    };
 
 /**
  * Immutable exact decimal value. The `(coefficient, scale)` pair is the

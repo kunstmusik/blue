@@ -9,6 +9,7 @@ guidance and where to record feature decisions and evidence.
 ## Repository map
 
 - `packages/blue-data` (`@blue/data`) — platform-neutral project models, XML, and CSD generation.
+  Before changing this package, read its [agent guidance](packages/blue-data/AGENTS.md).
 - `packages/blue-app` (`@blue/app`) — Electron main, preload, and renderer code.
   Before changing this package, read its [agent guidance](packages/blue-app/AGENTS.md).
 - `packages/blue-engine-client` — versioned engine protocol and client.

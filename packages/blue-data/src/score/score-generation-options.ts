@@ -1,15 +1,20 @@
 import { Note } from '../sound-objects/note';
 import { NoteList } from '../sound-objects/note-list';
 
+/** Describes how notes emitted by a sound object participate in track instrument assignment. */
 export type InstrumentTargetBehavior = 'assignable' | 'propagated' | 'preserve' | 'none';
 
+/** Receives track-instrument targeting classification for generated notes. */
 export interface InstrumentTargetCollector {
+  /** Records the targeting behavior of a generated note. */
   mark(note: Note, behavior: InstrumentTargetBehavior): void;
 }
 
 /** Shared by an Instance and the PolyObject that normalizes its linked source. */
 export interface ScoreNormalizationOrigin {
+  /** Identity of the object that owns this render's normalization request. */
   readonly owner: object;
+  /** Unnormalized origin in Csound beats, once determined. */
   originBeats?: number;
   /**
    * Stable origin in the linked PolyObject's child timeline. `null` means
@@ -20,6 +25,7 @@ export interface ScoreNormalizationOrigin {
   readonly allowRangeOrigin?: boolean;
 }
 
+/** Controls note generation and placement as a render traverses score layers. */
 export interface ScoreGenerationOptions {
   /** Absolute score beat at local beat zero while descending nested PolyObjects. */
   readonly beatOrigin?: number;
@@ -29,9 +35,13 @@ export interface ScoreGenerationOptions {
   readonly deferFileSeek?: boolean;
   /** Pre-range minimum collected once by a linked source's owner PolyObject. */
   readonly normalizationOrigin?: ScoreNormalizationOrigin;
+  /** Enables filtering based on whether other layers are soloed. */
   readonly processWithSolo?: boolean;
+  /** Stable ID of the track whose notes are being generated. */
   readonly trackId?: string;
+  /** Compiled instrument ID for notes that can use the owning track's assignment. */
   readonly instrumentOverrideId?: string;
+  /** Optional observer for the classification of generated instrument targets. */
   readonly instrumentTargetCollector?: InstrumentTargetCollector;
   /**
    * Track header authority (Spec 111). When 'audio', Track groups generate
@@ -48,11 +58,16 @@ export interface ScoreGenerationOptions {
    */
   readonly pruneInaudibleTracks?: ReadonlySet<string>;
   /** Mutable sink collecting the unpruned duration bound of pruned tracks. */
-  readonly prunedDurationSink?: { value: number };
+  readonly prunedDurationSink?: {
+    /** Accumulated duration bound for pruned tracks, in Csound beats. */
+    value: number;
+  };
 }
 
+/** Full generation options or a legacy boolean that supplies only the solo-filtering flag. */
 export type ScoreGenerationOptionsOrSolo = ScoreGenerationOptions | boolean;
 
+/** Converts a legacy solo flag or absent options into a generation options object. */
 export function normalizeScoreGenerationOptions(
   options: ScoreGenerationOptionsOrSolo | undefined,
 ): ScoreGenerationOptions {
@@ -94,6 +109,7 @@ export function replaceTrackInstrumentP1(
   return authoredP1;
 }
 
+/** Mutates eligible notes to use the supplied runtime instrument ID while preserving Csound p1 suffixes. */
 export function applyTrackInstrumentOverride(
   notes: NoteList,
   runtimeInstrumentId: string | number,

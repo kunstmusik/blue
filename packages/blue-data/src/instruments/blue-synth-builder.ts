@@ -274,6 +274,7 @@ export class BlueSynthBuilder extends Instrument {
   private _presetGroup: PresetGroup | null = null;
   private _udoReplacementValues: Map<string, string> | null = null;
 
+  /** Creates a default blue synth builder or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: BlueSynthBuilder, mode: CopyMode = 'duplication') {
     super();
     if (other) {
@@ -310,45 +311,57 @@ export class BlueSynthBuilder extends Instrument {
 
   private _editEnabled = true;
 
+  /** Returns the instrument text stored on the BlueSynthBuilder instrument. */
   getInstrumentText(): string {
     return this._instrumentText;
   }
+  /** Sets the instrument text stored on the BlueSynthBuilder instrument. */
   setInstrumentText(text: string): void {
     this._instrumentText = text;
   }
 
+  /** Returns the source for the optional always-on instrument. */
   getAlwaysOnInstrumentText(): string {
     return this._alwaysOnInstrumentText;
   }
+  /** Replaces the source for the optional always-on instrument. */
   setAlwaysOnInstrumentText(text: string): void {
     this._alwaysOnInstrumentText = text;
   }
 
+  /** Returns the project-wide Csound orchestra source contributed by the instrument. */
   getGlobalOrc(): string {
     return this._globalOrc;
   }
+  /** Sets the project-wide Csound orchestra source contributed by the instrument. */
   setGlobalOrc(orc: string): void {
     this._globalOrc = orc;
   }
 
+  /** Returns the project-wide Csound score source contributed by the instrument. */
   getGlobalSco(): string {
     return this._globalSco;
   }
+  /** Sets the project-wide Csound score source contributed by the instrument. */
   setGlobalSco(sco: string): void {
     this._globalSco = sco;
   }
 
+  /** Returns the editable BlueSynthBuilder graphics model. */
   getGraphicInterface(): BSBGraphicInterface {
     return this._graphicInterface;
   }
+  /** Sets the editable BlueSynthBuilder graphics model. */
   setGraphicInterface(gi: BSBGraphicInterface): void {
     this._graphicInterface = gi;
     this.syncParametersFromWidgets();
   }
 
+  /** Reports whether the BlueSynthBuilder instrument allows editing the graphic interface. */
   isEditEnabled(): boolean {
     return this._editEnabled;
   }
+  /** Sets whether the BlueSynthBuilder interface can be edited. */
   setEditEnabled(enabled: boolean): void {
     this._editEnabled = enabled;
   }
@@ -653,6 +666,7 @@ export class BlueSynthBuilder extends Instrument {
     return this._opcodeList;
   }
 
+  /** Sets the collection of user-defined Csound opcodes. */
   setOpcodeList(opcodeList: OpcodeList): void {
     this._opcodeList = opcodeList;
   }
@@ -665,10 +679,12 @@ export class BlueSynthBuilder extends Instrument {
     this._udoReplacementValues = appendUserDefinedOpcodes(this._opcodeList, udoList);
   }
 
+  /** Formats the current user-defined opcode definitions as Csound source. */
   getOpcodeListText(): string {
     return this._opcodeList.toString();
   }
 
+  /** Parses and replaces the instrument's user-defined opcodes from source text. */
   setOpcodeListText(text: string): void {
     const lines = text.split('\n');
     const newList = new OpcodeList();
@@ -768,6 +784,7 @@ export class BlueSynthBuilder extends Instrument {
     return true;
   }
 
+  /** Converts the UDO at a zero-based index to the requested syntax. Returns false if there is no UDO at that index. */
   convertUdoStyle(index: number, style: UDOStyle): boolean {
     const udo = this._opcodeList.getOpcode(index);
     if (!udo) return false;
@@ -781,14 +798,17 @@ export class BlueSynthBuilder extends Instrument {
     return true;
   }
 
+  /** Returns the preset hierarchy. */
   getPresetGroup(): PresetGroup | null {
     return this._presetGroup;
   }
 
+  /** Sets the preset hierarchy. */
   setPresetGroup(group: PresetGroup | null): void {
     this._presetGroup = group;
   }
 
+  /** Applies the stored values from the preset with the given ID. Returns false if the preset cannot be found. */
   applyPreset(presetUniqueId: string): boolean {
     if (!this._presetGroup) return false;
     const preset = this._presetGroup.findPresetByUniqueId(presetUniqueId);
@@ -833,6 +853,7 @@ export class BlueSynthBuilder extends Instrument {
     return true;
   }
 
+  /** Applies supported property changes to the widget identified by its persistent ID. */
   updateWidgetProperties(widgetId: string, properties: Record<string, unknown>): boolean {
     const widget = this._graphicInterface.findWidgetById(widgetId);
     if (!widget) return false;
@@ -1043,6 +1064,7 @@ export class BlueSynthBuilder extends Instrument {
     return true;
   }
 
+  /** Updates one slider by widget ID and zero-based index, synchronizing its automation value when applicable. */
   updateSliderBankValue(widgetId: string, sliderIndex: number, value: number): boolean {
     const widget = this._graphicInterface.findWidgetById(widgetId);
     if (!(widget instanceof BSBHSliderBank) && !(widget instanceof BSBVSliderBank)) {
@@ -1068,17 +1090,21 @@ export class BlueSynthBuilder extends Instrument {
     return true;
   }
 
+  /** Retained for callers that used to invalidate widget lookups. There is no cached state to clear. */
   invalidateGraphicInterfaceCache(): void {}
 
+  /** Updates the instrument and graphic interface together when toggling widget editing. */
   setBsbEditEnabled(enabled: boolean): void {
     this._graphicInterface.setEditEnabled(enabled);
     this._editEnabled = enabled;
   }
 
+  /** Applies the supplied subset of editor grid settings. */
   setBsbGridSettings(settings: Partial<GridSettingsData>): void {
     this._graphicInterface.setGridSettings(settings);
   }
 
+  /** Updates the named widget and its matching automation parameter. Returns false when no widget changes. */
   updateWidgetValue(objectName: string, value: number): boolean {
     const widget = this.findWidgetByObjectName(objectName);
     if (!widget || widget.value === value) {
@@ -1163,6 +1189,7 @@ export class BlueSynthBuilder extends Instrument {
     return elem;
   }
 
+  /** Reconstructs the BlueSynthBuilder instrument from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

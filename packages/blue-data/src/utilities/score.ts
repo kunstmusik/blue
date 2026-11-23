@@ -4,9 +4,13 @@ import { NoteProcessorChain } from '../note-processors/note-processor-chain';
 import { Note } from '../sound-objects/note';
 import { TimeBehavior } from '../sound-objects/time-behavior';
 
+/** Reports a malformed Csound instrument event with its source line and text. */
 export class NoteParseException extends Error {
+  /** Creates a parse error for the supplied line number and original note text. */
   constructor(
+    /** One-based source line containing the unparseable note. */
     readonly lineNumber: number,
+    /** Original text of the malformed note statement. */
     readonly noteText: string,
   ) {
     super(
@@ -16,6 +20,7 @@ export class NoteParseException extends Error {
   }
 }
 
+/** Runs the supplied processor chain over the notes and returns the final list. */
 export function applyNoteProcessorChain(nl: NoteList, npc: NoteProcessorChain): NoteList {
   return npc.apply(nl);
 }
@@ -28,6 +33,7 @@ export async function applyNoteProcessorChainAsync(
   return npc.applyAsync(nl, compileData);
 }
 
+/** Offsets note starts by the specified position in Csound beats. */
 export function setScoreStart(nl: NoteList, offset: number): void {
   for (const note of nl) {
     note.setStartTime(note.getStartTime() + offset);
@@ -43,6 +49,7 @@ export function rebaseScoreToRenderStart(nl: NoteList, renderStart: number): voi
   );
 }
 
+/** Returns the latest note end in Csound beats, with zero as the minimum. */
 export function getTotalDuration(notes: NoteList): number {
   let max = 0;
   for (let i = 0; i < notes.length; i++) {
@@ -205,6 +212,7 @@ function expandRamps(notes: NoteList): void {
   }
 }
 
+/** Parses Csound instrument events into a note list. */
 export function getNotes(scoreText: string): NoteList {
   const notes = new NoteList();
   let previousNote: Note | null = null;

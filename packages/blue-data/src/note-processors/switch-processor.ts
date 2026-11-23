@@ -7,11 +7,14 @@ import { Element } from '../serialization/xml-reader';
 
 const JAVA_TYPE = 'blue.noteProcessor.SwitchProcessor';
 
+/** Exchanges the values of two selected p-fields on each note. */
 export class SwitchProcessor extends NoteProcessor {
   private _pfield1 = 4;
   private _pfield2 = 5;
 
+  /** Creates a switch processor initialized with its default settings. */
   constructor();
+  /** Creates a switch processor using the source instance’s settings. */
   constructor(src: SwitchProcessor);
   constructor(src?: SwitchProcessor) {
     super();
@@ -21,16 +24,20 @@ export class SwitchProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based index of the first Csound p-field. */
   getPfield1(): string {
     return this._pfield1.toString();
   }
+  /** Sets the one-based index of the first Csound p-field. */
   setPfield1(pfield1: string): void {
     this._pfield1 = parseInt(pfield1, 10);
   }
 
+  /** Returns the one-based index of the second Csound p-field. */
   getPfield2(): string {
     return this._pfield2.toString();
   }
+  /** Sets the one-based index of the second Csound p-field. */
   setPfield2(pfield2: string): void {
     this._pfield2 = parseInt(pfield2, 10);
   }
@@ -68,6 +75,7 @@ export class SwitchProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the switch processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): SwitchProcessor {
     validateProcessorXml(data, 'SwitchProcessor', context);
     const proc = new SwitchProcessor();

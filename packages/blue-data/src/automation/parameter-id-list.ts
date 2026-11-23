@@ -4,11 +4,13 @@ import { Element } from '../serialization/xml-reader';
 
 const CASE_INSENSITIVE_COLLATOR = new Intl.Collator(undefined, { sensitivity: 'base' });
 
+/** Ordered collection of automation parameter identifiers with a single selection. */
 export class ParameterIdList {
   private _ids: string[] = [];
   private _selectedIndex = -1;
   private _isSorted = true;
 
+  /** Adds a parameter ID if it is absent and updates the selection index as needed. */
   addParameterId(id: string): void {
     if (this._ids.includes(id)) {
       return;
@@ -71,6 +73,7 @@ export class ParameterIdList {
     }
   }
 
+  /** Removes the given ID if present and keeps the selection index within the list. */
   removeParameterId(id: string): void {
     const idx = this._ids.indexOf(id);
     if (idx === -1) return;
@@ -85,42 +88,51 @@ export class ParameterIdList {
     }
   }
 
+  /** Checks whether the given ID appears in the list. */
   contains(id: string): boolean {
     return this._ids.includes(id);
   }
 
+  /** Removes all IDs and resets the selection. */
   clear(): void {
     this._ids = [];
     this._selectedIndex = -1;
   }
 
+  /** Returns the number of entries stored in the parameter ID list. */
   size(): number {
     return this._ids.length;
   }
 
+  /** Returns the entry at the supplied index in the parameter ID list’s IDs. */
   getParameterId(index: number): string {
     return this._ids[index];
   }
 
+  /** Returns a snapshot of the IDs in their stored order. */
   getIds(): string[] {
     return [...this._ids];
   }
 
+  /** Returns the zero-based index of the selected item. */
   getSelectedIndex(): number {
     if (this._ids.length === 0) return -1;
     if (this._selectedIndex >= this._ids.length) return this._ids.length - 1;
     return this._selectedIndex;
   }
 
+  /** Sets the zero-based index of the selected item. */
   setSelectedIndex(index: number): void {
     this._selectedIndex = index;
   }
 
+  /** Returns the selected ID, or undefined if there is no selection. */
   getSelectedId(): string | undefined {
     const idx = this.getSelectedIndex();
     return idx >= 0 ? this._ids[idx] : undefined;
   }
 
+  /** Selects a stored ID. An unknown ID leaves the selection unchanged. */
   setSelectedParameter(id: string): void {
     const idx = this._ids.indexOf(id);
     if (idx !== -1) {
@@ -128,6 +140,7 @@ export class ParameterIdList {
     }
   }
 
+  /** Serializes the parameter ID list and its persisted settings to a new Blue XML element. */
   saveAsXML(): Element {
     const elem = new Element('parameterIdList');
     elem.setAttribute('selectedIndex', this._selectedIndex.toString());
@@ -137,6 +150,7 @@ export class ParameterIdList {
     return elem;
   }
 
+  /** Reconstructs the parameter ID list from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): ParameterIdList {
     checkRoot(data, 'parameterIdList', context);
     checkShape(data, ['selectedIndex'], ['parameterId'], context, ['parameterId']);
@@ -163,6 +177,7 @@ export class ParameterIdList {
     return list;
   }
 
+  /** Copies the parameter ID list and its editable state. */
   deepCopy(): ParameterIdList {
     const copy = new ParameterIdList();
     copy._ids = [...this._ids];

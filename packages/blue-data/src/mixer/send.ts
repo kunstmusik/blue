@@ -21,6 +21,7 @@ export class Send implements BlueDataObject {
   /** Disposable identity used to bind compiled send gates to this entry. */
   private _runtimeIdentity = `send-${nextRuntimeIdentity++}`;
 
+  /** Creates a send to the master channel with unity gain and an automation control. */
   constructor() {
     this._parameter = new Parameter();
     this._parameter.setName('Send Amount');
@@ -30,16 +31,20 @@ export class Send implements BlueDataObject {
     this._parameter.setResolution(-1.0);
   }
 
+  /** Returns the send channel stored on the send. */
   getSendChannel(): string {
     return this._sendChannel;
   }
+  /** Sets the send channel stored on the send. */
   setSendChannel(sendChannel: string): void {
     this._sendChannel = sendChannel;
   }
 
+  /** Returns the stored send amount as a gain multiplier. */
   getLevel(): number {
     return this._level;
   }
+  /** Sets the send gain multiplier and synchronizes the fixed parameter value when automation is disabled. */
   setLevel(level: number): void {
     this._level = level;
     if (!this._parameter.isAutomationEnabled()) {
@@ -47,27 +52,34 @@ export class Send implements BlueDataObject {
     }
   }
 
+  /** Reports whether the send is enabled. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Sets the enabled stored on the send. */
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
   }
 
+  /** Returns the stable runtime identity used in compiled bindings. */
   getRuntimeIdentity(): string {
     return this._runtimeIdentity;
   }
 
+  /** Sets the stable runtime identity used in compiled bindings. */
   setRuntimeIdentity(identity: string): void {
     this._runtimeIdentity = identity;
   }
 
+  /** Returns the parameter stored on the send. */
   getParameter(): Parameter {
     return this._parameter;
   }
+  /** Returns the live automation parameter that controls send gain. */
   getLevelParameter(): Parameter {
     return this._parameter;
   }
+  /** Returns the send's parameters available for automation. */
   getParameters(): Parameter[] {
     return [this._parameter];
   }
@@ -81,6 +93,7 @@ export class Send implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the send from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Send {
     const ctx = context ?? new XmlLoadContext(data);
     checkRoot(data, 'send', ctx);

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="{{description}}" />
+    <title>{{title}} | Blue Documentation</title>
+    <link rel="stylesheet" href="{{prefix}}style.css" />
+  </head>
+  <body class="site-page">
+    <a class="skip-link" href="#main-title">Skip to main content</a>
+    <header class="site-header">
+      <div class="wrap nav-row">
+        <a class="brand" href="{{prefix}}">Blue <span>Documentation</span></a>
+        <a href="https://blue.kunstmusik.com/">Blue product site</a>
+      </div>
+      <nav class="section-nav" aria-label="Documentation sections">
+        <ul class="wrap nav-row">
+          {{navigation}}
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <div class="hero">
+        <div class="wrap">
+          <h1 id="main-title" tabindex="-1">{{title}}</h1>
+          <p>{{description}}</p>
+        </div>
+      </div>
+      <div class="wrap editions">{{body}}</div>
+    </main>
+  </body>
+</html>

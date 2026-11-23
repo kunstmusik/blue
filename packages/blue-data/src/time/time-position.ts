@@ -28,7 +28,7 @@ const DEFAULT_PPQ = 960;
 /**
  * Immutable timeline position tagged with a {@link TimeBase} discriminant, matching Java Blue's
  * `TimePosition` subtypes (`BEATS`, `BBT`, `BBST`, `BBF`, `TIME`, `SECONDS`, `FRAME`; `TimeBase.SMPTE`
- * is display-only and {@link smpte} aliases {@link frames}).
+ * is display-only and {@link TimePosition.smpte} aliases {@link TimePosition.frames}).
  *
  * Unlike `TimeDuration` (which uses 0-based bars and beats), musical positions use **1-based** bar and
  * beat numbers and convert against a {@link TimeContext}:
@@ -220,13 +220,14 @@ export class TimePosition {
     return new TimePosition(TimeBase.FRAME, { frameNumber });
   }
 
-  /** Alias for {@link frames} (SMPTE frame-count compatibility). */
+  /** Compatibility alias for {@link TimePosition.frames}. */
   static smpte(frames: number): TimePosition {
     return TimePosition.frames(frames);
   }
 
   // ─── Accessors ───
 
+  /** Returns the representation stored for this position. */
   getTimeBase(): TimeBase {
     return this._timeBase;
   }
@@ -236,7 +237,7 @@ export class TimePosition {
     return this._timeBase === TimeBase.BEATS;
   }
 
-  /** Get the raw csoundBeats value (only valid for BEATS type). */
+  /** Returns the stored scalar for beats, seconds, or audio frames. Use a conversion method for other time bases. */
   getValue(): number {
     if (this._timeBase === TimeBase.BEATS) return this._csoundBeats;
     if (this._timeBase === TimeBase.SECONDS) return this._totalSeconds;
@@ -245,41 +246,51 @@ export class TimePosition {
   }
 
   // BeatTime
+  /** Returns the stored Csound beat coordinate for a `BEATS` position. */
   getCsoundBeats(): number {
     return this._csoundBeats;
   }
 
   // BBTTime
+  /** Returns the one-based bar coordinate for a bar-based position. */
   getBar(): number {
     return this._bar;
   }
+  /** Returns the one-based beat coordinate within the bar. */
   getBeat(): number {
     return this._beat;
   }
+  /** Returns the stored tick remainder for `BBT` or `BBST` positions. */
   getTicks(): number {
     return this._ticks;
   }
 
   // BBSTTime
+  /** Returns the one-based sixteenth coordinate within the beat for `BBST`. */
   getSixteenth(): number {
     return this._sixteenth;
   }
 
   // BBFTime
+  /** Returns the stored hundredths of a beat for `BBF` (0–99). */
   getFraction(): number {
     return this._fraction;
   }
 
   // TimeValue
+  /** Returns the hours component of a `TIME` position. */
   getHours(): number {
     return this._hours;
   }
+  /** Returns the minutes component of a `TIME` position. */
   getMinutes(): number {
     return this._minutes;
   }
+  /** Returns the seconds component of a `TIME` position. Use `toSeconds(context)` to convert the whole position. */
   getSeconds(): number {
     return this._seconds;
   }
+  /** Returns the milliseconds component of a `TIME` position. */
   getMilliseconds(): number {
     return this._milliseconds;
   }
@@ -290,11 +301,13 @@ export class TimePosition {
   }
 
   // SecondsValue
+  /** Returns the stored scalar for a `SECONDS` position. */
   getTotalSeconds(): number {
     return this._totalSeconds;
   }
 
   // FrameValue
+  /** Returns the stored audio sample-frame coordinate for a `FRAME` position. */
   getFrameNumber(): number {
     return this._frameNumber;
   }
@@ -430,24 +443,29 @@ export class TimePosition {
 
   // ─── Comparison ───
 
+  /** Tests whether this position is strictly earlier than the other position in the supplied timing context. */
   lt(context: TimeContext, other: TimePosition): boolean {
     return this.toBeats(context) < other.toBeats(context);
   }
 
+  /** Tests whether this position is strictly later than the other position. */
   gt(context: TimeContext, other: TimePosition): boolean {
     return this.toBeats(context) > other.toBeats(context);
   }
 
+  /** Tests whether this position is earlier than or equal to the other position. */
   lte(context: TimeContext, other: TimePosition): boolean {
     return this.toBeats(context) <= other.toBeats(context);
   }
 
+  /** Tests whether this position is later than or equal to the other position. */
   gte(context: TimeContext, other: TimePosition): boolean {
     return this.toBeats(context) >= other.toBeats(context);
   }
 
   // ─── Comparison ───
 
+  /** Tests whether both positions use the same time base and stored coordinate. */
   equals(other: TimePosition): boolean {
     if (this._timeBase !== other._timeBase) return false;
     switch (this._timeBase) {
@@ -486,6 +504,7 @@ export class TimePosition {
     }
   }
 
+  /** Returns a hash based on the same representation used by {@link TimePosition.equals}. */
   hashCode(): number {
     const h = (n: number) => ((n >>> 0) * 2654435761) | 0;
     switch (this._timeBase) {
@@ -512,6 +531,7 @@ export class TimePosition {
 
   // ─── XML Serialization ───
 
+  /** Serializes this position using its stored time representation. */
   saveAsXML(): Element {
     const elem = new Element('timePosition');
 
@@ -569,6 +589,7 @@ export class TimePosition {
     return elem;
   }
 
+  /** Loads a supported timeline position using the supplied XML diagnostic context. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): TimePosition {
     const type = data.getAttribute('type') ?? '';
     switch (type) {

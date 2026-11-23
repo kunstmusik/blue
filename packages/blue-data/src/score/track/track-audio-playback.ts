@@ -23,6 +23,7 @@ function findAssociatedChannel(compileData: CompileData, trackId: string): Chann
   return undefined;
 }
 
+/** Generates Csound playback notes for audio clips in a track render window. */
 export function generateTrackAudioPlaybackNotes(
   trackId: string,
   clips: readonly AudioClip[],
@@ -122,6 +123,7 @@ export function generateTrackAudioPlaybackNotes(
   return notes;
 }
 
+/** Obtains or creates the render instrument used to play track audio clips. */
 export function ensureTrackAudioPlaybackInstrument(
   trackId: string,
   _context: TimeContext,

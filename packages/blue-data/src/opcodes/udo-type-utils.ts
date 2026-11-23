@@ -343,12 +343,14 @@ export function getModernOutTypesFromSignature(outputSignature: string): string 
 
 /**
  * Lightweight authored UDO definition accepted by the completion adapter.
- * Mirrors the field subset of {@link UdoCompletionDefinition} that completion
- * needs; code and comments are deliberately excluded.
+ * Contains only the fields needed for editor completion. The UDO body and comments stay on the authored definition.
  */
 export interface UdoCallableSignatureInput {
+  /** Name associated with the UDO callable signature input. */
   name: string;
+  /** Declaration syntax used to interpret the callable signature. */
   style: 'CLASSIC' | 'MODERN';
+  /** Declared output types used to identify the callable overload. */
   outTypes: string;
   /** Classic-style input declaration; empty for modern style. */
   inTypes: string;

@@ -9,6 +9,7 @@
 export class BSBCompilationUnit {
   private replacementValues = new Map<string, string>();
 
+  /** Associates a widget token key with its replacement text, replacing any previous mapping. */
   addReplacementValue(key: string, value: string): void {
     this.replacementValues.set(key, value);
   }

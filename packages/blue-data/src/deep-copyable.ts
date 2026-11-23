@@ -12,6 +12,7 @@ export type CopyMode = 'duplication' | 'history';
  * Mirrors the Java DeepCopyable<T> interface.
  */
 export interface DeepCopyable<T> {
+  /** Copies the object. Duplication creates new identities where applicable, and history copies preserve them. */
   deepCopy(mode?: CopyMode): T;
 }
 
@@ -20,5 +21,6 @@ export interface DeepCopyable<T> {
  * canonical copy of itself for transaction history.
  */
 export interface HistoryCopyable<T> {
+  /** Creates a copy for history that retains the identities used to match existing objects. */
   historyCopy(): T;
 }

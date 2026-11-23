@@ -23,8 +23,10 @@ export const CODE_REPOSITORY_SNIPPET_ELEMENT = 'customAccelerator';
 
 /** Error thrown when XML cannot be parsed or is structurally unsupported. */
 export class CodeRepositoryXmlError extends Error {
+  /** Creates a repository XML diagnostic with its validation code. */
   constructor(
     message: string,
+    /** Machine-readable reason for the diagnostic. */
     readonly code: 'invalid-legacy-xml',
   ) {
     super(message);
@@ -34,8 +36,11 @@ export class CodeRepositoryXmlError extends Error {
 
 /** Parsed import plan: a fresh tree (with generated ids) and counts. */
 export interface CodeRepositoryParseResult {
+  /** Top-level element or container. */
   readonly root: CodeRepositoryNode;
+  /** Number of groups in the parsed repository. */
   readonly groupCount: number;
+  /** Number of snippets in the parsed repository. */
   readonly snippetCount: number;
 }
 

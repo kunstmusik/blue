@@ -33,6 +33,7 @@ function findLastIndexAtOrBefore<T>(
   return best;
 }
 
+/** Piecewise tempo curve for converting between Csound beats and elapsed seconds. */
 export class TempoMap {
   private points: TempoPoint[] = [new TempoPoint(undefined, 60, CurveType.CONSTANT)];
   private _enabled = false;
@@ -63,6 +64,7 @@ export class TempoMap {
     return this.points[0]?.tempo ?? 60;
   }
 
+  /** Changes the tempo in beats per minute when the map has exactly one point. */
   setTempo(bpm: number): void {
     if (this.points.length === 1) {
       this.points[0].tempo = bpm;
@@ -85,18 +87,22 @@ export class TempoMap {
     return this.points[index];
   }
 
+  /** Reports whether conversions use the tempo curve. A disabled map converts at 60 BPM. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Enables or disables tempo-curve conversion without deleting its points. */
   setEnabled(enabled: boolean): void {
     this._enabled = enabled;
     this.recalculateAccumulatedTimes();
     this.fireListeners();
   }
 
+  /** Returns the stored editor preference for showing tempo data. */
   isVisible(): boolean {
     return this._visible;
   }
+  /** Updates the stored visibility preference independently of conversion. */
   setVisible(visible: boolean): void {
     if (this._visible !== visible) {
       this._visible = visible;
@@ -104,14 +110,17 @@ export class TempoMap {
     }
   }
 
+  /** Returns the number of stored tempo points. */
   size(): number {
     return this.points.length;
   }
 
+  /** Returns a read-only view of the stored tempo points in beat order. */
   getTempoPoints(): ReadonlyArray<TempoPoint> {
     return this.points;
   }
 
+  /** Returns the live tempo point at a valid zero-based index. */
   getTempoPoint(index: number): TempoPoint {
     return this.points[index];
   }
@@ -153,6 +162,7 @@ export class TempoMap {
     this.fireListeners();
   }
 
+  /** Removes a tempo point by zero-based index. Throws if it is the last remaining point. */
   removeTempoPoint(index: number): void {
     if (this.points.length <= 1) {
       throw new Error('Cannot remove the last tempo point');
@@ -185,6 +195,7 @@ export class TempoMap {
     this.fireListeners();
   }
 
+  /** Registers a callback to run when the map notifies listeners of a change. */
   addListener(listener: () => void): void {
     this.listeners.push(listener);
   }
@@ -197,6 +208,7 @@ export class TempoMap {
 
   // ─── Conversion ───
 
+  /** Returns the duration of one beat in seconds at the initial tempo. */
   getBeatDuration(): number {
     return 60.0 / this.getTempo();
   }
@@ -413,6 +425,7 @@ export class TempoMap {
     return map;
   }
 
+  /** Compares enabled state and each point’s beat, BPM, and curve. */
   equals(other: TempoMap): boolean {
     if (this._enabled !== other._enabled) return false;
     if (this.points.length !== other.points.length) return false;
@@ -426,6 +439,7 @@ export class TempoMap {
 
   // ─── XML Serialization ───
 
+  /** Serializes the stored tempo curve and display preferences into a new XML element. */
   saveAsXML(): Element {
     const elem = new Element('tempoMap');
     elem.addElement('enabled').setText(this._enabled.toString());
@@ -438,6 +452,7 @@ export class TempoMap {
     return elem;
   }
 
+  /** Reads tempo map settings and points and rebuilds the time conversion cache. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): TempoMap {
     checkRoot(data, 'tempoMap', context);
     checkShape(data, [], ['enabled', 'visible', 'tempoPoint', 'beatTempoPair'], context, [

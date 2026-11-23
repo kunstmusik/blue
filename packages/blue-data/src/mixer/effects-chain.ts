@@ -11,9 +11,11 @@ import { checkRoot, checkShape } from '../utilities/xml';
 import { BlueDataObject } from '../blue-data-object';
 import type { CopyMode } from '../deep-copyable';
 
+/** One effect processor or send in an ordered mixer effects chain. */
 export type EffectsChainItem = Effect | Send;
 
 export class EffectsChain extends Array<EffectsChainItem> implements BlueDataObject {
+  /** Returns the sends contained in the effects chain. */
   getSends(): Send[] {
     return this.filter((item): item is Send => item instanceof Send);
   }
@@ -26,6 +28,7 @@ export class EffectsChain extends Array<EffectsChainItem> implements BlueDataObj
     return elem;
   }
 
+  /** Reconstructs the effects chain from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     context?: XmlLoadContext,

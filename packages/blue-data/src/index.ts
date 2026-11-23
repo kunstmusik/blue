@@ -1,3 +1,13 @@
+/**
+ * Blue's portable project model, XML I/O, musical timing, and Csound generation.
+ *
+ * Start with {@link readProjectXml} to inspect an existing `.blue` project, or
+ * create a {@link BlueData} instance to build one in memory. {@link BlueData.saveToString}
+ * serializes project XML, and {@link BlueData.toDiskCSD} generates Csound text.
+ * The host handles file I/O and provides any required script runtimes.
+ *
+ * @module @kunstmusik/blue-data
+ */
 // ─── Core ───
 export { BlueData } from './blue-data';
 export { readProjectXml } from './blue-data/xml-policy';

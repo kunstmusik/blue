@@ -1,0 +1,30 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "@kunstmusik/blue-data",
+  "entryPoints": ["src/index.ts", "docs/supporting-types.ts"],
+  "tsconfig": "tsconfig.docs.json",
+  "out": "build/api",
+  "readme": "none",
+  "includeVersion": true,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "requiredToBeDocumented": [
+    "Enum",
+    "EnumMember",
+    "Variable",
+    "Function",
+    "Class",
+    "Interface",
+    "Property",
+    "Method",
+    "Accessor",
+    "TypeAlias",
+    "Constructor",
+    "IndexSignature"
+  ],
+  "validation": {
+    "notDocumented": true
+  },
+  "treatWarningsAsErrors": true
+}

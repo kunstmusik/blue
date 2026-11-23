@@ -7,6 +7,7 @@ import { NoteProcessorChain } from './note-processor-chain';
 export class NoteProcessorChainMap implements BlueDataObject {
   private chains = new Map<string, NoteProcessorChain>();
 
+  /** Creates a default note processor chain map or copies a supplied instance. */
   constructor(other?: NoteProcessorChainMap) {
     if (other) {
       for (const [name, chain] of other.chains) {
@@ -15,22 +16,27 @@ export class NoteProcessorChainMap implements BlueDataObject {
     }
   }
 
+  /** Looks up the processor chain saved under the given name. */
   getChain(name: string): NoteProcessorChain | undefined {
     return this.chains.get(name);
   }
 
+  /** Retrieves the chain associated with the supplied name. */
   getNoteProcessorChain(name: string): NoteProcessorChain | undefined {
     return this.chains.get(name);
   }
 
+  /** Stores a named chain, replacing the previous entry for that name. */
   setChain(name: string, chain: NoteProcessorChain): void {
     this.chains.set(name, chain);
   }
 
+  /** Returns the names of the currently stored chains. */
   getChainNames(): string[] {
     return Array.from(this.chains.keys());
   }
 
+  /** Removes the entry under the supplied name. */
   removeChain(name: string): void {
     this.chains.delete(name);
   }
@@ -46,6 +52,7 @@ export class NoteProcessorChainMap implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the named note processor chains from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): NoteProcessorChainMap {
     checkRoot(data, 'noteProcessorChainMap', context);
     checkShape(data, [], ['npc', 'noteProcessorChain'], context, ['npc', 'noteProcessorChain']);

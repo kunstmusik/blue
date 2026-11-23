@@ -17,6 +17,7 @@ import { Element } from '../serialization/xml-reader';
 import { ObjRefSaveMap } from '../serialization/obj-ref-map';
 import type { CopyMode } from '../deep-copyable';
 
+/** Common timeline placement, duration, time behavior, and note processing for authored sound objects. */
 export abstract class AbstractSoundObject implements SoundObject {
   protected _name = '';
   protected _startTime = TimePosition.beats(0);
@@ -27,6 +28,7 @@ export abstract class AbstractSoundObject implements SoundObject {
   protected _npc = new NoteProcessorChain();
   protected _cloneSourceHashCode = 0;
 
+  /** Initializes common sound-object settings, including a zero start and four-beat duration. */
   constructor() {}
 
   // Copy constructor
@@ -43,86 +45,106 @@ export abstract class AbstractSoundObject implements SoundObject {
 
   // ─── ScoreObject implementation ───
 
+  /** Returns the editable object name shown on the timeline. */
   getName(): string {
     return this._name;
   }
 
+  /** Changes this object's display name. */
   setName(value: string): void {
     this._name = value;
   }
 
+  /** Returns the object's placement in its containing timeline, in the authored time base. */
   getStartTime(): TimePosition {
     return this._startTime;
   }
 
+  /** Sets the object's placement in its containing timeline. */
   setStartTime(value: TimePosition): void {
     this._startTime = value;
   }
 
+  /** Returns the authored span that controls placement and time behavior. */
   getSubjectiveDuration(): TimeDuration {
     return this._subjectiveDuration;
   }
 
+  /** Sets the object's authored span. */
   setSubjectiveDuration(value: TimeDuration): void {
     this._subjectiveDuration = value;
   }
 
+  /** Returns the stored timeline color as a packed integer. */
   getBackgroundColor(): number {
     return this._backgroundColor;
   }
 
+  /** Sets the packed color integer used when displaying this object. */
   setBackgroundColor(color: number): void {
     this._backgroundColor = color;
   }
 
+  /** Returns the allowed left-edge offsets. The base defaults to extension with no lower bound. */
   getResizeLeftLimits(_context: TimeContext): number[] {
     return [-Infinity, 0];
   }
 
+  /** Returns the allowed right-edge offsets. The base defaults to extension with no upper bound. */
   getResizeRightLimits(_context: TimeContext): number[] {
     return [0, Infinity];
   }
 
+  /** Handles a move of the left edge in Csound beats. The base implementation is a no-op. */
   resizeLeft(_context: TimeContext, _newStartTime: number): void {
     // Default: no-op
   }
 
+  /** Handles a move of the right edge in Csound beats. The base implementation is a no-op. */
   resizeRight(_context: TimeContext, _newEndTime: number): void {
     // Default: no-op
   }
 
+  /** Returns the stored source hash carried by copies. */
   getCloneSourceHashCode(): number {
     return this._cloneSourceHashCode;
   }
 
   // ─── SoundObject implementation ───
 
+  /** Returns the live chain that concrete objects use to transform generated notes. */
   getNoteProcessorChain(): NoteProcessorChain {
     return this._npc;
   }
 
+  /** Replaces the object's processor chain by reference. */
   setNoteProcessorChain(chain: NoteProcessorChain): void {
     this._npc = chain;
   }
 
+  /** Returns the rule used to fit generated material to the object's authored duration. */
   getTimeBehavior(): TimeBehavior {
     return this._timeBehavior;
   }
 
+  /** Sets the rule applied during score generation. */
   setTimeBehavior(behavior: TimeBehavior): void {
     this._timeBehavior = behavior;
   }
 
+  /** Returns the configured repetition interval, or `null` to let the generator infer it. */
   getRepeatPoint(): TimeDuration | null {
     return this._repeatPoint;
   }
 
+  /** Sets the repetition interval. Pass `null` to clear the override. */
   setRepeatPoint(repeatPoint: TimeDuration | null): void {
     this._repeatPoint = repeatPoint;
   }
 
   // ─── Abstract methods ───
 
+  /** Generates the object's notes using the supplied timing and render context. */
   abstract generateForCSD(
     context: TimeContext,
     compileData: CompileData,
@@ -130,7 +152,9 @@ export abstract class AbstractSoundObject implements SoundObject {
     endTime: number,
   ): NoteList;
 
+  /** Writes the concrete sound object to XML, using the supplied reference mapping when applicable. */
   abstract saveAsXML(objRefMap?: ObjRefSaveMap): Element;
 
+  /** Copies the authored sound object with the requested identity policy. */
   abstract deepCopy(mode?: CopyMode): SoundObject;
 }

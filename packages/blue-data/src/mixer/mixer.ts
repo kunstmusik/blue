@@ -27,6 +27,7 @@ import {
   type PanLawDb,
 } from './channel-pan';
 
+/** Identifier for a supported mixer meter scale and display profile. */
 export type MeterProfileKey =
   | 'peak-rms-mixing-plus-6'
   | 'peak-rms-linear-plus-6'
@@ -34,6 +35,7 @@ export type MeterProfileKey =
   | 'k14-rms-peak'
   | 'k12-rms-peak';
 
+/** Supported meter profile keys in presentation order. */
 export const METER_PROFILE_KEYS: readonly MeterProfileKey[] = [
   'peak-rms-mixing-plus-6',
   'peak-rms-linear-plus-6',
@@ -42,17 +44,24 @@ export const METER_PROFILE_KEYS: readonly MeterProfileKey[] = [
   'k12-rms-peak',
 ] as const;
 
+/** Metering default for a newly created mixer. */
 export const DEFAULT_NEW_METER_ENABLED = true;
+/** Meter profile selected for a newly created mixer. */
 export const DEFAULT_NEW_METER_PROFILE_KEY: MeterProfileKey = 'peak-rms-mixing-plus-6';
 
+/** Metering fallback when persisted mixer XML omits the setting. */
 export const DEFAULT_LEGACY_METER_ENABLED = false;
+/** Meter profile fallback for legacy mixer XML and unsupported profile selections. */
 export const DEFAULT_LEGACY_METER_PROFILE_KEY: MeterProfileKey = 'peak-rms-linear-plus-6';
 
+/** Checks whether a value is a supported mixer meter profile key. */
 export function isMeterProfileKey(value: unknown): value is MeterProfileKey {
   return typeof value === 'string' && METER_PROFILE_KEYS.includes(value as MeterProfileKey);
 }
 
+/** Project mixer containing grouped source channels, orchestra channels, subchannels, and a master output. */
 export class Mixer implements BlueDataObject {
+  /** Reserved routing name for the master output. */
   static readonly MASTER_CHANNEL = 'Master';
 
   private _enabled = true;
@@ -68,6 +77,7 @@ export class Mixer implements BlueDataObject {
   private _extraRenderTime = 0;
   private _subChannelDependencies = new Set<string>();
 
+  /** Creates the default enabled mixer with empty source and subchannel lists and a master output. */
   constructor() {
     this._master.setName(Mixer.MASTER_CHANNEL);
     this._channels.setListName('Orchestra');
@@ -76,70 +86,90 @@ export class Mixer implements BlueDataObject {
     this._subChannels.setListNameEditSupported(false);
   }
 
+  /** Reports whether the mixer participates in Csound generation. */
   isEnabled(): boolean {
     return this._enabled;
   }
+  /** Enables or bypasses the project mixer for generation. */
   setEnabled(e: boolean): void {
     this._enabled = e;
   }
 
+  /** Reports whether the mixer requests meter channels for realtime use. */
   isEnableMeters(): boolean {
     return this._enableMeters;
   }
+  /** Sets the persisted preference for realtime metering. */
   setEnableMeters(enable: boolean): void {
     this._enableMeters = enable;
   }
 
+  /** Returns the stored profile used by the host to present meter values. */
   getMeterProfileKey(): MeterProfileKey {
     return this._meterProfileKey;
   }
+  /** Selects a meter profile, falling back to the legacy default for an unrecognized key. */
   setMeterProfileKey(key: MeterProfileKey): void {
     this._meterProfileKey = isMeterProfileKey(key) ? key : DEFAULT_LEGACY_METER_PROFILE_KEY;
   }
 
+  /** Reports whether the mixer uses per-channel panners. */
   isPanningEnabled(): boolean {
     return this._panningEnabled;
   }
+  /** Enables or disables the mixer's per-channel panners. */
   setPanningEnabled(enabled: boolean): void {
     if (typeof enabled === 'boolean') this._panningEnabled = enabled;
   }
 
+  /** Returns the mixer's center attenuation in dB. */
   getPanLawDb(): PanLawDb {
     return this._panLawDb;
   }
+  /** Sets the center attenuation in dB. Unsupported values are ignored. */
   setPanLawDb(lawDb: PanLawDb): void {
     if (isValidPanLawDb(lawDb)) this._panLawDb = lawDb;
   }
 
+  /** Reports whether panning applies off-center level boost. */
   isPanOffCenterBoost(): boolean {
     return this._panOffCenterBoost;
   }
+  /** Controls off-center boost for mixer panners. */
   setPanOffCenterBoost(boost: boolean): void {
     if (typeof boost === 'boolean') this._panOffCenterBoost = boost;
   }
 
+  /** Returns the tail duration added after the score when the mixer is enabled. */
   getExtraRenderTime(): number {
     return this._extraRenderTime;
   }
+  /** Sets the additional render tail used for effects to finish after the score. */
   setExtraRenderTime(t: number): void {
     this._extraRenderTime = t;
   }
 
+  /** Returns the live collection of grouped source-channel lists. */
   getChannelListGroups(): ChannelList[] {
     return this._channelListGroups;
   }
+  /** Removes the grouped source-channel lists. Orchestra channels and subchannels remain available. */
   clearChannelListGroups(): void {
     this._channelListGroups = [];
   }
+  /** Returns the live list of orchestra source channels. */
   getChannels(): ChannelList {
     return this._channels;
   }
+  /** Returns the live list of mixer subchannels that receive routed audio. */
   getSubChannels(): ChannelList {
     return this._subChannels;
   }
+  /** Returns the live channel used for the master output. */
   getMaster(): Channel {
     return this._master;
   }
+  /** Replaces the master channel with the supplied instance. */
   setMaster(master: Channel): void {
     this._master = master;
   }
@@ -159,12 +189,14 @@ export class Mixer implements BlueDataObject {
     return `ga_bluesub_${safeName}_${outputIndex}`;
   }
 
+  /** Records a nonempty subchannel name as a render dependency. */
   addSubChannelDependency(_name: string): void {
     if (_name) {
       this._subChannelDependencies.add(_name);
     }
   }
 
+  /** Returns a new array of live source channels, with grouped channels followed by orchestra channels. */
   getAllSourceChannels(): Channel[] {
     const result: Channel[] = [];
     for (const group of this._channelListGroups) {
@@ -255,6 +287,7 @@ export class Mixer implements BlueDataObject {
     return this._subChannelDependencies.size > 0;
   }
 
+  /** Writes the mixer settings, routing channels, and render tail to a new XML element. */
   saveAsXML(): Element {
     const elem = new Element('mixer');
     elem.setAttribute('panningEnabled', this._panningEnabled ? 'true' : 'false');
@@ -284,6 +317,7 @@ export class Mixer implements BlueDataObject {
     return elem;
   }
 
+  /** Validates and loads mixer XML, applying compatibility defaults when legacy documents omit settings. */
   static loadFromXML(data: Element, context?: XmlLoadContext, sink?: XmlDiagnosticSink): Mixer {
     const ctx = context ?? new XmlLoadContext(data);
     checkRoot(data, 'mixer', ctx);

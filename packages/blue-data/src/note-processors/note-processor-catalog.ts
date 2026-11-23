@@ -17,6 +17,7 @@ import { TuningProcessor } from './tuning-processor';
 import { PythonProcessor, DEFAULT_PYTHON_PROCESSOR_CODE } from './python-processor';
 import { NoteProcessor } from './note-processor';
 
+/** Input shapes supported by the note-processor parameter editor. */
 export type ParameterValueType =
   | 'string'
   | 'number'
@@ -25,19 +26,31 @@ export type ParameterValueType =
   | 'multilineText'
   | 'code';
 
+/** Editor metadata for one configurable property of a note processor. */
 export interface NoteProcessorParameterDefinition {
+  /** Name associated with the note processor parameter definition. */
   name: string;
+  /** Human-readable label for the configurable processor property. */
   label: string;
+  /** Expected input shape for editing the property. */
   valueType: ParameterValueType;
+  /** Initial value when no explicit value is supplied. */
   defaultValue: string | number | boolean;
+  /** Whether the editor requires a value for this property. */
   required: boolean;
 }
 
+/** Catalog entry with processor label, ordering, parameters, and a creation function. */
 export interface NoteProcessorDefinition {
+  /** Serialized type name used to identify this processor. */
   type: string;
+  /** Human-readable display label. */
   displayName: string;
+  /** Relative order used when presenting processors in the editor. */
   position: number;
+  /** Parameters belonging to this note processor definition, in stored order. */
   parameters: NoteProcessorParameterDefinition[];
+  /** Constructs a processor initialized with the catalog's defaults. */
   createDefault: () => NoteProcessor;
 }
 
@@ -294,14 +307,17 @@ for (const def of CATALOG) {
   CATALOG_MAP.set(def.type, def);
 }
 
+/** Returns the registered editor definitions for note processors. */
 export function getNoteProcessorCatalog(): NoteProcessorDefinition[] {
   return CATALOG;
 }
 
+/** Looks up the catalog entry for a processor type. */
 export function getNoteProcessorDefinition(type: string): NoteProcessorDefinition | undefined {
   return CATALOG_MAP.get(type);
 }
 
+/** Reports whether this processor type can be created through the editor catalog. */
 export function isAddableProcessor(type: string): boolean {
   return CATALOG_MAP.has(type);
 }

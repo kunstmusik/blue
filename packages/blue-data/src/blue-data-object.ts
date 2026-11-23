@@ -22,5 +22,6 @@ export interface BlueDataObject extends DeepCopyable<BlueDataObject> {
  * methods on interfaces, and constructors can't be in interfaces.
  */
 export interface BlueDataObjectStatic<T extends BlueDataObject> {
+  /** Reconstructs an object from an XML element, optionally resolving references in the containing document. */
   loadFromXML(data: Element, objRefMap?: ObjRefLoadMap): T;
 }

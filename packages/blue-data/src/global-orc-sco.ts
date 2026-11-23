@@ -9,10 +9,12 @@ import { Element } from './serialization/xml-reader';
 import { XmlLoadContext } from './serialization/xml-load';
 import { checkRoot, checkShape, readText } from './utilities/xml';
 
+/** Stores project-wide Csound orchestra and score source text. */
 export class GlobalOrcSco {
   private _globalOrc = '';
   private _globalSco = '';
 
+  /** Creates empty source blocks or copies both blocks from another instance. */
   constructor(other?: GlobalOrcSco) {
     if (other) {
       this._globalOrc = other._globalOrc;
@@ -20,24 +22,29 @@ export class GlobalOrcSco {
     }
   }
 
+  /** Returns the authored project orchestra text. */
   getGlobalOrc(): string {
     return this._globalOrc;
   }
 
+  /** Replaces the project-wide orchestra text. */
   setGlobalOrc(orc: string): void {
     this._globalOrc = orc;
   }
 
+  /** Returns the authored project score text. */
   getGlobalSco(): string {
     return this._globalSco;
   }
 
+  /** Replaces the project-wide score text. */
   setGlobalSco(sco: string): void {
     this._globalSco = sco;
   }
 
   // ─── XML ───
 
+  /** Writes both Csound source blocks to a new XML element. */
   saveAsXML(): Element {
     const elem = new Element('globalOrcSco');
     elem.addElement('globalOrc').setText(this._globalOrc);
@@ -45,6 +52,7 @@ export class GlobalOrcSco {
     return elem;
   }
 
+  /** Loads the project orchestra and score blocks from XML. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): GlobalOrcSco {
     checkRoot(data, 'globalOrcSco', context);
     checkShape(data, [], ['globalOrc', 'globalSco'], context);

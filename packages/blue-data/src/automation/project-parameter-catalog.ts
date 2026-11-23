@@ -20,14 +20,18 @@ import { Score } from '../score/score';
 import { TrackLayerGroup } from '../score/track/track-layer-group';
 import type { BlueData } from '../blue-data';
 
+/** Location categories for parameters collected from a Blue project. */
 export type ProjectParameterOwnerKind = 'arrangement-instrument' | 'track-instrument' | 'mixer';
 
+/** A collected automation parameter and the stable project owner associated with it. */
 export interface ProjectParameterEntry {
+  /** Category of the project model that owns the parameter. */
   ownerKind: ProjectParameterOwnerKind;
   /** Stable location identity, never a display name. */
   ownerIdentity: string;
   /** Display only; same-named owners are disambiguated by location. */
   ownerLabel: string;
+  /** Live parameter associated with the reported owner. */
   parameter: Parameter;
   /** Automation chooser groups. */
   path: readonly string[];

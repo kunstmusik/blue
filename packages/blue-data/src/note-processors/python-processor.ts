@@ -122,13 +122,16 @@ export const DEFAULT_PYTHON_PROCESSOR_CODE = `# Example: scale duration (p3) by 
 #     note.setPField(str(p3 * 0.95), 3)
 `;
 
+/** Delegates note-list transformations to a host-provided Jython runtime. */
 export class PythonProcessor extends NoteProcessor {
   private code = '';
 
+  /** Returns the Python source used to transform the note list. */
   getCode(): string {
     return this.code;
   }
 
+  /** Sets the Python source sent to the Jython runtime. */
   setCode(code: string): void {
     this.code = code ?? '';
   }
@@ -138,6 +141,7 @@ export class PythonProcessor extends NoteProcessor {
     return notes;
   }
 
+  /** Sends the current notes and Python code to the Jython client attached to the compilation. */
   override async processAsync(notes: NoteList, compileData?: CompileData): Promise<NoteList> {
     if (!compileData) {
       throw new NoteProcessorException('PythonProcessor requires a Java runtime session', -1);
@@ -181,6 +185,7 @@ export class PythonProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the Python processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): PythonProcessor {
     validateProcessorXml(data, 'PythonProcessor', context);
     const processor = new PythonProcessor();

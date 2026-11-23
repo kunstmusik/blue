@@ -8,11 +8,14 @@ import { ValueTimeMapper } from './value-time-mapper';
 
 const JAVA_TYPE = 'blue.noteProcessor.LineMultiplyProcessor';
 
+/** Multiplies a p-field on each note by the value of a beat/value curve. */
 export class LineMultiplyProcessor extends NoteProcessor {
   private _lineMultiplyString = '0 1';
   private _pfield = 4;
 
+  /** Creates a line multiply processor initialized with its default settings. */
   constructor();
+  /** Creates a line multiply processor using the source instance’s settings. */
   constructor(src: LineMultiplyProcessor);
   constructor(src?: LineMultiplyProcessor) {
     super();
@@ -22,16 +25,20 @@ export class LineMultiplyProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the one-based Csound p-field index. */
   getPfield(): string {
     return this._pfield.toString();
   }
+  /** Sets the one-based Csound p-field index. */
   setPfield(pfield: string): void {
     this._pfield = parseInt(pfield, 10);
   }
 
+  /** Returns the line multiply string stored on the line multiply processor. */
   getLineMultiplyString(): string {
     return this._lineMultiplyString;
   }
+  /** Sets the line multiply string stored on the line multiply processor. */
   setLineMultiplyString(lineMultiplyString: string): void {
     this._lineMultiplyString = lineMultiplyString;
   }
@@ -78,6 +85,7 @@ export class LineMultiplyProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the line multiply processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): LineMultiplyProcessor {
     validateProcessorXml(data, 'LineMultiplyProcessor', context);
     const proc = new LineMultiplyProcessor();

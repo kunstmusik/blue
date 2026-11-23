@@ -13,6 +13,7 @@ Use this index when changing Blue. Start with the repository's [agent guidance](
 | Audio previews or BlueX7 generation                                            | [Waveform handling](waveform-data-handling.md) and [BlueX7 rendering](blue-x7-modern-renderer.md)                |
 | Performance tests or acceptance evidence                                       | [Performance testing](performance-testing.md)                                                                    |
 | Changelog entries and release notes                                            | [Maintaining the changelog](changelog.md)                                                                        |
+| Hosted documentation, editions, or Pages deployment                            | [Documentation site](site/README.md)                                                                             |
 | Packaging, release, or dependency licensing                                    | [Release guide](release-guide.md) and [production dependency license inventory](dependency-license-inventory.md) |
 
 Keep this directory focused on standing rules, current subsystem contracts, and

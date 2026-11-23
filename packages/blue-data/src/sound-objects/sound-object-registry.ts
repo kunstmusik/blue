@@ -8,20 +8,29 @@ import { XmlLoadContext, requireXmlValue, type XmlDiagnosticSink } from '../seri
 import { ObjRefLoadMap } from '../serialization/obj-ref-map';
 import { SoundObject } from './sound-object';
 
-type SoundObjectLoader = (
+/** Callback that reconstructs a sound object from XML and shared load context. */
+export type SoundObjectLoader = (
   data: Element,
   objRefMap?: ObjRefLoadMap,
   context?: XmlLoadContext,
 ) => SoundObject | null;
-type SoundObjectFactory = () => SoundObject;
+/** Callback that creates a fresh instance of a registered sound-object type. */
+export type SoundObjectFactory = () => SoundObject;
 
+/** Whether a sound-object type may be placed on a track. */
 export type TrackPlacement = 'compatible' | 'incompatible';
+/** Registry classification controlling how generated notes interact with a track instrument assignment. */
 export type InstrumentTargetBehavior = 'assignable' | 'propagated' | 'preserve' | 'none';
 
+/** Registry metadata describing a sound-object type's placement and instrument-target behavior. */
 export interface SoundObjectTypeDescriptor {
+  /** Registered sound-object type name. */
   readonly typeName: string;
+  /** Whether this type can be placed in a track. */
   readonly trackPlacement: TrackPlacement;
+  /** Explanation when track placement is unavailable. */
   readonly trackPlacementReason?: string;
+  /** How generated notes participate in track instrument targeting. */
   readonly instrumentTargetBehavior: InstrumentTargetBehavior;
 }
 
@@ -57,6 +66,7 @@ export function normalizeClassName(type: string | null): string {
   return shortName;
 }
 
+/** Registers a loader for a persisted sound-object type and its placement metadata. */
 export function registerSoundObjectType(
   typeName: string,
   loader: SoundObjectLoader,
@@ -73,15 +83,18 @@ export function registerSoundObjectType(
   }
 }
 
+/** Registers a factory for creating a new sound object of the given type. */
 export function registerSoundObjectFactory(typeName: string, factory: SoundObjectFactory): void {
   factories.set(typeName, factory);
 }
 
+/** Creates a sound object using the factory registered under the supplied type name. */
 export function createSoundObject(typeName: string): SoundObject | null {
   const factory = factories.get(typeName) ?? factories.get(normalizeClassName(typeName));
   return factory ? factory() : null;
 }
 
+/** Looks up placement and instrument-target metadata for a registered type. */
 export function getSoundObjectTypeDescriptor(
   typeName: string | null | undefined,
 ): SoundObjectTypeDescriptor | undefined {
@@ -89,6 +102,7 @@ export function getSoundObjectTypeDescriptor(
   return descriptors.get(typeName) ?? descriptors.get(normalizeClassName(typeName));
 }
 
+/** Returns the registered sound-object type metadata. */
 export function getAllSoundObjectTypeDescriptors(): readonly SoundObjectTypeDescriptor[] {
   const seen = new Map<string, SoundObjectTypeDescriptor>();
   for (const descriptor of descriptors.values()) {
@@ -97,9 +111,13 @@ export function getAllSoundObjectTypeDescriptors(): readonly SoundObjectTypeDesc
   return [...seen.values()];
 }
 
+/** Checks whether the supplied sound object supports placement on a track. */
 export function getTrackPlacementForSoundObject(object: SoundObject): {
+  /** Whether the object can be placed on a track. */
   compatible: boolean;
+  /** Explanation of why the requested value is unavailable. */
   reason?: string;
+  /** Registration metadata used to determine placement, when available. */
   descriptor?: SoundObjectTypeDescriptor;
 } {
   const placement = getTrackPlacementForSoundObjectType(object.constructor.name);
@@ -121,9 +139,13 @@ export function getTrackPlacementForSoundObject(object: SoundObject): {
   };
 }
 
+/** Checks track compatibility for a registered sound-object type name. */
 export function getTrackPlacementForSoundObjectType(typeName: string | null | undefined): {
+  /** Whether the type can be placed on a track. */
   compatible: boolean;
+  /** Explanation of why the requested value is unavailable. */
   reason?: string;
+  /** Registration metadata used to determine placement, when available. */
   descriptor?: SoundObjectTypeDescriptor;
 } {
   const rawType = typeName ?? '';
@@ -141,6 +163,7 @@ export function getTrackPlacementForSoundObjectType(typeName: string | null | un
   };
 }
 
+/** Reconstructs the registered sound-object type using the supplied reference map and XML diagnostic context. */
 export function loadSoundObjectFromXML(
   data: Element,
   objRefMap?: ObjRefLoadMap,

@@ -35,58 +35,100 @@ import {
  */
 export const BLUEX7_MODERN_MODULE_KEY = 'blueX7.modernModuleEmitted';
 
+/** Generated Csound tables, instrument body, and parameter-binding report for a BlueX7 preview. */
 export interface BlueX7PreviewResult {
+  /** Csound function-table definitions required by the preview. */
   tables: string;
+  /** Generated Csound instrument body for the preview. */
   body: string;
+  /** Report of requested controls that were or were not emitted. */
   bindings: {
+    /** Semantic parameter keys emitted as bindings. */
     emitted: string[];
+    /** Requested semantic parameter keys omitted from the generated bindings. */
     notEmitted: string[];
   };
 }
 
+/** One DX7 envelope segment's rate and destination level. */
 export interface EnvelopePoint {
+  /** DX7 rate value for reaching this segment's destination level. */
   rate: number;
+  /** DX7 destination level for the segment. */
   level: number;
 }
 
+/** Voice-wide routing, transposition, feedback, and output settings for BlueX7. */
 export interface BlueX7Common {
+  /** Voice-wide transposition setting in the DX7 value domain. */
   keyTranspose: number;
+  /** FM routing algorithm for the six operators. */
   algorithm: number;
+  /** Amount of operator feedback in the selected algorithm. */
   feedback: number;
+  /** Six enable flags in the model's operator order. */
   operatorEnabled: [boolean, boolean, boolean, boolean, boolean, boolean];
 }
 
+/** Low-frequency oscillator settings shared across the BlueX7 voice. */
 export interface BlueX7Lfo {
+  /** Rate of low-frequency oscillation in the DX7 value domain. */
   speed: number;
+  /** DX7 delay setting for the onset of modulation. */
   delay: number;
+  /** Depth of pitch modulation introduced by the LFO. */
   pitchModulationDepth: number;
+  /** Depth of amplitude modulation introduced by the LFO. */
   amplitudeModulationDepth: number;
+  /** DX7 waveform selector for the LFO. */
   wave: number;
+  /** LFO synchronization setting. */
   sync: number;
 }
 
+/** Oscillator, envelope, and keyboard response settings for one DX7 operator. */
 export interface BlueX7Operator {
+  /** Selects ratio or fixed-frequency operation. */
   mode: number;
+  /** Oscillator phase synchronization setting. */
   sync: number;
+  /** Coarse oscillator frequency or ratio setting. */
   freqCoarse: number;
+  /** Fine oscillator frequency or ratio adjustment. */
   freqFine: number;
+  /** DX7 detuning adjustment for this operator. */
   detune: number;
+  /** Keyboard breakpoint separating the left and right level-scaling regions. */
   breakpoint: number;
+  /** Keyboard level-scaling curve below the breakpoint. */
   curveLeft: number;
+  /** Keyboard level-scaling curve above the breakpoint. */
   curveRight: number;
+  /** Level-scaling depth below the breakpoint. */
   depthLeft: number;
+  /** Level-scaling depth above the breakpoint. */
   depthRight: number;
+  /** Amount of envelope rate scaling by keyboard position. */
   keyboardRateScaling: number;
+  /** Operator output level in the DX7 value domain. */
   outputLevel: number;
+  /** Amount of operator level modulation by note velocity. */
   velocitySensitivity: number;
+  /** Operator amplitude modulation sensitivity. */
   modulationAmplitude: number;
+  /** Operator pitch modulation sensitivity. */
   modulationPitch: number;
+  /** Ordered segments of the operator envelope. */
   envelope: [EnvelopePoint, EnvelopePoint, EnvelopePoint, EnvelopePoint];
 }
 
+/** Serializable model of a six-operator BlueX7 voice and its shared settings. */
 export interface BlueX7Voice {
+  /** Settings shared by all six operators. */
   common: BlueX7Common;
+  /** Shared low-frequency oscillator settings. */
   lfo: BlueX7Lfo;
+  /** Six operators in the model's voice order. */
   operators: [
     BlueX7Operator,
     BlueX7Operator,
@@ -95,10 +137,13 @@ export interface BlueX7Voice {
     BlueX7Operator,
     BlueX7Operator,
   ];
+  /** Segments of the shared pitch envelope. */
   pitchEnvelope: [EnvelopePoint, EnvelopePoint, EnvelopePoint, EnvelopePoint];
+  /** Additional Csound code associated with the voice output. */
   csoundPostCode: string;
 }
 
+/** Creates a new voice with BlueX7's default routing and modulation settings. */
 export function createDefaultBlueX7Voice(): BlueX7Voice {
   return {
     common: {
@@ -265,6 +310,7 @@ export function createDefaultBlueX7Voice(): BlueX7Voice {
   };
 }
 
+/** Creates an independent copy of the voice, including operators and envelope points. */
 export function cloneBlueX7Voice(voice: BlueX7Voice): BlueX7Voice {
   return {
     common: {
@@ -481,7 +527,13 @@ export function replaceBlueX7VoiceFixedValues(
   }
 }
 
-export function getBlueX7BindingReport(): { emitted: string[]; notEmitted: string[] } {
+/** Returns the semantic controls represented by the code generator's parameter bindings. */
+export function getBlueX7BindingReport(): {
+  /** Semantic parameter keys emitted as bindings. */
+  emitted: string[];
+  /** Requested semantic parameter keys omitted from the generated bindings. */
+  notEmitted: string[];
+} {
   const emitted = BLUE_X7_PARAMETER_DESCRIPTORS.map((descriptor) => {
     const updateClass = descriptor.updateClass === 'next-note' ? 'next-note' : 'active-note';
     const target =
@@ -497,6 +549,7 @@ export function getBlueX7BindingReport(): { emitted: string[]; notEmitted: strin
   };
 }
 
+/** Compiles a voice into a Csound preview body and a binding report. */
 export function generateBlueX7Preview(voice: BlueX7Voice, name = 'BlueX7'): BlueX7PreviewResult {
   const instr = new BlueX7();
   instr.setName(name);
@@ -522,8 +575,10 @@ function updateOrAddChildText(parent: Element, tag: string, text: string): Eleme
 export class BlueX7 extends Instrument {
   private _voice: BlueX7Voice;
   private _parameters: ParameterList;
+  /** Function table numbers allocated for this instrument's operator data. */
   public operatorTableNums: number[] | null = null;
 
+  /** Creates a default BlueX7 or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: BlueX7, mode: CopyMode = 'duplication') {
     super();
     this.setName('BlueX7');
@@ -540,10 +595,12 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Returns the voice stored on the BlueX7 instrument. */
   getVoice(): BlueX7Voice {
     return this._voice;
   }
 
+  /** Returns a new array of this instrument's live automation parameters. */
   getParameters(): Parameter[] {
     return [...this._parameters];
   }
@@ -568,14 +625,17 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Applies voice values to the current model and existing automation controls. */
   setVoice(voice: BlueX7Voice): void {
     replaceBlueX7VoiceFixedValues(this._voice, this._parameters, voice);
   }
 
+  /** Applies incoming voice values while retaining the current parameter objects. */
   replaceVoice(voice: BlueX7Voice): void {
     replaceBlueX7VoiceFixedValues(this._voice, this._parameters, voice);
   }
 
+  /** Updates a shared voice setting and synchronizes the affected fixed automation values. */
   setCommonField<K extends keyof BlueX7Common>(field: K, value: BlueX7Common[K]): void {
     if (field === 'operatorEnabled') {
       const operatorEnabled = value as BlueX7Common['operatorEnabled'];
@@ -590,6 +650,7 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Updates the enable flag and fixed automation value for an operator at a zero-based index from 0 through 5. */
   setOperatorEnabled(index: number, enabled: boolean): void {
     if (index >= 0 && index < 6) {
       this._voice.common.operatorEnabled[index] = enabled;
@@ -597,6 +658,7 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Updates a low-frequency oscillator setting and synchronizes any mapped control. */
   setLfoField<K extends keyof BlueX7Lfo>(field: K, value: BlueX7Lfo[K]): void {
     this._voice.lfo[field] = value;
     const key = LFO_FIELD_TO_KEY[field as string];
@@ -605,6 +667,7 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Updates a setting for a zero-based operator index and synchronizes the affected automation control. */
   setOperatorField<K extends keyof BlueX7Operator>(
     operatorIndex: number,
     field: K,
@@ -623,6 +686,7 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Sets the oscillator synchronization on all six operators and its shared fixed value. */
   setSharedOscillatorSync(value: number): void {
     for (let i = 0; i < 6; i++) {
       this._voice.operators[i].sync = value;
@@ -630,6 +694,7 @@ export class BlueX7 extends Instrument {
     this.syncFixedValues(['common.oscillatorKeySync']);
   }
 
+  /** Sets pitch modulation sensitivity on every operator and its shared fixed value. */
   setSharedPitchModulationSensitivity(value: number): void {
     for (let i = 0; i < 6; i++) {
       this._voice.operators[i].modulationPitch = value;
@@ -637,6 +702,7 @@ export class BlueX7 extends Instrument {
     this.syncFixedValues(['lfo.pitchModulationSensitivity']);
   }
 
+  /** Copies a segment into a zero-based operator and envelope slot and synchronizes the segment controls. */
   setOperatorEnvelopePoint(operatorIndex: number, stageIndex: number, point: EnvelopePoint): void {
     if (operatorIndex >= 0 && operatorIndex < 6 && stageIndex >= 0 && stageIndex < 4) {
       this._voice.operators[operatorIndex].envelope[stageIndex] = { ...point };
@@ -647,6 +713,7 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Copies a segment into a zero-based pitch-envelope slot and synchronizes its controls. */
   setPitchEnvelopePoint(stageIndex: number, point: EnvelopePoint): void {
     if (stageIndex >= 0 && stageIndex < 4) {
       this._voice.pitchEnvelope[stageIndex] = { ...point };
@@ -657,14 +724,17 @@ export class BlueX7 extends Instrument {
     }
   }
 
+  /** Returns the Csound code appended after the generated synthesis body. */
   getCsoundPostCode(): string {
     return this._voice.csoundPostCode;
   }
 
+  /** Sets the Csound code appended after the generated synthesis body. */
   setCsoundPostCode(code: string): void {
     this._voice.csoundPostCode = code;
   }
 
+  /** Reports whether this instrument implementation requires a preassigned function table. Always false. */
   hasFTable(): boolean {
     return false;
   }
@@ -873,6 +943,7 @@ export class BlueX7 extends Instrument {
     return elem;
   }
 
+  /** Reconstructs the BlueX7 instrument from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: unknown,

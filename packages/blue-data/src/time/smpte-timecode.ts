@@ -1,15 +1,28 @@
-/** Original counting arithmetic from SMPTE ST 12-1:2014 §§4.9, 5.2.1–5.2.2.
- * https://pub.smpte.org/latest/st12-1/st0012-1-2014.pdf
- * Independent derivation: specs/115-smpte-timecode/public-calculation-basis.md.
- * No third-party conversion source was adapted. Hours are elapsed, without wrap.
- */
+// Original counting arithmetic from SMPTE ST 12-1:2014 §§4.9, 5.2.1–5.2.2.
+// https://pub.smpte.org/latest/st12-1/st0012-1-2014.pdf
+// Independent derivation: specs/115-smpte-timecode/public-calculation-basis.md.
+// No third-party conversion source was adapted. Hours are elapsed, without wrap.
+
+/** Presentation settings for SMPTE timecode labels. */
 export interface SmpteFormat {
+  /** Supported SMPTE rate, such as 24 or 29.97 frames per second. */
   frameRate: number;
+  /** Whether to omit frame labels to track elapsed time at 29.97 or 59.94 fps. */
   dropFrame: boolean;
 }
 
 const rates: Readonly<
-  Record<number, Readonly<{ numerator: number; denominator: number; nominal: number }>>
+  Record<
+    number,
+    Readonly<{
+      /** Numerator of the exact physical frame rate. */
+      numerator: number;
+      /** Denominator of the exact physical frame rate. */
+      denominator: number;
+      /** Nominal frame count per second used for labeling. */
+      nominal: number;
+    }>
+  >
 > = {
   23.976: { numerator: 24000, denominator: 1001, nominal: 24 },
   24: { numerator: 24, denominator: 1, nominal: 24 },
@@ -22,9 +35,11 @@ const rates: Readonly<
 };
 const MAX_FRAME = Math.floor(Number.MAX_SAFE_INTEGER / 1001);
 
+/** Returns the exact rational and nominal counting rates for a supported SMPTE rate or `null`. */
 export function resolveSmpteRate(rate: number) {
   return typeof rate === 'number' ? (rates[rate] ?? null) : null;
 }
+/** Checks the supported presentation rates and limits drop-frame mode to 29.97 and 59.94 fps. */
 export function isValidSmpteFormat(rate: number, dropFrame: boolean): boolean {
   return (
     resolveSmpteRate(rate) !== null &&
@@ -35,6 +50,7 @@ export function isValidSmpteFormat(rate: number, dropFrame: boolean): boolean {
 function validFrame(frame: number): boolean {
   return Number.isSafeInteger(frame) && frame >= 0 && frame <= MAX_FRAME;
 }
+/** Converts seconds to a zero-based timecode frame, rounding down by default. Invalid input returns `null`. */
 export function secondsToSmpteFrame(
   seconds: number,
   rate: number,
@@ -49,12 +65,14 @@ export function secondsToSmpteFrame(
   const frame = operation === 'nearest' ? Math.round(coordinate) : Math.floor(coordinate);
   return validFrame(frame) ? frame : null;
 }
+/** Converts a timecode frame to elapsed seconds at the exact rational rate. Invalid input returns `null`. */
 export function smpteFrameToSeconds(frame: number, rate: number): number | null {
   const descriptor = resolveSmpteRate(rate);
   return descriptor && validFrame(frame)
     ? (frame * descriptor.denominator) / descriptor.numerator
     : null;
 }
+/** Formats elapsed seconds as SMPTE timecode with unwrapped hours. Invalid input returns `null`. */
 export function formatSmpte(seconds: number, format: SmpteFormat): string | null {
   if (!isValidSmpteFormat(format.frameRate, format.dropFrame)) return null;
   const frame = secondsToSmpteFrame(seconds, format.frameRate);
@@ -79,6 +97,7 @@ export function formatSmpte(seconds: number, format: SmpteFormat): string | null
   ].map((value) => String(value).padStart(2, '0'));
   return `${fields[0]}:${fields[1]}:${fields[2]}${format.dropFrame ? ';' : ':'}${fields[3]}`;
 }
+/** Parses SMPTE timecode to elapsed seconds. Returns `null` for invalid labels, including omitted drop-frame labels. */
 export function parseSmpte(text: string, format: SmpteFormat): number | null {
   if (!isValidSmpteFormat(format.frameRate, format.dropFrame)) return null;
   const match = /^(\d+):(\d{1,2}):(\d{1,2})([:;])(\d{1,2})$/.exec(text.trim());

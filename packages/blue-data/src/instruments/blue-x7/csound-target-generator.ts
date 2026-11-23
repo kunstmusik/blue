@@ -20,8 +20,10 @@ import {
 } from './parameter-catalog';
 import { BLUE_X7_MODERN_ORCHESTRA } from './modern-orchestra.generated';
 
+/** Whether the Csound target uses a shared user-defined opcode or inline synthesis. */
 export type BlueX7TargetLayout = 'udo' | 'inline';
 
+/** One automation binding for the generated BlueX7 Csound target. */
 export interface BlueX7TargetParameter {
   /** Semantic catalog key. */
   key: string;
@@ -29,12 +31,15 @@ export interface BlueX7TargetParameter {
   symbol: string;
 }
 
+/** Inputs used to generate a Csound implementation of a BlueX7 voice. */
 export interface BlueX7TargetOptions {
   /** 155-slot mapping used by static/preview targets and note snapshots. */
   voice: readonly number[];
+  /** Bit mask that enables or disables the six operators. */
   operatorMask: number;
   /** When present, all 151 catalog entries must be resolved. */
   parameters?: readonly BlueX7TargetParameter[];
+  /** Selects an inline or UDO-based generated target. */
   layout?: BlueX7TargetLayout;
   /** Change detection strategy; epoch avoids scanning active globals per note. */
   changeStrategy?: 'per-note' | 'epoch';

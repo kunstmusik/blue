@@ -28,6 +28,7 @@ export class LineObject extends AbstractSoundObject {
 
   private _lines: LineData[] = [];
 
+  /** Creates a default line object or copies a supplied instance. */
   constructor(other?: LineObject) {
     super();
     this.setName('LineObject');
@@ -40,9 +41,11 @@ export class LineObject extends AbstractSoundObject {
     }
   }
 
+  /** Returns the control lines authored on this sound object. */
   getLines(): LineData[] {
     return [...this._lines];
   }
+  /** Adds a Csound control line to the object. */
   addLine(line: LineData): void {
     this._lines.push(line);
   }
@@ -82,6 +85,7 @@ export class LineObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the line object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,
@@ -256,18 +260,30 @@ export class LineObject extends AbstractSoundObject {
   }
 }
 
+/** Authored time and value pair for a Csound control line. */
 export interface LinePoint {
+  /** Horizontal time coordinate of this control point. */
   x: number;
+  /** Control value at this point. */
   y: number;
 }
 
+/** Named control line with bounds, resolution, and authored points. */
 export interface LineData {
+  /** Csound variable name driven by this line. */
   varName: string;
+  /** Minimum random value. */
   min?: number;
+  /** Maximum random value. */
   max?: number;
+  /** Numeric value step. */
   resolution?: string;
+  /** Packed display color. */
   color: number;
+  /** Whether the line includes a constrained right endpoint. */
   rightBound?: boolean;
+  /** Whether the two endpoint values are linked. */
   endPointsLinked?: boolean;
+  /** Control points belonging to this line data, in stored order. */
   points: LinePoint[];
 }

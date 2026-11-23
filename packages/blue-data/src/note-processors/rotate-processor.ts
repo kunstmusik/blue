@@ -8,10 +8,13 @@ import { normalizeNoteList } from '../utilities/score';
 
 const JAVA_TYPE = 'blue.noteProcessor.RotateProcessor';
 
+/** Rotates the temporal arrangement of notes around a selected note. */
 export class RotateProcessor extends NoteProcessor {
   private _noteIndex = 1;
 
+  /** Creates a rotate processor initialized with its default settings. */
   constructor();
+  /** Creates a rotate processor using the source instance’s settings. */
   constructor(src: RotateProcessor);
   constructor(src?: RotateProcessor) {
     super();
@@ -20,9 +23,11 @@ export class RotateProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the index that anchors the rotation. */
   getNoteIndex(): string {
     return this._noteIndex.toString();
   }
+  /** Sets the note index used as the rotation anchor. */
   setNoteIndex(noteIndex: string): void {
     this._noteIndex = parseInt(noteIndex, 10);
   }
@@ -85,6 +90,7 @@ export class RotateProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the rotate processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): RotateProcessor {
     validateProcessorXml(data, 'RotateProcessor', context);
     const proc = new RotateProcessor();

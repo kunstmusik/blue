@@ -4,12 +4,18 @@ import { BSBHSliderBank } from './bsb-hslider-bank';
 import { BSBVSliderBank } from './bsb-vslider-bank';
 import { BSBWidget } from './bsb-widget';
 
+/** Why widget normalization replaced the previous identifier. */
 export type BsbWidgetIdRepairReason = 'missing' | 'duplicate';
 
+/** Record of replacing a missing or duplicate widget identifier. */
 export interface BsbWidgetIdRepair {
+  /** Widget whose identifier was repaired. */
   widget: BSBWidget;
+  /** Whether the existing identifier was missing or was already in use. */
   reason: BsbWidgetIdRepairReason;
+  /** Identifier before normalization, possibly empty. */
   previousId: string;
+  /** Unique identifier assigned during normalization. */
   nextId: string;
 }
 

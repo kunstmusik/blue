@@ -8,11 +8,14 @@ import { normalizeNoteList } from '../utilities/score';
 
 const JAVA_TYPE = 'blue.noteProcessor.SubListProcessor';
 
+/** Selects an inclusive one-based range of notes and normalizes their starts. */
 export class SubListProcessor extends NoteProcessor {
   private _start = 1;
   private _end = 2;
 
+  /** Creates a sub list processor initialized with its default settings. */
   constructor();
+  /** Creates a sub list processor using the source instance’s settings. */
   constructor(src: SubListProcessor);
   constructor(src?: SubListProcessor) {
     super();
@@ -22,16 +25,20 @@ export class SubListProcessor extends NoteProcessor {
     }
   }
 
+  /** Returns the configured first note index as editable text. */
   getStart(): string {
     return this._start.toString();
   }
+  /** Sets the inclusive one-based start index. */
   setStart(start: string): void {
     this._start = parseInt(start, 10);
   }
 
+  /** Returns the configured last note index as editable text. */
   getEnd(): string {
     return this._end.toString();
   }
+  /** Sets the inclusive one-based end index. */
   setEnd(end: string): void {
     this._end = parseInt(end, 10);
   }
@@ -68,6 +75,7 @@ export class SubListProcessor extends NoteProcessor {
     return elem;
   }
 
+  /** Reconstructs the sub list processor from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(data: Element, context = new XmlLoadContext(data)): SubListProcessor {
     validateProcessorXml(data, 'SubListProcessor', context);
     const proc = new SubListProcessor();

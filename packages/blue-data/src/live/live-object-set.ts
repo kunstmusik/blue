@@ -10,20 +10,25 @@ export class LiveObjectSet implements BlueDataObject {
   private _name = '';
   private _liveObjectIds: string[] = [];
 
+  /** Creates an empty named selection of Live cells. */
   constructor() {}
 
+  /** Returns the name stored on the Live object set. */
   getName(): string {
     return this._name;
   }
 
+  /** Sets the name stored on the Live object set. */
   setName(name: string): void {
     this._name = name;
   }
 
+  /** Returns the Live object IDs stored on the Live object set. */
   getLiveObjectIds(): string[] {
     return this._liveObjectIds;
   }
 
+  /** Sets the Live object IDs stored on the Live object set. */
   setLiveObjectIds(ids: string[]): void {
     this._liveObjectIds = ids;
   }
@@ -37,6 +42,7 @@ export class LiveObjectSet implements BlueDataObject {
     return elem;
   }
 
+  /** Reconstructs the Live object set from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     bins: LiveObjectBins,
@@ -78,6 +84,7 @@ export class LiveObjectSet implements BlueDataObject {
     return copy;
   }
 
+  /** Resolves the stored cell IDs against the current Blue Live grid. */
   resolveLiveObjects(bins: LiveObjectBins): LiveObject[] {
     const result: LiveObject[] = [];
     for (const id of this._liveObjectIds) {

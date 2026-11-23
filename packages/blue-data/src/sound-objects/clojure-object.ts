@@ -38,6 +38,7 @@ export class ClojureObject extends AbstractSoundObject {
   private _clojureCode = '';
   private _onLoadProcessable = false;
 
+  /** Creates a Clojure sound object with default timeline and script settings. */
   constructor() {
     super();
     this.setName('(clojure-object)');
@@ -46,22 +47,27 @@ export class ClojureObject extends AbstractSoundObject {
     this._backgroundColor = 0x404040;
   }
 
+  /** Returns the Clojure code stored on the Clojure object. */
   getClojureCode(): string {
     return this._clojureCode;
   }
 
+  /** Sets the Clojure code stored on the Clojure object. */
   setClojureCode(code: string): void {
     this._clojureCode = code;
   }
 
+  /** Reports whether the Clojure object runs its script during on-load processing. */
   isOnLoadProcessable(): boolean {
     return this._onLoadProcessable;
   }
 
+  /** Sets the on load processable stored on the Clojure object. */
   setOnLoadProcessable(value: boolean): void {
     this._onLoadProcessable = value;
   }
 
+  /** Skips the Clojure on-load script and logs a warning when enabled. Use the async method with a Java runtime client to execute it. */
   processOnLoad(_context: TimeContext): void {
     if (!this._onLoadProcessable) {
       return;
@@ -70,6 +76,7 @@ export class ClojureObject extends AbstractSoundObject {
     console.warn('ClojureObject.processOnLoad skipped: requires Java runtime');
   }
 
+  /** Evaluates the enabled on-load script through the supplied Java runtime client. */
   async processOnLoadAsync(
     _context: TimeContext,
     runtimeClient?: JavaRuntimeClientContract | null,
@@ -103,6 +110,7 @@ export class ClojureObject extends AbstractSoundObject {
     return new NoteList();
   }
 
+  /** Generates the Clojure object’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,
@@ -149,6 +157,7 @@ export class ClojureObject extends AbstractSoundObject {
     return elem;
   }
 
+  /** Reconstructs the Clojure object from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     _objRefMap?: ObjRefLoadMap,

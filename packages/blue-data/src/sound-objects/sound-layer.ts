@@ -49,6 +49,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
   private _npc = new NoteProcessorChain();
   private _automationParameters = new ParameterIdList();
 
+  /** Creates an empty sound layer, copies a source instance, or allocates the requested number of array slots. */
   constructor(other?: SoundLayer | number, mode: CopyMode = 'duplication') {
     if (typeof other === 'number') {
       super(other);
@@ -72,6 +73,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     }
   }
 
+  /** Reconstructs the sound layer from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,
@@ -171,10 +173,12 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     return resolveEffectiveHeight(this._heightIndex, this._customHeight);
   }
 
+  /** Returns the custom height stored on the sound layer. */
   getCustomHeight(): number | undefined {
     return this._customHeight;
   }
 
+  /** Sets the custom height stored on the sound layer. */
   setCustomHeight(customHeight: number | undefined): void {
     if (customHeight !== undefined) {
       const parsed = parseCustomHeight(customHeight);
@@ -186,6 +190,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     this._customHeight = undefined;
   }
 
+  /** Chooses a preset or custom pixel height and reports whether the effective height changed. */
   setExplicitHeight(height: number): boolean {
     const currentEffective = this.getLayerHeight();
     const parsed = parseCustomHeight(height);
@@ -197,26 +202,32 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     return true;
   }
 
+  /** Reports whether the sound layer is muted. */
   isMuted(): boolean {
     return this._muted;
   }
 
+  /** Sets the muted stored on the sound layer. */
   setMuted(muted: boolean): void {
     this._muted = muted;
   }
 
+  /** Reports whether the sound layer is marked for solo playback. */
   isSolo(): boolean {
     return this._solo;
   }
 
+  /** Sets the solo stored on the sound layer. */
   setSolo(solo: boolean): void {
     this._solo = solo;
   }
 
+  /** Returns the height index stored on the sound layer. */
   getHeightIndex(): number {
     return this._heightIndex;
   }
 
+  /** Sets the height index stored on the sound layer. */
   setHeightIndex(heightIndex: number): void {
     const oldEffective = this.getLayerHeight();
     this._heightIndex = heightIndex;
@@ -226,14 +237,17 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     }
   }
 
+  /** Returns the editable chain that runs over notes collected from this layer. */
   getNoteProcessorChain(): NoteProcessorChain {
     return this._npc;
   }
 
+  /** Replaces the layer's processor chain with the supplied instance. */
   setNoteProcessorChain(chain: NoteProcessorChain): void {
     this._npc = chain;
   }
 
+  /** Returns the collection of associated automation parameter IDs. */
   getAutomationParameters(): ParameterIdList {
     return this._automationParameters;
   }
@@ -322,6 +336,7 @@ export class SoundLayer extends Array<SoundObject> implements Layer, Automatable
     });
   }
 
+  /** Generates the sound layer’s Csound notes, awaiting asynchronous generators or processors through the compile context. */
   async generateForCSDAsync(
     context: TimeContext,
     compileData: CompileData,

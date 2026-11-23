@@ -8,18 +8,22 @@
  */
 
 export const DEFAULT_PAN = 0.5;
+/** Minimum normalized pan position, corresponding to full left. */
 export const MIN_PAN = 0.0;
+/** Maximum normalized pan position, corresponding to full right. */
 export const MAX_PAN = 1.0;
 
 /** 1 / sqrt(2) ≈ 0.7071067811865475 (-3.01 dB) */
 export const EQUAL_POWER_CENTER_GAIN = 1 / Math.SQRT2;
 
+/** Checks whether the supplied value is a supported valid pan. */
 export function isValidPan(value: unknown): value is number {
   return (
     typeof value === 'number' && Number.isFinite(value) && value >= MIN_PAN && value <= MAX_PAN
   );
 }
 
+/** Constrains pan to its normalized range using the supplied fallback for invalid input. */
 export function clampPan(value: unknown, fallback = DEFAULT_PAN): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fallback;
@@ -37,31 +41,42 @@ export function parseFiniteNumber(str: string | null | undefined): number | unde
 
 // ─── Pan Law Constants and Validation ───
 
+/** Supported center attenuation values for mixer panners, in decibels. */
 export type PanLawDb = 0 | -3 | -4.5 | -6;
+/** Supported mixer pan laws in decibels of center attenuation. */
 export const PAN_LAW_VALUES: readonly PanLawDb[] = [0, -3, -4.5, -6];
+/** Center attenuation selected for new mixer panners by default. */
 export const DEFAULT_PAN_LAW_DB: PanLawDb = -3;
+/** Default setting for off-center gain compensation. */
 export const DEFAULT_PAN_OFF_CENTER_BOOST = false;
 
+/** Checks whether the supplied value is a supported valid pan law dB. */
 export function isValidPanLawDb(value: unknown): value is PanLawDb {
   return (
     typeof value === 'number' && (value === 0 || value === -3 || value === -4.5 || value === -6)
   );
 }
 
+/** Returns a supported center attenuation value or the configured fallback. */
 export function clampPanLawDb(value: unknown, fallback: PanLawDb = DEFAULT_PAN_LAW_DB): PanLawDb {
   return isValidPanLawDb(value) ? value : fallback;
 }
 
 // ─── Stereo Pan Mode Constants and Validation ───
 
+/** Supported stereo routing modes for a mixer channel. */
 export type StereoPanMode = 'balance' | 'stereoPan' | 'dualPan';
+/** Supported modes for distributing stereo input across mixer outputs. */
 export const STEREO_PAN_MODES: readonly StereoPanMode[] = ['balance', 'stereoPan', 'dualPan'];
+/** Stereo routing mode assigned to newly created channels. */
 export const DEFAULT_STEREO_PAN_MODE: StereoPanMode = 'balance';
 
+/** Checks whether the supplied value is a supported valid stereo pan mode. */
 export function isValidStereoPanMode(value: unknown): value is StereoPanMode {
   return value === 'balance' || value === 'stereoPan' || value === 'dualPan';
 }
 
+/** Returns a supported stereo routing mode or the configured fallback. */
 export function clampStereoPanMode(
   value: unknown,
   fallback: StereoPanMode = DEFAULT_STEREO_PAN_MODE,
@@ -69,6 +84,7 @@ export function clampStereoPanMode(
   return isValidStereoPanMode(value) ? value : fallback;
 }
 
+/** Encodes a stereo routing mode for the compiled Csound panner. */
 export function stereoPanModeToNumber(mode: StereoPanMode): number {
   switch (mode) {
     case 'balance':
@@ -80,6 +96,7 @@ export function stereoPanModeToNumber(mode: StereoPanMode): number {
   }
 }
 
+/** Decodes the Csound panner's numeric mode into a named routing mode. */
 export function numberToStereoPanMode(value: number): StereoPanMode {
   if (value === 1) return 'stereoPan';
   if (value === 2) return 'dualPan';
@@ -88,10 +105,14 @@ export function numberToStereoPanMode(value: number): StereoPanMode {
 
 // ─── Width and Dual Pan Constants and Validation ───
 
+/** Default normalized stereo width, retaining the full spread. */
 export const DEFAULT_PAN_WIDTH = 1.0;
+/** Minimum spread for stereo panning, collapsing the input to the pan position. */
 export const MIN_PAN_WIDTH = 0.0;
+/** Maximum normalized stereo spread. */
 export const MAX_PAN_WIDTH = 1.0;
 
+/** Checks whether the supplied value is a supported valid pan width. */
 export function isValidPanWidth(value: unknown): value is number {
   return (
     typeof value === 'number' &&
@@ -101,6 +122,7 @@ export function isValidPanWidth(value: unknown): value is number {
   );
 }
 
+/** Constrains stereo width to the supported normalized range. */
 export function clampPanWidth(value: unknown, fallback = DEFAULT_PAN_WIDTH): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fallback;
@@ -108,15 +130,19 @@ export function clampPanWidth(value: unknown, fallback = DEFAULT_PAN_WIDTH): num
   return Math.max(MIN_PAN_WIDTH, Math.min(MAX_PAN_WIDTH, value));
 }
 
+/** Default position of the left input in dual-pan mode. */
 export const DEFAULT_DUAL_PAN_LEFT = 0.0;
+/** Default position of the right input in dual-pan mode. */
 export const DEFAULT_DUAL_PAN_RIGHT = 1.0;
 
+/** Checks whether the supplied value is a supported valid dual pan. */
 export function isValidDualPan(value: unknown): value is number {
   return (
     typeof value === 'number' && Number.isFinite(value) && value >= MIN_PAN && value <= MAX_PAN
   );
 }
 
+/** Constrains a dual-pan position to the supported normalized range. */
 export function clampDualPan(value: unknown, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fallback;
@@ -126,9 +152,13 @@ export function clampDualPan(value: unknown, fallback: number): number {
 
 // ─── Stable Parameter Names for Automation ───
 
+/** Automation parameter name for the channel's normalized pan position. */
 export const PARAM_PAN = 'Pan';
+/** Automation parameter name for the channel's stereo width. */
 export const PARAM_WIDTH = 'Width';
+/** Automation parameter name for the left input's position in dual-pan mode. */
 export const PARAM_DUAL_LEFT = 'Dual Left';
+/** Automation parameter name for the right input's position in dual-pan mode. */
 export const PARAM_DUAL_RIGHT = 'Dual Right';
 
 // ─── Continuous Pan Law Gain Functions ───

@@ -38,6 +38,7 @@ export class PatternLayer implements Layer {
   private _backgroundColor = DEFAULT_LAYER_COLOR;
   private _patternData: PatternData;
 
+  /** Creates a default pattern layer or copies a supplied instance. The copy mode controls identity preservation. */
   constructor(other?: PatternLayer, mode: CopyMode = 'duplication') {
     if (other) {
       this._name = other._name;
@@ -95,32 +96,40 @@ export class PatternLayer implements Layer {
 
   // ─── PatternLayer-specific ───
 
+  /** Returns the sound object stored on the pattern layer. */
   getSoundObject(): SoundObject {
     return this._soundObject;
   }
 
+  /** Sets the sound object stored on the pattern layer. */
   setSoundObject(sObj: SoundObject): void {
     this._soundObject = sObj;
   }
 
+  /** Reports whether the pattern layer is muted. */
   isMuted(): boolean {
     return this._muted;
   }
+  /** Sets the muted stored on the pattern layer. */
   setMuted(m: boolean): void {
     this._muted = m;
   }
 
+  /** Reports whether the pattern layer is marked for solo playback. */
   isSolo(): boolean {
     return this._solo;
   }
+  /** Sets the solo stored on the pattern layer. */
   setSolo(s: boolean): void {
     this._solo = s;
   }
 
+  /** Returns the pattern data stored on the pattern layer. */
   getPatternData(): PatternData {
     return this._patternData;
   }
 
+  /** Generates notes from selected pattern steps for the supplied render window. */
   generateForCSD(
     context: TimeContext,
     compileData: CompileData,
@@ -151,6 +160,7 @@ export class PatternLayer implements Layer {
 
   // ─── XML Serialization ───
 
+  /** Serializes the pattern layer and its persisted settings to a new Blue XML element. */
   saveAsXML(_objRefMap?: ObjRefSaveMap): Element {
     const elem = new Element('patternLayer');
     elem.setAttribute('name', this._name);
@@ -166,6 +176,7 @@ export class PatternLayer implements Layer {
     return elem;
   }
 
+  /** Reconstructs the pattern layer from its Blue XML element, using the supplied diagnostic context when provided. */
   static loadFromXML(
     data: Element,
     objRefMap?: ObjRefLoadMap,
