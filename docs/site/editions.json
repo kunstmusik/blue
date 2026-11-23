@@ -1,0 +1,15 @@
+{
+  "desktop": [
+    {
+      "key": "v3.0.0-beta.6",
+      "channel": "prerelease",
+      "label": "Blue 3.0.0-beta.6 (prerelease)",
+      "sourceSha": "308bc5c8ae479a44a047a96531edb1d673253069",
+      "tag": "v3.0.0-beta.6"
+    }
+  ],
+  "tooling": [],
+  "recommended": {
+    "desktop": "v3.0.0-beta.6"
+  }
+}

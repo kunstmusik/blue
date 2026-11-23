@@ -8,7 +8,7 @@
     "clean": "node scripts/clean.mjs",
     "test": "pnpm -r run test && pnpm test:scripts",
     "test:performance": "pnpm -r --workspace-concurrency=1 --no-sort --no-bail run test:performance",
-    "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs packages/blue-app/scripts/verify-release-version.test.mjs scripts/run-performance-tests.test.mjs scripts/verify-npm-packages.test.mjs scripts/verify-npm-release.test.mjs",
+    "test:scripts": "node --test scripts/audit-renderer-theme.test.mjs scripts/audit-renderer-typography.test.mjs scripts/confirmation-dialog-lint.test.mjs scripts/parse-cli-flags.test.mjs scripts/release-metadata.test.mjs scripts/verify-package-inputs.test.mjs packages/blue-app/scripts/verify-release-version.test.mjs scripts/run-performance-tests.test.mjs scripts/verify-npm-packages.test.mjs scripts/verify-npm-release.test.mjs scripts/docs-site-catalog.test.mjs scripts/verify-docs-site.test.mjs scripts/build-docs-site.test.mjs scripts/docs-site-tooling.test.mjs scripts/docs-pages-workflow.test.mjs",
     "lint": "vp run lint:workspace",
     "format": "vp fmt",
     "format:check": "vp fmt --check",
@@ -22,14 +22,22 @@
     "verify:release-workflows": "node scripts/validate-release-workflows.mjs",
     "verify:release-artifacts": "node scripts/release-artifact-manifest.test.mjs",
     "verify:release-credentials": "node scripts/release-credential-preflight.test.mjs",
-    "release:preflight": "node scripts/release-credential-preflight.mjs"
+    "release:preflight": "node scripts/release-credential-preflight.mjs",
+    "docs:site:build": "node scripts/build-docs-site.mjs",
+    "docs:site:verify": "node scripts/verify-docs-site.mjs",
+    "docs:site:smoke": "node --test scripts/docs-site-manual.browser.test.mjs scripts/docs-site-tooling.browser.test.mjs",
+    "site:package": "pnpm docs:site:build --local",
+    "site:preview": "node scripts/docs-site-preview.mjs && http-server build/docs-site-preview -a 127.0.0.1 -p 8000 -c-1 -d false --no-dotfiles"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "http-server": "14.1.1",
+    "parse5": "8.0.1",
     "typescript": "^5.8.0",
     "vite": "catalog:",
     "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "yaml": "2.9.1"
   },
   "packageManager": "pnpm@12.8.1"
 }

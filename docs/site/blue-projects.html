@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Install the Blue Projects AI skill and work with Blue composition files from your coding agent."
+    />
+    <title>Blue Projects AI skill | Blue Documentation</title>
+    <link rel="stylesheet" href="{{prefix}}style.css" />
+  </head>
+  <body class="site-page tooling-page">
+    <a class="skip-link" href="#main-title">Skip to main content</a>
+    <header class="site-header">
+      <nav class="nav-row" aria-label="Primary navigation">
+        <a class="brand" href="{{prefix}}">Blue <span>Documentation</span></a>
+        <a href="https://blue.kunstmusik.com/">Blue product site</a>
+      </nav>
+    </header>
+    <main>
+      <h1 id="main-title" tabindex="-1">Blue Projects AI skill</h1>
+      <p>
+        <code>blue-projects</code> teaches a coding agent how to work with Blue's
+        <code>.blue</code> composition files without opening the desktop app. It includes a
+        walkthrough and a sample project.
+      </p>
+      <h2>Install the skill</h2>
+      <p>Use Node.js 22.20 or later and run the following command from your project folder.</p>
+      <pre><code>npx skills add kunstmusik/blue --skill blue-projects</code></pre>
+      <p>
+        Choose your coding agent when prompted. Add <code>-g</code> to install the skill for use
+        across projects. See the
+        <a href="https://github.com/vercel-labs/skills#install-a-skill"
+          >skills installer documentation</a
+        >
+        for supported agents and installation options.
+      </p>
+      <h2>What you can ask your agent to do</h2>
+      <ul>
+        <li>Inspect a project's instruments, score layers, and load diagnostics.</li>
+        <li>Make a targeted edit, save a separate copy, and reload it to verify the change.</li>
+        <li>
+          Compile a trusted project to a Csound <code>.csd</code> file for disk rendering, realtime
+          playback, or Blue Live.
+        </li>
+      </ul>
+      <p>
+        For example, ask “Use the <code>blue-projects</code> skill to inspect
+        <code>project.blue</code> and summarize its instruments and any load warnings.”
+      </p>
+      <p>
+        The skill uses <a href="{{prefix}}api/blue-data/">Blue Data</a> for inspection and editing
+        and the <a href="{{prefix}}cli/">Blue CLI</a> for compilation. Compilation can run embedded
+        scripts and shell commands. Use inspection first for unfamiliar projects.
+      </p>
+      <p>
+        <a href="https://github.com/kunstmusik/blue/tree/develop/skills/blue-projects"
+          >View the skill and its walkthrough on GitHub</a
+        >.
+      </p>
+    </main>
+  </body>
+</html>
