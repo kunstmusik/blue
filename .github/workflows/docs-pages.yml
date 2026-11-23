@@ -97,6 +97,8 @@ jobs:
         run: pnpm --filter @blue/data docs:api
 
       - name: Build and verify documentation site
+        env:
+          BLUE_DOCS_RELEASE_TOKEN: ${{ github.token }}
         run: pnpm docs:site:build
 
       - name: Install Chromium for browser smoke
@@ -225,6 +227,8 @@ jobs:
           esac
 
       - name: Build complete documentation site
+        env:
+          BLUE_DOCS_RELEASE_TOKEN: ${{ github.token }}
         run: pnpm docs:site:build
 
       - name: Verify retained publication history

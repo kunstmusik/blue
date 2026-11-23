@@ -49,6 +49,13 @@ test('pull requests use the read-only workflow permissions', () => {
   assert.equal(workflow.on.pull_request_target, undefined);
   assert.equal(workflow.on.workflow_run, undefined);
 
+  for (const jobId of ['validate-pull-request', 'build-production']) {
+    const job = workflow.jobs[jobId];
+    const build = job.steps.find((step) => step.run === 'pnpm docs:site:build');
+    assert.equal(build?.env?.BLUE_DOCS_RELEASE_TOKEN, '${{ github.token }}');
+    assert.deepEqual(job.permissions, { contents: 'read' });
+  }
+
   const deployId = jobs().find(([, job]) => environmentName(job) === 'github-pages')?.[0];
   for (const [jobId, job] of jobs()) {
     if (jobId === deployId) continue;

@@ -118,6 +118,7 @@ async function assertTrustedPreview(repositoryRoot, sourceSha) {
 
 async function assertPublishedRelease(edition, fetchImpl) {
   const url = `${GITHUB_API}/repos/kunstmusik/blue/releases/tags/${encodeURIComponent(edition.tag)}`;
+  const token = process.env.BLUE_DOCS_RELEASE_TOKEN;
   let response;
   try {
     response = await fetchImpl(url, {
@@ -125,6 +126,7 @@ async function assertPublishedRelease(edition, fetchImpl) {
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
         'User-Agent': 'blue-docs-site-builder',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       signal: AbortSignal.timeout(30_000),
     });
