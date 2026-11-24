@@ -100,19 +100,6 @@ matching public tarballs. [Blue CLI registry](https://www.npmjs.com/package/@kun
 
 ## Live operations
 
-The [cutover plan](../../docs/site/legacy-cutover.md) records the live Blue 3 and controlled-link checks required before separately authorized retirement of the legacy repository and public site.
-
-### Cutover readiness recheck
-
-- GitHub still lists `develop` at `1a5857cbbd152470d646236518d4f23b891afc53`.
-  The strict TypeDoc source commit `f55f875b9` is in the local feature history.
-  First deployment needs those sources and the Pages workflow on the trusted
-  branch. The Blue 3 Pages home returned HTTP 404.
-- Both npm package histories still show only `0.0.0-stage` and
-  `0.1.0-beta.1`. The latter remains the only public npm release tag and
-  predates the reference. T020 remains open.
-- In the earlier legacy repair, 181 URLs passed. This is historical evidence.
-  Current cutover verification covers the active manual and project-controlled links.
-  [Legacy deployment](https://github.com/kunstmusik/blue-manual/actions/runs/44930641915)
-- The original title and named author, pinned adaptation source, and remaining
-  publication attribution fields are recorded in the [provenance inventory](../../docs/site/provenance.md#manual-publication-attribution).
+- The Blue 3 manual cutover completed on 2026-11-23. The production site deployed, the product site's **View Manual** link opened the active selector, and the maintainer archived the legacy repository and disabled its Pages site. [Cutover record](../../docs/site/legacy-cutover.md)
+- A subsequent push to `develop` verified retention of the published edition routes, deployed the manual-first homepage, and compared the live catalog and inventory with the verified artifact. [Production run](https://github.com/kunstmusik/blue/actions/runs/45293350181)
+- The 2026-11-23 npm registry check found only `0.0.0-stage` and `0.1.0-beta.1` for both tooling packages. The only `npm-v*` tag is `npm-v0.1.0-beta.1`, whose source predates the strict TypeDoc configuration. T020 stays open for the first eligible tooling release.
