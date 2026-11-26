@@ -1,12 +1,51 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import {
+  AddProcessor,
+  AudioClip,
   BlueData,
+  BlueSynthBuilder,
   Channel,
+  ClojureObject,
+  Element,
+  External,
+  FrozenSoundObject,
+  GenericInstrument,
+  GenericScore,
+  Instance,
+  JMask,
+  JavaScriptInstrument,
+  JavaScriptObject,
+  LiveObject,
+  NoteProcessor,
+  NoteList,
+  ObjectBuilder,
+  PatternLayer,
+  PatternsLayerGroup,
+  PianoNote,
+  PianoRoll,
+  PolyObject,
+  PythonInstrument,
+  PythonObject,
+  PythonProcessor,
+  SoundLayer,
+  TimeBehavior,
+  TimeDuration,
+  TimePosition,
+  TrackLayer,
+  TrackLayerGroup,
+  TuningProcessor,
   type JavaRuntimeClientContract,
   type JavaScriptSession,
 } from '@blue/data';
 
-import { generateDiskCsdForScreen, generateRealtimeCsdForScreen } from './csd-generation';
+import {
+  generateDiskCsdForScreen,
+  generateObservationOnlyDiskCsd,
+  generateRealtimeCsdForScreen,
+  preflightObservationOnlyDiskCsd,
+} from './csd-generation';
+import { McpBridge, McpConsoleTailBuffer, type McpAuthContext } from './mcp-bridge';
+import { ProjectSession } from './project-session';
 
 describe('screen CSD generation', () => {
   it('uses the disk profile for the ordinary Generate CSD to Screen action', async () => {
@@ -148,5 +187,469 @@ describe('screen CSD generation', () => {
     expect(rtCsd).toContain('gk_blue_score_pan_boost init 1');
     expect(rtCsd).toContain('if gk_blue_pan_mode_0 < 0.5 then');
     expect(rtCsd).toContain('k_pan_al = min(1, 2 * (1 - gk_blue_auto1))');
+  });
+});
+
+function createEligibleProject(): BlueData {
+  const data = new BlueData();
+  data.getMixer().setPanningEnabled(false);
+  data.getProjectProperties().title = 'Observation Eligible';
+  data.getProjectProperties().author = 'Composer';
+
+  const generic = new GenericInstrument();
+  generic.setName('Sine');
+  generic.setText('a1 oscili 0.2, 440\nouts a1, a1');
+  data.getArrangement().addInstrument(generic, '1');
+
+  const bsb = new BlueSynthBuilder();
+  bsb.setName('BSB Pad');
+  bsb.setInstrumentText('a1 oscili 0.1, 220\nouts a1, a1');
+  data.getArrangement().addInstrument(bsb, '2');
+
+  const libScore = new GenericScore();
+  libScore.setName('Lib Phrase');
+  libScore.setScoreText('i1 0 1 440');
+  libScore.setSubjectiveDuration(TimeDuration.beats(2));
+  data.getSoundObjectLibrary().addObject(libScore);
+
+  const rootPoly = data.getScore()[0] as PolyObject;
+  const layer = rootPoly[0]!;
+  const scoreObj = new GenericScore();
+  scoreObj.setName('Lead');
+  scoreObj.setStartTime(TimePosition.beats(0));
+  scoreObj.setSubjectiveDuration(TimeDuration.beats(4));
+  scoreObj.setScoreText('i1 0 2 440 0.5');
+  scoreObj.getNoteProcessorChain().addProcessor(new AddProcessor());
+  layer.push(scoreObj);
+
+  const instance = new Instance(libScore);
+  instance.setStartTime(TimePosition.beats(4));
+  instance.setSubjectiveDuration(TimeDuration.beats(2));
+  layer.push(instance);
+
+  const roll = new PianoRoll();
+  roll.setStartTime(TimePosition.beats(6));
+  roll.setSubjectiveDuration(TimeDuration.beats(2));
+  const note = new PianoNote();
+  note.setStart(0);
+  note.setDuration(1);
+  roll.getNotes().push(note);
+  layer.push(roll);
+
+  const tracks = new TrackLayerGroup();
+  const track = new TrackLayer();
+  const clip = new AudioClip();
+  clip.setName('Clip');
+  clip.setAudioFile('/tmp/nonexistent-without-panning.wav');
+  track.push(clip);
+  tracks.push(track);
+  data.getScore().push(tracks);
+
+  const patterns = new PatternsLayerGroup();
+  const patternLayer = new PatternLayer();
+  patterns.push(patternLayer);
+  data.getScore().push(patterns);
+
+  return data;
+}
+
+function createAuth(overrides: Partial<McpAuthContext> = {}): McpAuthContext {
+  return {
+    listenerGeneration: 1,
+    credentialEpoch: 1,
+    accessMode: 'read-only',
+    action: 'read',
+    signal: new AbortController().signal,
+    isAuthorized: () => true,
+    ...overrides,
+  };
+}
+
+describe('observation-only disk CSD generation', () => {
+  it('matches generateDiskCsdForScreen output on eligible projects without mutating canonical data', async () => {
+    const data = createEligibleProject();
+    const beforeXml = data.saveToString();
+
+    expect(preflightObservationOnlyDiskCsd(data)).toEqual({ ok: true });
+
+    const expected = await generateDiskCsdForScreen(data, undefined, null);
+    const observed = await generateObservationOnlyDiskCsd(data);
+
+    expect(observed).toEqual({
+      ok: true,
+      csd: expected,
+      diagnostics: [],
+    });
+    expect(data.saveToString()).toBe(beforeXml);
+  });
+
+  it('denies with EXECUTION_REQUIRED before any on-load hook or interpreter runs', async () => {
+    const cases: Array<{ name: string; build: () => BlueData; spy?: ReturnType<typeof vi.fn> }> = [
+      {
+        name: 'PythonInstrument in arrangement',
+        build: () => {
+          const data = new BlueData();
+          data.getArrangement().addInstrument(new PythonInstrument(), '1');
+          return data;
+        },
+      },
+      {
+        name: 'JavaScriptInstrument in track',
+        build: () => {
+          const data = new BlueData();
+          const group = new TrackLayerGroup();
+          const track = new TrackLayer();
+          track.setInstrument(new JavaScriptInstrument());
+          group.push(track);
+          data.getScore().push(group);
+          return data;
+        },
+      },
+      {
+        name: 'PythonObject in nested PolyObject',
+        build: () => {
+          const data = new BlueData();
+          const root = data.getScore()[0] as PolyObject;
+          const nested = new PolyObject();
+          const subLayer = new SoundLayer();
+          subLayer.push(new PythonObject());
+          nested.push(subLayer);
+          root[0]!.push(nested);
+          return data;
+        },
+      },
+      {
+        name: 'JavaScriptObject with on-load processing in Score',
+        build: () => {
+          const data = new BlueData();
+          const jsObj = new JavaScriptObject();
+          jsObj.setOnLoadProcessable(true);
+          jsObj.setJavaScriptCode('throw new Error("should never execute");');
+          (data.getScore()[0] as PolyObject)[0]!.push(jsObj);
+          return data;
+        },
+      },
+      {
+        name: 'ClojureObject in SoundObjectLibrary via Instance',
+        build: () => {
+          const data = new BlueData();
+          const clj = new ClojureObject();
+          data.getSoundObjectLibrary().addObject(clj);
+          (data.getScore()[0] as PolyObject)[0]!.push(new Instance(clj));
+          return data;
+        },
+      },
+      {
+        name: 'External inside FrozenSoundObject',
+        build: () => {
+          const data = new BlueData();
+          const frozen = new FrozenSoundObject();
+          frozen.setFrozenSoundObject(new External());
+          (data.getScore()[0] as PolyObject)[0]!.push(frozen);
+          return data;
+        },
+      },
+      {
+        name: 'ObjectBuilder in PatternsLayerGroup',
+        build: () => {
+          const data = new BlueData();
+          const patterns = new PatternsLayerGroup();
+          const pl = new PatternLayer();
+          pl.setSoundObject(new ObjectBuilder());
+          patterns.push(pl);
+          data.getScore().push(patterns);
+          return data;
+        },
+      },
+      {
+        name: 'PythonProcessor in Score NoteProcessorChain',
+        build: () => {
+          const data = new BlueData();
+          data.getScore().getNoteProcessorChain().addProcessor(new PythonProcessor());
+          return data;
+        },
+      },
+      {
+        name: 'On-load processable object in LiveData',
+        build: () => {
+          const data = new BlueData();
+          const obj = new GenericScore();
+          const onLoadSpy = vi.fn();
+          Object.assign(obj, {
+            isOnLoadProcessable: () => true,
+            processOnLoad: onLoadSpy,
+          });
+          const liveObj = new LiveObject();
+          liveObj.setSoundObject(obj);
+          data.getLiveData().getLiveObjectBins().setLiveObject(0, 0, liveObj);
+          return data;
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const data = testCase.build();
+      const result = await generateObservationOnlyDiskCsd(data);
+      expect(result.ok, testCase.name).toBe(false);
+      if (!result.ok) {
+        expect(result.code, testCase.name).toBe('EXECUTION_REQUIRED');
+      }
+    }
+
+    const onLoadHookSpy = vi.fn();
+    const guarded = new BlueData();
+    const customOnLoad = new GenericScore();
+    Object.assign(customOnLoad, {
+      isOnLoadProcessable: () => true,
+      processOnLoad: onLoadHookSpy,
+    });
+    (guarded.getScore()[0] as PolyObject)[0]!.push(customOnLoad);
+
+    const refused = await generateObservationOnlyDiskCsd(guarded);
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.code).toBe('EXECUTION_REQUIRED');
+    }
+    expect(onLoadHookSpy).not.toHaveBeenCalled();
+  });
+
+  it('denies with UNSUPPORTED_CONTENT for external TuningProcessor scales, UnsupportedProcessor, and panning AudioClips', async () => {
+    // 1. TuningProcessor with external scaleReference
+    const tuningData = new BlueData();
+    const scoreObj = new GenericScore();
+    const tuningElem = Element.parse(
+      '<noteProcessor type="blue.noteProcessor.TuningProcessor"><pfield>4</pfield><scale>missing-scale.scl</scale></noteProcessor>',
+    );
+    scoreObj.getNoteProcessorChain().addProcessor(TuningProcessor.loadFromXML(tuningElem));
+    (tuningData.getScore()[0] as PolyObject)[0]!.push(scoreObj);
+
+    const tuningResult = await generateObservationOnlyDiskCsd(tuningData);
+    expect(tuningResult.ok).toBe(false);
+    if (!tuningResult.ok) {
+      expect(tuningResult.code).toBe('UNSUPPORTED_CONTENT');
+    }
+
+    // 2. UnsupportedProcessor on a layer NoteProcessorChain
+    class UnsupportedProcessor extends NoteProcessor {
+      override process(notes: NoteList): NoteList {
+        return notes;
+      }
+      override getDisplayName(): string {
+        return 'Unsupported';
+      }
+      override deepCopy(): NoteProcessor {
+        return new UnsupportedProcessor();
+      }
+      override saveAsXML(): Element {
+        return new Element('noteProcessor');
+      }
+    }
+    const unsupportedData = new BlueData();
+    (unsupportedData.getScore()[0] as PolyObject)[0]!
+      .getNoteProcessorChain()
+      .addProcessor(new UnsupportedProcessor());
+
+    const unsupportedResult = await generateObservationOnlyDiskCsd(unsupportedData);
+    expect(unsupportedResult.ok).toBe(false);
+    if (!unsupportedResult.ok) {
+      expect(unsupportedResult.code).toBe('UNSUPPORTED_CONTENT');
+    }
+
+    // 3. mixer.isPanningEnabled() with AudioClip
+    const panningData = new BlueData();
+    panningData.getMixer().setPanningEnabled(true);
+    const tracks = new TrackLayerGroup();
+    const track = new TrackLayer();
+    const clip = new AudioClip();
+    clip.setAudioFile('/tmp/unreadable-audio.wav');
+    track.push(clip);
+    tracks.push(track);
+    panningData.getScore().push(tracks);
+
+    const panningResult = await generateObservationOnlyDiskCsd(panningData);
+    expect(panningResult.ok).toBe(false);
+    if (!panningResult.ok) {
+      expect(panningResult.code).toBe('UNSUPPORTED_CONTENT');
+    }
+  });
+
+  it('discards late CSD results when the project is replaced or its revision changes mid-flight', async () => {
+    const session = new ProjectSession();
+    session.replace(createEligibleProject(), '/tmp/first.blue');
+
+    let resolveGeneration!: (value: { ok: true; csd: string; diagnostics: string[] }) => void;
+    const bridge = new McpBridge({
+      readSession: () => session.read(),
+      getSaveState: () => 'saved',
+      isDirty: () => false,
+      getEngineStatus: () => ({
+        connected: false,
+        available: false,
+        playbackState: 'stopped',
+        activeDocumentId: null,
+        consoleTail: [],
+      }),
+      generateObservationCsd: () =>
+        new Promise((resolve) => {
+          resolveGeneration = resolve;
+        }),
+    });
+
+    // Case 1: Revision changes while async generation is in flight
+    const inFlightRevision = bridge.generateCsd(createAuth());
+    session.recordMutation({ changed: true });
+    resolveGeneration({ ok: true, csd: 'stale-csd', diagnostics: [] });
+
+    await expect(inFlightRevision).resolves.toMatchObject({
+      ok: false,
+      code: 'CONFLICT',
+    });
+
+    // Case 2: Project replacement while async generation is in flight
+    const inFlightReplace = bridge.generateCsd(createAuth());
+    session.replace(createEligibleProject(), '/tmp/second.blue');
+    resolveGeneration({ ok: true, csd: 'stale-replaced-csd', diagnostics: [] });
+
+    await expect(inFlightReplace).resolves.toMatchObject({
+      ok: false,
+      code: 'CONFLICT',
+    });
+
+    // Case 3: Authorization revoked while async generation is in flight
+    let authorized = true;
+    const inFlightRevoked = bridge.generateCsd(createAuth({ isAuthorized: () => authorized }));
+    authorized = false;
+    resolveGeneration({ ok: true, csd: 'revoked-csd', diagnostics: [] });
+
+    await expect(inFlightRevoked).resolves.toMatchObject({
+      ok: false,
+      code: 'ACCESS_DENIED',
+    });
+  });
+
+  it('bounds McpConsoleTailBuffer by line count and byte limit', () => {
+    const buffer = new McpConsoleTailBuffer(3, 20);
+    buffer.append('alpha\nbeta\ngamma\ndelta\n', 'stdout');
+    expect(buffer.read().map((e) => e.text)).toEqual(['beta', 'gamma', 'delta']);
+
+    buffer.append('12345678901234567', 'stderr');
+    expect(buffer.read()).toEqual([{ text: '12345678901234567', type: 'stderr' }]);
+
+    buffer.clear();
+    expect(buffer.read()).toEqual([]);
+  });
+
+  it('counts each shared instance expansion before copying the project', async () => {
+    const data = new BlueData();
+    const source = new GenericScore();
+    source.setScoreText('i1 0 1\n'.repeat(10));
+    const layer = (data.getScore()[0] as PolyObject)[0]!;
+    for (let index = 0; index < 6; index++) {
+      const instance = new Instance();
+      instance.setSoundObject(source);
+      layer.push(instance);
+    }
+    const copy = vi.spyOn(data, 'historyCopy');
+    await expect(
+      generateObservationOnlyDiskCsd(data, { budget: { maxEstimatedScoreEvents: 50 } }),
+    ).resolves.toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it.each([TimeBehavior.REPEAT, TimeBehavior.REPEAT_CLASSIC])(
+    'bounds explicit periods and refuses unproven derived periods for %s',
+    async (behavior) => {
+      const data = new BlueData();
+      const score = new GenericScore();
+      score.setScoreText('i1 0 0.000001');
+      score.setSubjectiveDuration(TimeDuration.beats(1));
+      score.setTimeBehavior(behavior);
+      (data.getScore()[0] as PolyObject)[0]!.push(score);
+      const copy = vi.spyOn(data, 'historyCopy');
+      await expect(generateObservationOnlyDiskCsd(data)).resolves.toMatchObject({
+        ok: false,
+        code: 'UNSUPPORTED_CONTENT',
+      });
+      score.setRepeatPoint(TimeDuration.beats(0.000001));
+      await expect(generateObservationOnlyDiskCsd(data)).resolves.toMatchObject({
+        ok: false,
+        code: 'RESPONSE_TOO_LARGE',
+      });
+      expect(copy).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refuses data-driven JMask generation before copying or generating notes', async () => {
+    const data = new BlueData();
+    const mask = new JMask();
+    (data.getScore()[0] as PolyObject)[0]!.push(mask);
+    const copy = vi.spyOn(data, 'historyCopy');
+    const generate = vi.spyOn(mask, 'generateForCSD');
+    await expect(generateObservationOnlyDiskCsd(data)).resolves.toMatchObject({
+      ok: false,
+      code: 'UNSUPPORTED_CONTENT',
+    });
+    expect(copy).not.toHaveBeenCalled();
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it('bounds observation-only CSD generation before calling historyCopy or toDiskCSD (T065)', async () => {
+    // 1. Deeply nested PolyObject (>32 depth) rejects with RESPONSE_TOO_LARGE before copying
+    const deepData = new BlueData();
+    let current = deepData.getScore()[0] as PolyObject;
+    for (let depth = 0; depth < 35; depth++) {
+      const child = new PolyObject();
+      child.setName(`Nested ${depth}`);
+      child.push(new SoundLayer());
+      current[0]!.push(child);
+      current = child;
+    }
+    const deepCopySpy = vi.spyOn(deepData, 'historyCopy');
+    const deepCsdSpy = vi.spyOn(deepData, 'toDiskCSD');
+    const deepResult = await generateObservationOnlyDiskCsd(deepData);
+    expect(deepResult).toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+    expect(deepCopySpy).not.toHaveBeenCalled();
+    expect(deepCsdSpy).not.toHaveBeenCalled();
+
+    // 2. Oversized GenericScore with TimeBehavior.REPEAT expansion rejects before copying
+    const repeatData = new BlueData();
+    const repeatingScore = new GenericScore();
+    repeatingScore.setStartTime(TimePosition.beats(0));
+    repeatingScore.setSubjectiveDuration(TimeDuration.beats(10_000));
+    repeatingScore.setTimeBehavior(TimeBehavior.REPEAT);
+    repeatingScore.setRepeatPoint(TimeDuration.beats(1));
+    repeatingScore.setScoreText('i1 0 1 440\ni1 0.5 0.5 880');
+    (repeatData.getScore()[0] as PolyObject)[0]!.push(repeatingScore);
+
+    const repeatCopySpy = vi.spyOn(repeatData, 'historyCopy');
+    const repeatCsdSpy = vi.spyOn(repeatData, 'toDiskCSD');
+    const repeatResult = await generateObservationOnlyDiskCsd(repeatData, {
+      budget: { maxEstimatedScoreEvents: 500, maxEstimatedInputBytes: 4096 },
+    });
+    expect(repeatResult).toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+    expect(repeatCopySpy).not.toHaveBeenCalled();
+    expect(repeatCsdSpy).not.toHaveBeenCalled();
+
+    // 3. Eligible fixture succeeds with at most one historyCopy (zero duplicate copy)
+    const session = new ProjectSession();
+    session.replace(createEligibleProject(), '/tmp/bounded-ok.blue');
+    const activeData = session.read().data!;
+    const okCopySpy = vi.spyOn(activeData, 'historyCopy');
+    const bridge = new McpBridge({
+      readSession: () => session.read(),
+      getSaveState: () => 'saved',
+      isDirty: () => false,
+      getEngineStatus: () => ({
+        connected: false,
+        available: false,
+        playbackState: 'stopped',
+        activeDocumentId: null,
+        consoleTail: [],
+      }),
+    });
+
+    const okRes = await bridge.generateCsd(createAuth());
+    expect(okRes.ok).toBe(true);
+    expect(okCopySpy).toHaveBeenCalledTimes(1);
   });
 });

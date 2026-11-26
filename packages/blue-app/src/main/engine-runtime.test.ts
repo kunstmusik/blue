@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { chmod, mkdir, mkdtemp, readFile, stat, unlink, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
-import { beforeEach, describe, expect, it } from 'vite-plus/test';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import {
   developmentEnginePath,
   EngineRuntimeService,
@@ -499,4 +499,188 @@ describe('EngineRuntimeService', () => {
     expect(third.artifactSha256).not.toBe(first.artifactSha256);
     expect(third.artifactSha256).toBe(createHash('sha256').update(updatedBytes).digest('hex'));
   });
+
+  it('enforces beforeLaunch synchronously after async probe and cwd validation without launching Csound (T063)', async () => {
+    let gateAllowed = true;
+    const runExecutionProcess = vi.fn(async () => ({
+      exitCode: 0,
+      signal: null,
+      stdout: '',
+      stderr: '',
+      started: true,
+    }));
+
+    const runtime = service({
+      runProbeProcess: async () => {
+        gateAllowed = false;
+        return { exitCode: 0, stdout: report(2, true, libraryPath), stderr: '', timedOut: false };
+      },
+      runExecutionProcess,
+    });
+
+    const result = await runtime.executeCsound(
+      {
+        kind: 'performance',
+        operationId: 'fenced-launch',
+        cwd: repoRoot,
+        args: [],
+      },
+      {
+        beforeLaunch: () =>
+          gateAllowed
+            ? { ok: true }
+            : {
+                ok: false,
+                code: 'ACCESS_DENIED',
+                message: 'Read-write MCP access revoked during engine probe.',
+              },
+      },
+    );
+
+    expect(result.state).toBe('failed');
+    expect(result.errorCode).toBe('ACCESS_DENIED');
+    expect(runExecutionProcess).not.toHaveBeenCalled();
+  });
+
+  it('requires the two-stage native render capability before launch', async () => {
+    const runWithoutFeature = vi.fn();
+    const lackingRuntime = service({
+      runProbeProcess: async () => ({
+        exitCode: 0,
+        stdout: JSON.stringify({
+          schemaVersion: 1,
+          engine: {
+            schemaVersion: 1,
+            engineVersion: '0.1.0',
+            protocolVersion: 2,
+            sourceRevision: 'test-rev',
+            features: ['csound-probe-v1', 'csound-performance-v1'],
+          },
+          csound: {
+            status: 'ready',
+            requestedPath: null,
+            loadedPath: libraryPath,
+            versionRaw: 7000,
+            major: 7,
+            minor: 0,
+            patch: 0,
+            supportedMajors: [7],
+            missingSymbols: [],
+            message: 'ready',
+          },
+          ready: true,
+        }),
+        stderr: '',
+        timedOut: false,
+      }),
+      runExecutionProcess: runWithoutFeature,
+    });
+
+    const denied = await lackingRuntime.executeCsound({
+      kind: 'confined-render',
+      operationId: 'confined-missing-cap',
+      rootPath: repoRoot,
+      rootDev: '1',
+      rootIno: '2',
+      outputFilename: 'out.wav',
+      csdText: '<CsoundSynthesizer></CsoundSynthesizer>',
+      args: ['-d'],
+    });
+    expect(denied.state).toBe('failed');
+    expect(denied.errorCode).toBe('ENGINE_CAPABILITY_MISSING');
+    expect(runWithoutFeature).not.toHaveBeenCalled();
+  });
+
+  it.each(['commit', 'revoke', 'stale receipt', 'cancel', 'terminate'] as const)(
+    'owns staging through %s and fences native publication after the render child exits',
+    async (outcome) => {
+      let stagingRoot = '';
+      const controller = new AbortController();
+      const publishConfinedWav = vi.fn(() => {
+        controller.abort();
+        return { status: 0, stderr: '' };
+      });
+      const capableRuntime = service({
+        runProbeProcess: async () => ({
+          exitCode: 0,
+          stdout: JSON.stringify({
+            schemaVersion: 1,
+            engine: {
+              schemaVersion: 1,
+              engineVersion: '0.1.0',
+              protocolVersion: 2,
+              sourceRevision: 'test-rev',
+              features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v2'],
+            },
+            csound: {
+              status: 'ready',
+              requestedPath: null,
+              loadedPath: libraryPath,
+              versionRaw: 7000,
+              major: 7,
+              minor: 0,
+              patch: 0,
+              supportedMajors: [7],
+              missingSymbols: [],
+              message: 'ready',
+            },
+            ready: true,
+          }),
+          stderr: '',
+          timedOut: false,
+        }),
+        publishConfinedWav,
+        runExecutionProcess: async (_exe, args, cwd, _signal, _onOutput, stdin) => {
+          stagingRoot = cwd;
+          expect(cwd).not.toBe(repoRoot);
+          expect(args).toContain(cwd);
+          expect(stdin).toBe('<CsoundSynthesizer>test</CsoundSynthesizer>');
+          await writeFile(path.join(cwd, 'render.wav'), Buffer.alloc(44));
+          if (outcome === 'cancel') controller.abort();
+          if (outcome === 'terminate') {
+            await writeFile(path.join(cwd, 'render.csd'), 'unpublished score');
+            return { exitCode: null, signal: 'SIGKILL', stdout: '', stderr: '', started: true };
+          }
+          return { exitCode: 0, signal: null, stdout: '', stderr: '', started: true };
+        },
+      });
+
+      const root = await stat(repoRoot, { bigint: true });
+      const result = await capableRuntime.executeCsound(
+        {
+          kind: 'confined-render',
+          operationId: 'confined-ok',
+          rootPath: repoRoot,
+          rootDev: String(root.dev),
+          rootIno: String(root.ino),
+          outputFilename: 'out.wav',
+          csdText: '<CsoundSynthesizer>test</CsoundSynthesizer>',
+          args: ['--format=wav:short', '-d'],
+        },
+        {
+          signal: controller.signal,
+          beforePublish: () => {
+            if (outcome === 'revoke') {
+              return { ok: false, code: 'ACCESS_DENIED', message: 'Grant revoked' };
+            }
+            if (outcome === 'stale receipt') {
+              return { ok: false, code: 'CONFLICT', message: 'Project receipt changed' };
+            }
+            return { ok: true };
+          },
+        },
+      );
+      if (outcome === 'commit') {
+        expect(result.state).toBe('completed');
+        expect(publishConfinedWav).toHaveBeenCalledOnce();
+      } else {
+        expect(result.state).toBe(outcome === 'cancel' ? 'cancelled' : 'failed');
+        expect(publishConfinedWav).not.toHaveBeenCalled();
+        if (outcome === 'revoke') expect(result.errorCode).toBe('ACCESS_DENIED');
+        if (outcome === 'stale receipt') expect(result.errorCode).toBe('CONFLICT');
+      }
+      expect(stagingRoot).not.toBe('');
+      await expect(stat(stagingRoot)).rejects.toMatchObject({ code: 'ENOENT' });
+    },
+  );
 });

@@ -1,3 +1,4 @@
+#include "csound/ConfinedRender.h"
 #include "csound/CsoundLoader.h"
 #include "csound/CsoundRuntimeServices.h"
 #include "engine/CsoundEngine.h"
@@ -6,6 +7,7 @@
 #include "process/OwnerMonitor.h"
 #include "protocol/Capabilities.h"
 
+#include <cerrno>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -31,6 +33,8 @@ enum class OneShotMode {
   LIST_IO,
   RUN_UTILITY,
   RUN_CSOUND,
+  RUN_CONFINED_RENDER,
+  PUBLISH_CONFINED_RENDER,
 };
 
 bool isAbsolutePath(const std::string &value) {
@@ -196,6 +200,7 @@ void printUsage(const char *progname) {
   std::printf("  --list-io --json  List Csound modules and selected devices\n");
   std::printf("  --run-utility <name> -- [args...]  Run a Csound utility\n");
   std::printf("  --run-csound -- [args...]  Run an offline Csound performance\n");
+  std::printf("  --run-confined-render --root-dir <abs> --root-dev <u64> --root-ino <u64> --output-name <wav> -- [args...]  Run a directory-anchored offline Csound performance\n");
   std::printf("  --csound-library <absolute-path>  Select a specific Csound library\n");
   std::printf("  --audio-module <name>  Select an audio module for --list-io\n");
   std::printf("  --midi-module <name>  Select a MIDI module for --list-io\n");
@@ -218,8 +223,21 @@ int main(int argc, char *argv[]) {
   std::string utilityName;
   std::string audioModule;
   std::string midiModule;
+  blue::ConfinedRenderOptions confinedOptions;
+  bool hasRootDev = false;
+  bool hasRootIno = false;
   std::vector<std::string> oneShotArguments;
   bool argumentSeparator = false;
+
+  const auto parseUnsigned64 = [](const char *raw, uint64_t &out) -> bool {
+    if (!raw || raw[0] == '\0' || raw[0] == '-') return false;
+    char *endptr = nullptr;
+    errno = 0;
+    const unsigned long long parsed = std::strtoull(raw, &endptr, 10);
+    if (errno != 0 || !endptr || *endptr != '\0') return false;
+    out = static_cast<uint64_t>(parsed);
+    return true;
+  };
 
   // Parse arguments
   for (int i = 1; i < argc; i++) {
@@ -264,6 +282,26 @@ int main(int argc, char *argv[]) {
       utilityName = argv[++i];
     } else if (std::strcmp(argv[i], "--run-csound") == 0) {
       oneShotMode = OneShotMode::RUN_CSOUND;
+    } else if (std::strcmp(argv[i], "--run-confined-render") == 0) {
+      oneShotMode = OneShotMode::RUN_CONFINED_RENDER;
+    } else if (std::strcmp(argv[i], "--publish-confined-render") == 0) {
+      oneShotMode = OneShotMode::PUBLISH_CONFINED_RENDER;
+    } else if (std::strcmp(argv[i], "--root-dir") == 0 && i + 1 < argc) {
+      confinedOptions.rootDir = argv[++i];
+    } else if (std::strcmp(argv[i], "--root-dev") == 0 && i + 1 < argc) {
+      if (!parseUnsigned64(argv[++i], confinedOptions.expectedDev)) {
+        std::fprintf(stderr, "Invalid --root-dev value\n");
+        return 64;
+      }
+      hasRootDev = true;
+    } else if (std::strcmp(argv[i], "--root-ino") == 0 && i + 1 < argc) {
+      if (!parseUnsigned64(argv[++i], confinedOptions.expectedIno)) {
+        std::fprintf(stderr, "Invalid --root-ino value\n");
+        return 64;
+      }
+      hasRootIno = true;
+    } else if (std::strcmp(argv[i], "--output-name") == 0 && i + 1 < argc) {
+      confinedOptions.outputName = argv[++i];
     } else if (std::strcmp(argv[i], "--json") == 0) {
       jsonOutput = true;
     } else if (std::strcmp(argv[i], "--csound-library") == 0 &&
@@ -331,6 +369,34 @@ int main(int argc, char *argv[]) {
     }
     return runOneShot(oneShotMode, csoundLibraryPath, utilityName, audioModule,
                       midiModule, oneShotArguments);
+  }
+
+  if (oneShotMode == OneShotMode::PUBLISH_CONFINED_RENDER) {
+    uint64_t stagingDev = 0, stagingIno = 0, wavIno = 0;
+    if (!isAbsolutePath(confinedOptions.rootDir) || !hasRootDev || !hasRootIno ||
+        oneShotArguments.size() != 4 || !isAbsolutePath(oneShotArguments[0]) ||
+        !parseUnsigned64(oneShotArguments[1].c_str(), stagingDev) ||
+        !parseUnsigned64(oneShotArguments[2].c_str(), stagingIno) ||
+        !parseUnsigned64(oneShotArguments[3].c_str(), wavIno)) {
+      std::fprintf(stderr, "Invalid confined WAV publication arguments\n");
+      return 64;
+    }
+    return blue::publishConfinedRender(confinedOptions, oneShotArguments[0],
+                                       stagingDev, stagingIno, wavIno);
+  }
+
+  if (oneShotMode == OneShotMode::RUN_CONFINED_RENDER) {
+    if (jsonOutput || !audioModule.empty() || !midiModule.empty() ||
+        (!csoundLibraryPath.empty() && !isAbsolutePath(csoundLibraryPath)) ||
+        !isAbsolutePath(confinedOptions.rootDir) || !hasRootDev ||
+        !hasRootIno || confinedOptions.outputName.empty()) {
+      std::fprintf(stderr,
+                   "--run-confined-render requires absolute --root-dir, "
+                   "--root-dev, --root-ino, --output-name, and rejects --json/modules\n");
+      return 64;
+    }
+    return blue::runConfinedRender(confinedOptions, csoundLibraryPath,
+                                   oneShotArguments);
   }
 
   if (jsonOutput || !csoundLibraryPath.empty() || !audioModule.empty() ||

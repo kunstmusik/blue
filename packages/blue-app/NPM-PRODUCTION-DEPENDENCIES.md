@@ -1,6 +1,6 @@
 # Blue app production dependency license inventory
 
-Generated from the installed production dependency graph with `pnpm licenses list --json -P --filter @blue/app` on 2026-09-22, then augmented with production dependencies of the workspace packages `@blue/data` and `@blue/engine-client`. The app filter does not report the full dependency graph of those workspace packages. Versions reflect the lockfile installation at generation time. This inventory records package metadata; consult each package license file for full terms. Electron is listed separately because the Electron runtime is packaged from a development dependency.
+Generated from the installed production dependency graph with `pnpm licenses list --json -P --filter @blue/app` on 2026-11-26, then augmented with production dependencies of the workspace packages `@blue/data` and `@blue/engine-client`. The app filter does not report the full dependency graph of those workspace packages. Versions reflect the lockfile installation at generation time. This inventory records package metadata; consult each package license file for full terms. Electron is listed separately because the Electron runtime is packaged from a development dependency.
 
 ## 0BSD
 
@@ -8,6 +8,9 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 ## Apache-2.0
 
+- `@modelcontextprotocol/core` 2.4.0 (composite Apache-2.0 + retained MIT notice in `MCP-TypeScript-SDK-Apache-2.0-MIT.txt`)
+- `@modelcontextprotocol/node` 2.1.2 (same notice)
+- `@modelcontextprotocol/server` 2.4.0 (same notice)
 - `node-osc` 11.7.1
 
 ## BSD-3-Clause
@@ -16,11 +19,10 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 
 ## ISC
 
-- `saxes` 6.0.0
-
 - `@nextjournal/lang-clojure` 1.0.0
 - `@nextjournal/lezer-clojure` 1.0.0
 - `lucide-react` 0.563.0
+- `saxes` 6.0.0
 
 ## MIT
 
@@ -43,7 +45,8 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `@floating-ui/dom` 1.8.0
 - `@floating-ui/react-dom` 2.1.9
 - `@floating-ui/utils` 0.2.12
-- `@kunstmusik/codemirror-lang-csound` 1.0.2
+- `@hono/node-server` 2.1.11 (through `@modelcontextprotocol/node`; notice in `Hono-Node-Server-MIT.txt`)
+- `@kunstmusik/codemirror-lang-csound` 1.0.4
 - `@lezer/common` 1.5.2
 - `@lezer/highlight` 1.2.3
 - `@lezer/javascript` 1.5.5
@@ -87,21 +90,18 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `@react-dnd/shallowequal` 2.0.0
 - `@tanstack/react-table` 8.21.3
 - `@tanstack/table-core` 8.21.3
-- `@types/node` 26.6.2
-- `@types/react` 19.3.0
-- `@types/react-dom` 19.3.0
 - `aria-hidden` 1.2.6
 - `clsx` 2.1.1
 - `cmake-ts` 1.0.2
 - `codemirror` 6.0.2
 - `crelt` 1.0.7
-- `csstype` 3.2.3
 - `detect-node-es` 1.1.0
 - `dnd-core` 14.0.1
 - `dockview` 5.2.0
 - `dockview-core` 5.2.0
 - `fast-deep-equal` 3.1.3
 - `get-nonce` 1.0.1
+- `hono` 4.13.22 (through `@modelcontextprotocol/node`; notice in `Hono-MIT.txt`)
 - `memoize-one` 5.2.1
 - `midi-file` 1.2.4
 - `node-addon-api` 8.9.2
@@ -120,11 +120,11 @@ Generated from the installed production dependency graph with `pnpm licenses lis
 - `sonner` 2.0.8
 - `style-mod` 4.1.4
 - `tailwind-merge` 3.7.0
-- `undici-types` 8.9.0
 - `use-callback-ref` 1.3.3
 - `use-sidecar` 1.1.3
 - `use-sync-external-store` 1.7.0
 - `w3c-keyname` 2.2.8
+- `zod` 4.6.7 (Colin McDonnell notice in `Zod-MIT.txt`)
 - `zustand` 5.0.15
 
 ## MIT AND MPL-2.0

@@ -118,6 +118,12 @@ import type {
 } from '../../shared/midi-input';
 import type { OscCommandEvent, OscServerRuntimeSnapshot } from '../../shared/osc-control';
 import type {
+  McpClientConfigTarget,
+  McpCopyResult,
+  McpRotateResult,
+  McpServerStatus,
+} from '../../shared/mcp-server';
+import type {
   BrowseLibraryRequest,
   BeginLibraryDragRequest,
   BrowseLibraryResult,
@@ -601,6 +607,13 @@ declare global {
       getOscServerSnapshot: () => Promise<OscServerRuntimeSnapshot>;
       onOscServerSnapshot: (callback: (snapshot: OscServerRuntimeSnapshot) => void) => () => void;
       onOscCommand: (callback: (event: OscCommandEvent) => void) => () => void;
+
+      // MCP Server
+      getMcpServerStatus: () => Promise<McpServerStatus>;
+      onMcpServerStatus: (callback: (status: McpServerStatus) => void) => () => void;
+      copyMcpCredential: () => Promise<McpCopyResult>;
+      copyMcpClientConfig: (target: McpClientConfigTarget) => Promise<McpCopyResult>;
+      rotateMcpCredential: () => Promise<McpRotateResult>;
 
       // Window Layout
       getWindowLayout: () => Promise<WindowLayoutSettingsSnapshot>;

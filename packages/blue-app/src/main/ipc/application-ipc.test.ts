@@ -19,7 +19,7 @@ const HANDLER_CHANNELS = APPLICATION_IPC_CHANNELS.filter(
 );
 
 describe('application IPC registrar', () => {
-  it('registers the exact 24-channel invoke/listener sequence and exact teardown', () => {
+  it('registers the exact 30-channel invoke/listener sequence and exact teardown', () => {
     const ipcMain = new FakeRegistrarIpcMain();
     const listeners = { 'settings:close-response': vi.fn() } satisfies Record<
       ApplicationListenerChannel,

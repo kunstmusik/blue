@@ -362,3 +362,8 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(test_owner_monitor_integration PRIVATE pthread)
 endif()
 add_test(NAME OwnerMonitorIntegrationTests COMMAND test_owner_monitor_integration)
+
+if(WIN32)
+    add_executable(test_windows_confined_render_lock test_windows_confined_render_lock.cpp)
+    add_test(NAME WindowsConfinedRenderLockTests COMMAND test_windows_confined_render_lock)
+endif()

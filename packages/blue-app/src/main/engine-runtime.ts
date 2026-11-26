@@ -1,7 +1,17 @@
-import { execFile, spawn } from 'node:child_process';
+import { execFile, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { constants, createReadStream } from 'node:fs';
+import {
+  constants,
+  createReadStream,
+  lstatSync,
+  mkdtempSync,
+  realpathSync,
+  rmdirSync,
+  unlinkSync,
+  type BigIntStats,
+} from 'node:fs';
 import { access, readFile, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { BLUE_ENGINE_PROTOCOL_VERSION, hasEngineFeature } from '@blue/engine-client/capabilities';
 import {
@@ -15,6 +25,7 @@ import {
   type EngineSelection,
   type EngineSelectionSource,
 } from '../shared/engine-runtime';
+import type { RenderBeforeLaunchCheck } from './render-to-disk';
 import {
   CSOUND_IO_FEATURE,
   decodeCsoundIoReportJson,
@@ -68,6 +79,7 @@ export type ExecutionProcessRunner = (
   cwd: string,
   signal: AbortSignal | undefined,
   onOutput: (text: string, source: ExecutionOutputSource) => void,
+  stdin?: string,
 ) => Promise<ExecutionProcessResult>;
 
 export interface EngineRuntimeOptions {
@@ -82,6 +94,10 @@ export interface EngineRuntimeOptions {
   probeTimeoutMs?: number;
   runProbeProcess?: ProbeProcessRunner;
   runExecutionProcess?: ExecutionProcessRunner;
+  publishConfinedWav?: (
+    executablePath: string,
+    args: string[],
+  ) => { status: number | null; stderr: string };
 }
 
 class EngineRuntimeError extends Error {
@@ -155,6 +171,7 @@ async function defaultExecutionProcess(
   cwd: string,
   signal: AbortSignal | undefined,
   onOutput: (text: string, source: ExecutionOutputSource) => void,
+  stdin?: string,
 ): Promise<ExecutionProcessResult> {
   return new Promise((resolve) => {
     const outputLimit = 1024 * 1024;
@@ -181,8 +198,14 @@ async function defaultExecutionProcess(
       cwd,
       shell: false,
       windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [stdin !== undefined ? 'pipe' : 'ignore', 'pipe', 'pipe'],
     });
+    if (stdin !== undefined && child.stdin) {
+      child.stdin.on('error', () => {
+        // Ignore EPIPE if the engine rejects arguments before draining stdin.
+      });
+      child.stdin.end(stdin, 'utf8');
+    }
     const finish = (result: ExecutionProcessResult) => {
       if (settled) return;
       settled = true;
@@ -191,7 +214,7 @@ async function defaultExecutionProcess(
     };
     const onAbort = () => {
       try {
-        child.kill('SIGTERM');
+        child.kill(stdin === undefined ? 'SIGTERM' : 'SIGKILL');
       } catch {
         // The child may have exited between the abort and kill calls.
       }
@@ -235,6 +258,11 @@ async function defaultExecutionProcess(
       });
     });
   });
+}
+
+function readPrivateRenderArtifact(filename: string): BigIntStats | null {
+  const info = lstatSync(filename, { bigint: true, throwIfNoEntry: false });
+  return info?.isFile() && info.nlink === 1n ? info : null;
 }
 
 export function developmentEnginePath(
@@ -548,6 +576,8 @@ export class EngineRuntimeService {
     hooks: {
       signal?: AbortSignal;
       onOutput?: (text: string, source: ExecutionOutputSource) => void;
+      beforeLaunch?: RenderBeforeLaunchCheck;
+      beforePublish?: RenderBeforeLaunchCheck;
     } = {},
   ): Promise<CsoundExecutionResult> {
     const request = normalizeCsoundExecutionRequest(rawRequest);
@@ -588,48 +618,182 @@ export class EngineRuntimeService {
     if (!hasEngineFeature(probe.report.engine, feature)) {
       return failed(`Blue Engine does not advertise ${feature}`, 'ENGINE_CAPABILITY_MISSING');
     }
-    if (!path.isAbsolute(request.cwd)) {
+    const executionCwd = request.kind === 'confined-render' ? request.rootPath : request.cwd;
+    if (!path.isAbsolute(executionCwd)) {
       return failed(
         'Csound execution working directory must be absolute',
         'CSOUND_EXECUTION_INVALID_CWD',
       );
     }
     try {
-      const cwdStat = await stat(request.cwd);
+      const cwdStat = await stat(executionCwd);
       if (!cwdStat.isDirectory()) {
         return failed(
-          `Csound execution working directory is not a directory: ${request.cwd}`,
+          `Csound execution working directory is not a directory: ${executionCwd}`,
           'CSOUND_EXECUTION_INVALID_CWD',
         );
       }
     } catch {
       return failed(
-        `Csound execution working directory was not found: ${request.cwd}`,
+        `Csound execution working directory was not found: ${executionCwd}`,
         'CSOUND_EXECUTION_INVALID_CWD',
       );
     }
 
-    const args =
-      request.kind === 'utility' ? ['--run-utility', request.utilityName] : ['--run-csound'];
-    if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
-    args.push('--', ...request.args);
+    if (request.kind === 'confined-render' && hooks.signal?.aborted) {
+      return {
+        operationId: request.operationId,
+        state: 'cancelled',
+        exitCode: null,
+        signal: 'SIGTERM',
+        stdout: '',
+        stderr: '',
+        errorCode: 'CSOUND_EXECUTION_CANCELLED',
+        message: 'Csound operation cancelled before launch',
+      };
+    }
+
+    const beforeLaunchResult = hooks.beforeLaunch?.();
+    if (beforeLaunchResult && !beforeLaunchResult.ok) {
+      return {
+        operationId: request.operationId,
+        state: beforeLaunchResult.code === 'CANCELLED' ? 'cancelled' : 'failed',
+        exitCode: null,
+        signal: null,
+        stdout: '',
+        stderr: boundedDiagnostic(beforeLaunchResult.message),
+        errorCode: beforeLaunchResult.code,
+        message: boundedDiagnostic(beforeLaunchResult.message),
+      };
+    }
+
+    const rootArgs = (directory: string, dev: string, ino: string, filename: string) => [
+      '--root-dir',
+      directory,
+      '--root-dev',
+      dev,
+      '--root-ino',
+      ino,
+      '--output-name',
+      filename,
+    ];
+    const stageFiles = ['render.csd', 'render.wav'];
+    let staging: { path: string; dev: bigint; ino: bigint } | undefined;
+    const artifactIdentities = new Map<string, BigIntStats | null>();
     let processResult: ExecutionProcessResult;
+    let published = false;
     try {
+      let cwd = executionCwd;
+      let args: string[];
+      if (request.kind === 'confined-render') {
+        if (!hooks.beforePublish) {
+          return failed('Confined render requires a publication guard.', 'OUTPUT_REJECTED');
+        }
+        const stagePath = mkdtempSync(path.join(realpathSync(tmpdir()), 'blue-mcp-render-'));
+        const stageStat = lstatSync(stagePath, { bigint: true });
+        staging = { path: stagePath, dev: stageStat.dev, ino: stageStat.ino };
+        if (String(staging.dev) !== request.rootDev) {
+          return failed(
+            'Render staging and destination require the same filesystem.',
+            'OUTPUT_REJECTED',
+          );
+        }
+        cwd = staging.path;
+        args = [
+          '--run-confined-render',
+          ...rootArgs(cwd, String(staging.dev), String(staging.ino), 'render.wav'),
+        ];
+      } else {
+        args =
+          request.kind === 'utility' ? ['--run-utility', request.utilityName] : ['--run-csound'];
+      }
+      if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
+      args.push('--', ...request.args);
       processResult = await this.runExecutionProcess(
         probe.selection.executablePath,
         args,
-        request.cwd,
+        cwd,
         hooks.signal,
         hooks.onOutput ?? (() => undefined),
+        request.kind === 'confined-render' ? request.csdText : undefined,
       );
+      if (staging) {
+        for (const name of stageFiles) {
+          artifactIdentities.set(name, readPrivateRenderArtifact(path.join(staging.path, name)));
+        }
+      }
+      if (request.kind === 'confined-render' && staging && processResult.exitCode === 0) {
+        if (hooks.signal?.aborted) {
+          return {
+            ...failed('Render cancelled before publication.', 'CSOUND_EXECUTION_CANCELLED'),
+            state: 'cancelled',
+          };
+        }
+        const wav = artifactIdentities.get('render.wav');
+        if (!wav || wav.size < 44n || wav.dev !== staging.dev) {
+          return failed('Could not verify the staged WAV.', 'OUTPUT_REJECTED');
+        }
+        const publicationArgs = [
+          '--publish-confined-render',
+          ...rootArgs(request.rootPath, request.rootDev, request.rootIno, request.outputFilename),
+          '--',
+          staging.path,
+          String(staging.dev),
+          String(staging.ino),
+          String(wav.ino),
+        ];
+        const gate = hooks.beforePublish!();
+        if (!gate.ok) {
+          return {
+            ...failed(gate.message, gate.code),
+            state: gate.code === 'CANCELLED' ? 'cancelled' : 'failed',
+          };
+        }
+        // This metadata-only commit runs in the same main-process turn as the authority check.
+        const commit = this.options.publishConfinedWav
+          ? this.options.publishConfinedWav(probe.selection.executablePath, publicationArgs)
+          : spawnSync(probe.selection.executablePath, publicationArgs, {
+              encoding: 'utf8',
+              windowsHide: true,
+              stdio: ['ignore', 'ignore', 'pipe'],
+            });
+        if (commit.status !== 0) {
+          return failed(commit.stderr || 'Could not publish the staged WAV.', 'OUTPUT_REJECTED');
+        }
+        published = true;
+      }
     } catch (error) {
       return failed(
         error instanceof Error ? error.message : String(error),
-        'CSOUND_PROCESS_FAILED',
+        request.kind === 'confined-render' ? 'OUTPUT_REJECTED' : 'CSOUND_PROCESS_FAILED',
       );
+    } finally {
+      if (staging) {
+        try {
+          const current = lstatSync(staging.path, { bigint: true });
+          if (current.isDirectory() && current.dev === staging.dev && current.ino === staging.ino) {
+            for (const name of stageFiles) {
+              const filename = path.join(staging.path, name);
+              const file = lstatSync(filename, { bigint: true, throwIfNoEntry: false });
+              const owned = artifactIdentities.has(name)
+                ? artifactIdentities.get(name)
+                : readPrivateRenderArtifact(filename);
+              if (file && owned && file.dev === owned.dev && file.ino === owned.ino) {
+                unlinkSync(filename);
+              }
+            }
+            rmdirSync(staging.path);
+          }
+        } catch (error) {
+          const code = (error as NodeJS.ErrnoException).code;
+          if (code !== 'ENOENT' && code !== 'ENOTEMPTY') {
+            console.warn('Could not remove private MCP render staging.', error);
+          }
+        }
+      }
     }
 
-    const cancelled = hooks.signal?.aborted ?? false;
+    const cancelled = !published && (hooks.signal?.aborted ?? false);
     const state: CsoundExecutionResult['state'] = cancelled
       ? 'cancelled'
       : processResult.exitCode === 0

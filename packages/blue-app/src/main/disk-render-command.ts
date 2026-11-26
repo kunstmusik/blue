@@ -9,6 +9,7 @@
  * Keeps executable resolution and filesystem access outside the pure planner.
  */
 import type { DiskRenderSettingsSnapshot } from '../shared/program-settings';
+import { SAMPLE_FORMAT_CHOICES } from '../shared/program-settings';
 import type { ProjectProperties } from '@blue/data';
 
 export type DiskCommandMode = 'normal' | 'completeOverride';
@@ -217,5 +218,80 @@ export function planFreezeCommand(inputs: FreezeCommandInputs): { args: string[]
   const flagTokens = tokenizeCommand(inputs.freezeFlags);
   return {
     args: [...flagTokens, inputs.outputFilePath, inputs.csdPath],
+  };
+}
+
+const VETTED_WAV_SAMPLE_FORMATS = new Set(SAMPLE_FORMAT_CHOICES);
+
+/**
+ * Plan a strictly vetted WAV disk-render command for MCP requests.
+ *
+ * Refuses project overrides or arbitrary user/project command-line strings and
+ * emits only vetted WAV flags (`-+msg_color=false`, `--format=wav[:<sample>]`,
+ * `-K`, `-Z`, `-R`, `-d`, `-m<level>`, `-o`, `outputFile`).
+ */
+export function planVettedMcpDiskCommand(inputs: DiskCommandInputs): DiskCommandPlan {
+  const { diskRender, props, outputFile, messageColorsEnabled } = inputs;
+
+  if (props.diskCompleteOverride) {
+    throw new Error('MCP render refuses projects with diskCompleteOverride enabled.');
+  }
+  if (props.diskAdvancedSettings.trim().length > 0) {
+    throw new Error('MCP render refuses projects with non-empty diskAdvancedSettings.');
+  }
+  if (props.diskCommandLine.trim().length > 0) {
+    throw new Error('MCP render refuses projects with non-empty diskCommandLine.');
+  }
+  if (!outputFile || outputFile.trim().length === 0) {
+    throw new Error('MCP disk render requires a resolved WAV output file path.');
+  }
+
+  const args: string[] = [];
+
+  if (!messageColorsEnabled) {
+    args.push('-+msg_color=false');
+  }
+
+  if (diskRender.fileFormatEnabled) {
+    const normalizedFileFormat = diskRender.fileFormat.trim().toUpperCase();
+    if (normalizedFileFormat !== 'WAV') {
+      throw new Error(
+        `MCP render supports only WAV file format, but diskRender.fileFormat is "${diskRender.fileFormat}".`,
+      );
+    }
+    let formatArg = '--format=wav';
+    if (diskRender.sampleFormatEnabled) {
+      const normalizedSampleFormat = diskRender.sampleFormat.trim().toUpperCase();
+      if (!VETTED_WAV_SAMPLE_FORMATS.has(normalizedSampleFormat)) {
+        throw new Error(
+          `MCP render rejected unsupported WAV sample format "${diskRender.sampleFormat}".`,
+        );
+      }
+      formatArg += `:${normalizedSampleFormat.toLowerCase()}`;
+    }
+    args.push(formatArg);
+  }
+
+  if (!diskRender.savePeakInformation) {
+    args.push('-K');
+  }
+  if (diskRender.ditherOutput) {
+    args.push('-Z');
+  }
+  if (diskRender.rewriteHeader) {
+    args.push('-R');
+  }
+  if (diskRender.displaysDisabled) {
+    args.push('-d');
+  }
+
+  args.push(`-m${getDiskMessageLevel(props)}`);
+  args.push('-o');
+  args.push(outputFile);
+
+  return {
+    mode: 'normal',
+    args,
+    outputPath: outputFile,
   };
 }
