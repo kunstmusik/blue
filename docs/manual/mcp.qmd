@@ -4,26 +4,87 @@ title: "Blue MCP"
 
 Blue's Model Context Protocol (MCP) server lets a compatible local client inspect the active project and engine. With read-write access, the client can also request supported project edits, timeline playback, and WAV renders.
 
-## Install and enable
+## Enable MCP in Blue
 
-1. Install a Blue 3 build that includes **Settings… → MCP**. MCP ships with the desktop app. Check [Blue releases](https://github.com/kunstmusik/blue/releases) for your platform or use the [development build artifacts](https://github.com/kunstmusik/blue/actions/workflows/develop.yml) after the feature lands. Install [Csound 7](https://csound.com/download.html) if you want playback or rendering.
-2. Launch Blue and open a project. On macOS, open **Settings…** from the **Blue** menu. On Windows and Linux, open it from **File**.
-3. Select **MCP**, check **Enable MCP Server**, keep **Access Mode** set to **Read-only**, and click **Apply**. Wait for **Listening** and use the endpoint displayed there. If the preferred port is occupied, Blue shows the fallback port.
-4. Choose your client under **Credentials and Client Configuration**, then click **Copy Client Config**. Keep Blue running while using the connection.
+1. Open a project in a Blue 3 build with an **MCP** settings panel. See [Blue releases](https://github.com/kunstmusik/blue/releases) and [development builds](https://github.com/kunstmusik/blue/actions/workflows/develop.yml).
+2. Open **Settings… → MCP**. Settings is in the **Blue** menu on macOS and the **File** menu on Windows and Linux.
+3. Check **Enable MCP Server**, leave **Access Mode** on **Read-only**, then **click Apply**. The server starts when you apply the settings. Wait for **Listening**.
+
+Keep Blue open and run the client on the same computer. Use the endpoint shown in the MCP panel, including its actual port. **Copy Credential** copies the raw token.
 
 ## Connect a client
 
-The server uses Streamable HTTP on IPv4 loopback. Use a client that runs on the same machine as Blue and can send the bearer token. For a custom client, use the displayed URL and send `Authorization: Bearer <token>` with the credential from **Copy Credential**.
+### Cursor, VS Code, or Codex CLI
 
-| Client | Add the copied configuration |
-| --- | --- |
-| Cursor | Merge the `blue` entry into `mcpServers` in your local `~/.cursor/mcp.json`. The snippet contains the actual token. Keep that file private and outside shared source control. |
-| VS Code | Use a local VS Code session that supports editor-managed MCP and interactive inputs. Run **MCP: Open User Configuration** and merge the snippet into that file, or use a private workspace’s `.vscode/mcp.json`. Start the server connection and paste the raw value from **Copy Credential** when VS Code prompts. |
-| Codex CLI | Add the copied `[mcp_servers.blue]` table to your local Codex `config.toml`. Set `BLUE_MCP_TOKEN` in the environment of the process that starts Codex, then start or restart Codex. The TOML references the variable by name. |
+In Blue's MCP panel, select your client and click **Copy Client Config**. Add the snippet to your client configuration. If a configuration already exists, keep its other settings and add the Blue entry.
 
-For client-specific options, see the [Cursor MCP documentation](https://cursor.com/docs/mcp) and the [VS Code MCP configuration reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration).
+- **Cursor** — Add the entry under `mcpServers` in `~/.cursor/mcp.json`. The snippet includes your token. Keep this file private. [Cursor MCP docs](https://cursor.com/docs/mcp)
+- **VS Code** — In a local session that supports editor-managed MCP, run **MCP: Open User Configuration** from the Command Palette and add the snippet. Start the Blue connection and paste the token from **Copy Credential** when prompted. [VS Code MCP reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration)
+- **Codex CLI** — Add the copied `[mcp_servers.blue]` section to `config.toml`. [Set the Codex token in your terminal](#set-the-codex-token-in-your-terminal), then start Codex from that terminal.
 
-Refresh client discovery after switching access modes or restarting the listener. If the port changes, copy the configuration again. An authentication error usually means the client needs the current token. **Rotate Credential** invalidates the previous token and closes its sessions. If Blue displays **Session-only**, copy a new token when you next launch Blue. Disable MCP and click **Apply** when you want to close the listener.
+### OpenCode
+
+Add this to your OpenCode configuration, usually `~/.config/opencode/opencode.json`. Replace the example URL with Blue's displayed endpoint and `YOUR_BLUE_TOKEN` with the value from **Copy Credential**. Keep this file private because it contains the token.
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "blue": {
+        "type": "remote",
+        "url": "http://127.0.0.1:8765/mcp",
+        "oauth": false,
+        "headers": { "Authorization": "Bearer YOUR_BLUE_TOKEN" }
+      }
+    }
+  }
+}
+```
+
+On OpenCode 1.x, put `blue` directly under `mcp`. Start OpenCode and use `/mcps` to check that `blue` is connected. [OpenCode MCP docs](https://opencode.ai/docs/mcp-servers/) · [OpenCode 1.x and 2.x configuration comparison](https://opencode.ai/docs/migrate-v1/#mcp-servers)
+
+### Google Antigravity
+
+In the Antigravity app, open **Customizations → Installed → MCP Servers** and click **Copy Config File Path**. In the Antigravity IDE, use **… → MCP Servers → Manage MCP Servers → View raw config** in the agent panel. Add the entry below to that `mcp_config.json`.
+
+```json
+{
+  "mcpServers": {
+    "blue": {
+      "serverUrl": "http://127.0.0.1:8765/mcp",
+      "headers": { "Authorization": "Bearer YOUR_BLUE_TOKEN" }
+    }
+  }
+}
+```
+
+Replace the example URL with Blue's displayed endpoint and `YOUR_BLUE_TOKEN` with the value from **Copy Credential**. Save the file and restart Antigravity. Keep the configuration private because it contains the token. [Google Antigravity MCP docs](https://antigravity.google/docs/mcp)
+
+### Set the Codex token in your terminal
+
+Codex reads the token from `BLUE_MCP_TOKEN`. Run the command for your shell, paste the value from **Copy Credential**, then press Enter. Launch your client from the same terminal.
+
+**Bash or Zsh**
+
+```sh
+read -rs BLUE_MCP_TOKEN && export BLUE_MCP_TOKEN
+```
+
+**PowerShell 7.2 or later**
+
+```powershell
+$env:BLUE_MCP_TOKEN = Read-Host "Blue MCP token" -MaskInput
+```
+
+### Connection problems
+
+- **Blue shows no endpoint** — Check **Enable MCP Server**, click **Apply**, and wait for **Listening**.
+- **The connection is refused** — Keep Blue open and check the configured URL against the one Blue displays. Blue may pick a different port when the preferred port is in use.
+- **Authentication fails** — Copy the current token and reconnect. **Rotate Credential** invalidates the previous token. If Blue shows **Session-only**, copy the new token each time you relaunch Blue.
+
+- **OpenCode lists no servers on startup** — Open an OpenCode session, then check `/mcps` again. Some OpenCode 2.x builds can return an empty list while the CLI is starting. [OpenCode issue](https://github.com/anomalyco/opencode/issues/63053)
+
+If you use another client, configure Streamable HTTP with the displayed URL and an `Authorization: Bearer <token>` header. To close the listener, clear **Enable MCP Server** and click **Apply**.
 
 ## Inspect the active project
 
@@ -35,4 +96,4 @@ Ask the client to run `generate_csd` to inspect a disk-profile Csound document. 
 
 Switch **Access Mode** to **Read-write** and click **Apply** when you want the client to make changes. The client must use the current document receipt for writes. If Blue reports a conflict, ask the client to reread the project and confirm the intended edit before retrying. Supported edits appear in Blue's undo history. Save the project in Blue to persist them.
 
-Playback and renders can prompt for approval in the desktop app. For a render, ask for a fresh WAV basename such as `preview.wav`. The client can use the saved project's working directory or ask Blue to display a local folder picker. Blue publishes the result only in the approved directory and refuses an existing file. You can choose another volume if it supports private staging and atomic publication. On macOS, a render to another volume can leave one empty, private scratch file in the approved directory. If Blue rejects a volume, try a different local folder. Keep Csound 7 available and check **Settings… → Realtime Render → Check Engine and Csound** if the engine reports an error.
+Install [Csound 7](https://csound.com/download.html) for playback and rendering. Both can prompt for approval in the desktop app. For a render, ask for a fresh WAV basename such as `preview.wav`. The client can use the saved project's working directory or ask Blue to display a local folder picker. Blue publishes the result only in the approved directory and refuses an existing file. You can choose another volume if it supports private staging and atomic publication. On macOS, a render to another volume can leave one empty, private scratch file in the approved directory. If Blue rejects a volume, try a different local folder. Keep Csound 7 available and check **Settings… → Realtime Render → Check Engine and Csound** if the engine reports an error.
