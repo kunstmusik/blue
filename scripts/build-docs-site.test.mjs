@@ -20,6 +20,10 @@ test('assembles a pinned desktop edition and retains a verified output after a f
 
     const source = join(repositoryRoot, 'docs', 'site');
     await mkdir(source, { recursive: true });
+    const manual = join(repositoryRoot, 'docs', 'manual');
+    await mkdir(manual);
+    await writeFile(join(manual, 'mcp.qmd'), '## Connect a local client\n');
+    await writeFile(join(manual, 'COPYING.GFDL'), 'Manual license');
     const catalog = {
       desktop: [
         { key: 'v3.0.0', channel: 'stable', label: 'Blue 3.0.0', sourceSha, tag: 'v3.0.0' },
@@ -31,7 +35,7 @@ test('assembles a pinned desktop edition and retains a verified output after a f
       writeFile(join(source, 'editions.json'), JSON.stringify(catalog)),
       writeFile(
         join(source, 'index.html'),
-        '<a href="{{prefix}}blue-projects/">Blue Projects</a>' +
+        '<a href="{{prefix}}blue-projects/">Blue Projects</a><a href="{{prefix}}mcp/">Blue MCP</a>' +
           '<a href="{{prefix}}manual/">Manual</a><a href="{{prefix}}cli/">CLI</a>' +
           '<a href="{{prefix}}api/blue-data/">API</a>',
       ),
@@ -51,6 +55,10 @@ test('assembles a pinned desktop edition and retains a verified output after a f
     };
     await assembleDocsSite({ repositoryRoot, output, renderDesktop });
     assert.match(await readFile(actualIndex, 'utf8'), /Pinned chapter/);
+    assert.match(
+      await readFile(join(output, 'mcp', 'index.html'), 'utf8'),
+      /Connect a local client/,
+    );
     assert.match(
       await readFile(join(output, 'blue-projects', 'index.html'), 'utf8'),
       /href="\/blue\/"/,

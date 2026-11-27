@@ -72,6 +72,14 @@ test(
         `the docs home must link to ${section}`,
       );
     }
+    await page.getByRole('link', { name: 'Blue MCP', exact: true }).click();
+    await page.waitForURL(`**${SITE_PREFIX}mcp/`);
+    await page.getByRole('heading', { level: 1, name: 'Blue MCP' }).waitFor();
+    await page.getByRole('heading', { level: 2, name: 'Connect a client' }).waitFor();
+    assert.equal(
+      await page.getByRole('link', { name: 'Blue MCP', exact: true }).getAttribute('aria-current'),
+      'page',
+    );
     await page.locator(`a[href="${SITE_PREFIX}manual/"]`).first().click();
     await page.getByRole('heading', { level: 1, name: 'Blue 3 manual' }).waitFor();
     const recommendedLink = page.locator(`.recommendation a[href="${editionInventory.fixedUrl}"]`);

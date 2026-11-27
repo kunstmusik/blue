@@ -1,14 +1,15 @@
 # Blue documentation site
 
-The GitHub Pages project site at <https://kunstmusik.github.io/blue/> hosts the Blue 3 desktop manual, Blue CLI guide, and Blue Data API reference. The [product site](https://blue.kunstmusik.com/) owns downloads, tutorials, and community links. Blue 3 is the active desktop manual.
+The GitHub Pages project site at <https://kunstmusik.github.io/blue/> hosts the Blue 3 desktop manual, Blue CLI guide, Blue Data API reference, and Blue MCP setup guide. The [product site](https://blue.kunstmusik.com/) owns downloads, tutorials, and community links. Blue 3 is the active desktop manual.
 
 | Section       | Source owner                                                                                                             | Renderer                            |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
 | Blue 3 manual | [Quarto book](../manual/README.md)                                                                                       | Quarto and its bundled Pandoc       |
+| Blue MCP      | [Manual chapter](../manual/mcp.qmd)                                                                                      | Quarto’s bundled Pandoc             |
 | Blue CLI      | [Package README](../../packages/blue-cli/README.md)                                                                      | Quarto's bundled Pandoc             |
 | Blue Data     | [TypeDoc configuration](../../packages/blue-data/typedoc.json) and [Node quickstart](../../packages/blue-data/README.md) | TypeDoc and Quarto's bundled Pandoc |
 
-Use the workspace's Node.js and pnpm versions and the Quarto version documented for the manual. Node scripts assemble the registered editions into `build/docs-site/`, which the repository ignores. Each edition uses the sources at its pinned Git revision. See the [publication contract](../../specs/122-gh-pages-site/contracts/publication.md) and [asset inventory](provenance.md).
+Use the workspace's Node.js and pnpm versions and the Quarto version documented for the manual. Node scripts assemble the registered editions into `build/docs-site/`, which the repository ignores. Each edition uses the sources at its pinned Git revision. The [Blue MCP guide](https://kunstmusik.github.io/blue/mcp/) uses the current manual chapter and is published with the landing pages. See the [publication contract](../../specs/122-gh-pages-site/contracts/publication.md) and [asset inventory](provenance.md).
 
 ## Edition catalog
 
