@@ -34,7 +34,7 @@ class InMemoryProtection implements McpCredentialProtection {
   }
 
   encryptString(plainText: string): Buffer {
-    return Buffer.from(plainText, 'utf8').map((byte) => byte ^ 0x5a);
+    return Buffer.from(Buffer.from(plainText, 'utf8').map((byte) => byte ^ 0x5a));
   }
 
   decryptString(ciphertext: Buffer): string {
@@ -1117,8 +1117,8 @@ describe('McpServerService', () => {
           description: 'Holds before checking admission authority',
           inputSchema: z.object({}).strict(),
         },
-        async (_args, extra) => {
-          const writeAuth = ctx.authContext.forAction('write', extra?.signal);
+        async () => {
+          const writeAuth = ctx.authContext.forAction('write');
           expect(writeAuth.isAuthorized('write')).toBe(true);
           pendingWriteEntered();
           await pendingWriteGate;

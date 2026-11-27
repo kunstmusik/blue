@@ -17,6 +17,7 @@ import {
   createMcpHandler,
   type CallToolResult,
   type FetchLike,
+  type ListToolsResult,
   type ServerContext,
 } from '@modelcontextprotocol/server';
 import * as z from 'zod';
@@ -39,6 +40,8 @@ import { ProjectHistory } from './project-history';
 import { ProjectSession } from './project-session';
 import { createRenderFreezeCoordinator } from './render-freeze-coordinator';
 import type { EngineRuntimeService } from './engine-runtime';
+
+type RuntimeSeam = Pick<EngineRuntimeService, 'executeCsound'>;
 
 function createSineProject(): BlueData {
   const data = new BlueData();
@@ -130,7 +133,7 @@ function createRuntimeHarness(projectDir: string) {
     };
   };
 
-  let engineRuntimeService: EngineRuntimeService | null = {
+  let engineRuntimeService: RuntimeSeam | null = {
     executeCsound: async (request, hooks) => {
       const preLaunch = hooks?.beforeLaunch?.();
       if (preLaunch && !preLaunch.ok) {
@@ -163,7 +166,7 @@ function createRuntimeHarness(projectDir: string) {
         message: 'completed',
       };
     },
-  } as unknown as EngineRuntimeService;
+  };
 
   const coordinator = createRenderFreezeCoordinator({
     getCurrentData: () => session.read().data,
@@ -176,7 +179,7 @@ function createRuntimeHarness(projectDir: string) {
     getCurrentProjectStateId: () => session.read().stateId,
     getCurrentProjectDocument: () => null,
     getMainWindow: () => null,
-    getEngineRuntimeService: () => engineRuntimeService,
+    getEngineRuntimeService: () => engineRuntimeService as EngineRuntimeService | null,
     getJavaScriptSession: () => null,
     getProjectHistory: () => history,
     loadProgramSettings: () => settings,
@@ -301,10 +304,7 @@ function createRuntimeHarness(projectDir: string) {
     if (accessMode === 'read-only') {
       // Hide write/runtime tools in tools/list while keeping tools/call returning structured ACCESS_DENIED.
       const innerServer = server.server as unknown as {
-        _requestHandlers: Map<
-          string,
-          (req: unknown, ctx: unknown) => Promise<{ tools: Array<{ name: string }> }>
-        >;
+        _requestHandlers: Map<string, (req: unknown, ctx: unknown) => Promise<ListToolsResult>>;
       };
       const defaultListTools = innerServer._requestHandlers.get('tools/list')!;
       server.server.setRequestHandler('tools/list', async (req, ctx) => {
@@ -349,7 +349,7 @@ function createRuntimeHarness(projectDir: string) {
     setEngineAvailable: (next: boolean) => {
       engineAvailable = next;
     },
-    setEngineRuntimeService: (svc: EngineRuntimeService | null) => {
+    setEngineRuntimeService: (svc: RuntimeSeam | null) => {
       engineRuntimeService = svc;
     },
     setPickerFolder: (folder: string | null) => {
@@ -582,7 +582,7 @@ describe('MCP runtime tool contract', () => {
             message: 'completed',
           };
         },
-      } as unknown as EngineRuntimeService);
+      });
     });
 
     const uiRenderPromise = h.coordinator.handleRenderToDisk('render', 'ui-render-1');
@@ -674,7 +674,7 @@ describe('MCP runtime tool contract', () => {
             message: 'completed',
           };
         },
-      } as unknown as EngineRuntimeService);
+      });
       const pendingRender = await client.callTool({
         name: 'render_to_disk',
         arguments: { expected: receipt, filename: 'pre-pub-revoked.wav' },
@@ -732,7 +732,7 @@ describe('MCP runtime tool contract', () => {
             message: 'completed',
           };
         },
-      } as unknown as EngineRuntimeService);
+      });
       const committedRender = await client.callTool({
         name: 'render_to_disk',
         arguments: { expected: receipt, filename: 'committed-ok.wav' },

@@ -222,7 +222,8 @@ function createEligibleProject(): BlueData {
   scoreObj.getNoteProcessorChain().addProcessor(new AddProcessor());
   layer.push(scoreObj);
 
-  const instance = new Instance(libScore);
+  const instance = new Instance();
+  instance.setSoundObject(libScore);
   instance.setStartTime(TimePosition.beats(4));
   instance.setSubjectiveDuration(TimeDuration.beats(2));
   layer.push(instance);
@@ -335,7 +336,9 @@ describe('observation-only disk CSD generation', () => {
           const data = new BlueData();
           const clj = new ClojureObject();
           data.getSoundObjectLibrary().addObject(clj);
-          (data.getScore()[0] as PolyObject)[0]!.push(new Instance(clj));
+          const instance = new Instance();
+          instance.setSoundObject(clj);
+          (data.getScore()[0] as PolyObject)[0]!.push(instance);
           return data;
         },
       },

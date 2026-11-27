@@ -24,6 +24,8 @@ import {
   PythonProcessor,
   TimeDuration,
   TimePosition,
+  TrackLayer,
+  TrackLayerGroup,
   TuningProcessor,
 } from '@blue/data';
 import type { DiskRenderSettingsSnapshot } from '../shared/program-settings';
@@ -494,8 +496,11 @@ describe('verifyMcpRenderEligibility', () => {
 
     const audioClipData = createSineProject();
     audioClipData.getMixer().setPanningEnabled(true);
-    const libClip = new AudioClip();
-    audioClipData.getSoundObjectLibrary().addObject(libClip);
+    const track = new TrackLayer();
+    track.push(new AudioClip());
+    const tracks = new TrackLayerGroup();
+    tracks.push(track);
+    audioClipData.getScore().push(tracks);
     expect(
       verifyMcpRenderEligibility(
         audioClipData,
@@ -525,7 +530,7 @@ describe('executeConfinedMcpRender', () => {
     const root = createTempDir();
     const canonicalRoot = fs.realpathSync(root);
     const data = createSineProject();
-    let capturedRequest: ConfinedCsoundRunRequest | null = null;
+    const captured: { request?: ConfinedCsoundRunRequest } = {};
 
     const result = await executeConfinedMcpRender({
       data,
@@ -539,7 +544,7 @@ describe('executeConfinedMcpRender', () => {
       executionSeam: {
         runCsound: vi.fn(),
         runConfinedCsound: async (req) => {
-          capturedRequest = req;
+          captured.request = req;
           const gate = req.beforeLaunch?.();
           if (gate && !gate.ok) {
             return {
@@ -566,10 +571,10 @@ describe('executeConfinedMcpRender', () => {
       'RIFF-WAV-BYTES',
     );
     expect(fs.readdirSync(canonicalRoot)).toEqual(['sine-out.wav']);
-    expect(capturedRequest?.args).toContain('--format=wav:short');
-    expect(capturedRequest?.args).toContain('-+msg_color=false');
-    expect(capturedRequest?.args).not.toContain('-o');
-    expect(capturedRequest?.csdText).toContain('<CsoundSynthesizer>');
+    expect(captured.request?.args).toContain('--format=wav:short');
+    expect(captured.request?.args).toContain('-+msg_color=false');
+    expect(captured.request?.args).not.toContain('-o');
+    expect(captured.request?.csdText).toContain('<CsoundSynthesizer>');
   });
 
   it('rejects active lines from project metadata before native launch', async () => {

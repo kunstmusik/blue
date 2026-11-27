@@ -28,7 +28,7 @@ class FakeProtection implements McpCredentialProtection {
   }
 
   encryptString(plainText: string): Buffer {
-    return Buffer.from(plainText, 'utf8').map((byte) => byte ^ 0x5a);
+    return Buffer.from(Buffer.from(plainText, 'utf8').map((byte) => byte ^ 0x5a));
   }
 
   decryptString(ciphertext: Buffer): string {

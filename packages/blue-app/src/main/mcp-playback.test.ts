@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 import { BlueData } from '@blue/data';
 import type { McpAccessMode } from '../shared/mcp-server';
-import type { McpAuthContext, McpDocumentReceipt } from './mcp-bridge';
+import type { McpAuthContext, McpDocumentReceipt, McpResult } from './mcp-bridge';
 import {
   createGuardedMcpPlaybackController,
   runGuardedPlaybackSequence,
   type McpPlaybackConfirmationOutcome,
+  type McpPlaybackFence,
 } from './mcp-playback';
 import { ProjectHistory } from './project-history';
 import { ProjectSession } from './project-session';
@@ -28,11 +29,7 @@ function createPlaybackHarness() {
   let accessMode: McpAccessMode = 'read-write';
   let confirmationOutcome: McpPlaybackConfirmationOutcome = 'approved';
   let confirmHook: (() => Promise<McpPlaybackConfirmationOutcome>) | null = null;
-  let startPlaybackHook:
-    | ((fence: {
-        check: () => unknown;
-      }) => Promise<{ ok: true; value: undefined } | { ok: false; code: any; message: string }>)
-    | null = null;
+  let startPlaybackHook: ((fence: McpPlaybackFence) => Promise<McpResult<void>>) | null = null;
 
   const confirmSpy = vi.fn(async () => {
     if (confirmHook) return confirmHook();
@@ -90,7 +87,7 @@ function createPlaybackHarness() {
     confirmPlayback: confirmSpy,
     startPlayback: async (fence) => {
       if (startPlaybackHook) {
-        return startPlaybackHook(fence) as Promise<{ ok: true; value: undefined }>;
+        return startPlaybackHook(fence);
       }
       const gate = fence.check();
       if (!gate.ok) return gate;
@@ -211,8 +208,8 @@ describe('createGuardedMcpPlaybackController', () => {
       expect(fence.check()).toMatchObject({ ok: true });
       // Simulate token revocation before retry dispatch
       h.rotateToken();
-      const afterRevoke = fence.check() as { ok: false; code: string; message: string };
-      expect(afterRevoke.ok).toBe(false);
+      const afterRevoke = fence.check();
+      if (afterRevoke.ok) throw new Error('Revoked playback still has authority');
       expect(afterRevoke.code).toBe('ACCESS_DENIED');
       return afterRevoke;
     });
@@ -224,7 +221,9 @@ describe('createGuardedMcpPlaybackController', () => {
     const auth3 = h.makeAuth();
     h.setStartPlaybackHook(async (fence) => {
       h.setAccessMode('read-only');
-      return fence.check() as { ok: false; code: string; message: string };
+      const afterDowngrade = fence.check();
+      if (afterDowngrade.ok) throw new Error('Downgraded playback still has authority');
+      return afterDowngrade;
     });
     const modeChanged = await h.controller.transportPlay(auth3, receipt2);
     expect(modeChanged).toMatchObject({ ok: false, code: 'ACCESS_DENIED' });

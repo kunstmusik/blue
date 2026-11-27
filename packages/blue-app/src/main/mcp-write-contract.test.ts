@@ -81,7 +81,8 @@ function createWriteContractFixture(): {
   libraryScore.setSubjectiveDuration(TimeDuration.beats(2));
   libraryScore.setScoreText('i1 0 1 660');
 
-  const instance = new Instance(libraryScore);
+  const instance = new Instance();
+  instance.setSoundObject(libraryScore);
   instance.setName('Motif Ref');
   instance.setStartTime(TimePosition.beats(6));
   instance.setSubjectiveDuration(TimeDuration.beats(2));

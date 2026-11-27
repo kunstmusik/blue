@@ -470,7 +470,7 @@ describe('updatePlaybackPreferences', () => {
 
   describe('MCP server preferences', () => {
     const MCP_DEFAULTS = { enabled: false, preferredPort: 8765, accessMode: 'read-only' };
-    const MCP_EXPLICIT = { enabled: true, preferredPort: 9000, accessMode: 'read-write' };
+    const MCP_EXPLICIT = { enabled: true, preferredPort: 9000, accessMode: 'read-write' } as const;
 
     function writeSettingsFile(value: unknown): string {
       const filePath = path.join(tempDir, 'program-settings.json');

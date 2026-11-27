@@ -61,8 +61,8 @@ function createHistoryFixture(): { data: BlueData; baseline: BlueData } {
   const layer0 = rootPoly[0]!;
   const score = new GenericScore();
   score.setName('Time-Based Score');
-  score.setStartTime(new TimePosition(TimeBase.TIME, 2));
-  score.setSubjectiveDuration(new TimeDuration(TimeBase.TIME, 4));
+  score.setStartTime(TimePosition.time(0, 0, 2, 0));
+  score.setSubjectiveDuration(TimeDuration.time(0, 0, 4, 0));
   score.setScoreText('i1 0 1 440');
   layer0.push(score);
 
@@ -354,13 +354,12 @@ describe('MCP history and runtime integration (T021)', () => {
 
   it('rejects concurrent MCP writes and participant boundary delays with CONFLICT without mutating state', async () => {
     const harness = createHarness({
-      onPrepareBoundary: (history, docId) => {
+      onPrepareBoundary: (history) => {
         const barrier = history.getActiveBarrier();
         if (!barrier) return;
         const snap = harness.session.read();
         history.acknowledgeBoundary({
           contextId: 'renderer-1',
-          documentId: docId,
           barrierId: barrier.barrierId,
           lastAcknowledgedRevision: snap.revision,
           lastAcknowledgedSequence: 0,
@@ -374,7 +373,6 @@ describe('MCP history and runtime integration (T021)', () => {
         contextId: 'renderer-1',
         documentId: snap.documentId!,
         acceptedRevision: snap.revision,
-        lastSequence: 0,
       }).ok,
     ).toBe(true);
 
@@ -408,13 +406,12 @@ describe('MCP history and runtime integration (T021)', () => {
 
   it('rejects concurrent upsertInstrument ID collision and late authorization revocation before committing', async () => {
     const revokeHarness = createHarness({
-      onPrepareBoundary: (history, docId) => {
+      onPrepareBoundary: (history) => {
         const barrier = history.getActiveBarrier();
         if (!barrier) return;
         revokeHarness.setAuthorized(false);
         history.acknowledgeBoundary({
           contextId: 'renderer-1',
-          documentId: docId,
           barrierId: barrier.barrierId,
           lastAcknowledgedRevision: revokeHarness.session.read().revision,
           lastAcknowledgedSequence: 0,
@@ -427,7 +424,6 @@ describe('MCP history and runtime integration (T021)', () => {
       contextId: 'renderer-1',
       documentId: snapA.documentId!,
       acceptedRevision: snapA.revision,
-      lastSequence: 0,
     });
 
     const denied = await revokeHarness.bridge.setProjectProperties(revokeHarness.makeAuth(), {
@@ -502,7 +498,7 @@ describe('MCP history and runtime integration (T021)', () => {
 
   it('keeps queued MCP writes permanently invalidated after read-write -> read-only -> read-write toggle (T055)', async () => {
     const toggleHarness = createHarness({
-      onPrepareBoundary: (history, docId) => {
+      onPrepareBoundary: (history) => {
         const barrier = history.getActiveBarrier();
         if (!barrier) return;
         // Downgrade to read-only and re-enable read-write before the barrier settles
@@ -510,7 +506,6 @@ describe('MCP history and runtime integration (T021)', () => {
         toggleHarness.setAccessMode('read-write');
         history.acknowledgeBoundary({
           contextId: 'renderer-1',
-          documentId: docId,
           barrierId: barrier.barrierId,
           lastAcknowledgedRevision: toggleHarness.session.read().revision,
           lastAcknowledgedSequence: 0,
@@ -523,7 +518,6 @@ describe('MCP history and runtime integration (T021)', () => {
       contextId: 'renderer-1',
       documentId: snap.documentId!,
       acceptedRevision: snap.revision,
-      lastSequence: 0,
     });
 
     const auth = toggleHarness.makeAuth('write');
