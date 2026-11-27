@@ -23,6 +23,8 @@ int runConfinedRender(const ConfinedRenderOptions &options,
 
 int publishConfinedRender(const ConfinedRenderOptions &options);
 
+int allocateConfinedStaging(const ConfinedRenderOptions &options, const std::string &token);
+
 int cleanupConfinedRender(const ConfinedRenderOptions &options);
 
 } // namespace blue

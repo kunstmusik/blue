@@ -6,6 +6,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   rename,
   rm,
   stat,
@@ -608,7 +609,7 @@ describe('EngineRuntimeService', () => {
   const workspaceRoot = path.resolve(__dirname, '../../../..');
   const stagedNativeEngine = developmentEnginePath(workspaceRoot, process.platform, process.arch);
 
-  const probeWithConfinedV4 = () => ({
+  const probeWithConfinedV5 = () => ({
     exitCode: 0,
     stdout: JSON.stringify({
       schemaVersion: 1,
@@ -617,7 +618,7 @@ describe('EngineRuntimeService', () => {
         engineVersion: '0.1.0',
         protocolVersion: 2,
         sourceRevision: 'test-rev',
-        features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v4'],
+        features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v5'],
       },
       csound: {
         status: 'ready',
@@ -654,6 +655,57 @@ describe('EngineRuntimeService', () => {
     return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : undefined;
   };
 
+  it.skipIf(process.platform !== 'linux')(
+    'publishes from anonymous staging on a separate Linux filesystem (T075)',
+    async (context) => {
+      const sharedMemory = '/dev/shm';
+      const osTemp = await stat(tmpdir());
+      const other = await stat(sharedMemory).catch(() => null);
+      if (!other?.isDirectory() || other.dev === osTemp.dev) {
+        context.skip('No separate shared-memory filesystem is mounted.');
+        return;
+      }
+      if (!existsSync(stagedNativeEngine) && process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1') {
+        context.skip('No staged Blue Engine is available.');
+        return;
+      }
+      const destination = await mkdtemp(path.join(sharedMemory, 'blue-render-volume-'));
+      try {
+        const root = await stat(destination, { bigint: true });
+        const bytes = Buffer.alloc(44, 'w');
+        const runtime = service({
+          runProbeProcess: async () => probeWithConfinedV5(),
+          publishConfinedWav: (_exe, args, wavFd) => runNativeConfinedFs(args, wavFd),
+          runExecutionProcess: async (_exe, _args, _cwd, _signal, _output, _csd, wavFd) => {
+            const wav = fstatSync(wavFd!, { bigint: true });
+            expect(wav.dev).toBe(root.dev);
+            expect(wav.nlink).toBe(0n);
+            writeSync(wavFd!, bytes);
+            return { exitCode: 0, signal: null, stdout: '', stderr: '', started: true };
+          },
+        });
+        const result = await runtime.executeCsound(
+          {
+            kind: 'confined-render',
+            operationId: 'cross-volume-render',
+            rootPath: destination,
+            rootDev: String(root.dev),
+            rootIno: String(root.ino),
+            outputFilename: 'out.wav',
+            csdText: '<CsoundSynthesizer>test</CsoundSynthesizer>',
+            args: ['--format=wav:short'],
+          },
+          { beforePublish: () => ({ ok: true }) },
+        );
+        expect(result).toMatchObject({ state: 'completed' });
+        expect(await readFile(path.join(destination, 'out.wav'))).toEqual(bytes);
+        expect(await readdir(destination)).toEqual(['out.wav']);
+      } finally {
+        await rm(destination, { recursive: true, force: true });
+      }
+    },
+  );
+
   it.for(['commit', 'revoke', 'stale receipt', 'cancel', 'terminate', 'runner throws'] as const)(
     'owns descriptor staging through %s and fences native publication after the render child exits',
     async (outcome, context) => {
@@ -689,7 +741,7 @@ describe('EngineRuntimeService', () => {
         return runNativeConfinedFs(args, wavFd);
       });
       const capableRuntime = service({
-        runProbeProcess: async () => probeWithConfinedV4(),
+        runProbeProcess: async () => probeWithConfinedV5(),
         publishConfinedWav,
         cleanupConfinedStaging,
         runExecutionProcess: async (_exe, args, cwd, _signal, _onOutput, stdin, stdoutFd) => {
@@ -798,7 +850,7 @@ describe('EngineRuntimeService', () => {
       let winVictimPath = '';
       const cleanupDirsToRemove: string[] = [];
       const runtime = service({
-        runProbeProcess: async () => probeWithConfinedV4(),
+        runProbeProcess: async () => probeWithConfinedV5(),
         publishConfinedWav,
         cleanupConfinedStaging: (_exe, args, wavFd) => {
           const dir = flagValue(args, '--root-dir');

@@ -1,4 +1,4 @@
-import { openMacRenderScratch } from './macos-render-scratch';
+import { recoverMacRenderScratch } from './macos-render-scratch';
 import { readAudioFileMetadataHeader } from './audio-file-metadata';
 /**
  * Electron main process — manages app window, file dialogs, and engine lifecycle.
@@ -2067,7 +2067,7 @@ function createWindow(): void {
   const scratchProfile = app.getPath('userData');
   if (process.platform === 'darwin') {
     try {
-      openMacRenderScratch(scratchProfile, fs.realpathSync(tmpdir()), true);
+      recoverMacRenderScratch(scratchProfile, fs.realpathSync(tmpdir()));
     } catch (error) {
       console.warn('Could not recover MCP render scratch.', error);
     }

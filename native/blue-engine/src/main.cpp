@@ -35,6 +35,7 @@ enum class OneShotMode {
   RUN_CSOUND,
   RUN_CONFINED_RENDER,
   PUBLISH_CONFINED_RENDER,
+  ALLOCATE_CONFINED_STAGING,
   CLEANUP_CONFINED_RENDER,
 };
 
@@ -292,6 +293,8 @@ int main(int argc, char *argv[]) {
       oneShotMode = OneShotMode::RUN_CONFINED_RENDER;
     } else if (std::strcmp(argv[i], "--publish-confined-render") == 0) {
       oneShotMode = OneShotMode::PUBLISH_CONFINED_RENDER;
+    } else if (std::strcmp(argv[i], "--allocate-confined-staging") == 0) {
+      oneShotMode = OneShotMode::ALLOCATE_CONFINED_STAGING;
     } else if (std::strcmp(argv[i], "--cleanup-confined-render") == 0) {
       oneShotMode = OneShotMode::CLEANUP_CONFINED_RENDER;
     } else if (std::strcmp(argv[i], "--root-dir") == 0 && i + 1 < argc) {
@@ -409,6 +412,17 @@ int main(int argc, char *argv[]) {
       return 64;
     }
     return blue::publishConfinedRender(confinedOptions);
+  }
+
+  if (oneShotMode == OneShotMode::ALLOCATE_CONFINED_STAGING) {
+    if (jsonOutput || !audioModule.empty() || !midiModule.empty() ||
+        !csoundLibraryPath.empty() || !completeRootFlags || anyWavFlag ||
+        oneShotArguments.size() > 1) {
+      std::fprintf(stderr, "Invalid confined staging allocation arguments\n");
+      return 64;
+    }
+    return blue::allocateConfinedStaging(
+        confinedOptions, oneShotArguments.empty() ? "" : oneShotArguments.front());
   }
 
   if (oneShotMode == OneShotMode::CLEANUP_CONFINED_RENDER) {

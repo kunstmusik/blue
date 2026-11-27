@@ -31,6 +31,7 @@ import {
 import type { DiskRenderSettingsSnapshot } from '../shared/program-settings';
 import { planVettedMcpDiskCommand } from './disk-render-command';
 import { developmentEnginePath, EngineRuntimeService } from './engine-runtime';
+import { openMacRenderScratch, recoverMacRenderScratch } from './macos-render-scratch';
 import type { McpAuthContext, McpDocumentReceipt } from './mcp-bridge';
 import {
   captureAuthorizedRenderRoot,
@@ -520,8 +521,8 @@ describe('executeConfinedMcpRender', () => {
     }
   });
 
-  function createTempDir(): string {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'blue-mcp-render-test-'));
+  function createTempDir(parent = os.tmpdir()): string {
+    const dir = fs.mkdtempSync(path.join(parent, 'blue-mcp-render-test-'));
     tempDirs.push(dir);
     return dir;
   }
@@ -846,7 +847,7 @@ describe('executeConfinedMcpRender', () => {
                 engineVersion: '0.1.0',
                 protocolVersion: 2,
                 sourceRevision: 'test',
-                features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v4'],
+                features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v5'],
               },
               csound: {
                 status: 'ready',
@@ -1076,6 +1077,45 @@ describe('executeConfinedMcpRender', () => {
 
   const workspaceRoot = path.resolve(__dirname, '../../../..');
   const stagedEngine = developmentEnginePath(workspaceRoot, process.platform, process.arch);
+
+  it.skipIf(process.platform === 'linux')(
+    'allocates native staging only in the approved directory and refuses a collision (T075)',
+    (context) => {
+      if (!fs.existsSync(stagedEngine) && process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1') {
+        context.skip('No staged Blue Engine is available.');
+      }
+      const root = fs.realpathSync(createTempDir());
+      const identity = fs.statSync(root, { bigint: true });
+      const leaf = process.platform === 'darwin' ? 'blue-mcp-test.wav' : 'blue-mcp-test';
+      const allocation = (ino: bigint) =>
+        spawnSync(
+          stagedEngine,
+          [
+            '--allocate-confined-staging',
+            '--root-dir',
+            root,
+            '--root-dev',
+            String(identity.dev),
+            '--root-ino',
+            String(ino),
+            '--output-name',
+            leaf,
+            ...(process.platform === 'darwin'
+              ? ['--', '00000000-0000-0000-0000-000000000000']
+              : []),
+          ],
+          { encoding: 'utf8', windowsHide: true },
+        );
+      expect(allocation(identity.ino + 1n).status).toBe(70);
+      expect(fs.readdirSync(root)).toEqual([]);
+      const created = allocation(identity.ino);
+      expect(created.status, created.stderr).toBe(0);
+      const entry = fs.lstatSync(path.join(root, leaf), { bigint: true });
+      expect(created.stdout.trim()).toBe(`${entry.dev} ${entry.ino}`);
+      expect(allocation(identity.ino).status).toBe(73);
+      expect(fs.lstatSync(path.join(root, leaf), { bigint: true }).ino).toBe(entry.ino);
+    },
+  );
 
   const createNativeStagedWav = (
     parent: string,
@@ -1363,11 +1403,12 @@ describe('executeConfinedMcpRender', () => {
   );
 
   it('renders a sine WAV and fences a stale destination at the publication callback', async (context) => {
+    const scratchProfile = createTempDir();
     const runtime = new EngineRuntimeService({
       isPackaged: false,
       resourcesPath: workspaceRoot,
       repoRoot: workspaceRoot,
-      scratchProfile: createTempDir(),
+      scratchProfile,
       getSettingsEnginePath: () => '',
     });
     const probe = await runtime.probe();
@@ -1382,6 +1423,7 @@ describe('executeConfinedMcpRender', () => {
       data: BlueData,
       authorizedRoot: ReturnType<typeof captureAuthorizedRenderRoot>,
       atPublication?: () => void,
+      signal = new AbortController().signal,
     ) => {
       expect(authorizedRoot.ok).toBe(true);
       if (!authorizedRoot.ok) throw new Error(authorizedRoot.message);
@@ -1390,7 +1432,7 @@ describe('executeConfinedMcpRender', () => {
           data,
           expectedReceipt: DEFAULT_RECEIPT,
           getCurrentReceipt: () => DEFAULT_RECEIPT,
-          auth: makeAuth(),
+          auth: makeAuth({ signal }),
           nativeRoot,
           authorizedRoot: authorizedRoot.value,
           filename,
@@ -1411,6 +1453,7 @@ describe('executeConfinedMcpRender', () => {
                   args: request.args,
                 },
                 {
+                  signal,
                   beforeLaunch: request.beforeLaunch,
                   beforePublish: () => {
                     atPublication?.();
@@ -1468,6 +1511,73 @@ describe('executeConfinedMcpRender', () => {
     );
     expect(noOverwrite).toMatchObject({ ok: false, code: 'OUTPUT_REJECTED' });
     expect(fs.readFileSync(path.join(canonicalOutDir, 'real-sine.wav'))).toEqual(wavBytes);
+
+    const crossVolumeRoot = process.env.BLUE_TEST_RENDER_VOLUME;
+    if (crossVolumeRoot) {
+      const crossOut = fs.realpathSync(createTempDir(crossVolumeRoot));
+      expect(fs.statSync(crossOut).dev).not.toBe(fs.statSync(os.tmpdir()).dev);
+      const crossResult = await runWithRealEngine(
+        crossOut,
+        'cross-volume.wav',
+        createSineProject(),
+        captureAuthorizedRenderRoot(crossOut),
+      );
+      expect(crossResult).toMatchObject({ ok: true });
+      const finalWav = fs.readFileSync(path.join(crossOut, 'cross-volume.wav'));
+      expect(finalWav).toEqual(wavBytes);
+      const cancel = new AbortController();
+      const cancelled = await runWithRealEngine(
+        crossOut,
+        'cancelled.wav',
+        createSineProject(),
+        captureAuthorizedRenderRoot(crossOut),
+        () => cancel.abort(),
+        cancel.signal,
+      );
+      expect(cancelled).toMatchObject({ ok: false, code: 'CANCELLED' });
+      expect(fs.existsSync(path.join(crossOut, 'cancelled.wav'))).toBe(false);
+      const residue = fs.readdirSync(crossOut).filter((name) => name !== 'cross-volume.wav');
+      if (process.platform === 'darwin') {
+        expect(residue).toHaveLength(1);
+        expect(fs.statSync(path.join(crossOut, residue[0]!)).size).toBe(0);
+        const root = fs.statSync(crossOut, { bigint: true });
+        const abandoned = openMacRenderScratch(scratchProfile, crossOut, false, root)!;
+        fs.writeSync(abandoned.wavFd, 'unpublished audio');
+        fs.closeSync(abandoned.wavFd);
+        recoverMacRenderScratch(scratchProfile, fs.realpathSync(os.tmpdir()));
+        expect(fs.statSync(path.join(crossOut, residue[0]!)).size).toBe(0);
+      } else {
+        expect(residue).toEqual([]);
+      }
+    }
+
+    const unsupportedVolume = process.env.BLUE_TEST_UNSUPPORTED_RENDER_VOLUME;
+    if (unsupportedVolume) {
+      const unsupportedOut = createTempDir(unsupportedVolume);
+      const result = await runWithRealEngine(
+        unsupportedOut,
+        'unsupported.wav',
+        createSineProject(),
+        captureAuthorizedRenderRoot(unsupportedOut),
+      );
+      expect(result).toMatchObject({ ok: false, code: 'OUTPUT_REJECTED' });
+      expect(fs.existsSync(path.join(unsupportedOut, 'unsupported.wav'))).toBe(false);
+      expect(fs.readdirSync(unsupportedOut)).toEqual([]);
+    }
+
+    const unavailableVolume = process.env.BLUE_TEST_READONLY_RENDER_VOLUME;
+    if (unavailableVolume) {
+      expect(fs.statSync(unavailableVolume).dev).not.toBe(fs.statSync(os.tmpdir()).dev);
+      const candidate = `blue-test-${Date.now()}.wav`;
+      const refused = await runWithRealEngine(
+        unavailableVolume,
+        candidate,
+        createSineProject(),
+        captureAuthorizedRenderRoot(unavailableVolume),
+      );
+      expect(refused).toMatchObject({ ok: false, code: 'OUTPUT_REJECTED' });
+      expect(fs.existsSync(path.join(unavailableVolume, candidate))).toBe(false);
+    }
 
     const raceParent = createTempDir();
     const authorizedDir = path.join(raceParent, 'authorized');

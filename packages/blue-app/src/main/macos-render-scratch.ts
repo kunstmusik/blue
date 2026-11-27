@@ -7,6 +7,7 @@ import {
   fstatSync,
   fsyncSync,
   ftruncateSync,
+  lstatSync,
   openSync,
   realpathSync,
 } from 'node:fs';
@@ -29,13 +30,34 @@ function ownershipTag(fd: number, token?: string): string {
   return result.stdout.trim();
 }
 
-export function openMacRenderScratch(profile: string, root: string, recoverOnly: boolean) {
+interface VolumeScratchLocation {
+  dev: bigint;
+  ino: bigint;
+  create?: (leaf: string, token: string) => { dev: bigint; ino: bigint };
+}
+
+function verifyLocation(root: string, location: VolumeScratchLocation): void {
+  const info = lstatSync(root, { bigint: true });
+  if (!info.isDirectory() || info.dev !== location.dev || info.ino !== location.ino) {
+    throw new Error('Render scratch directory no longer matches its approved identity.');
+  }
+}
+
+export function openMacRenderScratch(
+  profile: string,
+  root: string,
+  recoverOnly: boolean,
+  location?: VolumeScratchLocation,
+) {
   const registry = path.join(profile, 'mcp-render-scratch.sqlite');
   if (recoverOnly && !existsSync(registry)) return;
-  // A fixed per-profile name bounds empty residue even if initialization is interrupted.
-  // Exclusive creation refuses to adopt an entry without a committed ownership record.
-  const profileId = createHash('sha256').update(realpathSync(profile)).digest('hex');
-  const filename = path.join(root, `blue-mcp-${profileId}.wav`);
+  if (location) verifyLocation(root, location);
+  const hash = createHash('sha256').update(realpathSync(profile));
+  if (location) hash.update('\0').update(root);
+  const leaf = `blue-mcp-${hash.digest('hex')}.wav`;
+  const filename = path.join(root, leaf);
+  const table = location ? 'volume_scratch' : 'scratch';
+  const slot = location ? root : 1;
   const db = new DatabaseSync(registry);
   let fd: number | undefined;
   try {
@@ -43,8 +65,19 @@ export function openMacRenderScratch(profile: string, root: string, recoverOnly:
       CREATE TABLE IF NOT EXISTS scratch (
         slot INTEGER PRIMARY KEY CHECK(slot=1), token TEXT NOT NULL,
         dev TEXT NOT NULL, ino TEXT NOT NULL, dirty INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS volume_scratch (
+        slot TEXT PRIMARY KEY NOT NULL, token TEXT NOT NULL,
+        dev TEXT NOT NULL, ino TEXT NOT NULL, dirty INTEGER NOT NULL,
+        root_dev TEXT NOT NULL, root_ino TEXT NOT NULL);
       BEGIN IMMEDIATE;`);
-    const row = db.prepare('SELECT * FROM scratch WHERE slot=1').get();
+    const row = db.prepare(`SELECT * FROM ${table} WHERE slot=?`).get(slot);
+    if (
+      row &&
+      location &&
+      (row.root_dev !== String(location.dev) || row.root_ino !== String(location.ino))
+    ) {
+      throw new Error('Recorded render scratch directory changed. The entry was preserved.');
+    }
     let token = row?.token;
     if (row) {
       if (typeof token !== 'string' || !uuid.test(token))
@@ -55,9 +88,10 @@ export function openMacRenderScratch(profile: string, root: string, recoverOnly:
         const code = (error as NodeJS.ErrnoException).code;
         if (recoverOnly && code === 'EAGAIN') return;
         if (code !== 'ENOENT') throw error;
-        db.exec('DELETE FROM scratch WHERE slot=1');
+        db.prepare(`DELETE FROM ${table} WHERE slot=?`).run(slot);
       }
       if (fd !== undefined) {
+        if (location) verifyLocation(root, location);
         const stat = fstatSync(fd, { bigint: true });
         if (
           !stat.isFile() ||
@@ -78,22 +112,51 @@ export function openMacRenderScratch(profile: string, root: string, recoverOnly:
       }
     }
     if (recoverOnly) {
-      db.exec('UPDATE scratch SET dirty=0 WHERE slot=1; COMMIT');
+      db.prepare(`UPDATE ${table} SET dirty=0 WHERE slot=?`).run(slot);
+      db.exec('COMMIT');
       return;
     }
     if (fd === undefined) {
       token = randomUUID();
-      fd = openSync(filename, locked | constants.O_CREAT | constants.O_EXCL, 0o600);
-      const stat = fstatSync(fd, { bigint: true });
-      ownershipTag(fd, token);
-      fsyncSync(fd);
-      db.prepare('INSERT INTO scratch VALUES(1,?,?,?,1)').run(
-        token,
-        String(stat.dev),
-        String(stat.ino),
-      );
+      if (location) {
+        if (!location.create) throw new Error('Native render scratch allocation is required.');
+        const expected = location.create(leaf, token);
+        fd = openSync(filename, locked);
+        verifyLocation(root, location);
+        const info = fstatSync(fd, { bigint: true });
+        if (
+          !info.isFile() ||
+          info.nlink !== 1n ||
+          info.size !== 0n ||
+          info.dev !== expected.dev ||
+          info.ino !== expected.ino ||
+          info.dev !== location.dev ||
+          ownershipTag(fd) !== token
+        ) {
+          throw new Error('Allocated render scratch changed before handoff.');
+        }
+        db.prepare('INSERT INTO volume_scratch VALUES(?,?,?,?,1,?,?)').run(
+          slot,
+          token,
+          String(info.dev),
+          String(info.ino),
+          String(location.dev),
+          String(location.ino),
+        );
+      } else {
+        fd = openSync(filename, locked | constants.O_CREAT | constants.O_EXCL, 0o600);
+        const info = fstatSync(fd, { bigint: true });
+        ownershipTag(fd, token);
+        fsyncSync(fd);
+        db.prepare('INSERT INTO scratch VALUES(1,?,?,?,1)').run(
+          token,
+          String(info.dev),
+          String(info.ino),
+        );
+      }
     }
-    db.exec('UPDATE scratch SET dirty=1 WHERE slot=1; COMMIT');
+    db.prepare(`UPDATE ${table} SET dirty=1 WHERE slot=?`).run(slot);
+    db.exec('COMMIT');
     const wavFd = fd;
     fd = undefined;
     return {
@@ -103,7 +166,9 @@ export function openMacRenderScratch(profile: string, root: string, recoverOnly:
         fsyncSync(wavFd);
         const state = new DatabaseSync(registry);
         try {
-          state.prepare('UPDATE scratch SET dirty=0 WHERE slot=1 AND token=?').run(token as string);
+          state
+            .prepare(`UPDATE ${table} SET dirty=0 WHERE slot=? AND token=?`)
+            .run(slot, token as string);
         } finally {
           state.close();
         }
@@ -112,5 +177,38 @@ export function openMacRenderScratch(profile: string, root: string, recoverOnly:
   } finally {
     if (fd !== undefined) closeSync(fd);
     db.close();
+  }
+}
+
+export function recoverMacRenderScratch(profile: string, tempRoot: string): void {
+  const registry = path.join(profile, 'mcp-render-scratch.sqlite');
+  if (!existsSync(registry)) return;
+  const recover = (root: string, location?: VolumeScratchLocation) => {
+    try {
+      openMacRenderScratch(profile, root, true, location);
+    } catch (error) {
+      // A disconnected or changed volume must not prevent recovery on other volumes.
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        console.warn('Could not recover MCP render scratch.', error);
+      }
+    }
+  };
+  recover(tempRoot);
+  const db = new DatabaseSync(registry, { readOnly: true });
+  let rows;
+  try {
+    if (
+      !db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='volume_scratch'").get()
+    )
+      return;
+    rows = db.prepare('SELECT slot, root_dev, root_ino FROM volume_scratch WHERE dirty=1').all();
+  } finally {
+    db.close();
+  }
+  for (const row of rows) {
+    recover(String(row.slot), {
+      dev: BigInt(String(row.root_dev)),
+      ino: BigInt(String(row.root_ino)),
+    });
   }
 }

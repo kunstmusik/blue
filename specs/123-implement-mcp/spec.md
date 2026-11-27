@@ -118,4 +118,4 @@ A composer can manage the service in Program Settings, see the actual endpoint, 
 
 ### macOS render scratch lifecycle
 
-One private, empty scratch WAV per profile may remain after completion or cancellation. After an interruption, recover recorded scratch on startup when its ownership is verified and its writer has exited. Preserve unrelated files and published WAVs.
+One private, empty scratch WAV per profile may remain in the OS temp directory and in each approved staging directory used on a different filesystem after completion or cancellation. After an interruption, recover recorded scratch on startup when its ownership is verified and its writer has exited. Preserve unrelated files and published WAVs.

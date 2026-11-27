@@ -1,5 +1,5 @@
 import { execFile, spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   closeSync,
   constants,
@@ -307,24 +307,69 @@ function defaultNativeConfinedFs(
 
 function acquireConfinedStaging(
   executablePath: string,
-  expectedRootDev: string,
+  destination: Extract<CsoundExecutionRequest, { kind: 'confined-render' }>,
   scratchProfile: string | undefined,
   runCleanup: (executablePath: string, args: string[], wavFd?: number) => NativeConfinedFsResult,
 ): { ok: true; staging: ConfinedStaging } | { ok: false; message: string } {
-  const tmpRoot = realpathSync(tmpdir());
-  const tmpStat = lstatSync(tmpRoot, { bigint: true });
-  if (!tmpStat.isDirectory() || String(tmpStat.dev) !== expectedRootDev) {
+  const expectedRootDev = destination.rootDev;
+  const tempPath = realpathSync(tmpdir());
+  const tempStat = lstatSync(tempPath, { bigint: true });
+  const differentVolume = String(tempStat.dev) !== expectedRootDev;
+  const stagingRoot = differentVolume ? destination.rootPath : tempPath;
+  const rootStat = differentVolume ? lstatSync(stagingRoot, { bigint: true }) : tempStat;
+  if (
+    !rootStat.isDirectory() ||
+    String(rootStat.dev) !== expectedRootDev ||
+    (differentVolume && String(rootStat.ino) !== destination.rootIno)
+  ) {
     return {
       ok: false,
-      message: 'Render staging and destination require the same filesystem.',
+      message: 'Render staging directory no longer matches the approved identity.',
     };
   }
 
+  const allocateOnDestination = (leaf: string, token?: string) => {
+    const result = spawnSync(
+      executablePath,
+      [
+        '--allocate-confined-staging',
+        '--root-dir',
+        stagingRoot,
+        '--root-dev',
+        String(rootStat.dev),
+        '--root-ino',
+        String(rootStat.ino),
+        '--output-name',
+        leaf,
+        ...(token ? ['--', token] : []),
+      ],
+      { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    const identity = /^(\d+) (\d+)\s*$/.exec(result.stdout ?? '');
+    if (result.status !== 0 || !identity || identity[1] !== expectedRootDev) {
+      throw new Error(
+        result.stderr?.trim() ||
+          result.error?.message ||
+          'Could not allocate private staging on the approved filesystem.',
+      );
+    }
+    return { dev: BigInt(identity[1]!), ino: BigInt(identity[2]!) };
+  };
+
   if (process.platform === 'linux') {
     const oTmpfile = (constants.O_DIRECTORY ?? 0) | LINUX_O_TMPFILE_BIT;
+    let rootFd: number | undefined;
     let wavFd: number | null = null;
     try {
-      wavFd = openSync(tmpRoot, constants.O_RDWR | oTmpfile, 0o600);
+      rootFd = openSync(
+        stagingRoot,
+        constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW,
+      );
+      const anchor = fstatSync(rootFd, { bigint: true });
+      if (anchor.dev !== rootStat.dev || anchor.ino !== rootStat.ino) {
+        throw new Error('Staging directory changed during allocation.');
+      }
+      wavFd = openSync(`/proc/self/fd/${rootFd}`, constants.O_RDWR | oTmpfile, 0o600);
       const wavStat = fstatSync(wavFd, { bigint: true });
       if (!wavStat.isFile() || wavStat.nlink !== 0n || String(wavStat.dev) !== expectedRootDev) {
         closeSync(wavFd);
@@ -339,9 +384,9 @@ function acquireConfinedStaging(
           wavFd,
           wavDev: wavStat.dev,
           wavIno: wavStat.ino,
-          cwdPath: tmpRoot,
-          cwdDev: tmpStat.dev,
-          cwdIno: tmpStat.ino,
+          cwdPath: stagingRoot,
+          cwdDev: rootStat.dev,
+          cwdIno: rootStat.ino,
         },
       };
     } catch (error) {
@@ -356,12 +401,21 @@ function acquireConfinedStaging(
         ok: false,
         message: `Could not allocate anonymous render staging: ${error instanceof Error ? error.message : String(error)}`,
       };
+    } finally {
+      if (rootFd !== undefined) closeSync(rootFd);
     }
   }
 
   if (process.platform === 'darwin') {
     if (!scratchProfile) throw new Error('Missing render scratch profile.');
-    const scratch = openMacRenderScratch(scratchProfile, tmpRoot, false);
+    const scratch = openMacRenderScratch(
+      scratchProfile,
+      stagingRoot,
+      false,
+      differentVolume
+        ? { dev: rootStat.dev, ino: rootStat.ino, create: allocateOnDestination }
+        : undefined,
+    );
     if (!scratch) throw new Error('Could not acquire render scratch.');
     const wav = fstatSync(scratch.wavFd, { bigint: true });
     return {
@@ -370,9 +424,9 @@ function acquireConfinedStaging(
         ...scratch,
         wavDev: wav.dev,
         wavIno: wav.ino,
-        cwdPath: tmpRoot,
-        cwdDev: tmpStat.dev,
-        cwdIno: tmpStat.ino,
+        cwdPath: stagingRoot,
+        cwdDev: rootStat.dev,
+        cwdIno: rootStat.ino,
       },
     };
   }
@@ -385,11 +439,25 @@ function acquireConfinedStaging(
     let wavDev: bigint | null = null;
     let wavIno: bigint | null = null;
     try {
-      stagePath = mkdtempSync(path.join(tmpRoot, 'blue-mcp-render-'));
+      if (differentVolume) {
+        const leaf = `blue-mcp-render-${randomUUID()}`;
+        const identity = allocateOnDestination(leaf);
+        stagePath = path.join(stagingRoot, leaf);
+        stageDev = identity.dev;
+        stageIno = identity.ino;
+      } else {
+        stagePath = mkdtempSync(path.join(stagingRoot, 'blue-mcp-render-'));
+        const stageStat = lstatSync(stagePath, { bigint: true });
+        stageDev = stageStat.dev;
+        stageIno = stageStat.ino;
+      }
       const stageStat = lstatSync(stagePath, { bigint: true });
-      stageDev = stageStat.dev;
-      stageIno = stageStat.ino;
-      if (!stageStat.isDirectory() || String(stageDev) !== expectedRootDev) {
+      if (
+        !stageStat.isDirectory() ||
+        stageStat.dev !== stageDev ||
+        stageStat.ino !== stageIno ||
+        String(stageDev) !== expectedRootDev
+      ) {
         runCleanup(executablePath, [
           '--cleanup-confined-render',
           '--root-dir',
@@ -401,7 +469,7 @@ function acquireConfinedStaging(
         ]);
         return {
           ok: false,
-          message: 'Render staging and destination require the same filesystem.',
+          message: 'Private render staging no longer matches the allocated directory.',
         };
       }
       wavFd = openSync(
@@ -413,10 +481,14 @@ function acquireConfinedStaging(
       wavDev = wavStat.dev;
       wavIno = wavStat.ino;
       const recheckStage = lstatSync(stagePath, { bigint: true });
+      const recheckRoot = lstatSync(stagingRoot, { bigint: true });
       if (
         !wavStat.isFile() ||
         wavStat.nlink !== 1n ||
         wavStat.dev !== stageDev ||
+        !recheckRoot.isDirectory() ||
+        recheckRoot.dev !== rootStat.dev ||
+        recheckRoot.ino !== rootStat.ino ||
         !recheckStage.isDirectory() ||
         recheckStage.dev !== stageDev ||
         recheckStage.ino !== stageIno
@@ -926,7 +998,7 @@ export class EngineRuntimeService {
         }
         const allocated = acquireConfinedStaging(
           probe.selection.executablePath,
-          request.rootDev,
+          request,
           this.options.scratchProfile,
           runCleanup,
         );

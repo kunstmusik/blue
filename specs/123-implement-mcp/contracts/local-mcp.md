@@ -45,7 +45,7 @@ Inputs are strict objects. All numeric values are finite. IDs are nonempty and b
 | `transport_stop` | Write | `expected`. Stops only the targeted active project's playback. An already stopped target is an idempotent outcome. |
 | `render_to_disk` | Write | `expected` and a single WAV output `filename`, with optional `destination` of `project` (default) or `choose` (local folder picker). Returns the terminal job outcome and native path on success. The client cannot supply an absolute folder or engine arguments. |
 
-Confined render destinations must be on the same filesystem as Blue’s temporary render storage and support native atomic no-replace publication.
+Confined render destinations must support private staging and native atomic no-replace publication. When a destination is on a different filesystem from the OS temp directory, Blue stages on the approved destination filesystem.
 
 Project property settings use the established editor semantics. Settings with separate disk and realtime fields apply the named value to realtime. Any disk render settings remain project-owned and follow existing rules.
 
@@ -55,4 +55,4 @@ Blue returns stable domain codes such as `NO_ACTIVE_PROJECT`, `CONFLICT`, `ACCES
 
 Existing settings get, save and reset operations carry only preferences. Add typed main/preload operations to read and subscribe to sanitized runtime status, copy the credential or a selected client's config, and rotate the credential. Build and write copy content in main when the user requests it. Keep the raw credential out of renderer settings state and broadcasts. Snippets name the client, use the actual bound port, and use its documented bearer setting. Cursor stores the header in its local configuration. VS Code prompts for a secret input, and local Codex references an environment variable. Disable copying until an endpoint and current credential are available. A credential rotation reports whether it was persisted or is session-only and closes the previous sessions. If protected storage rejects every way to persist revocation, the response reports that rotation did not commit. The current listener closes, and the existing credential may be loaded after restart once storage recovers.
 
-On macOS, one empty, app-managed scratch WAV per profile may persist after completion or cancellation. A crash can leave unpublished audio until startup recovery verifies ownership and obtains exclusive access.
+On macOS, one empty, app-managed scratch WAV per profile and staging directory may persist after completion or cancellation. A crash can leave unpublished audio until startup recovery verifies ownership and obtains exclusive access.

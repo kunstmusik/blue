@@ -130,6 +130,9 @@ target_include_directories(blue-engine PRIVATE
 )
 
 target_link_libraries(blue-engine PRIVATE libzmq-static Boost::boost)
+if(WIN32)
+    target_link_libraries(blue-engine PRIVATE advapi32)
+endif()
 if(MSVC)
     # Keep UTF-8 command-line paths lossless when opening native directory handles.
     target_sources(blue-engine PRIVATE src/blue-engine.manifest)

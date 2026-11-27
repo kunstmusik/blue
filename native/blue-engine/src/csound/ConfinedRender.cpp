@@ -4,6 +4,7 @@
 #include "CsoundRuntimeServices.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <cstdio>
 #include <fcntl.h>
 #include <cstring>
@@ -12,13 +13,17 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <sddl.h>
 #include <winternl.h>
 #include <io.h>
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #ifdef __APPLE__
+#include <sys/acl.h>
+#include <sys/attr.h>
 #include <sys/clonefile.h>
+#include <sys/xattr.h>
 #endif
 #endif
 
@@ -482,6 +487,118 @@ int publishConfinedRender(const ConfinedRenderOptions &options) {
                      info.st_size >= 44;
   return valid ? publishPosixWav(STDIN_FILENO, guard.rootFd, options.outputName)
                : kExitPublishFailed;
+#endif
+}
+
+int allocateConfinedStaging(const ConfinedRenderOptions &options, const std::string &token) {
+#if defined(__APPLE__) || defined(_WIN32)
+  const auto &name = options.outputName;
+  if (!options.hasRoot || name.rfind("blue-mcp-", 0) != 0 || name.size() > 100 ||
+      name.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789-.") != std::string::npos) {
+    return kExitRootMismatch;
+  }
+#ifdef __APPLE__
+  if (!isValidLeafWavName(name) || token.size() != 36 ||
+      token.find_first_not_of("0123456789abcdef-") != std::string::npos) {
+    return kExitRootMismatch;
+  }
+  PosixDirectories guard;
+  guard.rootFd = open(options.rootDir.c_str(), kDirectoryFlags);
+  if (!isPosixDirectory(guard.rootFd, options.expectedDev, options.expectedIno)) {
+    return kExitRootMismatch;
+  }
+  struct attrlist attributes {};
+  attributes.bitmapcount = ATTR_BIT_MAP_COUNT;
+  attributes.volattr = ATTR_VOL_INFO | ATTR_VOL_CAPABILITIES;
+  struct {
+    uint32_t size;
+    vol_capabilities_attr_t capabilities;
+  } volume {};
+  if (fgetattrlist(guard.rootFd, &attributes, &volume, sizeof(volume), 0) != 0 ||
+      (volume.capabilities.valid[VOL_CAPABILITIES_INTERFACES] &
+       volume.capabilities.capabilities[VOL_CAPABILITIES_INTERFACES] & VOL_CAP_INT_CLONE) == 0) {
+    std::fprintf(stderr, "Render staging requires a filesystem with atomic file cloning\n");
+    return kExitUnsupportedFs;
+  }
+  const int fd = openat(guard.rootFd, name.c_str(),
+                        O_CREAT | O_EXCL | O_NOFOLLOW | O_RDWR | O_CLOEXEC, 0600);
+  if (fd < 0) {
+    std::fprintf(stderr, "Could not create private render scratch: %s\n", std::strerror(errno));
+    return kExitPublishFailed;
+  }
+  struct stat info {};
+  // A shared destination can apply inherited ACL entries despite mode 0600.
+  const acl_t emptyAcl = acl_init(0);
+  const bool privateAccess = emptyAcl && acl_set_fd_np(fd, emptyAcl, ACL_TYPE_EXTENDED) == 0;
+  if (emptyAcl) acl_free(emptyAcl);
+  const bool valid = privateAccess && fstat(fd, &info) == 0 && info.st_nlink == 1 &&
+      fsetxattr(fd, "org.blue.mcp.render-scratch", token.data(), token.size(), 0, XATTR_CREATE) == 0 &&
+      fsync(fd) == 0;
+  close(fd);
+  if (!valid) return kExitPublishFailed;
+  std::printf("%" PRIu64 " %" PRIu64 "\n",
+              static_cast<uint64_t>(info.st_dev), static_cast<uint64_t>(info.st_ino));
+#else
+  if (!token.empty() || name.back() == '.') return kExitRootMismatch;
+  std::wstring rootPath, wideName;
+  if (!utf8ToWide(options.rootDir, rootPath) || !utf8ToWide(name, wideName)) {
+    return kExitRootMismatch;
+  }
+  WinDirectories guard;
+  guard.rootHandle = openWinDirectory(rootPath, FILE_ADD_SUBDIRECTORY | FILE_TRAVERSE | FILE_READ_ATTRIBUTES);
+  if (!isWinDirectory(guard.rootHandle, options.expectedDev, options.expectedIno)) {
+    return kExitRootMismatch;
+  }
+  using CreateRelative = NTSTATUS(NTAPI *)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES,
+      PIO_STATUS_BLOCK, PLARGE_INTEGER, ULONG, ULONG, ULONG, ULONG, PVOID, ULONG);
+  const auto create = reinterpret_cast<CreateRelative>(
+      GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateFile"));
+  if (!create) return kExitUnsupportedFs;
+
+  UNICODE_STRING leafName {};
+  leafName.Buffer = wideName.data();
+  leafName.Length = static_cast<USHORT>(wideName.size() * sizeof(wchar_t));
+  leafName.MaximumLength = leafName.Length;
+  OBJECT_ATTRIBUTES attributes {};
+  attributes.Length = sizeof(attributes);
+  attributes.RootDirectory = guard.rootHandle;
+  attributes.ObjectName = &leafName;
+  attributes.Attributes = 0x40; // OBJ_CASE_INSENSITIVE
+  DWORD filesystemFlags = 0;
+  if (!GetVolumeInformationByHandleW(guard.rootHandle, nullptr, 0, nullptr, nullptr,
+                                    &filesystemFlags, nullptr, 0) ||
+      (filesystemFlags & FILE_PERSISTENT_ACLS) == 0) {
+    std::fprintf(stderr, "Render staging requires a filesystem with persistent access controls\n");
+    return kExitUnsupportedFs;
+  }
+  PSECURITY_DESCRIPTOR privateAccess = nullptr;
+  // Protect the staging directory and its files from the destination's inherited ACL.
+  if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
+          L"D:P(A;OICI;FA;;;OW)(A;OICI;FA;;;SY)", SDDL_REVISION_1, &privateAccess, nullptr)) {
+    return kExitPublishFailed;
+  }
+  attributes.SecurityDescriptor = privateAccess;
+  IO_STATUS_BLOCK result {};
+  constexpr ULONG createNew = 2;            // FILE_CREATE
+  constexpr ULONG directorySync = 0x21;     // FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
+  const auto status = create(&guard.stagingHandle, FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+      &attributes, &result, nullptr, FILE_ATTRIBUTE_NORMAL,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, createNew, directorySync, nullptr, 0);
+  LocalFree(privateAccess);
+  BY_HANDLE_FILE_INFORMATION info {};
+  if (status != 0 || !GetFileInformationByHandle(guard.stagingHandle, &info)) {
+    std::fprintf(stderr, "Could not create private render staging directory (0x%08lx)\n",
+                 static_cast<unsigned long>(status));
+    return kExitPublishFailed;
+  }
+  std::printf("%" PRIu64 " %" PRIu64 "\n",
+              static_cast<uint64_t>(info.dwVolumeSerialNumber), fileIndex64(info));
+#endif
+  return 0;
+#else
+  (void)options;
+  (void)token;
+  return kExitUnsupportedFs;
 #endif
 }
 
