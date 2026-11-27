@@ -12,6 +12,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <winternl.h>
 #include <io.h>
 #else
 #include <sys/stat.h>
@@ -248,14 +249,24 @@ int publishWinWav(HANDLE wav, HANDLE root, const std::wstring &name) {
   rename->RootDirectory = root;
   rename->FileNameLength = static_cast<DWORD>(bytes);
   std::memcpy(rename->FileName, name.c_str(), bytes + sizeof(wchar_t));
-  if (SetFileInformationByHandle(wav, FileRenameInfo, rename, static_cast<DWORD>(buffer.size()))) {
-    return 0;
-  }
-  const DWORD error = GetLastError();
-  std::fprintf(stderr, "CONFINED_PUBLISH_FAILED: Atomic WAV publication failed (%lu)\n",
+  // The Win32 wrapper rejects directory-relative names on Windows Server 2022.
+  // Use the native rename class so the destination stays anchored to the handle.
+  using SetInformationFile = NTSTATUS(NTAPI *)(HANDLE, PIO_STATUS_BLOCK, PVOID,
+                                               ULONG, FILE_INFORMATION_CLASS);
+  const auto setInformationFile = reinterpret_cast<SetInformationFile>(
+      GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtSetInformationFile"));
+  if (!setInformationFile) return kExitUnsupportedFs;
+
+  constexpr auto renameInformation = static_cast<FILE_INFORMATION_CLASS>(10);
+  constexpr auto nameCollision = static_cast<ULONG>(0xC0000035);
+  IO_STATUS_BLOCK ioStatus {};
+  const NTSTATUS status = setInformationFile(
+      wav, &ioStatus, rename, static_cast<ULONG>(buffer.size()), renameInformation);
+  if (status == 0) return 0;
+  const auto error = static_cast<ULONG>(status);
+  std::fprintf(stderr, "CONFINED_PUBLISH_FAILED: Atomic WAV publication failed (0x%08lx)\n",
                static_cast<unsigned long>(error));
-  return error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS
-      ? kExitTargetExists : kExitPublishFailed;
+  return error == nameCollision ? kExitTargetExists : kExitPublishFailed;
 }
 
 int runWinConfinedRender(const ConfinedRenderOptions &options,
@@ -329,7 +340,7 @@ int publishConfinedRender(const ConfinedRenderOptions &options,
     return kExitRootMismatch;
   }
   WinDirectories guard;
-  guard.rootHandle = openWinDirectory(rootPath, FILE_LIST_DIRECTORY | FILE_ADD_FILE);
+  guard.rootHandle = openWinDirectory(rootPath, FILE_TRAVERSE | FILE_READ_ATTRIBUTES);
   guard.stagingHandle = openWinDirectory(stagePath, FILE_LIST_DIRECTORY);
   if (!isWinDirectory(guard.rootHandle, options.expectedDev, options.expectedIno) ||
       !isWinDirectory(guard.stagingHandle, stagingDev, stagingIno) ||

@@ -722,7 +722,7 @@ describe('executeConfinedMcpRender', () => {
 
     try {
       fs.renameSync(approvedDir, path.join(parent, 'approved.moved'));
-      fs.symlinkSync(swappedDir, approvedDir);
+      fs.symlinkSync(swappedDir, approvedDir, process.platform === 'win32' ? 'junction' : 'dir');
 
       const runConfinedCsound = vi.fn();
       const res = await executeConfinedMcpRender({
@@ -747,8 +747,7 @@ describe('executeConfinedMcpRender', () => {
 
     // 2. Directory change, access downgrade, receipt conflict, and cancellation while EngineRuntimeService.probe() is pending -> never launches Csound
     const fakeRepo = createTempDir();
-    const archKey = `${process.platform}-${process.arch}`;
-    const fakeEngine = path.join(fakeRepo, 'native', 'blue-engine', 'dist', archKey, 'blue-engine');
+    const fakeEngine = developmentEnginePath(fakeRepo, process.platform, process.arch);
     fs.mkdirSync(path.dirname(fakeEngine), { recursive: true });
     const fakeEngineBytes = Buffer.from('stub-engine');
     fs.writeFileSync(fakeEngine, fakeEngineBytes);
@@ -760,7 +759,7 @@ describe('executeConfinedMcpRender', () => {
         protocolVersion: 2,
         platform: process.platform,
         arch: process.arch,
-        executableName: 'blue-engine',
+        executableName: path.basename(fakeEngine),
         sha256: createHash('sha256').update(fakeEngineBytes).digest('hex'),
       }),
     );
@@ -784,7 +783,7 @@ describe('executeConfinedMcpRender', () => {
         expectedCode: 'OUTPUT_REJECTED',
         mutateDuringProbe: ({ dir, moved, decoy }) => {
           fs.renameSync(dir, moved);
-          fs.symlinkSync(decoy, dir);
+          fs.symlinkSync(decoy, dir, process.platform === 'win32' ? 'junction' : 'dir');
         },
       },
       {

@@ -16,7 +16,7 @@ int main() {
 
   // Match the production directory handle's sharing mode at publication.
   const HANDLE locked = CreateFileW(
-      root, FILE_LIST_DIRECTORY | FILE_ADD_FILE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+      root, FILE_TRAVERSE | FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE,
       nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
       nullptr);
   const std::wstring moved = std::wstring(root) + L".moved";
