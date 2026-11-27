@@ -14,6 +14,17 @@ Keep Blue open and run the client on the same computer. Use the endpoint shown i
 
 ## Connect a client
 
+### ChatGPT desktop
+
+Use a local session on the computer running Blue.
+
+1. In **ChatGPT**, open **Settings → MCP servers → Add server**.
+2. Enter `blue` as the name, select **Streamable HTTP**, and paste the endpoint shown in Blue into **URL**.
+3. Under **Headers**, click **Add header**. Enter `Authorization` as the name and `Bearer YOUR_BLUE_TOKEN` as the value. Replace `YOUR_BLUE_TOKEN` with the value from Blue’s **Copy Credential**, keeping the space after `Bearer`.
+4. Click **Save**, then **Restart**. In a local conversation, type `/mcp` to check that `blue` is connected.
+
+This setup saves the header in the local Codex configuration. Keep that configuration private. If you already set up Blue in Codex CLI on this host, ChatGPT uses the same configuration. The separate **Plugins → Add custom MCP server** form is for remote connections and cannot use Blue’s loopback URL directly. [ChatGPT MCP setup](https://learn.chatgpt.com/docs/extend/mcp#configure-in-the-chatgpt-desktop-app) · [Custom MCP connections](https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt)
+
 ### Cursor, VS Code, or Codex CLI
 
 In Blue's MCP panel, select your client and click **Copy Client Config**. Add the snippet to your client configuration. If a configuration already exists, keep its other settings and add the Blue entry.
@@ -81,7 +92,6 @@ $env:BLUE_MCP_TOKEN = Read-Host "Blue MCP token" -MaskInput
 - **Blue shows no endpoint** — Check **Enable MCP Server**, click **Apply**, and wait for **Listening**.
 - **The connection is refused** — Keep Blue open and check the configured URL against the one Blue displays. Blue may pick a different port when the preferred port is in use.
 - **Authentication fails** — Copy the current token and reconnect. **Rotate Credential** invalidates the previous token. If Blue shows **Session-only**, copy the new token each time you relaunch Blue.
-
 - **OpenCode lists no servers on startup** — Open an OpenCode session, then check `/mcps` again. Some OpenCode 2.x builds can return an empty list while the CLI is starting. [OpenCode issue](https://github.com/anomalyco/opencode/issues/63053)
 
 If you use another client, configure Streamable HTTP with the displayed URL and an `Authorization: Bearer <token>` header. To close the listener, clear **Enable MCP Server** and click **Apply**.
