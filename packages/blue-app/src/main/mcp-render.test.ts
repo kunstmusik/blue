@@ -846,7 +846,7 @@ describe('executeConfinedMcpRender', () => {
                 engineVersion: '0.1.0',
                 protocolVersion: 2,
                 sourceRevision: 'test',
-                features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v2'],
+                features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v4'],
               },
               csound: {
                 status: 'ready',
@@ -1037,8 +1037,10 @@ describe('executeConfinedMcpRender', () => {
                       '--root-ino',
                       // Intentionally mismatch expected inode inside native blue-engine
                       `${BigInt(request.rootIno) + 1n}`,
-                      '--output-name',
-                      request.outputFilename,
+                      '--wav-dev',
+                      request.rootDev,
+                      '--wav-ino',
+                      '1',
                       '--',
                       ...request.args,
                     ],
@@ -1075,37 +1077,104 @@ describe('executeConfinedMcpRender', () => {
   const workspaceRoot = path.resolve(__dirname, '../../../..');
   const stagedEngine = developmentEnginePath(workspaceRoot, process.platform, process.arch);
 
-  it.for(['moved root', 'replaced staging', 'replaced WAV', 'late collision', 'publish'] as const)(
-    'runs native no-replace publication without Csound for %s',
-    (scenario, context) => {
-      if (!fs.existsSync(stagedEngine) && process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1') {
-        context.skip('No staged Blue Engine is available.');
-      }
-      const parent = createTempDir();
-      const root = path.join(parent, 'approved 音');
-      const stage = path.join(parent, 'stage é');
-      fs.mkdirSync(root);
-      fs.mkdirSync(stage);
-      const wav = path.join(stage, 'render.wav');
-      const rendered = Buffer.alloc(44).fill('test');
-      fs.writeFileSync(wav, rendered);
+  const createNativeStagedWav = (
+    parent: string,
+    payload: Buffer,
+    options: { keepLinkedOnPosix?: boolean } = {},
+  ): {
+    wavFd: number;
+    wavDev: bigint;
+    wavIno: bigint;
+    stageDir?: string;
+    wavPath?: string;
+    dispose: () => void;
+  } => {
+    const canonicalParent = fs.realpathSync(parent);
+    if (process.platform === 'linux' && !options.keepLinkedOnPosix) {
+      const oTmpfile = (fs.constants.O_DIRECTORY ?? 0) | 0o20000000;
+      const wavFd = fs.openSync(canonicalParent, fs.constants.O_RDWR | oTmpfile, 0o600);
+      fs.writeSync(wavFd, payload);
+      const stat = fs.fstatSync(wavFd, { bigint: true });
+      return {
+        wavFd,
+        wavDev: stat.dev,
+        wavIno: stat.ino,
+        dispose: () => {
+          try {
+            fs.closeSync(wavFd);
+          } catch {
+            // Ignore close failure.
+          }
+        },
+      };
+    }
+    const stageDir = path.join(canonicalParent, 'stage é');
+    fs.mkdirSync(stageDir);
+    const wavPath = path.join(stageDir, 'render.wav');
+    const wavFd = fs.openSync(
+      wavPath,
+      fs.constants.O_RDWR |
+        fs.constants.O_CREAT |
+        fs.constants.O_EXCL |
+        (fs.constants.O_NOFOLLOW ?? 0),
+      0o600,
+    );
+    fs.writeSync(wavFd, payload);
+    const wavStat = fs.fstatSync(wavFd, { bigint: true });
+    return {
+      wavFd,
+      wavDev: wavStat.dev,
+      wavIno: wavStat.ino,
+      stageDir: process.platform === 'win32' || options.keepLinkedOnPosix ? stageDir : undefined,
+      wavPath: process.platform === 'win32' || options.keepLinkedOnPosix ? wavPath : undefined,
+      dispose: () => {
+        try {
+          fs.closeSync(wavFd);
+        } catch {
+          // Ignore close failure.
+        }
+      },
+    };
+  };
+
+  it.for([
+    'moved root',
+    'wrong wav identity',
+    'short wav',
+    'linked WAV refused on Linux',
+    'replaced WAV path on windows',
+    'late collision',
+    'publish',
+  ] as const)('runs native no-replace publication without Csound for %s', (scenario, context) => {
+    if (!fs.existsSync(stagedEngine) && process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1') {
+      context.skip('No staged Blue Engine is available.');
+    }
+    if (scenario === 'linked WAV refused on Linux' && process.platform !== 'linux') {
+      context.skip('Linux requires an anonymous descriptor.');
+    }
+    if (scenario === 'replaced WAV path on windows' && process.platform !== 'win32') {
+      context.skip('Windows handle-bound path replacement scenario runs on Windows.');
+    }
+    const parent = fs.realpathSync(createTempDir());
+    const root = path.join(parent, 'approved 音');
+    fs.mkdirSync(root);
+    const rendered = Buffer.alloc(scenario === 'short wav' ? 12 : 44).fill('test');
+    const staged = createNativeStagedWav(parent, rendered, {
+      keepLinkedOnPosix: scenario === 'linked WAV refused on Linux',
+    });
+    try {
       const rootStat = fs.statSync(root, { bigint: true });
-      const stageStat = fs.statSync(stage, { bigint: true });
-      const wavStat = fs.statSync(wav, { bigint: true });
       const target = path.join(root, 'audio.wav');
       if (scenario === 'moved root') {
         fs.renameSync(root, path.join(parent, 'moved-root'));
         fs.mkdirSync(root);
-      } else if (scenario === 'replaced staging') {
-        fs.renameSync(stage, path.join(parent, 'moved-stage'));
-        fs.mkdirSync(stage);
-        fs.writeFileSync(wav, 'unrelated WAV');
-      } else if (scenario === 'replaced WAV') {
-        fs.renameSync(wav, path.join(stage, 'original.wav'));
-        fs.writeFileSync(wav, 'unrelated WAV');
       } else if (scenario === 'late collision') {
         fs.writeFileSync(target, 'keep existing audio');
+      } else if (scenario === 'replaced WAV path on windows' && staged.wavPath && staged.stageDir) {
+        fs.renameSync(staged.wavPath, path.join(staged.stageDir, 'moved-owned.wav'));
+        fs.writeFileSync(staged.wavPath, 'unrelated WAV');
       }
+      const expectedWavIno = scenario === 'wrong wav identity' ? staged.wavIno + 1n : staged.wavIno;
       const result = spawnSync(
         stagedEngine,
         [
@@ -1118,18 +1187,20 @@ describe('executeConfinedMcpRender', () => {
           String(rootStat.ino),
           '--output-name',
           'audio.wav',
-          '--',
-          stage,
-          String(stageStat.dev),
-          String(stageStat.ino),
-          String(wavStat.ino),
+          '--wav-dev',
+          String(staged.wavDev),
+          '--wav-ino',
+          String(expectedWavIno),
         ],
-        { encoding: 'utf8', windowsHide: true },
+        { encoding: 'utf8', windowsHide: true, stdio: [staged.wavFd, 'ignore', 'pipe'] },
       );
       expect(result.error).toBeUndefined();
-      if (scenario === 'publish') {
+      if (scenario === 'publish' || scenario === 'replaced WAV path on windows') {
         expect(result.status, result.stderr).toBe(0);
         expect(fs.readFileSync(target)).toEqual(rendered);
+        if (scenario === 'replaced WAV path on windows' && staged.wavPath) {
+          expect(fs.readFileSync(staged.wavPath, 'utf8')).toBe('unrelated WAV');
+        }
       } else {
         expect(result.status).toBeGreaterThan(0);
         if (scenario === 'late collision') {
@@ -1137,9 +1208,156 @@ describe('executeConfinedMcpRender', () => {
         } else {
           expect(fs.existsSync(target)).toBe(false);
         }
-        if (scenario === 'replaced staging' || scenario === 'replaced WAV') {
-          expect(fs.readFileSync(wav, 'utf8')).toBe('unrelated WAV');
+      }
+    } finally {
+      staged.dispose();
+    }
+  });
+
+  it.for([
+    'owned cleanup',
+    'replaced staging dir',
+    'replaced WAV entry',
+    'wrong wav identity',
+    'unrelated entry preserved',
+    'symlink staging refused',
+  ] as const)(
+    'enforces ownership-bound native staging cleanup without Csound for %s (T073)',
+    (scenario, context) => {
+      if (!fs.existsSync(stagedEngine) && process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1') {
+        context.skip('No staged Blue Engine is available.');
+      }
+      if (scenario === 'symlink staging refused' && process.platform === 'win32') {
+        context.skip('POSIX directory symlink test runs on POSIX hosts.');
+      }
+      const parent = fs.realpathSync(createTempDir());
+      const stage = path.join(parent, 'stage é');
+      fs.mkdirSync(stage);
+      const stageStat = fs.lstatSync(stage, { bigint: true });
+      const wavPath = path.join(stage, 'render.wav');
+      const wavFd = fs.openSync(
+        wavPath,
+        fs.constants.O_RDWR |
+          fs.constants.O_CREAT |
+          fs.constants.O_EXCL |
+          (fs.constants.O_NOFOLLOW ?? 0),
+        0o600,
+      );
+      fs.writeSync(wavFd, Buffer.alloc(44).fill('x'));
+      const wavStat = fs.fstatSync(wavFd, { bigint: true });
+      const victimDir = path.join(parent, 'victim-empty');
+      let wavClosed = false;
+      const closeWav = () => {
+        if (wavClosed) return;
+        wavClosed = true;
+        fs.closeSync(wavFd);
+      };
+
+      try {
+        if (scenario === 'replaced staging dir') {
+          if (process.platform === 'win32') {
+            // Release wavFd before renaming the directory on Windows to simulate a swapped dir before dir cleanup.
+            closeWav();
+            fs.renameSync(stage, path.join(parent, 'moved-stage'));
+            fs.mkdirSync(stage);
+          } else {
+            fs.renameSync(stage, path.join(parent, 'moved-stage'));
+            fs.mkdirSync(stage);
+            fs.writeFileSync(path.join(stage, 'keep.txt'), 'replacement');
+          }
+        } else if (scenario === 'replaced WAV entry') {
+          fs.renameSync(wavPath, path.join(stage, 'moved-owned.wav'));
+          fs.writeFileSync(wavPath, 'unrelated victim');
+        } else if (scenario === 'unrelated entry preserved') {
+          fs.writeFileSync(path.join(stage, 'keep.txt'), 'preserve me');
+        } else if (scenario === 'symlink staging refused') {
+          fs.mkdirSync(victimDir);
+          fs.renameSync(stage, path.join(parent, 'moved-stage'));
+          fs.symlinkSync(victimDir, stage);
         }
+
+        const requestedWavIno = scenario === 'wrong wav identity' ? wavStat.ino + 1n : wavStat.ino;
+
+        if (process.platform === 'win32') {
+          if (scenario !== 'replaced staging dir') {
+            const wavCleanup = spawnSync(
+              stagedEngine,
+              [
+                '--cleanup-confined-render',
+                '--wav-dev',
+                String(wavStat.dev),
+                '--wav-ino',
+                String(requestedWavIno),
+              ],
+              { encoding: 'utf8', windowsHide: true, stdio: [wavFd, 'ignore', 'pipe'] },
+            );
+            closeWav();
+            if (scenario === 'wrong wav identity') {
+              expect(wavCleanup.status).toBe(70);
+              expect(fs.existsSync(wavPath)).toBe(true);
+            } else {
+              expect(wavCleanup.status, wavCleanup.stderr).toBe(0);
+              if (scenario === 'replaced WAV entry') {
+                // Owned handle (moved-owned.wav) deleted; victim at render.wav preserved.
+                expect(fs.existsSync(path.join(stage, 'moved-owned.wav'))).toBe(false);
+                expect(fs.readFileSync(wavPath, 'utf8')).toBe('unrelated victim');
+              } else {
+                expect(fs.existsSync(wavPath)).toBe(false);
+              }
+            }
+          }
+          const dirCleanup = spawnSync(
+            stagedEngine,
+            [
+              '--cleanup-confined-render',
+              '--root-dir',
+              stage,
+              '--root-dev',
+              String(stageStat.dev),
+              '--root-ino',
+              String(stageStat.ino),
+            ],
+            { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] },
+          );
+          if (scenario === 'owned cleanup') {
+            expect(dirCleanup.status, dirCleanup.stderr).toBe(0);
+            expect(fs.existsSync(stage)).toBe(false);
+          } else if (scenario === 'replaced staging dir') {
+            expect(dirCleanup.status).toBe(70);
+            expect(fs.existsSync(stage)).toBe(true);
+          } else {
+            expect(dirCleanup.status).toBe(74);
+            expect(fs.existsSync(stage)).toBe(true);
+            if (scenario === 'unrelated entry preserved') {
+              expect(fs.readFileSync(path.join(stage, 'keep.txt'), 'utf8')).toBe('preserve me');
+            }
+          }
+        } else {
+          const cleanup = spawnSync(
+            stagedEngine,
+            [
+              '--cleanup-confined-render',
+              '--root-dir',
+              stage,
+              '--root-dev',
+              String(stageStat.dev),
+              '--root-ino',
+              String(stageStat.ino),
+              '--output-name',
+              'render.wav',
+              '--wav-dev',
+              String(wavStat.dev),
+              '--wav-ino',
+              String(requestedWavIno),
+            ],
+            { encoding: 'utf8', windowsHide: true, stdio: [wavFd, 'ignore', 'pipe'] },
+          );
+          expect(cleanup.status, cleanup.stderr).toBe(72);
+          expect(fs.fstatSync(wavFd, { bigint: true }).nlink).toBe(1n);
+          expect(fs.existsSync(stage)).toBe(true);
+        }
+      } finally {
+        closeWav();
       }
     },
   );
@@ -1149,6 +1367,7 @@ describe('executeConfinedMcpRender', () => {
       isPackaged: false,
       resourcesPath: workspaceRoot,
       repoRoot: workspaceRoot,
+      scratchProfile: createTempDir(),
       getSettingsEnginePath: () => '',
     });
     const probe = await runtime.probe();
@@ -1215,6 +1434,10 @@ describe('executeConfinedMcpRender', () => {
       }
     };
 
+    const isEngineStagingEntry = (entry: string) =>
+      entry.startsWith('blue-mcp-render-') && !entry.startsWith('blue-mcp-render-test-');
+    const stagingDirsBefore = new Set(fs.readdirSync(os.tmpdir()).filter(isEngineStagingEntry));
+
     // 1. Supported-platform real sine render produces RIFF/WAVE WAV with zero staging residue.
     const outDir = createTempDir();
     const canonicalOutDir = fs.realpathSync(outDir);
@@ -1267,5 +1490,10 @@ describe('executeConfinedMcpRender', () => {
     expect(raceResult).toMatchObject({ ok: false, code: 'OUTPUT_REJECTED' });
     expect(fs.readdirSync(authorizedDir)).toEqual(['unrelated.txt']);
     expect(fs.readdirSync(movedDir)).toEqual([]);
+
+    const stagingDirsAfter = fs
+      .readdirSync(os.tmpdir())
+      .filter((entry) => isEngineStagingEntry(entry) && !stagingDirsBefore.has(entry));
+    expect(stagingDirsAfter).toEqual([]);
   }, 30_000);
 });

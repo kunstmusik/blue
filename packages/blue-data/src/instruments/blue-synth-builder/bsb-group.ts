@@ -101,6 +101,11 @@ export class BSBGroup extends BSBWidget {
     return [...this._children];
   }
 
+  /** Returns the number of direct children without allocating a snapshot. */
+  getChildCount(): number {
+    return this._children.length;
+  }
+
   /** Appends the supplied widget instance to this group. */
   addChild(widget: BSBWidget): void {
     this._children.push(widget);

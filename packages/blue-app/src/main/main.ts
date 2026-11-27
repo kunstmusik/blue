@@ -1,3 +1,4 @@
+import { openMacRenderScratch } from './macos-render-scratch';
 import { readAudioFileMetadataHeader } from './audio-file-metadata';
 /**
  * Electron main process — manages app window, file dialogs, and engine lifecycle.
@@ -14,6 +15,7 @@ import {
   shell,
 } from 'electron';
 import * as path from 'path';
+import { tmpdir } from 'node:os';
 import * as fs from 'fs';
 import { randomUUID } from 'node:crypto';
 
@@ -2062,7 +2064,16 @@ function createWindow(): void {
 
   // Resolve the workspace artifact in development and the installed resource
   // in packaged builds. Neither path consults the system executable search path.
+  const scratchProfile = app.getPath('userData');
+  if (process.platform === 'darwin') {
+    try {
+      openMacRenderScratch(scratchProfile, fs.realpathSync(tmpdir()), true);
+    } catch (error) {
+      console.warn('Could not recover MCP render scratch.', error);
+    }
+  }
   engineRuntimeService = new EngineRuntimeService({
+    scratchProfile,
     isPackaged: app.isPackaged,
     resourcesPath: process.resourcesPath,
     repoRoot: path.resolve(app.getAppPath(), '..', '..'),

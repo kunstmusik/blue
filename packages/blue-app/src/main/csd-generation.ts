@@ -1,7 +1,17 @@
 import {
   AudioClip,
   AudioFile,
+  BSBCheckBox,
+  BSBGroup,
+  BSBHSlider,
+  BSBKnob,
+  BSBLabel,
+  BSBTextField,
+  BSBVSlider,
+  BSBValue,
+  BSBXYController,
   BlueData,
+  BlueSynthBuilder,
   ClojureObject,
   Comment,
   External,
@@ -23,6 +33,9 @@ import {
   TuningProcessor,
   createNoteProcessorChainSnapshot,
   type AudioLayoutManifest,
+  type BSBWidget,
+  type InstrumentLibrary,
+  type JavaDecimal,
   type JavaRuntimeClientContract,
   type JavaScriptSession,
   type NoteProcessorChain,
@@ -114,6 +127,7 @@ export function preflightObservationOnlyDiskCsd(
   let instrumentCount = 0;
   let estimatedInputBytes = 0;
   let estimatedScoreEvents = 0;
+  let estimatedBsbScanBytes = 0;
 
   const recordExecution = (reason: string): void => {
     if (executionReason === null) {
@@ -213,6 +227,142 @@ export function preflightObservationOnlyDiskCsd(
     return windows;
   };
 
+  const checkBlueSynthBuilder = (instrument: BlueSynthBuilder): void => {
+    const globalScore = instrument.getGlobalSco();
+    const sources = [
+      globalScore,
+      instrument.getInstrumentText(),
+      instrument.getAlwaysOnInstrumentText(),
+      instrument.getGlobalOrc(),
+    ];
+    const sourceBytes = sources.reduce((total, source) => total + source.length, 0);
+    if (!addEstimatedBytes(sourceBytes)) return;
+    // Check UTF-16 length first so the UTF-8 measurement itself is bounded.
+    const sourceUtf8Bytes = sources.reduce((total, source) => total + Buffer.byteLength(source), 0);
+    if (!addEstimatedBytes(sourceUtf8Bytes - sourceBytes)) return;
+
+    if (instrument.getPresetGroup() || instrument.getOpcodeList().size() > 0) {
+      recordUnsupported(
+        'Observation-only CSD generation cannot bound Blue Synth Builder presets or user-defined opcodes.',
+      );
+      return;
+    }
+
+    let replacementCount = 0;
+    let maxReplacementBytes = 0;
+    let maxReplacementNewlines = 0;
+    const checkResolution = (resolution: JavaDecimal): boolean => {
+      if (resolution.coefficient.length <= 64 && Math.abs(resolution.scale) <= 64) return true;
+      tripBudget('Blue Synth Builder resolution exceeded the observation CSD decimal budget.');
+      return false;
+    };
+    const visitWidget = (widget: BSBWidget, depth: number): boolean => {
+      if (depth > budget.maxDepth) {
+        tripBudget(
+          'Blue Synth Builder widget hierarchy exceeded the observation CSD depth budget.',
+        );
+        return false;
+      }
+      if (!addEstimatedBytes(widget.objectName.length)) return false;
+      if (widget instanceof BSBGroup) {
+        if (!consumeNodes(widget.getChildCount())) return false;
+        return widget.getChildren().every((child) => visitWidget(child, depth + 1));
+      }
+      if (widget instanceof BSBLabel) return true;
+      if (widget instanceof BSBTextField) {
+        const value = widget.textValue;
+        if (!addEstimatedBytes(value.length)) return false;
+        // Angle brackets can introduce later tokens. Dollar substitutions can copy the surrounding text.
+        if (/[<$]/.test(value)) {
+          recordUnsupported(
+            'Observation-only CSD generation cannot bound recursive or context-dependent Blue Synth Builder substitutions.',
+          );
+          return false;
+        }
+        const bytes = Buffer.byteLength(value);
+        if (!addEstimatedBytes(bytes - value.length)) return false;
+        maxReplacementBytes = Math.max(maxReplacementBytes, bytes);
+        maxReplacementNewlines = Math.max(
+          maxReplacementNewlines,
+          Math.max(0, countScoreLines(value, budget.maxEstimatedScoreEvents + 1) - 1),
+        );
+        replacementCount += 1;
+        return true;
+      }
+      if (
+        (widget instanceof BSBHSlider || widget instanceof BSBVSlider) &&
+        !checkResolution(widget.resolutionDecimal)
+      ) {
+        return false;
+      }
+      if (
+        widget instanceof BSBCheckBox ||
+        widget instanceof BSBHSlider ||
+        widget instanceof BSBKnob ||
+        widget instanceof BSBVSlider ||
+        widget instanceof BSBValue ||
+        widget instanceof BSBXYController
+      ) {
+        // Blue's decimal formatter emits at most 309 integer digits plus sign and decimal fraction.
+        maxReplacementBytes = Math.max(maxReplacementBytes, 321);
+        replacementCount += widget instanceof BSBXYController ? 2 : 1;
+        return true;
+      }
+      recordUnsupported(
+        `Observation-only CSD generation cannot bound Blue Synth Builder widget ${widget.constructor.name}.`,
+      );
+      return false;
+    };
+
+    if (!consumeNodes() || !visitWidget(instrument.getGraphicInterface().getRootGroup(), 0)) return;
+    for (const parameter of instrument.iterateStoredParameters()) {
+      if (!consumeNodes(1 + parameter.getPointCount())) return;
+      if (!addEstimatedBytes(parameter.getName().length)) return;
+      if (!checkResolution(parameter.getResolutionDecimal())) return;
+      // Active automation is a separate score generator. Fixed parameters can still carry
+      // authored points that the detached project copy has to materialize.
+      const compilationName = parameter.getCompilationVarName();
+      if (parameter.isAutomationEnabled() || compilationName) {
+        recordUnsupported(
+          'Observation-only CSD generation cannot bound Blue Synth Builder automation or custom compilation names.',
+        );
+        return;
+      }
+    }
+
+    // With literal replacements, every substitution consumes at least one existing opening
+    // bracket. Bound intermediate strings as well as the final output and all replacement scans.
+    const [scoreTokens = 0, ...otherTokens] = sources.map((source) => {
+      let count = 0;
+      if (replacementCount > 0) {
+        for (
+          let offset = source.indexOf('<');
+          offset >= 0;
+          offset = source.indexOf('<', offset + 1)
+        ) {
+          count += 1;
+        }
+      }
+      return count;
+    });
+    if (
+      !addEstimatedEvents(
+        countScoreLines(globalScore, budget.maxEstimatedScoreEvents + 1) +
+          scoreTokens * maxReplacementNewlines,
+      )
+    ) {
+      return;
+    }
+    const expansionBytes =
+      otherTokens.reduce((total, count) => total + count, scoreTokens) * maxReplacementBytes;
+    if (!addEstimatedBytes(expansionBytes)) return;
+    estimatedBsbScanBytes += (sourceUtf8Bytes + expansionBytes) * replacementCount;
+    // Each replacement scans the current string. Cap cumulative scans as well as string sizes.
+    if (estimatedBsbScanBytes > 32 * budget.maxEstimatedInputBytes) {
+      tripBudget('Blue Synth Builder substitution work exceeded the observation CSD budget.');
+    }
+  };
+
   const checkInstrument = (instrument: unknown): void => {
     if (budgetReason !== null || !instrument) return;
     instrumentCount += 1;
@@ -230,6 +380,8 @@ export function preflightObservationOnlyDiskCsd(
       recordExecution(
         'Observation-only CSD generation refused because the project contains a JavaScriptInstrument.',
       );
+    } else if (instrument instanceof BlueSynthBuilder) {
+      checkBlueSynthBuilder(instrument);
     } else if (instrument instanceof GenericInstrument) {
       addEstimatedBytes(
         instrument.getText().length +
@@ -397,6 +549,30 @@ export function preflightObservationOnlyDiskCsd(
   for (const assignment of data.getArrangement().getArrangement()) {
     checkInstrument(assignment.instr);
     if (budgetReason !== null) break;
+  }
+
+  // The detached project copies its instrument library as well as the active arrangement.
+  const visitInstrumentCategory = (
+    category: ReturnType<InstrumentLibrary['getRootCategory']>,
+    depth: number,
+  ): void => {
+    if (depth > budget.maxDepth) {
+      tripBudget('Instrument library hierarchy exceeded the observation CSD depth budget.');
+      return;
+    }
+    if (!consumeNodes()) return;
+    for (const instrument of category.getInstruments()) {
+      if (!consumeNodes()) return;
+      if (instrument instanceof BlueSynthBuilder) checkInstrument(instrument);
+    }
+    for (const child of category.getSubCategories()) {
+      visitInstrumentCategory(child, depth + 1);
+      if (budgetReason !== null) return;
+    }
+  };
+  const instrumentLibrary = data.getInstrumentLibrary();
+  if (instrumentLibrary && budgetReason === null) {
+    visitInstrumentCategory(instrumentLibrary.getRootCategory(), 0);
   }
 
   const score = data.getScore();

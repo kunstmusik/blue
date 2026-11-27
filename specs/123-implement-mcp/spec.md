@@ -115,3 +115,7 @@ A composer can manage the service in Program Settings, see the actual endpoint, 
 - Only clients with compatible direct Streamable HTTP and bearer-header support receive a ready-to-paste configuration. Initial configuration targets are Cursor, VS Code, and local Codex. MCP Inspector is the protocol validation client. Claude Desktop direct local HTTP configuration remains outside the verified initial client set.
 - An unsaved project needs a directory selected in Blue before it can render. MCP clients supply an output filename within the authorized directory.
 - Existing file, module, and runtime permissions continue to apply. The user grants execution from Blue, where the project and requested action can be shown before the action occurs.
+
+### macOS render scratch lifecycle
+
+One private, empty scratch WAV per profile may remain after completion or cancellation. After an interruption, recover recorded scratch on startup when its ownership is verified and its writer has exited. Preserve unrelated files and published WAVs.

@@ -30,7 +30,7 @@ These are acceptance steps for the implemented feature. Record the Blue revision
 2. Use the [contract](contracts/local-mcp.md#tools) to exercise Generic and Blue Synth Builder code, create and update an instrument assignment, update score timing and GenericScore text, and change title plus audio settings. Read the new receipt after each change. Check the descriptive undo label, dirty indicator, renderer updates and applicable restart-required outcome. Undo and redo each case and verify stable references and saved-state restoration.
 3. Resubmit an edit after a UI commit, undo/redo, or project replacement. Expect a conflict and zero extra history entries. Repeat an equal-value update using a current receipt and expect a successful no-op.
 4. Start and stop timeline playback twice with the verified project. Check the engine status and decline one requested local activation. Confirm a delayed retry or loop cannot start after authority expires.
-5. Render the sine project using a fresh WAV basename in the approved directory. Confirm one final output and no staging residue. Verify rejection for an existing result, traversal or a non-leaf name, changed parent/target, unsupported options or content, and an unapproved render. Cancel a running render before publication and verify no final output. Run the platform filesystem cases on Windows as well.
+5. Render the sine project using a fresh WAV basename in the approved directory. Confirm one final output. On macOS the profile may retain one empty, private scratch file. Verify rejection for an existing result, traversal or a non-leaf name, changed parent/target, unsupported options or content, and an unapproved render. Cancel a running render before publication and verify no final output. Run the platform filesystem cases on Windows as well.
 
 ## Exercise access and shutdown
 
@@ -73,7 +73,7 @@ Run `pnpm test` when shared behavior changes. For release validation, regenerate
   - `pnpm --filter @blue/app build:main && pnpm --filter @blue/app build:preload && pnpm --filter @blue/app typecheck:renderer`: passed (0 errors).
   - `pnpm lint`: passed (1941 formatted files, ESLint, native & Java lint, renderer typography audit `passed: true`).
   - `git diff --check`: passed (0 whitespace errors).
-- **Pending external verification**:
+- **External verification outstanding at this phase** (see Phase 10 and PR CI below):
   - Windows 2022 `.github/workflows/pr.yml` CI run of `mcp-render.test.ts` and `blue-engine.exe --run-confined-render` native filesystem correctness and full cross-OS tests (T048).
   - Supported installer matrix (`.dmg`, `.exe`, `.AppImage`/`.deb`) packaged notice and dependency checks on CI runners (T057 / T045).
   - Interactive live Electron GUI, `mcp-inspector`, and external local editor (Cursor / VS Code / Codex) acceptance walkthrough (T056 / T019 / T026 / T035 / T043).
@@ -101,4 +101,15 @@ Run `pnpm test` when shared behavior changes. For release validation, regenerate
 - Ran native macOS publication checks without Csound for replaced destinations, replaced staging directories, replaced WAVs, and competing output creation. Separately verified the real sine render and a destination replacement at the publication callback. The engine runtime tests cover cancellation, grant revocation, stale receipts, child termination, and a cancellation after commit. The Windows directory-handle test and native publication checks are included in normal PR validation. Csound smoke tests report a skip when the required external library is absent.
 - Passed package input verification and the packaged-app smoke checks on a local macOS arm64 bundle. The test bundle used ad-hoc signing with hardened runtime disabled through build command options. Verified the packaged MCP server 2.4.0, node transport 2.1.2, Zod 4.6.7, and the Hono, MCP SDK, and Zod notices. The installed verifier now checks MCP dependencies and notices in the PR package matrix.
 - Passed the final macOS `pnpm test` run, including 562 app test files, 6,617 app tests passed, and 15 skipped. The workspace also passed 14 native CTest cases, 3,198 data tests, and 160 script tests. An earlier run that overlapped desktop and packaging checks reported one existing engine gate readback failure. The sequential run passed that case. Main and preload builds, renderer type-check, data API documentation, `pnpm lint`, and `git diff --check` passed.
-- Windows Server 2022 native filesystem results and the remaining installer matrix results are pending.
+
+### PR CI verification
+
+- At PR head `0710694b4`, the [PR build matrix](https://github.com/kunstmusik/blue/actions/runs/45928261223) passed workspace tests, lint, package builds, and packaged-app smoke checks on macOS arm64, Windows x64, and Linux x64. The packaged-app checks covered MCP runtime dependencies and notices. CI uploaded the macOS DMG, Windows installer, Linux AppImage, and Linux Debian package.
+- The [Windows Server 2022 job](https://github.com/kunstmusik/blue/actions/runs/45928261223/job/140274645625) passed the native `WindowsConfinedRenderLockTests` and ran `mcp-render.test.ts` with 57 tests passed and one skipped. The skipped real Csound 7 sine WAV render remains T076 because the external library was absent. The real sine render passed separately on macOS.
+
+### Phase 11 follow-ups
+
+- Observation-only CSD generation budgets Blue Synth Builder source, widget and stored parameter counts, and literal replacement expansion before copying the project. It supports nested groups and basic controls. It refuses widget types and substitutions without a bound, active automation, preset groups, and local user-defined opcodes.
+- On macOS, the 36 focused CSD and MCP inspection tests passed. The full workspace suite, lint, Electron main build, host-test type check, data API documentation build, and whitespace check passed. The workspace test run used an isolated Maven cache to resolve local file-lock errors.
+- T073 uses confined-render v4. On macOS verify the real sine WAV, zero-byte scratch after settlement, refusal of a second writer, recovery after child exit, preservation of a replaced scratch path, and recreation after OS eviction. The macOS runtime, native render and recovery suites passed 100 focused tests including the real Csound 7 sine render. The two platform-specific cases skipped on macOS cover Linux and Windows behavior. The macOS workspace suite, main build, host-test type check and lint also passed. Linux and Windows native validation for v4 is pending CI.
+- T075 remains deferred as a follow-up. The current render path requires the approved output directory and OS temp directory to share a filesystem.

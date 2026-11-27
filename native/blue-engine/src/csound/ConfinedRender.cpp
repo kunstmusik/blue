@@ -30,6 +30,7 @@ constexpr int kExitRootMismatch = 70;
 constexpr int kExitTargetExists = 71;
 constexpr int kExitUnsupportedFs = 72;
 constexpr int kExitPublishFailed = 73;
+constexpr int kExitDirNotEmpty = 74;
 
 bool isValidLeafWavName(const std::string &name) {
   if (name.empty() || name.size() > 255) return false;
@@ -45,7 +46,12 @@ bool isValidLeafWavName(const std::string &name) {
          (ext[2] == 'a' || ext[2] == 'A') && (ext[3] == 'v' || ext[3] == 'V');
 }
 
-int runStagedCsound(const std::string &outputName,
+bool isManagedOutputOption(const std::string &option) {
+  return option == "-o" || option.rfind("-o", 0) == 0 ||
+         option == "--output" || option.rfind("--output=", 0) == 0;
+}
+
+int runStagedCsound(const std::string &csdText,
                     const std::string &csoundLibraryPath,
                     const std::vector<std::string> &csoundArguments) {
   CsoundLoader::unload();
@@ -68,11 +74,29 @@ int runStagedCsound(const std::string &outputName,
     std::fflush(stderr);
   };
 
-  std::vector<std::string> fullArgs = csoundArguments;
-  fullArgs.emplace_back("-o");
-  fullArgs.push_back(outputName);
-  fullArgs.emplace_back("render.csd");
-  const int result = CsoundRuntimeServices::runPerformance(csound, fullArgs, onMessage);
+  int result = csound::CSOUND_ERROR;
+  if (CsoundLoader::csoundCompileCSD && csdText.find('\0') == std::string::npos) {
+    result = 0;
+    for (const auto &option : csoundArguments) {
+      if (isManagedOutputOption(option)) {
+        std::fprintf(stderr,
+                     "CONFINED_INVALID_ARGUMENT: Output flag is managed by confined render\n");
+        result = csound::CSOUND_ERROR;
+        break;
+      }
+      result = CsoundLoader::csoundSetOption(csound, option.c_str());
+      if (result != 0) break;
+    }
+    if (result == 0) {
+      result = CsoundLoader::csoundSetOption(csound, "-o stdout");
+    }
+    if (result == 0) {
+      result = CsoundLoader::csoundCompileCSD(csound, csdText.c_str(), 1, 0);
+      result = CsoundRuntimeServices::performCompiled(csound, result, onMessage);
+    }
+  } else {
+    std::fprintf(stderr, "Confined render requires an in-memory CSD and csoundCompileCSD\n");
+  }
   CsoundLoader::csoundReset(csound);
   CsoundLoader::csoundDestroyMessageBuffer(csound);
   CsoundLoader::csoundDestroy(csound);
@@ -128,15 +152,24 @@ bool isPosixDirectory(int fd, uint64_t dev, uint64_t ino) {
          static_cast<uint64_t>(info.st_ino) == ino;
 }
 
+#ifdef __APPLE__
+constexpr nlink_t kScratchLinks = 1;
+#else
+constexpr nlink_t kScratchLinks = 0;
+#endif
+
 int publishPosixWav(int wavFd, int rootFd, const std::string &name) {
 #ifdef __APPLE__
-  // APFS clones the opened file atomically and refuses an existing destination.
+  // APFS clones the opened scratch file atomically and refuses an existing destination.
   const int result = fclonefileat(wavFd, rootFd, name.c_str(), 0);
 #elif defined(__linux__)
-  // Following this procfs entry links the file descriptor, even if its old name changed.
+  // Links an O_TMPFILE descriptor into rootFd atomically and refuses an existing destination.
   const std::string fdPath = "/proc/self/fd/" + std::to_string(wavFd);
   const int result = linkat(AT_FDCWD, fdPath.c_str(), rootFd, name.c_str(), AT_SYMLINK_FOLLOW);
 #else
+  (void)wavFd;
+  (void)rootFd;
+  (void)name;
   errno = ENOTSUP;
   const int result = -1;
 #endif
@@ -145,20 +178,6 @@ int publishPosixWav(int wavFd, int rootFd, const std::string &name) {
   std::fprintf(stderr, "CONFINED_PUBLISH_FAILED: Atomic publication failed: %s\n",
                std::strerror(code));
   return code == EEXIST ? kExitTargetExists : kExitPublishFailed;
-}
-
-bool writeAllFd(int fd, const std::string &data) {
-  size_t writtenTotal = 0;
-  while (writtenTotal < data.size()) {
-    const ssize_t n =
-        write(fd, data.data() + writtenTotal, data.size() - writtenTotal);
-    if (n <= 0) {
-      if (n < 0 && errno == EINTR) continue;
-      return false;
-    }
-    writtenTotal += static_cast<size_t>(n);
-  }
-  return true;
 }
 
 int runPosixConfinedRender(const ConfinedRenderOptions &options,
@@ -173,13 +192,17 @@ int runPosixConfinedRender(const ConfinedRenderOptions &options,
     return kExitRootMismatch;
   }
 
-  const int csdFd = openat(directories.stagingFd, "render.csd",
-                            O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
-  if (csdFd < 0) return kExitPublishFailed;
-  const bool written = writeAllFd(csdFd, csdText);
-  close(csdFd);
-  if (!written) return kExitPublishFailed;
-  return runStagedCsound(options.outputName, csoundLibraryPath, csoundArguments);
+  struct stat wavInfo {};
+  if (fstat(STDOUT_FILENO, &wavInfo) != 0 || !S_ISREG(wavInfo.st_mode) ||
+      wavInfo.st_nlink != kScratchLinks ||
+      static_cast<uint64_t>(wavInfo.st_dev) != options.wavDev ||
+      static_cast<uint64_t>(wavInfo.st_ino) != options.wavIno ||
+      wavInfo.st_size != 0) {
+    std::fprintf(stderr, "CONFINED_ROOT_MISMATCH: Owned WAV descriptor mismatch\n");
+    return kExitRootMismatch;
+  }
+
+  return runStagedCsound(csdText, csoundLibraryPath, csoundArguments);
 }
 
 #else
@@ -202,6 +225,11 @@ bool utf8ToWide(const std::string &utf8, std::wstring &wide) {
 uint64_t fileIndex64(const BY_HANDLE_FILE_INFORMATION &info) {
   return (static_cast<uint64_t>(info.nFileIndexHigh) << 32) |
          static_cast<uint64_t>(info.nFileIndexLow);
+}
+
+uint64_t fileSize64(const BY_HANDLE_FILE_INFORMATION &info) {
+  return (static_cast<uint64_t>(info.nFileSizeHigh) << 32) |
+         static_cast<uint64_t>(info.nFileSizeLow);
 }
 
 bool getFinalHandlePath(HANDLE handle, std::wstring &outPath) {
@@ -241,6 +269,25 @@ bool isWinDirectory(HANDLE handle, uint64_t dev, uint64_t ino) {
          info.dwVolumeSerialNumber == dev && fileIndex64(info) == ino;
 }
 
+bool verifyWinOwnedWavHandle(HANDLE handle, uint64_t dev, uint64_t ino,
+                             bool requireEmpty, uint64_t minBytes) {
+  if (handle == INVALID_HANDLE_VALUE || handle == nullptr) return false;
+  if (GetFileType(handle) != FILE_TYPE_DISK) return false;
+  BY_HANDLE_FILE_INFORMATION info {};
+  if (!GetFileInformationByHandle(handle, &info)) return false;
+  if ((info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != 0) {
+    return false;
+  }
+  if (info.nNumberOfLinks != 1 || info.dwVolumeSerialNumber != dev ||
+      fileIndex64(info) != ino) {
+    return false;
+  }
+  const uint64_t size = fileSize64(info);
+  if (requireEmpty && size != 0) return false;
+  if (size < minBytes) return false;
+  return true;
+}
+
 int publishWinWav(HANDLE wav, HANDLE root, const std::wstring &name) {
   const size_t bytes = name.size() * sizeof(wchar_t);
   std::vector<unsigned char> buffer(sizeof(FILE_RENAME_INFO) + bytes);
@@ -276,7 +323,7 @@ int runWinConfinedRender(const ConfinedRenderOptions &options,
   std::wstring stagePath;
   if (!utf8ToWide(options.rootDir, stagePath)) return kExitRootMismatch;
   WinDirectories directories;
-  directories.stagingHandle = openWinDirectory(stagePath, FILE_LIST_DIRECTORY | FILE_ADD_FILE);
+  directories.stagingHandle = openWinDirectory(stagePath, FILE_LIST_DIRECTORY | FILE_READ_ATTRIBUTES);
   if (!isWinDirectory(directories.stagingHandle, options.expectedDev, options.expectedIno) ||
       !getFinalHandlePath(directories.stagingHandle, stagePath) ||
       !SetCurrentDirectoryW(stagePath.c_str())) {
@@ -284,15 +331,77 @@ int runWinConfinedRender(const ConfinedRenderOptions &options,
     return kExitRootMismatch;
   }
 
-  HANDLE csd = CreateFileW(L"render.csd", GENERIC_WRITE, 0, nullptr,
-                           CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (csd == INVALID_HANDLE_VALUE) return kExitPublishFailed;
-  DWORD bytesWritten = 0;
-  const BOOL wrote = WriteFile(csd, csdText.data(), static_cast<DWORD>(csdText.size()),
-                               &bytesWritten, nullptr);
-  CloseHandle(csd);
-  if (!wrote || bytesWritten != csdText.size()) return kExitPublishFailed;
-  return runStagedCsound(options.outputName, csoundLibraryPath, csoundArguments);
+  HANDLE outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (!verifyWinOwnedWavHandle(outHandle, options.wavDev, options.wavIno, true, 0)) {
+    std::fprintf(stderr, "CONFINED_ROOT_MISMATCH: Owned WAV descriptor mismatch\n");
+    return kExitRootMismatch;
+  }
+  _setmode(_fileno(stdout), _O_BINARY);
+
+  return runStagedCsound(csdText, csoundLibraryPath, csoundArguments);
+}
+
+int cleanupWinConfinedRender(const ConfinedRenderOptions &options) {
+  if (options.hasRoot == options.hasWav) {
+    std::fprintf(stderr,
+                 "CONFINED_CLEANUP_REFUSED: Specify either owned WAV handle or staging directory\n");
+    return kExitRootMismatch;
+  }
+
+  if (options.hasWav) {
+    HANDLE inherited = GetStdHandle(STD_INPUT_HANDLE);
+    if (!verifyWinOwnedWavHandle(inherited, options.wavDev, options.wavIno, false, 0)) {
+      std::fprintf(stderr, "CONFINED_CLEANUP_REFUSED: Owned WAV descriptor mismatch\n");
+      return kExitRootMismatch;
+    }
+    HANDLE delHandle = ReOpenFile(
+        inherited, DELETE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        FILE_FLAG_OPEN_REPARSE_POINT);
+    if (delHandle == INVALID_HANDLE_VALUE) {
+      std::fprintf(stderr,
+                   "CONFINED_CLEANUP_FAILED: Could not reopen owned WAV handle (%lu)\n",
+                   static_cast<unsigned long>(GetLastError()));
+      return kExitPublishFailed;
+    }
+    FILE_DISPOSITION_INFO disposition {static_cast<BOOLEAN>(TRUE)};
+    const BOOL ok = SetFileInformationByHandle(delHandle, FileDispositionInfo,
+                                               &disposition, sizeof(disposition));
+    const DWORD err = ok ? 0 : GetLastError();
+    CloseHandle(delHandle);
+    if (!ok) {
+      std::fprintf(stderr,
+                   "CONFINED_CLEANUP_FAILED: Could not mark owned WAV for deletion (%lu)\n",
+                   static_cast<unsigned long>(err));
+      return kExitPublishFailed;
+    }
+    return 0;
+  }
+
+  std::wstring stagePath;
+  if (!utf8ToWide(options.rootDir, stagePath)) return kExitRootMismatch;
+  WinDirectories guard;
+  guard.stagingHandle = openWinDirectory(
+      stagePath, DELETE | FILE_LIST_DIRECTORY | FILE_READ_ATTRIBUTES);
+  if (!isWinDirectory(guard.stagingHandle, options.expectedDev, options.expectedIno)) {
+    std::fprintf(stderr, "CONFINED_CLEANUP_REFUSED: Staging directory identity mismatch\n");
+    return kExitRootMismatch;
+  }
+  FILE_DISPOSITION_INFO disposition {static_cast<BOOLEAN>(TRUE)};
+  if (!SetFileInformationByHandle(guard.stagingHandle, FileDispositionInfo,
+                                  &disposition, sizeof(disposition))) {
+    const DWORD err = GetLastError();
+    if (err == ERROR_DIR_NOT_EMPTY) {
+      std::fprintf(stderr,
+                   "CONFINED_CLEANUP_PRESERVED: Staging directory contains unrelated entries\n");
+      return kExitDirNotEmpty;
+    }
+    std::fprintf(stderr,
+                 "CONFINED_CLEANUP_FAILED: Could not remove staging directory (%lu)\n",
+                 static_cast<unsigned long>(err));
+    return kExitPublishFailed;
+  }
+  return 0;
 }
 
 #endif
@@ -302,10 +411,9 @@ int runWinConfinedRender(const ConfinedRenderOptions &options,
 int runConfinedRender(const ConfinedRenderOptions &options,
                       const std::string &csoundLibraryPath,
                       const std::vector<std::string> &csoundArguments) {
-  if (!isValidLeafWavName(options.outputName)) {
+  if (!options.hasRoot || !options.hasWav || options.wavDev != options.expectedDev) {
     std::fprintf(stderr,
-                 "CONFINED_INVALID_ARGUMENT: Output filename must be a safe "
-                 "single-leaf .wav filename\n");
+                 "CONFINED_INVALID_ARGUMENT: Confined render requires matching root and WAV identities\n");
     return 64;
   }
 
@@ -327,57 +435,65 @@ int runConfinedRender(const ConfinedRenderOptions &options,
 #endif
 }
 
-int publishConfinedRender(const ConfinedRenderOptions &options,
-                          const std::string &stagingDir, uint64_t stagingDev,
-                          uint64_t stagingIno, uint64_t wavIno) {
-  if (!isValidLeafWavName(options.outputName) || stagingDev != options.expectedDev) {
+int publishConfinedRender(const ConfinedRenderOptions &options) {
+  if (!options.hasRoot || !options.hasWav ||
+      !isValidLeafWavName(options.outputName) ||
+      options.wavDev != options.expectedDev) {
     return kExitUnsupportedFs;
   }
 #ifdef _WIN32
-  std::wstring rootPath, stagePath, filename;
-  if (!utf8ToWide(options.rootDir, rootPath) || !utf8ToWide(stagingDir, stagePath) ||
-      !utf8ToWide(options.outputName, filename)) {
+  std::wstring rootPath, filename;
+  if (!utf8ToWide(options.rootDir, rootPath) || !utf8ToWide(options.outputName, filename)) {
     return kExitRootMismatch;
   }
   WinDirectories guard;
   guard.rootHandle = openWinDirectory(rootPath, FILE_TRAVERSE | FILE_READ_ATTRIBUTES);
-  guard.stagingHandle = openWinDirectory(stagePath, FILE_LIST_DIRECTORY);
-  if (!isWinDirectory(guard.rootHandle, options.expectedDev, options.expectedIno) ||
-      !isWinDirectory(guard.stagingHandle, stagingDev, stagingIno) ||
-      !getFinalHandlePath(guard.stagingHandle, stagePath)) {
+  if (!isWinDirectory(guard.rootHandle, options.expectedDev, options.expectedIno)) {
     return kExitRootMismatch;
   }
-  const std::wstring wavPath = stagePath + L"\\render.wav";
-  HANDLE wav = CreateFileW(wavPath.c_str(), GENERIC_READ | DELETE, FILE_SHARE_READ,
-                           nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-  if (wav == INVALID_HANDLE_VALUE) return kExitPublishFailed;
-  BY_HANDLE_FILE_INFORMATION info {};
-  const bool valid = GetFileType(wav) == FILE_TYPE_DISK &&
-                     GetFileInformationByHandle(wav, &info) &&
-                     (info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) == 0 &&
-                     info.nNumberOfLinks == 1 && info.dwVolumeSerialNumber == stagingDev &&
-                     fileIndex64(info) == wavIno;
-  const int result = valid ? publishWinWav(wav, guard.rootHandle, filename) : kExitPublishFailed;
-  CloseHandle(wav);
+  HANDLE inherited = GetStdHandle(STD_INPUT_HANDLE);
+  if (!verifyWinOwnedWavHandle(inherited, options.wavDev, options.wavIno, false, 44)) {
+    return kExitPublishFailed;
+  }
+  HANDLE renameHandle = ReOpenFile(
+      inherited, DELETE | FILE_READ_ATTRIBUTES,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      FILE_FLAG_OPEN_REPARSE_POINT);
+  if (renameHandle == INVALID_HANDLE_VALUE) {
+    std::fprintf(stderr,
+                 "CONFINED_PUBLISH_FAILED: Could not reopen owned WAV handle (%lu)\n",
+                 static_cast<unsigned long>(GetLastError()));
+    return kExitPublishFailed;
+  }
+  const int result = publishWinWav(renameHandle, guard.rootHandle, filename);
+  CloseHandle(renameHandle);
   return result;
 #else
   PosixDirectories guard;
   guard.rootFd = open(options.rootDir.c_str(), kDirectoryFlags);
-  guard.stagingFd = open(stagingDir.c_str(), kDirectoryFlags);
-  if (!isPosixDirectory(guard.rootFd, options.expectedDev, options.expectedIno) ||
-      !isPosixDirectory(guard.stagingFd, stagingDev, stagingIno)) {
+  if (!isPosixDirectory(guard.rootFd, options.expectedDev, options.expectedIno)) {
     return kExitRootMismatch;
   }
-  const int wav = openat(guard.stagingFd, "render.wav",
-                          O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC);
-  if (wav < 0) return kExitPublishFailed;
   struct stat info {};
-  const bool valid = fstat(wav, &info) == 0 && S_ISREG(info.st_mode) && info.st_nlink == 1 &&
-                     static_cast<uint64_t>(info.st_dev) == stagingDev &&
-                     static_cast<uint64_t>(info.st_ino) == wavIno;
-  const int result = valid ? publishPosixWav(wav, guard.rootFd, options.outputName) : kExitPublishFailed;
-  close(wav);
-  return result;
+  const bool valid = fstat(STDIN_FILENO, &info) == 0 && S_ISREG(info.st_mode) &&
+                     info.st_nlink == kScratchLinks &&
+                     static_cast<uint64_t>(info.st_dev) == options.wavDev &&
+                     static_cast<uint64_t>(info.st_ino) == options.wavIno &&
+                     info.st_size >= 44;
+  return valid ? publishPosixWav(STDIN_FILENO, guard.rootFd, options.outputName)
+               : kExitPublishFailed;
+#endif
+}
+
+int cleanupConfinedRender(const ConfinedRenderOptions &options) {
+#ifdef _WIN32
+  return cleanupWinConfinedRender(options);
+
+#else
+  // Linux owns an anonymous O_TMPFILE. Closing its descriptor completes cleanup.
+  (void)options;
+  std::fprintf(stderr, "CONFINED_CLEANUP_REFUSED: Named staging cleanup is unsupported\n");
+  return kExitUnsupportedFs;
 #endif
 }
 

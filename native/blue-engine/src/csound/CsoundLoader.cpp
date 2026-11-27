@@ -20,6 +20,7 @@ csound::csoundDestroy_t CsoundLoader::csoundDestroy = nullptr;
 csound::csoundReset_t CsoundLoader::csoundReset = nullptr;
 csound::csoundSetOption_t CsoundLoader::csoundSetOption = nullptr;
 csound::csoundCompileOrc_t CsoundLoader::csoundCompileOrc = nullptr;
+csound::csoundCompileCSD_t CsoundLoader::csoundCompileCSD = nullptr;
 csound::csoundCompile_t CsoundLoader::csoundCompile = nullptr;
 csound::csoundStart_t CsoundLoader::csoundStart = nullptr;
 csound::csoundPerformKsmps_t CsoundLoader::csoundPerformKsmps = nullptr;
@@ -121,6 +122,7 @@ void clearSymbols() {
   CsoundLoader::csoundReset = nullptr;
   CsoundLoader::csoundSetOption = nullptr;
   CsoundLoader::csoundCompileOrc = nullptr;
+  CsoundLoader::csoundCompileCSD = nullptr;
   CsoundLoader::csoundCompile = nullptr;
   CsoundLoader::csoundStart = nullptr;
   CsoundLoader::csoundPerformKsmps = nullptr;
@@ -172,6 +174,8 @@ bool loadAllSymbols(void *handle, std::vector<std::string> &missingSymbols) {
                      missingSymbols);
   loadRequiredSymbol(handle, "csoundCompileOrc", CsoundLoader::csoundCompileOrc,
                      missingSymbols);
+  CsoundLoader::csoundCompileCSD = reinterpret_cast<csound::csoundCompileCSD_t>(
+      getSymbol(handle, "csoundCompileCSD"));
   loadRequiredSymbol(handle, "csoundCompile", CsoundLoader::csoundCompile,
                      missingSymbols);
   loadRequiredSymbol(handle, "csoundStart", CsoundLoader::csoundStart,

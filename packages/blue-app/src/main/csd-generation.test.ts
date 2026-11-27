@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import {
   AddProcessor,
   AudioClip,
+  BSBGroup,
+  BSBKnob,
+  BSBTextField,
   BlueData,
   BlueSynthBuilder,
   Channel,
@@ -12,6 +15,7 @@ import {
   GenericInstrument,
   GenericScore,
   Instance,
+  InstrumentLibrary,
   JMask,
   JavaScriptInstrument,
   JavaScriptObject,
@@ -203,7 +207,18 @@ function createEligibleProject(): BlueData {
 
   const bsb = new BlueSynthBuilder();
   bsb.setName('BSB Pad');
-  bsb.setInstrumentText('a1 oscili 0.1, 220\nouts a1, a1');
+  const frequency = new BSBTextField();
+  frequency.objectName = 'frequency';
+  frequency.textValue = '220';
+  const gain = new BSBKnob();
+  gain.objectName = 'gain';
+  gain.value = 0.1;
+  const controls = new BSBGroup();
+  controls.addChild(frequency);
+  controls.addChild(gain);
+  bsb.getGraphicInterface().getRootGroup().addChild(controls);
+  bsb.getParameters();
+  bsb.setInstrumentText('a1 oscili <gain>, <frequency>\nouts a1, a1');
   data.getArrangement().addInstrument(bsb, '2');
 
   const libScore = new GenericScore();
@@ -274,6 +289,7 @@ describe('observation-only disk CSD generation', () => {
     expect(preflightObservationOnlyDiskCsd(data)).toEqual({ ok: true });
 
     const expected = await generateDiskCsdForScreen(data, undefined, null);
+    expect(expected).toMatch(/a1 oscili gk_blue_auto\d+, 220/);
     const observed = await generateObservationOnlyDiskCsd(data);
 
     expect(observed).toEqual({
@@ -283,6 +299,109 @@ describe('observation-only disk CSD generation', () => {
     });
     expect(data.saveToString()).toBe(beforeXml);
   });
+
+  it.each([
+    'setInstrumentText',
+    'setAlwaysOnInstrumentText',
+    'setGlobalOrc',
+    'setGlobalSco',
+  ] as const)('budgets Blue Synth Builder source set by %s before copying', async (setSource) => {
+    const data = new BlueData();
+    const instrument = new BlueSynthBuilder();
+    data.getArrangement().addInstrument(instrument, '1');
+    instrument[setSource]('é'.repeat(400));
+    const copy = vi.spyOn(data, 'historyCopy');
+
+    await expect(
+      generateObservationOnlyDiskCsd(data, { budget: { maxEstimatedInputBytes: 512 } }),
+    ).resolves.toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it('budgets Blue Synth Builder widgets in the copied project library', async () => {
+    const data = new BlueData();
+    const library = new InstrumentLibrary();
+    const instrument = new BlueSynthBuilder();
+    const field = new BSBTextField();
+    field.textValue = 'x'.repeat(1024);
+    instrument.getGraphicInterface().getRootGroup().addChild(field);
+    library.getRootCategory().addInstrument(instrument);
+    data.setInstrumentLibrary(library);
+    const copy = vi.spyOn(data, 'historyCopy');
+
+    await expect(
+      generateObservationOnlyDiskCsd(data, { budget: { maxEstimatedInputBytes: 512 } }),
+    ).resolves.toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['large literal expansion', 'x'.repeat(200), 'RESPONSE_TOO_LARGE'],
+    ['recursive expansion', '<value><value>', 'UNSUPPORTED_CONTENT'],
+    ['context-dependent expansion', "$'", 'UNSUPPORTED_CONTENT'],
+  ])('rejects Blue Synth Builder %s before copying', async (_label, value, code) => {
+    const data = new BlueData();
+    const instrument = new BlueSynthBuilder();
+    const field = new BSBTextField();
+    field.objectName = 'value';
+    field.textValue = value;
+    instrument.getGraphicInterface().getRootGroup().addChild(field);
+    instrument.setInstrumentText('<value>'.repeat(12));
+    data.getArrangement().addInstrument(instrument, '1');
+    const copy = vi.spyOn(data, 'historyCopy');
+
+    await expect(
+      generateObservationOnlyDiskCsd(data, { budget: { maxEstimatedInputBytes: 512 } }),
+    ).resolves.toMatchObject({ ok: false, code });
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it('budgets score lines introduced by Blue Synth Builder replacement text', async () => {
+    const data = new BlueData();
+    const instrument = new BlueSynthBuilder();
+    const field = new BSBTextField();
+    field.objectName = 'events';
+    field.textValue = 'i1 0 1\n'.repeat(12);
+    instrument.getGraphicInterface().getRootGroup().addChild(field);
+    instrument.setGlobalSco('<events>\n'.repeat(8));
+    data.getArrangement().addInstrument(instrument, '1');
+    const copy = vi.spyOn(data, 'historyCopy');
+
+    await expect(
+      generateObservationOnlyDiskCsd(data, { budget: { maxEstimatedScoreEvents: 64 } }),
+    ).resolves.toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+    expect(copy).not.toHaveBeenCalled();
+  });
+
+  it.each(['widgets', 'points'] as const)(
+    'budgets Blue Synth Builder %s before materializing the detached project',
+    async (collection) => {
+      const data = new BlueData();
+      const instrument = new BlueSynthBuilder();
+      const root = instrument.getGraphicInterface().getRootGroup();
+      if (collection === 'widgets') {
+        for (let index = 0; index < 40; index++) root.addChild(new BSBTextField());
+      } else {
+        const knob = new BSBKnob();
+        knob.objectName = 'gain';
+        root.addChild(knob);
+        instrument
+          .getParameters()[0]!
+          .setPoints(Array.from({ length: 40 }, (_, time) => ({ time, value: 0.5 })));
+      }
+      data.getArrangement().addInstrument(instrument, '1');
+      const copy = vi.spyOn(data, 'historyCopy');
+      const children = vi.spyOn(root, 'getChildren');
+      const sync = vi.spyOn(instrument, 'getParameters');
+
+      await expect(
+        generateObservationOnlyDiskCsd(data, { budget: { maxTraversalNodes: 32 } }),
+      ).resolves.toMatchObject({ ok: false, code: 'RESPONSE_TOO_LARGE' });
+      expect(copy).not.toHaveBeenCalled();
+      expect(sync).not.toHaveBeenCalled();
+      if (collection === 'widgets') expect(children).not.toHaveBeenCalled();
+    },
+  );
 
   it('denies with EXECUTION_REQUIRED before any on-load hook or interpreter runs', async () => {
     const cases: Array<{ name: string; build: () => BlueData; spy?: ReturnType<typeof vi.fn> }> = [

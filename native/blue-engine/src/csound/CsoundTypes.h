@@ -92,6 +92,7 @@ typedef int (*csoundSetOption_t)(CSOUND* csound, const char* option);
 
 // Compilation and performance
 typedef int (*csoundCompileOrc_t)(CSOUND* csound, const char* orc, int async);
+typedef int32_t (*csoundCompileCSD_t)(CSOUND* csound, const char* source, int32_t mode, int32_t async);
 typedef int32_t (*csoundCompile_t)(CSOUND* csound, int32_t argc,
                                    const char** argv);
 typedef int (*csoundStart_t)(CSOUND* csound);

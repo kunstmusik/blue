@@ -303,6 +303,11 @@ int CsoundRuntimeServices::runPerformance(
 
   int result = CsoundLoader::csoundCompile(
       csound, static_cast<int32_t>(argv.size()), argv.data());
+  return performCompiled(csound, result, onMessage);
+}
+
+int CsoundRuntimeServices::performCompiled(
+    csound::CSOUND *csound, int result, const CsoundMessageCallback &onMessage) {
   while (CsoundLoader::csoundGetMessageCnt &&
          CsoundLoader::csoundGetMessageCnt(csound) > 0) {
     drainMessages(csound, onMessage);

@@ -1,5 +1,18 @@
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmod, mkdir, mkdtemp, readFile, stat, unlink, utimes, writeFile } from 'node:fs/promises';
+import { existsSync, fstatSync, writeSync } from 'node:fs';
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  stat,
+  unlink,
+  utimes,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
@@ -73,6 +86,7 @@ describe('EngineRuntimeService', () => {
     return new EngineRuntimeService({
       isPackaged: false,
       resourcesPath: '/unused',
+      scratchProfile: repoRoot,
       repoRoot,
       platform: 'darwin',
       arch: 'arm64',
@@ -591,54 +605,114 @@ describe('EngineRuntimeService', () => {
     expect(runWithoutFeature).not.toHaveBeenCalled();
   });
 
-  it.each(['commit', 'revoke', 'stale receipt', 'cancel', 'terminate'] as const)(
-    'owns staging through %s and fences native publication after the render child exits',
-    async (outcome) => {
-      let stagingRoot = '';
+  const workspaceRoot = path.resolve(__dirname, '../../../..');
+  const stagedNativeEngine = developmentEnginePath(workspaceRoot, process.platform, process.arch);
+
+  const probeWithConfinedV4 = () => ({
+    exitCode: 0,
+    stdout: JSON.stringify({
+      schemaVersion: 1,
+      engine: {
+        schemaVersion: 1,
+        engineVersion: '0.1.0',
+        protocolVersion: 2,
+        sourceRevision: 'test-rev',
+        features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v4'],
+      },
+      csound: {
+        status: 'ready',
+        requestedPath: null,
+        loadedPath: libraryPath,
+        versionRaw: 7000,
+        major: 7,
+        minor: 0,
+        patch: 0,
+        supportedMajors: [7],
+        missingSymbols: [],
+        message: 'ready',
+      },
+      ready: true,
+    }),
+    stderr: '',
+    timedOut: false,
+  });
+
+  const runRealNativeCleanup = (args: string[], wavFd?: number) => {
+    const result = spawnSync(stagedNativeEngine, args, {
+      encoding: 'utf8',
+      windowsHide: true,
+      stdio: [wavFd !== undefined ? wavFd : 'ignore', 'ignore', 'pipe'],
+    });
+    return {
+      status: result.status,
+      stderr: result.stderr || result.error?.message || '',
+    };
+  };
+
+  const flagValue = (args: string[], flag: string): string | undefined => {
+    const idx = args.indexOf(flag);
+    return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : undefined;
+  };
+
+  it.for(['commit', 'revoke', 'stale receipt', 'cancel', 'terminate', 'runner throws'] as const)(
+    'owns descriptor staging through %s and fences native publication after the render child exits',
+    async (outcome, context) => {
+      if (
+        (process.platform === 'darwin' || process.platform === 'win32') &&
+        !existsSync(stagedNativeEngine) &&
+        process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1'
+      ) {
+        context.skip('No staged Blue Engine is available for native staging cleanup.');
+      }
+      const cleanupCalls: string[][] = [];
+      const observedStageDirs = new Set<string>();
+      let ownedWavFd: number | undefined;
+      let publishedWavFd: number | undefined;
+      let expectedWavDev = '';
+      let expectedWavIno = '';
       const controller = new AbortController();
-      const publishConfinedWav = vi.fn(() => {
+      const publishConfinedWav = vi.fn((_exe: string, args: string[], wavFd: number) => {
+        publishedWavFd = wavFd;
+        expect(flagValue(args, '--wav-dev')).toBe(expectedWavDev);
+        expect(flagValue(args, '--wav-ino')).toBe(expectedWavIno);
         controller.abort();
         return { status: 0, stderr: '' };
       });
+      const cleanupConfinedStaging = vi.fn((_exe: string, args: string[], wavFd?: number) => {
+        cleanupCalls.push(args);
+        const dir = flagValue(args, '--root-dir');
+        if (dir) observedStageDirs.add(dir);
+        return runRealNativeCleanup(args, wavFd);
+      });
       const capableRuntime = service({
-        runProbeProcess: async () => ({
-          exitCode: 0,
-          stdout: JSON.stringify({
-            schemaVersion: 1,
-            engine: {
-              schemaVersion: 1,
-              engineVersion: '0.1.0',
-              protocolVersion: 2,
-              sourceRevision: 'test-rev',
-              features: ['csound-probe-v1', 'csound-performance-v1', 'csound-confined-render-v2'],
-            },
-            csound: {
-              status: 'ready',
-              requestedPath: null,
-              loadedPath: libraryPath,
-              versionRaw: 7000,
-              major: 7,
-              minor: 0,
-              patch: 0,
-              supportedMajors: [7],
-              missingSymbols: [],
-              message: 'ready',
-            },
-            ready: true,
-          }),
-          stderr: '',
-          timedOut: false,
-        }),
+        runProbeProcess: async () => probeWithConfinedV4(),
         publishConfinedWav,
-        runExecutionProcess: async (_exe, args, cwd, _signal, _onOutput, stdin) => {
-          stagingRoot = cwd;
-          expect(cwd).not.toBe(repoRoot);
+        cleanupConfinedStaging,
+        runExecutionProcess: async (_exe, args, cwd, _signal, _onOutput, stdin, stdoutFd) => {
+          expect(args).toContain('--run-confined-render');
           expect(args).toContain(cwd);
           expect(stdin).toBe('<CsoundSynthesizer>test</CsoundSynthesizer>');
-          await writeFile(path.join(cwd, 'render.wav'), Buffer.alloc(44));
+          expect(stdoutFd).toBeTypeOf('number');
+          ownedWavFd = stdoutFd;
+          expectedWavDev = flagValue(args, '--wav-dev') ?? '';
+          expectedWavIno = flagValue(args, '--wav-ino') ?? '';
+          const beforeWrite = fstatSync(stdoutFd!, { bigint: true });
+          expect(beforeWrite.isFile()).toBe(true);
+          expect(String(beforeWrite.dev)).toBe(expectedWavDev);
+          expect(String(beforeWrite.ino)).toBe(expectedWavIno);
+          if (process.platform === 'linux') {
+            // Linux staging is already anonymous (nlink === 0) before Csound executes.
+            expect(beforeWrite.nlink).toBe(0n);
+          } else {
+            expect(beforeWrite.nlink).toBe(1n);
+            if (process.platform === 'win32') observedStageDirs.add(cwd);
+          }
+          writeSync(stdoutFd!, Buffer.alloc(44).fill('w'));
+          if (outcome === 'runner throws') {
+            throw new Error('runner failed');
+          }
           if (outcome === 'cancel') controller.abort();
           if (outcome === 'terminate') {
-            await writeFile(path.join(cwd, 'render.csd'), 'unpublished score');
             return { exitCode: null, signal: 'SIGKILL', stdout: '', stderr: '', started: true };
           }
           return { exitCode: 0, signal: null, stdout: '', stderr: '', started: true };
@@ -673,14 +747,135 @@ describe('EngineRuntimeService', () => {
       if (outcome === 'commit') {
         expect(result.state).toBe('completed');
         expect(publishConfinedWav).toHaveBeenCalledOnce();
+        expect(publishedWavFd).toBe(ownedWavFd);
       } else {
         expect(result.state).toBe(outcome === 'cancel' ? 'cancelled' : 'failed');
         expect(publishConfinedWav).not.toHaveBeenCalled();
         if (outcome === 'revoke') expect(result.errorCode).toBe('ACCESS_DENIED');
         if (outcome === 'stale receipt') expect(result.errorCode).toBe('CONFLICT');
       }
-      expect(stagingRoot).not.toBe('');
-      await expect(stat(stagingRoot)).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(ownedWavFd).toBeTypeOf('number');
+      // Owned descriptor is always closed on settlement, releasing the scratch lock on macOS and reclaiming anonymous staging on Linux.
+      expect(() => fstatSync(ownedWavFd!)).toThrow();
+      for (const dir of observedStageDirs) {
+        await expect(stat(dir)).rejects.toMatchObject({ code: 'ENOENT' });
+      }
+      if (process.platform !== 'win32') {
+        expect(cleanupCalls).toEqual([]);
+      } else {
+        expect(cleanupCalls.length).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  it.for(['commit', 'cancel', 'terminate'] as const)(
+    'ignores unrelated or replaced staging paths before post-child inspection and deletion across %s (T073)',
+    async (outcome, context) => {
+      if (
+        (process.platform === 'darwin' || process.platform === 'win32') &&
+        !existsSync(stagedNativeEngine) &&
+        process.env.BLUE_REQUIRE_NATIVE_RENDER_TESTS !== '1'
+      ) {
+        context.skip('No staged Blue Engine is available.');
+        return;
+      }
+      const decoyDir = await mkdtemp(path.join(repoRoot, 'decoy-stage-'));
+      const decoyWav = path.join(decoyDir, 'render.wav');
+      const controller = new AbortController();
+      let publishedBytes: Buffer | null = null;
+      const publishConfinedWav = vi.fn((_exe: string, _args: string[], wavFd: number) => {
+        const info = fstatSync(wavFd);
+        expect(info.size).toBe(44);
+        publishedBytes = Buffer.alloc(44).fill('a');
+        return { status: 0, stderr: '' };
+      });
+      let winStageDir = '';
+      let winMovedStageDir = '';
+      let winVictimPath = '';
+      const cleanupDirsToRemove: string[] = [];
+      const runtime = service({
+        runProbeProcess: async () => probeWithConfinedV4(),
+        publishConfinedWav,
+        cleanupConfinedStaging: (_exe, args, wavFd) => {
+          const dir = flagValue(args, '--root-dir');
+          // On Windows, simulate replacing the staging dir right between WAV deletion and dir deletion.
+          if (process.platform === 'win32' && dir && wavFd === undefined && winStageDir === dir) {
+            winMovedStageDir = `${dir}.moved`;
+            cleanupDirsToRemove.push(winMovedStageDir);
+            cleanupDirsToRemove.push(dir);
+            const movedSync = spawnSync('cmd', ['/c', 'move', dir, winMovedStageDir]);
+            if (movedSync.status === 0) {
+              const mkSync = spawnSync('cmd', ['/c', 'mkdir', dir]);
+              expect(mkSync.status).toBe(0);
+            }
+          }
+          return runRealNativeCleanup(args, wavFd);
+        },
+        runExecutionProcess: async (_exe, _args, cwd, _signal, _onOutput, _stdin, stdoutFd) => {
+          expect(stdoutFd).toBeTypeOf('number');
+          writeSync(stdoutFd!, Buffer.alloc(44).fill('a'));
+          await writeFile(decoyWav, 'unrelated decoy');
+          if (process.platform === 'win32') {
+            winStageDir = cwd;
+            const moved = path.join(cwd, 'moved-owned.wav');
+            winVictimPath = path.join(cwd, 'render.wav');
+            await rename(winVictimPath, moved);
+            await writeFile(winVictimPath, 'unrelated victim');
+          }
+          if (outcome === 'cancel') controller.abort();
+          if (outcome === 'terminate') {
+            return { exitCode: null, signal: 'SIGKILL', stdout: '', stderr: '', started: true };
+          }
+          return { exitCode: 0, signal: null, stdout: '', stderr: '', started: true };
+        },
+      });
+
+      try {
+        const root = await stat(repoRoot, { bigint: true });
+        const result = await runtime.executeCsound(
+          {
+            kind: 'confined-render',
+            operationId: `confined-decoy-${outcome}`,
+            rootPath: repoRoot,
+            rootDev: String(root.dev),
+            rootIno: String(root.ino),
+            outputFilename: 'out.wav',
+            csdText: '<CsoundSynthesizer>test</CsoundSynthesizer>',
+            args: ['--format=wav:short', '-d'],
+          },
+          {
+            signal: controller.signal,
+            beforePublish: () => ({ ok: true }),
+          },
+        );
+        expect(result.state).toBe(
+          outcome === 'commit' ? 'completed' : outcome === 'cancel' ? 'cancelled' : 'failed',
+        );
+        if (outcome === 'commit') {
+          expect(publishedBytes).toEqual(Buffer.alloc(44).fill('a'));
+        }
+        expect(await readFile(decoyWav, 'utf8')).toBe('unrelated decoy');
+        if (process.platform === 'win32' && winStageDir) {
+          // Replacement staging dir and unrelated victim file are preserved while owned moved-owned.wav was deleted by handle.
+          expect(existsSync(winStageDir)).toBe(true);
+          const victimContainer =
+            winMovedStageDir && existsSync(winMovedStageDir) ? winMovedStageDir : winStageDir;
+          expect(await readFile(path.join(victimContainer, 'render.wav'), 'utf8')).toBe(
+            'unrelated victim',
+          );
+          if (outcome !== 'commit') {
+            await expect(stat(path.join(victimContainer, 'moved-owned.wav'))).rejects.toMatchObject(
+              { code: 'ENOENT' },
+            );
+          }
+          cleanupDirsToRemove.push(winStageDir);
+        }
+      } finally {
+        await rm(decoyDir, { recursive: true, force: true });
+        for (const dir of cleanupDirsToRemove) {
+          await rm(dir, { recursive: true, force: true });
+        }
+      }
     },
   );
 });
