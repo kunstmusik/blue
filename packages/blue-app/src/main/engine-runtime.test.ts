@@ -637,7 +637,7 @@ describe('EngineRuntimeService', () => {
     timedOut: false,
   });
 
-  const runRealNativeCleanup = (args: string[], wavFd?: number) => {
+  const runNativeConfinedFs = (args: string[], wavFd?: number) => {
     const result = spawnSync(stagedNativeEngine, args, {
       encoding: 'utf8',
       windowsHide: true,
@@ -675,14 +675,18 @@ describe('EngineRuntimeService', () => {
         publishedWavFd = wavFd;
         expect(flagValue(args, '--wav-dev')).toBe(expectedWavDev);
         expect(flagValue(args, '--wav-ino')).toBe(expectedWavIno);
+        const result =
+          process.platform === 'win32'
+            ? runNativeConfinedFs(args, wavFd)
+            : { status: 0, stderr: '' };
         controller.abort();
-        return { status: 0, stderr: '' };
+        return result;
       });
       const cleanupConfinedStaging = vi.fn((_exe: string, args: string[], wavFd?: number) => {
         cleanupCalls.push(args);
         const dir = flagValue(args, '--root-dir');
         if (dir) observedStageDirs.add(dir);
-        return runRealNativeCleanup(args, wavFd);
+        return runNativeConfinedFs(args, wavFd);
       });
       const capableRuntime = service({
         runProbeProcess: async () => probeWithConfinedV4(),
@@ -809,7 +813,7 @@ describe('EngineRuntimeService', () => {
               expect(mkSync.status).toBe(0);
             }
           }
-          return runRealNativeCleanup(args, wavFd);
+          return runNativeConfinedFs(args, wavFd);
         },
         runExecutionProcess: async (_exe, _args, cwd, _signal, _onOutput, _stdin, stdoutFd) => {
           expect(stdoutFd).toBeTypeOf('number');
