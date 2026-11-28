@@ -33,13 +33,20 @@ type ActionFeedback = {
 const CLIENT_LABELS: Record<McpClientConfigTarget, string> = {
   cursor: 'Cursor',
   vscode: 'VS Code',
-  codex: 'Codex',
+  codex: 'Codex CLI / ChatGPT Desktop',
+  opencode: 'OpenCode',
+  antigravity: 'Google Antigravity',
 };
 
 const CLIENT_DESCRIPTIONS: Record<McpClientConfigTarget, string> = {
   cursor: 'Copies Cursor mcpServers JSON with the active loopback URL and Bearer header.',
   vscode: 'Copies VS Code mcp.json using a password prompt input without embedding the raw token.',
-  codex: 'Copies Codex TOML referencing the BLUE_MCP_TOKEN environment variable.',
+  codex:
+    'In ChatGPT Desktop, open Settings → MCP servers → Add server. Choose Streamable HTTP, use the endpoint above, and set the Authorization header to Bearer followed by a space and the value from Copy Credential. Save and restart ChatGPT. For Codex CLI, copy the TOML and set BLUE_MCP_TOKEN.',
+  opencode:
+    'Add the snippet to your private ~/.config/opencode/opencode.json. It contains the credential and uses mcp.servers for OpenCode 2.x. For 1.x, put blue directly under mcp.',
+  antigravity:
+    'Add the snippet to your private mcp_config.json. In the app, find it under Customizations → Installed → MCP Servers → Copy Config File Path. In the IDE, use MCP Servers → Manage MCP Servers → View raw config.',
 };
 
 const ACTION_BUTTON_CLASS =
@@ -178,7 +185,7 @@ export default function McpSettings({
         label="Enable MCP Server"
         checked={settings.enabled}
         onChange={(enabled) => onChange({ ...settings, enabled })}
-        description="Expose a local Streamable HTTP MCP server on IPv4 loopback (127.0.0.1)."
+        description="Click Apply to start or stop the local MCP server."
       />
 
       <SettingsSelectField
@@ -305,12 +312,14 @@ export default function McpSettings({
                 setClientTarget(value);
               }
             }}
-            containerClassName="mb-0"
+            containerClassName="mb-0 min-w-0 grow basis-64"
             description={CLIENT_DESCRIPTIONS[clientTarget]}
           >
-            <option value="cursor">Cursor</option>
-            <option value="vscode">VS Code</option>
-            <option value="codex">Codex</option>
+            {Object.entries(CLIENT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </SettingsSelectField>
           <button
             type="button"

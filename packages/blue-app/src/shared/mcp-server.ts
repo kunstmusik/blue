@@ -17,7 +17,7 @@ export const MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL = 'mcp-server:copy-client-con
 export const MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL = 'mcp-server:rotate-credential';
 
 export type McpAccessMode = 'read-only' | 'read-write';
-export type McpClientConfigTarget = 'cursor' | 'vscode' | 'codex';
+export type McpClientConfigTarget = 'cursor' | 'vscode' | 'codex' | 'opencode' | 'antigravity';
 
 export interface McpServerPreferences {
   enabled: boolean;
@@ -129,7 +129,13 @@ export function isMcpServerStatus(value: unknown): value is McpServerStatus {
 }
 
 export function isMcpClientConfigTarget(value: unknown): value is McpClientConfigTarget {
-  return value === 'cursor' || value === 'vscode' || value === 'codex';
+  return (
+    value === 'cursor' ||
+    value === 'vscode' ||
+    value === 'codex' ||
+    value === 'opencode' ||
+    value === 'antigravity'
+  );
 }
 
 export function isMcpCopyResult(value: unknown): value is McpCopyResult {

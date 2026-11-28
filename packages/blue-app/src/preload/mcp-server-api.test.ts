@@ -133,6 +133,12 @@ describe('MCP preload API (T012, T037)', () => {
     expect(await mocks.exposedApi!.copyMcpClientConfig('cursor')).toEqual({ ok: true });
     expect(mocks.invoke).toHaveBeenCalledWith(MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL, 'cursor');
 
+    for (const target of ['opencode', 'antigravity'] as const) {
+      mocks.invoke.mockResolvedValueOnce({ ok: true });
+      expect(await mocks.exposedApi!.copyMcpClientConfig(target)).toEqual({ ok: true });
+      expect(mocks.invoke).toHaveBeenCalledWith(MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL, target);
+    }
+
     mocks.invoke.mockResolvedValueOnce({ ok: true, token: 'secret' });
     expect(await mocks.exposedApi!.copyMcpClientConfig('vscode')).toEqual({
       ok: false,

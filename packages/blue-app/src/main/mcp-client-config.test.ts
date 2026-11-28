@@ -77,4 +77,27 @@ describe('buildMcpClientConfig (T038)', () => {
       `[mcp_servers.blue]\nurl = "${TEST_ENDPOINT}"\nbearer_token_env_var = "BLUE_MCP_TOKEN"\n`,
     );
   });
+
+  it('builds OpenCode 2.x remote JSON with OAuth disabled and the current bearer header', () => {
+    expect(JSON.parse(buildMcpClientConfig('opencode', TEST_ENDPOINT, TEST_TOKEN))).toEqual({
+      mcp: {
+        servers: {
+          blue: {
+            type: 'remote',
+            url: TEST_ENDPOINT,
+            oauth: false,
+            headers: { Authorization: `Bearer ${TEST_TOKEN}` },
+          },
+        },
+      },
+    });
+  });
+
+  it('builds Antigravity JSON with the server URL and bearer header', () => {
+    expect(JSON.parse(buildMcpClientConfig('antigravity', TEST_ENDPOINT, TEST_TOKEN))).toEqual({
+      mcpServers: {
+        blue: { serverUrl: TEST_ENDPOINT, headers: { Authorization: `Bearer ${TEST_TOKEN}` } },
+      },
+    });
+  });
 });

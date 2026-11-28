@@ -2,14 +2,15 @@ import type { McpClientConfigTarget } from '../shared/mcp-server';
 
 /**
  * Builds local MCP client configuration snippets for supported editors/CLIs.
- * Runs in Electron main; only Cursor embeds the bearer token directly, while
- * VS Code prompts for a secret input and Codex references `BLUE_MCP_TOKEN`.
+ * Runs in Electron main. Cursor, OpenCode, and Antigravity receive the bearer
+ * header. VS Code prompts for the token and Codex references `BLUE_MCP_TOKEN`.
  */
 export function buildMcpClientConfig(
   target: McpClientConfigTarget,
   endpointUrl: string,
   token: string,
 ): string {
+  const headers = { Authorization: `Bearer ${token}` };
   switch (target) {
     case 'cursor':
       return JSON.stringify(
@@ -17,9 +18,7 @@ export function buildMcpClientConfig(
           mcpServers: {
             blue: {
               url: endpointUrl,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers,
             },
           },
         },
@@ -52,5 +51,13 @@ export function buildMcpClientConfig(
       );
     case 'codex':
       return `[mcp_servers.blue]\nurl = ${JSON.stringify(endpointUrl)}\nbearer_token_env_var = "BLUE_MCP_TOKEN"\n`;
+    case 'opencode':
+      return JSON.stringify(
+        { mcp: { servers: { blue: { type: 'remote', url: endpointUrl, oauth: false, headers } } } },
+        null,
+        2,
+      );
+    case 'antigravity':
+      return JSON.stringify({ mcpServers: { blue: { serverUrl: endpointUrl, headers } } }, null, 2);
   }
 }

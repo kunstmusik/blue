@@ -27,7 +27,7 @@ This setup saves the header in the local Codex configuration. Keep that configur
 
 ### Cursor, VS Code, or Codex CLI
 
-In Blue's MCP panel, select your client and click **Copy Client Config**. Add the snippet to your client configuration. If a configuration already exists, keep its other settings and add the Blue entry.
+In Blue's MCP panel, select your client and click **Copy Client Config**. Choose **Codex CLI / ChatGPT Desktop** for the shared TOML. Add the snippet to your client configuration. If a configuration already exists, keep its other settings and add the Blue entry.
 
 - **Cursor** — Add the entry under `mcpServers` in `~/.cursor/mcp.json`. The snippet includes your token. Keep this file private. [Cursor MCP docs](https://cursor.com/docs/mcp)
 - **VS Code** — In a local session that supports editor-managed MCP, run **MCP: Open User Configuration** from the Command Palette and add the snippet. Start the Blue connection and paste the token from **Copy Credential** when prompted. [VS Code MCP reference](https://code.visualstudio.com/docs/agents/reference/mcp-configuration)
@@ -35,7 +35,7 @@ In Blue's MCP panel, select your client and click **Copy Client Config**. Add th
 
 ### OpenCode
 
-Add this to your OpenCode configuration, usually `~/.config/opencode/opencode.json`. Replace the example URL with Blue's displayed endpoint and `YOUR_BLUE_TOKEN` with the value from **Copy Credential**. Keep this file private because it contains the token.
+In Blue, select **OpenCode** and click **Copy Client Config**. Add the snippet to your OpenCode configuration, usually `~/.config/opencode/opencode.json`. The copied snippet includes Blue’s live endpoint and token. Keep this file private. If you enter the example by hand, replace the URL and `YOUR_BLUE_TOKEN`.
 
 ```json
 {
@@ -56,7 +56,7 @@ On OpenCode 1.x, put `blue` directly under `mcp`. Start OpenCode and use `/mcps`
 
 ### Google Antigravity
 
-In the Antigravity app, open **Customizations → Installed → MCP Servers** and click **Copy Config File Path**. In the Antigravity IDE, use **… → MCP Servers → Manage MCP Servers → View raw config** in the agent panel. Add the entry below to that `mcp_config.json`.
+In Blue, select **Google Antigravity** and click **Copy Client Config**. In the Antigravity app, open **Customizations → Installed → MCP Servers** and click **Copy Config File Path**. In the Antigravity IDE, use **… → MCP Servers → Manage MCP Servers → View raw config** in the agent panel. Add the copied entry to that `mcp_config.json`. The example below shows its format.
 
 ```json
 {
@@ -69,7 +69,7 @@ In the Antigravity app, open **Customizations → Installed → MCP Servers** an
 }
 ```
 
-Replace the example URL with Blue's displayed endpoint and `YOUR_BLUE_TOKEN` with the value from **Copy Credential**. Save the file and restart Antigravity. Keep the configuration private because it contains the token. [Google Antigravity MCP docs](https://antigravity.google/docs/mcp)
+If you enter the example by hand, use Blue's displayed endpoint and the value from **Copy Credential**. Save the file and restart Antigravity. Keep the configuration private because it contains the token. [Google Antigravity MCP docs](https://antigravity.google/docs/mcp)
 
 ### Set the Codex token in your terminal
 

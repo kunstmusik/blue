@@ -330,12 +330,30 @@ describe('MCP settings panel (T012, T037)', () => {
     });
     expect(mockBlueAPI.copyMcpClientConfig).toHaveBeenLastCalledWith('vscode');
 
-    await chooseAppSelectOption(clientTrigger, 'Codex');
+    await chooseAppSelectOption(clientTrigger, 'Codex CLI / ChatGPT Desktop');
+    expect(container.textContent).toContain('Settings → MCP servers → Add server');
     await act(async () => {
       copyConfigButton.click();
     });
     expect(mockBlueAPI.copyMcpClientConfig).toHaveBeenLastCalledWith('codex');
-    expect(container.textContent).toContain('Copied Codex configuration to clipboard.');
+    expect(container.textContent).toContain(
+      'Copied Codex CLI / ChatGPT Desktop configuration to clipboard.',
+    );
+
+    await chooseAppSelectOption(clientTrigger, 'OpenCode');
+    expect(container.textContent).toContain('mcp.servers for OpenCode 2.x');
+    await act(async () => {
+      copyConfigButton.click();
+    });
+    expect(mockBlueAPI.copyMcpClientConfig).toHaveBeenLastCalledWith('opencode');
+
+    await chooseAppSelectOption(clientTrigger, 'Google Antigravity');
+    expect(container.textContent).toContain('private mcp_config.json');
+    await act(async () => {
+      copyConfigButton.click();
+    });
+    expect(mockBlueAPI.copyMcpClientConfig).toHaveBeenLastCalledWith('antigravity');
+    expect(container.textContent).not.toContain(RAW_CREDENTIAL_SECRET);
 
     const rotateButton = findButton('Rotate Credential');
     await act(async () => {
