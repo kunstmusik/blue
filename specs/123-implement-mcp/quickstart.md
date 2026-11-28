@@ -115,3 +115,9 @@ Run `pnpm test` when shared behavior changes. For release validation, regenerate
 - T075 adds cross-volume staging in confined-render v5. Set `BLUE_TEST_RENDER_VOLUME` to the root of a writable volume with a different device identity from OS temp to exercise actual Csound publication, cancellation and macOS recovery in `mcp-render.test.ts`. On macOS, use `BLUE_TEST_UNSUPPORTED_RENDER_VOLUME` for a writable HFS+ mount and `BLUE_TEST_READONLY_RENDER_VOLUME` for a read-only APFS volume. The test requires a staged v5 engine and Csound 7 for these smoke cases. Native allocator tests exercise mismatched root IDs and existing entries without requiring Csound.
 
 - Local T075 verification passed with a writable APFS disk image on a different device from OS temp. It produced the same sine WAV, cancelled before publication, left zero-byte scratch after cancellation, and recovered abandoned destination scratch. A writable HFS+ volume and a read-only APFS volume produced no output or staging entries.
+
+### Completion evidence
+
+- On 2026-11-27, the project owner reported a successful live smoke test using Blue MCP from ChatGPT Desktop.
+- At PR head `10a641cca`, the [macOS, Linux, and Windows PR matrix](https://github.com/kunstmusik/blue/actions/runs/46094165994), [Chromium correctness](https://github.com/kunstmusik/blue/actions/runs/46094165940), and the [documentation candidate and navigation smoke tests](https://github.com/kunstmusik/blue/actions/runs/46094165883) passed.
+- The project owner approved completing the spec with [T076 deferred](tasks.md#deferred-validation). The real Csound 7 sine WAV render passed on macOS and remains pending on a Windows runner with Csound 7. Native Windows filesystem tests remain in PR CI.

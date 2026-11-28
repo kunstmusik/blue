@@ -2,7 +2,7 @@
 
 **Feature Branch** — `codex/implement-mcp`
 **Created** — 2026-11-26
-**Status** — Draft
+**Status** — Complete (2026-11-27). The Windows Csound 7 smoke test is deferred under [T076](tasks.md#deferred-validation).
 **Input** — Let the owner of a running Blue desktop session use a local Model Context Protocol (MCP) client to inspect, edit, play, and render the live project.
 
 ## User Scenarios & Testing
