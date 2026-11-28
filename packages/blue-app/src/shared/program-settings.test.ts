@@ -109,6 +109,7 @@ describe('program-settings choices', () => {
       'diskRender',
       'midi',
       'osc',
+      'mcp',
     ]);
   });
 

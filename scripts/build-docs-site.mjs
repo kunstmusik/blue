@@ -72,6 +72,34 @@ async function buildLandingPages(source, siteRoot, catalog) {
   }
 }
 
+async function buildMcpGuide(repositoryRoot, source, siteRoot) {
+  const { stdout: body } = await exec('quarto', [
+    'pandoc',
+    '--from=markdown-raw_html',
+    '--to=html5',
+    '--syntax-highlighting=none',
+    join(repositoryRoot, 'docs', 'manual', 'mcp.qmd'),
+  ]);
+  const template = await readFile(join(source, 'section.html'), 'utf8');
+  const guideRoot = join(siteRoot, 'mcp');
+  await mkdir(guideRoot);
+  await copyFile(
+    join(repositoryRoot, 'docs', 'manual', 'COPYING.GFDL'),
+    join(guideRoot, 'COPYING.GFDL'),
+  );
+  await writeFile(
+    join(guideRoot, 'index.html'),
+    fillTemplate(template, {
+      prefix: SITE_PREFIX,
+      title: 'Blue MCP',
+      description: 'Connect a local client to the Blue desktop app.',
+      navigation: `<li><a href="${SITE_PREFIX}manual/">Blue 3 manual</a></li>
+      <li><a href="${SITE_PREFIX}mcp/" aria-current="page">Blue MCP</a></li>`,
+      body: body + '<p><a href="./COPYING.GFDL">Manual license</a></p>',
+    }),
+  );
+}
+
 async function checkoutEdition(repositoryRoot, checkout, sha) {
   await exec('git', [
     'clone',
@@ -111,6 +139,7 @@ export async function assembleDocsSite({
     const checkout = join(stage, 'source');
     await mkdir(siteRoot);
     await buildLandingPages(source, siteRoot, catalog);
+    await buildMcpGuide(repositoryRoot, source, siteRoot);
     for (const edition of [...catalog.desktop, ...catalog.tooling]) {
       await checkoutEdition(repositoryRoot, checkout, edition.sourceSha);
       if ('key' in edition) {

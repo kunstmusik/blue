@@ -15,3 +15,9 @@ License texts in the installed licenses directory come from the repository's roo
 - The renderer bundles `@tanstack/react-query` 5.104.4 and `@tanstack/query-core` 5.104.4, MIT, Copyright (c) 2021-present Tanner Linsley. Their copyright and permission text is preserved in installed `Resources/licenses/TanStack-Query-MIT.txt`. Published sources: https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.104.4.tgz and https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.104.4.tgz.
 
 - Legacy library import uses the ISC-licensed [saxes 6.0.0](https://github.com/lddubeau/saxes/tree/v6.0.0) parser and its MIT-licensed [xmlchars 2.2.0](https://github.com/lddubeau/xmlchars/tree/v2.2.0) dependency in the Electron main process. Their full notices are installed as `Resources/licenses/Saxes-ISC.txt` and `Resources/licenses/Xmlchars-MIT.txt`.
+
+- Local MCP server support in the Electron main process bundles `@modelcontextprotocol/server` 2.4.0, `@modelcontextprotocol/core` 2.4.0, and `@modelcontextprotocol/node` 2.1.2 (Apache-2.0 with retained MIT notice for Copyright (c) 2024-2025 Model Context Protocol a Series of LF Projects, LLC). The composite license text is preserved verbatim in installed `Resources/licenses/MCP-TypeScript-SDK-Apache-2.0-MIT.txt`.
+
+- Schema validation for the local MCP server uses `zod` 4.6.7 (MIT, Copyright (c) 2025 Colin McDonnell); its license text is installed as `Resources/licenses/Zod-MIT.txt`.
+
+- The MCP Node HTTP adapter uses `hono` 4.13.22 (MIT, Copyright (c) 2021 - present, Yusuke Wada and Hono contributors; with retained in-package MIT headers in `dist/types/jsx/intrinsic-elements.d.ts` and `dist/helper/css/common.js` / `dist/cjs/helper/css/common.js`) and `@hono/node-server` 2.1.11 (MIT, Copyright (c) 2022 - present, Yusuke Wada and Hono contributors). Their license texts are installed as `Resources/licenses/Hono-MIT.txt` and `Resources/licenses/Hono-Node-Server-MIT.txt`.

@@ -1212,4 +1212,199 @@ describe('EngineBridge runtime selection and lifecycle', () => {
     expect(supported2).toBe(true);
     expect(bridge2.isMixerMeteringSupported()).toBe(true);
   });
+
+  it('enforces MCP playback fence across async playCSD steps, cleans up partial sessions, and preserves started performances (T062)', async () => {
+    const sampleCsd = `<CsoundSynthesizer>
+<CsInstruments>
+sr = 44100
+ksmps = 32
+nchnls = 2
+0dbfs = 1
+instr 1
+a1 oscili 0.2, 440
+outs a1, a1
+endin
+</CsInstruments>
+<CsScore>
+i1 0 1
+</CsScore>
+</CsoundSynthesizer>`;
+
+    const createWiredBridge = (clientOverrides: Partial<FakeEngineClient> = {}) => {
+      const fakeClient = new FakeEngineClient();
+      Object.assign(fakeClient, clientOverrides);
+      const child = new FakeChildProcess(888);
+      const registry = new FakeProcessRegistry();
+      let createdSession: EngineSession | null = null;
+
+      const bridge = new EngineBridge(
+        windowStub(),
+        'blue-engine',
+        undefined,
+        undefined,
+        'realtime',
+        undefined,
+        {
+          allocateEndpoints: async () => ({
+            controlEndpoint: 'tcp://127.0.0.1:45555',
+            pubEndpoint: 'tcp://127.0.0.1:45556',
+            controlPort: 45555,
+            pubPort: 45556,
+          }),
+          createSession: (request: EngineSessionCreationRequest) => {
+            createdSession = new EngineSession(request, {
+              spawn: () => child as never,
+              createClient: () => fakeClient as never,
+              registerManifest: (m) => registry.registerEngineProcess(m),
+              removeManifest: (p) => registry.removeEngineProcessRecord(p),
+            });
+            return createdSession;
+          },
+        },
+      );
+      const internals = bridge as unknown as {
+        startEngine: () => Promise<{ ok: boolean }>;
+      };
+      internals.startEngine = async () => {
+        const sess = new EngineSession(
+          { kind: 'realtime', enginePath: 'blue-engine' },
+          {
+            spawn: () => child as never,
+            createClient: () => fakeClient as never,
+            registerManifest: (m) => registry.registerEngineProcess(m),
+            removeManifest: (p) => registry.removeEngineProcessRecord(p),
+          },
+        );
+        await sess.spawn();
+        await sess.awaitReady();
+        createdSession = sess;
+        (bridge as unknown as { activeSession: EngineSession | null }).activeSession = sess;
+        return { ok: true };
+      };
+      return { bridge, fakeClient, getSession: () => createdSession };
+    };
+
+    // 1. Revoked during setOption
+    {
+      let allowed = true;
+      const { bridge, fakeClient } = createWiredBridge({
+        setOption: vi.fn(async () => {
+          allowed = false;
+          return { ok: true, message: '' };
+        }) as never,
+      });
+      const compileSpy = vi.spyOn(fakeClient, 'compileOrc');
+      const startSpy = vi.spyOn(fakeClient, 'start');
+      const res = await bridge.playCSD(
+        sampleCsd,
+        undefined,
+        undefined,
+        undefined,
+        ['-d', '-m0'],
+        undefined,
+        {
+          check: () =>
+            allowed ? { ok: true } : { ok: false, code: 'CONFLICT', message: 'Stale receipt' },
+        },
+      );
+      expect(res).toMatchObject({ ok: false, fenced: true, failureKind: 'project' });
+      expect(compileSpy).not.toHaveBeenCalled();
+      expect(startSpy).not.toHaveBeenCalled();
+      expect(bridge.getActiveSession()).toBeNull();
+      expect(bridge.isCurrentlyPlaying()).toBe(false);
+    }
+
+    // 2. Revoked during compileOrc -> readScore and start are never invoked, engine is killed
+    {
+      let allowed = true;
+      const { bridge, fakeClient } = createWiredBridge({
+        compileOrc: vi.fn(async () => {
+          allowed = false;
+          return { ok: true, message: '' };
+        }) as never,
+      });
+      const readScoreSpy = vi.spyOn(fakeClient, 'readScore');
+      const startSpy = vi.spyOn(fakeClient, 'start');
+      const res = await bridge.playCSD(
+        sampleCsd,
+        undefined,
+        undefined,
+        undefined,
+        ['-d'],
+        undefined,
+        {
+          check: () =>
+            allowed ? { ok: true } : { ok: false, code: 'ACCESS_DENIED', message: 'Revoked' },
+        },
+      );
+      expect(res).toMatchObject({ ok: false, fenced: true, failureKind: 'project' });
+      expect(readScoreSpy).not.toHaveBeenCalled();
+      expect(startSpy).not.toHaveBeenCalled();
+      expect(bridge.getActiveSession()).toBeNull();
+    }
+
+    // 3. Revoked during readScore -> client.start() is never invoked, engine is killed
+    {
+      let allowed = true;
+      const { bridge, fakeClient } = createWiredBridge({
+        readScore: vi.fn(async () => {
+          allowed = false;
+          return { ok: true, message: '' };
+        }) as never,
+      });
+      const startSpy = vi.spyOn(fakeClient, 'start');
+      const res = await bridge.playCSD(
+        sampleCsd,
+        undefined,
+        undefined,
+        undefined,
+        ['-d'],
+        undefined,
+        {
+          check: () =>
+            allowed ? { ok: true } : { ok: false, code: 'ACCESS_DENIED', message: 'Revoked' },
+        },
+      );
+      expect(res).toMatchObject({ ok: false, fenced: true, failureKind: 'project' });
+      expect(startSpy).not.toHaveBeenCalled();
+      expect(bridge.getActiveSession()).toBeNull();
+    }
+
+    // 4. Revocation AFTER client.start() succeeds preserves { ok: true }
+    {
+      let allowed = true;
+      const { bridge, fakeClient } = createWiredBridge({
+        start: vi.fn(async () => {
+          allowed = false;
+          return { ok: true, message: '' };
+        }) as never,
+      });
+      const stopSpy = vi.spyOn(fakeClient, 'stop');
+      const res = await bridge.playCSD(
+        sampleCsd,
+        undefined,
+        undefined,
+        undefined,
+        ['-d'],
+        undefined,
+        {
+          check: () =>
+            allowed ? { ok: true } : { ok: false, code: 'ACCESS_DENIED', message: 'Late revoke' },
+        },
+      );
+      expect(res).toEqual({ ok: true });
+      expect(stopSpy).not.toHaveBeenCalled();
+      expect(bridge.isCurrentlyPlaying()).toBe(true);
+      await bridge.stopPlayback();
+    }
+
+    // 5. Ordinary UI playback without a fence continues normally
+    {
+      const { bridge } = createWiredBridge();
+      const res = await bridge.playCSD(sampleCsd, undefined, undefined, undefined, ['-d']);
+      expect(res).toEqual({ ok: true });
+      expect(bridge.isCurrentlyPlaying()).toBe(true);
+      await bridge.stopPlayback();
+    }
+  });
 });

@@ -15,9 +15,11 @@ import RealtimeRenderSettings from './RealtimeRenderSettings';
 import DiskRenderSettings from './DiskRenderSettings';
 import MidiSettings from './MidiSettings';
 import OscSettings from './OscSettings';
+import McpSettings from './McpSettings';
 import { useMidiInputStore } from '../../stores/midi-input-store';
 import type { MidiInputServiceSnapshot } from '../../../shared/midi-input';
 import { isValidOscPort, type OscServerRuntimeSnapshot } from '../../../shared/osc-control';
+import { isValidMcpPort, type McpServerStatus } from '../../../shared/mcp-server';
 
 export default function SettingsApp(): React.ReactElement {
   const [active, setActive] = useState<ProgramSettingsPanelId>('general');
@@ -27,6 +29,7 @@ export default function SettingsApp(): React.ReactElement {
   const [validationIssues, setValidationIssues] = useState<SettingsValidationIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [oscRuntime, setOscRuntime] = useState<OscServerRuntimeSnapshot | null>(null);
+  const [mcpStatus, setMcpStatus] = useState<McpServerStatus | null>(null);
 
   const setMidiSavedPreferences = useMidiInputStore((s) => s.setSavedPreferences);
   const setMidiSnapshot = useMidiInputStore((s) => s.setSnapshot);
@@ -87,6 +90,29 @@ export default function SettingsApp(): React.ReactElement {
       .then((snapshot) => {
         setOscRuntime((current) =>
           !current || snapshot.revision >= current.revision ? snapshot : current,
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const api = window.blueAPI as typeof window.blueAPI & {
+      getMcpServerStatus?: () => Promise<McpServerStatus>;
+      onMcpServerStatus?: (callback: (status: McpServerStatus) => void) => () => void;
+    };
+    const unsubscribe = api.onMcpServerStatus?.((status) => {
+      setMcpStatus((current) =>
+        !current || status.revision >= current.revision ? status : current,
+      );
+    });
+    void api
+      .getMcpServerStatus?.()
+      .then((status) => {
+        setMcpStatus((current) =>
+          !current || status.revision >= current.revision ? status : current,
         );
       })
       .catch(() => undefined);
@@ -190,6 +216,7 @@ export default function SettingsApp(): React.ReactElement {
   const secondaryButtonClass =
     'inline-flex items-center rounded-md border border-app-border bg-transparent px-4 py-1.5 text-role-body transition-colors enabled:hover:border-app-accent/60 enabled:hover:text-app-text-strong disabled:cursor-default disabled:opacity-40';
   const hasInvalidOscDraft = !isValidOscPort(draft.osc.preferredPort);
+  const hasInvalidMcpDraft = !isValidMcpPort(draft.mcp.preferredPort);
 
   const renderPanel = () => {
     switch (active) {
@@ -259,6 +286,14 @@ export default function SettingsApp(): React.ReactElement {
             onChange={(osc) => handleDraftChange({ ...draft, osc })}
           />
         );
+      case 'mcp':
+        return (
+          <McpSettings
+            settings={draft.mcp}
+            status={mcpStatus}
+            onChange={(mcp) => handleDraftChange({ ...draft, mcp })}
+          />
+        );
     }
   };
 
@@ -312,7 +347,7 @@ export default function SettingsApp(): React.ReactElement {
           <button
             type="button"
             onClick={handleApply}
-            disabled={(!dirty && !midiDraftDirty) || hasInvalidOscDraft}
+            disabled={(!dirty && !midiDraftDirty) || hasInvalidOscDraft || hasInvalidMcpDraft}
             className="inline-flex items-center rounded-md bg-app-accent px-4 py-1.5 text-role-body text-app-accent-foreground transition-colors enabled:hover:bg-app-accent-hover disabled:cursor-default disabled:bg-app-surface-strong disabled:text-app-text-subtle"
           >
             Apply

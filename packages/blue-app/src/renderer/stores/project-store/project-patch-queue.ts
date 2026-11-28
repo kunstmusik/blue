@@ -1128,6 +1128,7 @@ export function createProjectPatchQueue(
       dirtyBaseline = null;
       sequenceChanged = false;
       if (sessionId !== undefined) {
+        if (sessionId !== currentSessionId) contextSequence = 0;
         currentSessionId = sessionId;
         currentRevision = 0;
       }
@@ -1154,6 +1155,7 @@ export function createProjectPatchQueue(
         trackedOperationIds.clear();
         dirtyBaseline = null;
         sequenceChanged = false;
+        contextSequence = 0;
         currentSessionId = sessionId;
         currentRevision = 0;
       }

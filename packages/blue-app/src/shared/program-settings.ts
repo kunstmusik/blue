@@ -16,6 +16,12 @@ import {
   type OscServerPreferences,
 } from './osc-control';
 import {
+  createDefaultMcpServerPreferences,
+  isValidMcpPort,
+  normalizeMcpServerPreferences,
+  type McpServerPreferences,
+} from './mcp-server';
+import {
   APP_ZOOM_DEFAULT_PERCENT,
   isSupportedAppZoomPercent,
   normalizeAppZoomPercent,
@@ -31,7 +37,8 @@ export type ProgramSettingsPanelId =
   | 'realtimeRender'
   | 'diskRender'
   | 'midi'
-  | 'osc';
+  | 'osc'
+  | 'mcp';
 
 export interface GeneralSettingsSnapshot {
   workDirectory: string;
@@ -188,6 +195,11 @@ export interface ProgramSettingsSnapshot {
    * downgrade safety.
    */
   osc: OscServerPreferences;
+  /**
+   * App-wide local MCP server preference (SPEC 123). The bearer credential is
+   * owned by main and never enters this snapshot or project XML.
+   */
+  mcp: McpServerPreferences;
   lastSavedAt?: string;
 }
 
@@ -578,6 +590,7 @@ export function createDefaultProgramSettings(platform: string): ProgramSettingsS
     appSpecific: createDefaultCurrentAppSettings(),
     midiInput: createDefaultMidiInputPreferences(),
     osc: createDefaultOscServerPreferences(),
+    mcp: createDefaultMcpServerPreferences(),
   };
 }
 
@@ -701,6 +714,30 @@ export function validateProgramSettings(
     });
   }
 
+  if (!isValidMcpPort(snapshot.mcp?.preferredPort)) {
+    issues.push({
+      path: 'mcp.preferredPort',
+      message: 'Must be an integer between 1024 and 65535',
+      severity: 'error',
+    });
+  }
+
+  if (typeof snapshot.mcp?.enabled !== 'boolean') {
+    issues.push({
+      path: 'mcp.enabled',
+      message: 'Must be true or false',
+      severity: 'error',
+    });
+  }
+
+  if (snapshot.mcp?.accessMode !== 'read-only' && snapshot.mcp?.accessMode !== 'read-write') {
+    issues.push({
+      path: 'mcp.accessMode',
+      message: 'Must be one of: read-only, read-write',
+      severity: 'error',
+    });
+  }
+
   if (!isSupportedAppZoomPercent(snapshot.appSpecific?.appZoomPercent)) {
     issues.push({
       path: 'appSpecific.appZoomPercent',
@@ -814,6 +851,9 @@ export function resetProgramSettingsPanel(
     case 'osc':
       result.osc = createDefaultOscServerPreferences();
       break;
+    case 'mcp':
+      result.mcp = createDefaultMcpServerPreferences();
+      break;
   }
 
   return result;
@@ -851,6 +891,8 @@ export function mergeWithDefaults(
     : createDefaultMidiInputPreferences();
 
   const mergedOsc = normalizeOscServerPreferences(saved.osc, savedAppSpecific.oscInputPort);
+
+  const mergedMcp = normalizeMcpServerPreferences(saved.mcp);
 
   return {
     version: saved.version ?? PROGRAM_SETTINGS_VERSION,
@@ -899,6 +941,7 @@ export function mergeWithDefaults(
     appSpecific: mergedAppSpecific,
     midiInput: mergedMidiInput,
     osc: mergedOsc,
+    mcp: mergedMcp,
     lastSavedAt: saved.lastSavedAt,
   };
 }
@@ -915,6 +958,7 @@ export const PROGRAM_SETTINGS_PANEL_ORDER: readonly {
   { id: 'diskRender', label: 'Disk Render' },
   { id: 'midi', label: 'MIDI' },
   { id: 'osc', label: 'OSC' },
+  { id: 'mcp', label: 'MCP' },
 ];
 
 /**

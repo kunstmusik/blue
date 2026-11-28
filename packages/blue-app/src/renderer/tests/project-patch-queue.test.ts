@@ -1813,6 +1813,30 @@ describe('ProjectPatchQueue settlement boundary participant (T016)', () => {
     expect(dependencies.commit).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['reset', 'publication'] as const)(
+    'starts the replacement document history sequence at zero after %s',
+    async (source) => {
+      const dependencies = makeParticipantDependencies();
+      const queue = createProjectPatchQueue(dependencies);
+      queue.acceptRevision(1, 5);
+      expect(queue.reserveContextSequence()).toBe(1);
+      expect(queue.reserveContextSequence()).toBe(2);
+
+      if (source === 'reset') queue.reset(2);
+      queue.acceptRevision(2, 0);
+      await queue.handlePrepareBoundary({ barrierId: 'replacement-quit', reason: 'replacement' });
+
+      expect(dependencies.acknowledgeBoundary).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lastAcknowledgedRevision: 0,
+          lastAcknowledgedSequence: 0,
+          outstandingPrefixCount: 0,
+        }),
+      );
+      expect(queue.reserveContextSequence()).toBe(1);
+    },
+  );
+
   it('ignores release events for stale barrier ids', async () => {
     const dependencies = makeParticipantDependencies();
     const queue = createProjectPatchQueue(dependencies);

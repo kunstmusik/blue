@@ -63,6 +63,8 @@ jobs:
           pnpm --filter @blue/engine-native verify
 
       - name: Run workspace tests
+        env:
+          BLUE_REQUIRE_NATIVE_RENDER_TESTS: '1'
         shell: bash
         run: pnpm test
 

@@ -83,6 +83,7 @@ public:
 
   // Compilation and performance
   static csound::csoundCompileOrc_t csoundCompileOrc;
+  static csound::csoundCompileCSD_t csoundCompileCSD;
   static csound::csoundCompile_t csoundCompile;
   static csound::csoundStart_t csoundStart;
   static csound::csoundPerformKsmps_t csoundPerformKsmps;

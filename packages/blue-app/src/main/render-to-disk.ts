@@ -47,6 +47,22 @@ export interface RenderToDiskContext {
 
 export type RenderStatusCallback = (status: RenderOperationStatus) => void;
 
+export type RenderBeforeLaunchCheck = () =>
+  | { readonly ok: true }
+  | { readonly ok: false; readonly code: string; readonly message: string };
+
+export interface ConfinedCsoundRunRequest {
+  readonly rootPath: string;
+  readonly rootDev: string;
+  readonly rootIno: string;
+  readonly outputFilename: string;
+  readonly csdText: string;
+  readonly args: string[];
+  readonly totalDuration?: number;
+  readonly beforeLaunch: RenderBeforeLaunchCheck;
+  readonly beforePublish: RenderBeforeLaunchCheck;
+}
+
 export interface RenderExecutionSeam {
   runCsound(
     args: string[],
@@ -54,6 +70,14 @@ export interface RenderExecutionSeam {
     onProgress?: (progress: number) => void,
     totalDuration?: number,
   ): Promise<{ exitCode: number; stderr: string; stdout?: string }>;
+  runConfinedCsound?(request: ConfinedCsoundRunRequest): Promise<{
+    exitCode: number;
+    stderr: string;
+    stdout?: string;
+    cancelled?: boolean;
+    errorCode?: string | null;
+    message?: string;
+  }>;
 }
 
 // ─── Service ───

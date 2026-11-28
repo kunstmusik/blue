@@ -10,6 +10,7 @@ export const BLUE_ENGINE_CAPABILITIES_SCHEMA_VERSION = 1;
 export const CSOUND_IO_FEATURE = 'csound-io-v1';
 export const CSOUND_UTILITY_FEATURE = 'csound-utility-v1';
 export const CSOUND_PERFORMANCE_FEATURE = 'csound-performance-v1';
+export const CSOUND_CONFINED_RENDER_FEATURE = 'csound-confined-render-v5';
 /** Declared by engines whose automation payload uses exact decimal text. */
 export const AUTOMATION_DECIMAL_FEATURE = 'automation-decimal-v1';
 /** Declared by engines supporting the native owner lifetime monitor. */

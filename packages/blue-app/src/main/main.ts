@@ -1,3 +1,4 @@
+import { recoverMacRenderScratch } from './macos-render-scratch';
 import { readAudioFileMetadataHeader } from './audio-file-metadata';
 /**
  * Electron main process — manages app window, file dialogs, and engine lifecycle.
@@ -14,6 +15,7 @@ import {
   shell,
 } from 'electron';
 import * as path from 'path';
+import { tmpdir } from 'node:os';
 import * as fs from 'fs';
 import { randomUUID } from 'node:crypto';
 
@@ -279,6 +281,37 @@ import { MidiImportService } from './midi-import-service';
 import type { MidiImportCommitResult, MidiImportStartResult } from '../shared/midi-import';
 import { decideMidiPermission, isSameApplicationLocation } from './midi-permission';
 import { OscControlService } from './osc-control-service';
+import {
+  McpBridge,
+  McpConsoleTailBuffer,
+  buildMcpEngineStatusSnapshot,
+  type McpAuthContext,
+  type McpDocumentReceipt,
+  type McpResult,
+} from './mcp-bridge';
+import { buildMcpClientConfig } from './mcp-client-config';
+import { createFileCredentialInterlock, McpCredentialManager } from './mcp-credential';
+import { captureAuthorizedRenderRoot } from './mcp-render';
+import {
+  createGuardedMcpPlaybackController,
+  runGuardedPlaybackSequence,
+  type McpPlaybackConfirmationOutcome,
+  type McpPlaybackFence,
+} from './mcp-playback';
+import { createBlueMcpServer } from './mcp-tools';
+import { McpServerService } from './mcp-server-service';
+import {
+  MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL,
+  MCP_SERVER_COPY_CREDENTIAL_CHANNEL,
+  MCP_SERVER_GET_STATUS_CHANNEL,
+  MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL,
+  MCP_SERVER_STATUS_CHANGED_CHANNEL,
+  createInitialMcpServerStatus,
+  isMcpClientConfigTarget,
+  type McpCopyResult,
+  type McpRotateResult,
+  type McpServerStatus,
+} from '../shared/mcp-server';
 import {
   SETTINGS_CLOSE_RESPONSE_CHANNEL,
   SETTINGS_CONFIRM_CLOSE_CHANNEL,
@@ -659,6 +692,7 @@ const projectHistory = createProjectHistory({
     if (hasLibraryRelevantChangedTargets(changedTargets)) {
       unifiedLibraryService?.publishProjectChanged();
     }
+    mcpServerService?.notifyProjectResourcesUpdated();
     rebuildApplicationMenuIfChanged();
     updateWindowTitleIfChanged();
   },
@@ -702,6 +736,7 @@ function publishHistoryCheckpoint(): void {
   broadcastToWorkbenchWindows(PROJECT_DOCUMENT_UPDATED_CHANNEL, event);
   broadcastProjectDocumentUpdateToEffectWindows(event as never);
   broadcastProjectDocumentUpdateToTrackInstrumentWindows(event as never);
+  mcpServerService?.notifyProjectResourcesUpdated();
   rebuildApplicationMenuIfChanged();
   updateWindowTitleIfChanged();
 }
@@ -836,6 +871,9 @@ let javaScriptSession: JavaScriptSession | null = null;
 let javaRuntimeSessionManager: JavaRuntimeSessionManager | null = null;
 let midiInputCoordinator: MidiInputCoordinator | null = null;
 let oscControlService: OscControlService | null = null;
+let mcpServerService: McpServerService | null = null;
+const mcpConsoleTail = new McpConsoleTailBuffer();
+let activePlaybackDocumentId: string | null = null;
 let recentProjectFiles: string[] = [];
 let currentFollowPlaybackEnabled = true;
 let currentSavedFollowPlayback = true;
@@ -1083,6 +1121,7 @@ const renderFreezeCoordinator = createRenderFreezeCoordinator({
   getCurrentProjectSessionId,
   getCurrentProjectSessionDocumentId,
   getCurrentProjectRevision,
+  getCurrentProjectStateId: () => projectSession.read().stateId,
   getCurrentProjectDocument,
   getMainWindow: () => mainWindow,
   getEngineRuntimeService: () => engineRuntimeService,
@@ -1104,6 +1143,305 @@ const {
   handleFreezeScoreObjects,
   handleCancelRenderOperation,
 } = renderFreezeCoordinator;
+
+function getCurrentProjectReceipt(): McpDocumentReceipt | null {
+  const snap = projectSession.read();
+  if (!snap.data || !snap.documentId || !snap.stateId) return null;
+  return {
+    documentId: snap.documentId,
+    revision: snap.revision,
+    stateId: snap.stateId,
+  };
+}
+
+function broadcastMcpStatus(status: McpServerStatus): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+      window.webContents.send(MCP_SERVER_STATUS_CHANGED_CHANNEL, status);
+    }
+  }
+}
+
+async function confirmMcpAction(
+  request: Parameters<typeof showNativeConfirmation>[1],
+  signal: AbortSignal,
+): Promise<McpPlaybackConfirmationOutcome> {
+  if (signal.aborted) {
+    return 'cancelled';
+  }
+  const win = mainWindow;
+  if (!win || win.isDestroyed()) {
+    return 'owner-unavailable';
+  }
+  const res = await showNativeConfirmation(win, request);
+  if (signal.aborted) {
+    return 'cancelled';
+  }
+  if (res.outcome === 'owner-unavailable' || res.outcome === 'failed') {
+    return 'owner-unavailable';
+  }
+  if (res.outcome === 'dismissed' || res.actionId === 'cancel') {
+    return 'declined';
+  }
+  return res.actionId === 'confirm' ? 'approved' : 'declined';
+}
+
+function checkMcpRuntimeGate(
+  auth: McpAuthContext,
+  expected: McpDocumentReceipt,
+): McpResult<McpDocumentReceipt> {
+  if (auth.signal.aborted) {
+    return { ok: false, code: 'CANCELLED', message: 'The MCP runtime request was cancelled.' };
+  }
+  if (!auth.isAuthorized() || auth.accessMode !== 'read-write' || auth.action !== 'runtime') {
+    return {
+      ok: false,
+      code: 'ACCESS_DENIED',
+      message: 'Read-write MCP authorization is required for this runtime action.',
+    };
+  }
+  const current = getCurrentProjectReceipt();
+  if (!current) {
+    return {
+      ok: false,
+      code: 'NO_ACTIVE_PROJECT',
+      message: 'No project is currently open in Blue. Open or create a project and retry.',
+    };
+  }
+  if (
+    current.documentId !== expected.documentId ||
+    current.revision !== expected.revision ||
+    current.stateId !== expected.stateId
+  ) {
+    return {
+      ok: false,
+      code: 'CONFLICT',
+      message:
+        'The active project changed before the runtime action completed. Reread the receipt and retry.',
+    };
+  }
+  return { ok: true, value: current };
+}
+
+const mcpPlaybackController = createGuardedMcpPlaybackController({
+  getCurrentReceipt: getCurrentProjectReceipt,
+  isEngineAvailable: () => Boolean(engineBridge && engineRuntimeService && !isQuitting),
+  isCurrentlyPlaying: () => Boolean(engineBridge?.isCurrentlyPlaying()),
+  getPlayingDocumentId: () => activePlaybackDocumentId,
+  isLoopAuthorityCurrent: (grant) => Boolean(mcpServerService?.isWriteGrantCurrent(grant)),
+  confirmPlayback: async ({ receipt, signal }) =>
+    confirmMcpAction(
+      {
+        id: 'mcp-transport-play',
+        type: 'question',
+        title: 'Allow MCP Timeline Playback',
+        message: 'Allow the connected MCP client to start timeline playback?',
+        detail: `Project receipt: ${receipt.documentId} (revision ${receipt.revision})`,
+        actions: [
+          { id: 'confirm', label: 'Start Playback', role: 'accept' },
+          { id: 'cancel', label: 'Cancel', role: 'cancel' },
+        ],
+        defaultActionId: 'confirm',
+        cancelActionId: 'cancel',
+      },
+      signal,
+    ),
+  startPlayback: async (fence) => {
+    if (playbackStartPromise) {
+      await playbackStartPromise;
+    }
+    let fenceFailure: McpResult<void> | null = null;
+    const trackedFence: McpPlaybackFence = {
+      check: () => {
+        const gate = fence.check();
+        if (!gate.ok) {
+          fenceFailure = gate;
+        }
+        return gate;
+      },
+    };
+    const gateBefore = trackedFence.check();
+    if (!gateBefore.ok) {
+      return gateBefore;
+    }
+    const startPromise = startPlayback(getCurrentData(), false, trackedFence).finally(() => {
+      if (playbackStartPromise === startPromise) {
+        playbackStartPromise = null;
+      }
+    });
+    playbackStartPromise = startPromise;
+    const started = await startPromise;
+    if (fenceFailure) {
+      return fenceFailure;
+    }
+    if (!started) {
+      return {
+        ok: false,
+        code: 'ENGINE_UNAVAILABLE',
+        message: 'Timeline playback failed to start in the Blue Csound engine.',
+      };
+    }
+    return { ok: true, value: undefined };
+  },
+  stopPlayback: () => stopPlaybackInternal(),
+});
+
+const mcpBridge = new McpBridge({
+  readSession: () => projectSession.read(),
+  getSaveState: () => projectHistory.getSaveState(),
+  isDirty: () => projectHistory.isDirty(),
+  getEngineStatus: () =>
+    buildMcpEngineStatusSnapshot({
+      isQuitting,
+      hasBridge: Boolean(engineBridge),
+      hasRuntimeService: Boolean(engineRuntimeService),
+      isPlaying: Boolean(engineBridge?.isCurrentlyPlaying()),
+      activeSessionAcceptingCommands: Boolean(
+        engineBridge?.getActiveSession()?.isCommandAccepting(),
+      ),
+      activePlaybackDocumentId,
+      consoleTail: mcpConsoleTail.read(),
+    }),
+  history: projectHistory,
+  runtime: {
+    transportPlay: (auth, expected) => mcpPlaybackController.transportPlay(auth, expected),
+    transportStop: (auth, expected) => mcpPlaybackController.transportStop(auth, expected),
+    renderToDisk: async (auth, input) => {
+      const preGate = checkMcpRuntimeGate(auth, input.expected);
+      if (!preGate.ok) return preGate;
+
+      let nativeRoot: string | null = null;
+      if (input.destination === 'project') {
+        const filePath = getCurrentFilePath();
+        if (!filePath) {
+          return {
+            ok: false,
+            code: 'OUTPUT_REJECTED',
+            message:
+              'Unsaved project has no project folder. Save the project or choose destination "choose".',
+          };
+        }
+        nativeRoot = path.dirname(filePath);
+      } else {
+        if (!mainWindow || mainWindow.isDestroyed()) {
+          return {
+            ok: false,
+            code: 'ACCESS_DENIED',
+            message: 'Main window is unavailable to choose an output directory.',
+          };
+        }
+        const picked = await dialog.showOpenDialog(mainWindow, {
+          title: 'Select Output Folder for MCP WAV Render',
+          defaultPath: getCurrentProjectDirectory() ?? getConfiguredWorkDirectory(),
+          properties: ['openDirectory'],
+        });
+        if (auth.signal.aborted) {
+          return { ok: false, code: 'CANCELLED', message: 'Render request was cancelled.' };
+        }
+        if (picked.canceled || picked.filePaths.length === 0) {
+          return {
+            ok: false,
+            code: 'CANCELLED',
+            message: 'Destination folder selection was cancelled.',
+          };
+        }
+        nativeRoot = picked.filePaths[0]!;
+      }
+
+      const capturedRoot = captureAuthorizedRenderRoot(nativeRoot);
+      if (!capturedRoot.ok) {
+        return capturedRoot;
+      }
+
+      try {
+        const postPickGate = checkMcpRuntimeGate(auth, input.expected);
+        if (!postPickGate.ok) return postPickGate;
+
+        const confirmation = await confirmMcpAction(
+          {
+            id: 'mcp-render-to-disk',
+            type: 'question',
+            title: 'Allow MCP WAV Render',
+            message: `Allow the connected MCP client to render "${input.filename}" to disk?`,
+            detail: `Destination folder: ${nativeRoot}`,
+            actions: [
+              { id: 'confirm', label: 'Render WAV', role: 'accept' },
+              { id: 'cancel', label: 'Cancel', role: 'cancel' },
+            ],
+            defaultActionId: 'confirm',
+            cancelActionId: 'cancel',
+          },
+          auth.signal,
+        );
+        if (confirmation === 'cancelled') {
+          return { ok: false, code: 'CANCELLED', message: 'Render request was cancelled.' };
+        }
+        if (confirmation !== 'approved') {
+          return {
+            ok: false,
+            code: 'ACCESS_DENIED',
+            message:
+              confirmation === 'owner-unavailable'
+                ? 'Confirmation dialog window is unavailable for MCP render.'
+                : 'Local approval for MCP WAV render was declined.',
+          };
+        }
+
+        return await renderFreezeCoordinator.handleMcpRenderToDisk({
+          auth,
+          expectedReceipt: input.expected,
+          getCurrentReceipt: getCurrentProjectReceipt,
+          nativeRoot,
+          authorizedRoot: capturedRoot.value,
+          filename: input.filename,
+        });
+      } finally {
+        capturedRoot.value.dispose();
+      }
+    },
+  },
+});
+
+function initializeMcpServerService(): void {
+  if (mcpServerService) return;
+  const preferences = loadProgramSettings().mcp;
+  const credentialManager = new McpCredentialManager({
+    interlock: createFileCredentialInterlock(
+      path.join(app.getPath('userData'), 'mcp-credential.interlock'),
+    ),
+  });
+  mcpServerService = new McpServerService(preferences, {
+    credentialManager,
+    onStatusChanged: broadcastMcpStatus,
+    onError: (error) => {
+      console.error('[mcp-server] Request/handler error:', error);
+    },
+    serverFactory: (ctx) =>
+      createBlueMcpServer(
+        mcpBridge,
+        (action, signal) => {
+          const requestAuth = ctx.authContext.forAction(action, signal);
+          return {
+            listenerGeneration: requestAuth.listenerGeneration,
+            credentialEpoch: requestAuth.credentialEpoch,
+            writeAccessEpoch: requestAuth.writeAccessEpoch,
+            accessMode: requestAuth.accessMode,
+            action,
+            signal: requestAuth.signal,
+            isAuthorized: () => requestAuth.isAuthorized(action),
+          };
+        },
+        app.getVersion(),
+      ),
+  });
+  void mcpServerService.applyPreferences(preferences);
+}
+
+async function rollbackMcpStage(): Promise<void> {
+  const service = mcpServerService;
+  mcpServerService = null;
+  await service?.shutdown();
+}
 
 function syncRecentProjectFiles(files: string[]): void {
   recentProjectFiles = [...files];
@@ -1726,7 +2064,16 @@ function createWindow(): void {
 
   // Resolve the workspace artifact in development and the installed resource
   // in packaged builds. Neither path consults the system executable search path.
+  const scratchProfile = app.getPath('userData');
+  if (process.platform === 'darwin') {
+    try {
+      recoverMacRenderScratch(scratchProfile, fs.realpathSync(tmpdir()));
+    } catch (error) {
+      console.warn('Could not recover MCP render scratch.', error);
+    }
+  }
   engineRuntimeService = new EngineRuntimeService({
+    scratchProfile,
     isPackaged: app.isPackaged,
     resourcesPath: process.resourcesPath,
     repoRoot: path.resolve(app.getAppPath(), '..', '..'),
@@ -1749,21 +2096,32 @@ function createWindow(): void {
   });
 
   engineBridge.setPlaybackCompleteCallback((stopReason) => {
+    activePlaybackDocumentId = null;
     invalidateTimelinePerformanceGeneration();
     if (activeAuditionPlayback) {
       activeAuditionPlayback = false;
+      mcpPlaybackController.clearMcpPlaybackGrant();
       clearOrFlushTimelineOutputBatch?.(false);
       return;
     }
     if (stopReason !== 'completed') {
+      mcpPlaybackController.clearMcpPlaybackGrant();
       clearOrFlushTimelineOutputBatch?.(false);
       return;
     }
     if (!getCurrentData() || !getCurrentData().isLoopRendering()) {
+      mcpPlaybackController.clearMcpPlaybackGrant();
       clearOrFlushTimelineOutputBatch?.(false);
       return;
     }
-    void startPlayback();
+    if (!mcpPlaybackController.canRestartLoopPlayback()) {
+      // Keep the revoked MCP performance origin until playback stops or UI starts
+      // so repeated completion events never treat a revoked MCP run as a UI loop.
+      clearOrFlushTimelineOutputBatch?.(false);
+      return;
+    }
+    const loopFence = mcpPlaybackController.createLoopRestartFence();
+    void startPlayback(getCurrentData(), false, loopFence);
   });
 
   let outputBatch: EngineOutputChunk[] = [];
@@ -1787,6 +2145,7 @@ function createWindow(): void {
   clearOrFlushTimelineOutputBatch = flushOutputBatch;
 
   engineBridge.setOutputCallback((text, type) => {
+    mcpConsoleTail.append(text, type);
     outputBatch.push({ text, type });
     if (!outputBatchTimer) {
       outputBatchTimer = setTimeout(() => flushOutputBatch(false), 50);
@@ -1989,6 +2348,15 @@ async function doQuit(trigger: ShutdownTrigger = 'user'): Promise<void> {
       });
       oscControlService = null;
 
+      await runShutdownStep('MCP server', async () => {
+        try {
+          await mcpServerService?.shutdown();
+        } finally {
+          await renderFreezeCoordinator.shutdownMcpRender();
+        }
+      });
+      mcpServerService = null;
+
       await runShutdownStep('domain IPC teardown', () => {
         try {
           unregisterDomainIpc?.();
@@ -2067,6 +2435,9 @@ async function doQuit(trigger: ShutdownTrigger = 'user'): Promise<void> {
         }
       });
       engineBridge = null;
+      activePlaybackDocumentId = null;
+      mcpConsoleTail.clear();
+      mcpPlaybackController.clearMcpPlaybackGrant();
 
       trackEditorRuntimeStatusCoordinator?.dispose();
       trackEditorRuntimeStatusCoordinator = null;
@@ -2184,6 +2555,9 @@ const projectLifecycle = createProjectLifecycle({
   clearProjectServices: () => {
     midiImportService.clearAll();
     setActiveMissingAudioSession(null);
+    mcpConsoleTail.clear();
+    mcpPlaybackController.clearMcpPlaybackGrant();
+    activePlaybackDocumentId = null;
   },
   publishProjectChanged: () => {
     unifiedLibraryService?.publishProjectChanged();
@@ -2192,6 +2566,7 @@ const projectLifecycle = createProjectLifecycle({
     historyAvailabilityBySender.clear();
     lastApplicationMenuStateKey = null;
     lastWindowTitle = null;
+    mcpServerService?.notifyProjectResourcesUpdated();
     rebuildApplicationMenuIfChanged();
     updateWindowTitleIfChanged();
   },
@@ -2199,6 +2574,7 @@ const projectLifecycle = createProjectLifecycle({
     historyAvailabilityBySender.clear();
     lastApplicationMenuStateKey = null;
     lastWindowTitle = null;
+    mcpServerService?.notifyProjectResourcesUpdated();
     rebuildApplicationMenuIfChanged();
     updateWindowTitleIfChanged();
     broadcastToWorkbenchWindows('project-closed', null);
@@ -3294,6 +3670,8 @@ async function togglePlay(): Promise<boolean> {
     return false;
   }
 
+  mcpPlaybackController.clearMcpPlaybackGrant();
+
   if (playbackStartPromise) {
     return playbackStartPromise;
   }
@@ -3321,6 +3699,8 @@ async function restartPlayback(): Promise<boolean> {
     notifyNoProjectLoaded('playback-error');
     return false;
   }
+
+  mcpPlaybackController.clearMcpPlaybackGrant();
 
   if (playbackStartPromise) {
     await playbackStartPromise;
@@ -3448,152 +3828,180 @@ async function applyRuntimeWorkOperation(
 async function startPlayback(
   data: BlueData | null = getCurrentData(),
   forceProcessOnLoad = false,
+  mcpFence?: McpPlaybackFence,
 ): Promise<boolean> {
   if (!engineBridge || !data || !mainWindow) return false;
+  if (mcpFence && !mcpFence.check().ok) return false;
   const canonicalDataAtStart = getCurrentData();
   const projectSessionAtStart = getCurrentProjectSessionId();
   activeAuditionPlayback = data !== getCurrentData();
 
+  const isSessionCurrent = (): boolean =>
+    getCurrentProjectSessionId() === projectSessionAtStart &&
+    getCurrentData() === canonicalDataAtStart &&
+    !(data !== getCurrentData() && !activeAuditionPlayback);
+
   try {
-    broadcastToWorkbenchWindows('playback-status', {
-      status: 'starting',
-      message: 'Preparing playback...',
-      renderStartTime: data.getRenderStartTime(),
-      auditioning: data !== getCurrentData(),
-    });
-
-    clearOrFlushTimelineOutputBatch?.(true);
-    mainWindow.webContents.send('engine-output-reset', { tabName: 'Csound' });
-    mainWindow.webContents.send('engine-output-select', { tabName: 'Csound' });
-
-    // T070: panning-enabled scores must clear audio layout preflight before any
-    // engine work so unsupported/unreadable layouts fail with a typed
-    // diagnostic instead of MISSING_AUDIO_LAYOUT during CSD generation.
     const preflight = preflightAudioLayout(data, {
       projectDirectory: getCurrentProjectDirectory(),
     });
-    if (!preflight.success) {
-      const diag = preflight.diagnostics[0];
-      const message = diag?.message ?? 'Audio layout preflight failed';
-      activeAuditionPlayback = false;
-      broadcastToWorkbenchWindows('playback-status', {
-        status: 'error',
-        message,
-        auditioning: data !== getCurrentData(),
-      });
-      broadcastPlaybackError(message, diag ?? null);
-      return false;
-    }
+    let emitMetering = false;
 
-    await ensureJavaScriptEngine();
+    let preparedRender: ReturnType<BlueData['toRealtimePlaybackCSD']> | null = null;
+    const dispatched = await runGuardedPlaybackSequence(
+      {
+        prepareRuntime: async () => {
+          broadcastToWorkbenchWindows('playback-status', {
+            status: 'starting',
+            message: 'Preparing playback...',
+            renderStartTime: data.getRenderStartTime(),
+            auditioning: data !== getCurrentData(),
+          });
 
-    const emitMetering = (await engineBridge?.probeMixerMeteringSupport()) ?? false;
-    const javaRuntimeClient = await runProjectOnLoad(data, forceProcessOnLoad);
-    const render = javaRuntimeClient
-      ? await data.toRealtimePlaybackCSDAsync(
-          javaScriptSession ?? undefined,
-          javaRuntimeClient,
-          emitMetering,
-          preflight.manifest,
-        )
-      : data.toRealtimePlaybackCSD(
-          javaScriptSession ?? undefined,
-          emitMetering,
-          preflight.manifest,
-        );
-    const csd = render.csdText;
-    const parameters = render.parameters;
-    const meterBindingMapPayload =
-      render.meterBindingMap && emitMetering
-        ? buildMeterBindingMapPayload(data, render.meterBindingMap)
-        : undefined;
-    const runtimeParameterSync = syncCompiledRuntimeParameterNames(
-      data.getArrangement(),
-      data.getMixer(),
-      parameters,
-      data.getScore(),
-    );
-    if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
-      console.warn(
-        '[main] Runtime parameter sync count mismatch:',
-        runtimeParameterSync.liveCount,
-        runtimeParameterSync.compiledCount,
-      );
-    }
+          clearOrFlushTimelineOutputBatch?.(true);
+          if (!activeAuditionPlayback) {
+            mcpConsoleTail.clear();
+          }
+          mainWindow!.webContents.send('engine-output-reset', { tabName: 'Csound' });
+          mainWindow!.webContents.send('engine-output-select', { tabName: 'Csound' });
 
-    const automationTiming = buildAutomationRuntimeTimingContext(data);
+          // T070: panning-enabled scores must clear audio layout preflight before any
+          // engine work so unsupported/unreadable layouts fail with a typed
+          // diagnostic instead of MISSING_AUDIO_LAYOUT during CSD generation.
+          if (!preflight.success) {
+            const diag = preflight.diagnostics[0];
+            const message = diag?.message ?? 'Audio layout preflight failed';
+            activeAuditionPlayback = false;
+            broadcastToWorkbenchWindows('playback-status', {
+              status: 'error',
+              message,
+              auditioning: data !== getCurrentData(),
+            });
+            broadcastPlaybackError(message, diag ?? null);
+            return false;
+          }
 
-    const projectDirectory = getCurrentProjectDirectory();
-    const extraRealtimeOptions = buildRealtimeEngineOptions(data, projectDirectory);
+          await ensureJavaScriptEngine();
+          emitMetering = (await engineBridge?.probeMixerMeteringSupport()) ?? false;
+          return isSessionCurrent();
+        },
+        runProjectOnLoad: () => runProjectOnLoad(data, forceProcessOnLoad),
+        generateRealtimeCsd: async (javaRuntimeClient) => {
+          const render = javaRuntimeClient
+            ? await data.toRealtimePlaybackCSDAsync(
+                javaScriptSession ?? undefined,
+                javaRuntimeClient,
+                emitMetering,
+                preflight.manifest,
+              )
+            : data.toRealtimePlaybackCSD(
+                javaScriptSession ?? undefined,
+                emitMetering,
+                preflight.manifest,
+              );
+          preparedRender = render;
+          return render;
+        },
+        dispatchAndRecover: async (render) => {
+          const csd = render.csdText;
+          const parameters = render.parameters;
+          const meterBindingMapPayload =
+            render.meterBindingMap && emitMetering
+              ? buildMeterBindingMapPayload(data, render.meterBindingMap)
+              : undefined;
+          const runtimeParameterSync = syncCompiledRuntimeParameterNames(
+            data.getArrangement(),
+            data.getMixer(),
+            parameters,
+            data.getScore(),
+          );
+          if (runtimeParameterSync.liveCount !== runtimeParameterSync.compiledCount) {
+            console.warn(
+              '[main] Runtime parameter sync count mismatch:',
+              runtimeParameterSync.liveCount,
+              runtimeParameterSync.compiledCount,
+            );
+          }
 
-    // Project replacement/close may complete while CSD generation or runtime
-    // setup is awaiting. Never submit an old canonical session or its audition
-    // copy to the engine after that fence has advanced.
-    if (
-      getCurrentProjectSessionId() !== projectSessionAtStart ||
-      getCurrentData() !== canonicalDataAtStart ||
-      (data !== getCurrentData() && !activeAuditionPlayback)
-    ) {
-      activeAuditionPlayback = false;
-      return false;
-    }
+          const automationTiming = buildAutomationRuntimeTimingContext(data);
+          const projectDirectory = getCurrentProjectDirectory();
+          const extraRealtimeOptions = buildRealtimeEngineOptions(data, projectDirectory);
 
-    const playAttempt = async (): Promise<boolean> => {
-      const result = await engineBridge!.playCSD(
-        csd,
-        parameters,
-        automationTiming,
-        projectDirectory,
-        extraRealtimeOptions,
-        meterBindingMapPayload,
-      );
-      if (!result.ok) {
-        // Invalid orchestra/score is a project-source error. The engine has
-        // already reported it in the Csound output and cleaned up, so do not
-        // present the engine recovery flow for an expected compile failure.
-        if (result.failureKind === 'project') return false;
-        throw new EngineRecoveryError(
-          result.errorMessage || 'Engine playback initialization failed',
-          result.failureCategory || 'unexpected',
-        );
-      }
-      return true;
-    };
+          // Project replacement/close may complete while CSD generation or runtime
+          // setup is awaiting. Never submit an old canonical session or its audition
+          // copy to the engine after that fence has advanced.
+          if (!isSessionCurrent() || (mcpFence && !mcpFence.check().ok)) {
+            return false;
+          }
 
-    const recoveryResult = await engineRecoveryCoordinator.runWithRecovery(
-      'realtime',
-      playAttempt,
-      async () => {
-        await engineBridge?.killAndWait();
-        // FR-017: recovery cleanup also removes obsolete records and
-        // terminates only provably orphaned managed engines (dead owner plus
-        // verified process identity); live-owner sessions are never touched.
-        await sweepStaleBlueEngineProcesses();
+          const playAttempt = async (): Promise<boolean> => {
+            if (!isSessionCurrent() || (mcpFence && !mcpFence.check().ok)) {
+              return false;
+            }
+            const result = await engineBridge!.playCSD(
+              csd,
+              parameters,
+              automationTiming,
+              projectDirectory,
+              extraRealtimeOptions,
+              meterBindingMapPayload,
+              mcpFence,
+            );
+            if (!result.ok) {
+              // Invalid orchestra/score or a fenced MCP abort should not trigger engine recovery.
+              if (result.fenced || result.failureKind === 'project') return false;
+              throw new EngineRecoveryError(
+                result.errorMessage || 'Engine playback initialization failed',
+                result.failureCategory || 'unexpected',
+              );
+            }
+            return true;
+          };
+
+          const recoveryResult = await engineRecoveryCoordinator.runWithRecovery(
+            'realtime',
+            playAttempt,
+            async () => {
+              if (mcpFence && !mcpFence.check().ok) return;
+              await engineBridge?.killAndWait();
+              // FR-017: recovery cleanup also removes obsolete records and
+              // terminates only provably orphaned managed engines (dead owner plus
+              // verified process identity); live-owner sessions are never touched.
+              await sweepStaleBlueEngineProcesses();
+            },
+          );
+
+          if (!recoveryResult.ok) {
+            activeAuditionPlayback = false;
+            broadcastToWorkbenchWindows('playback-status', {
+              status: 'error',
+              message: recoveryResult.errorMessage || 'Failed to start playback',
+            });
+
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              void presentEngineRecoveryFailure(
+                'realtime',
+                recoveryResult.errorMessage || 'Failed to start playback',
+                recoveryResult.diagnostics,
+              );
+            }
+            return false;
+          }
+
+          return Boolean(recoveryResult.result);
+        },
       },
+      mcpFence,
     );
 
-    if (!recoveryResult.ok) {
-      activeAuditionPlayback = false;
-      broadcastToWorkbenchWindows('playback-status', {
-        status: 'error',
-        message: recoveryResult.errorMessage || 'Failed to start playback',
-      });
-
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        void presentEngineRecoveryFailure(
-          'realtime',
-          recoveryResult.errorMessage || 'Failed to start playback',
-          recoveryResult.diagnostics,
-        );
-      }
-      return false;
-    }
-
-    if (!recoveryResult.result) {
+    if (!dispatched || !preparedRender) {
       activeAuditionPlayback = false;
       return false;
     }
+    const render: ReturnType<BlueData['toRealtimePlaybackCSD']> = preparedRender;
+    const parameters = render.parameters;
 
+    activePlaybackDocumentId = activeAuditionPlayback ? null : projectSession.read().documentId;
     timelinePerformanceGeneration += 1;
     const timelineGeneration = timelinePerformanceGeneration;
     const bridgedEngine = engineBridge;
@@ -3821,12 +4229,18 @@ async function auditionScoreObjects(objectIds: unknown): Promise<boolean> {
   }
 }
 
-async function stopPlayback(): Promise<void> {
+async function stopPlaybackInternal(): Promise<void> {
   activeAuditionPlayback = false;
+  activePlaybackDocumentId = null;
   invalidateTimelinePerformanceGeneration();
   if (!engineBridge) return;
   await engineBridge.stopPlayback();
   clearOrFlushTimelineOutputBatch?.(false);
+}
+
+async function stopPlayback(): Promise<void> {
+  mcpPlaybackController.clearMcpPlaybackGrant();
+  await stopPlaybackInternal();
 }
 
 function registerBlueLivePerformance(): void {
@@ -4863,6 +5277,9 @@ ipcRegistration.handle('program-settings:save', (_event, snapshot: ProgramSettin
   ) {
     void oscControlService.restart(result.snapshot.osc);
   }
+  if (result.ok && result.snapshot && mcpServerService) {
+    void mcpServerService.applyPreferences(result.snapshot.mcp);
+  }
   // Broadcast changed playback preferences after the full Settings save.
   if (result.ok && result.snapshot) {
     syncPlaybackPreferencesFromSnapshot(result.snapshot);
@@ -4912,6 +5329,9 @@ ipcRegistration.handle('program-settings:reset-panel', (_event, panel: string) =
   if (panel === 'osc' && oscControlService) {
     void oscControlService.restart(snapshot.osc);
   }
+  if (panel === 'mcp' && mcpServerService) {
+    void mcpServerService.applyPreferences(snapshot.mcp);
+  }
   if (panel === 'playback') {
     syncPlaybackPreferencesFromSnapshot(snapshot);
   }
@@ -4923,6 +5343,67 @@ ipcRegistration.handle(OSC_CONTROL_GET_SNAPSHOT_CHANNEL, () => {
     oscControlService?.getSnapshot() ??
     createInitialOscServerRuntimeSnapshot(loadProgramSettings().osc)
   );
+});
+
+ipcRegistration.handle(MCP_SERVER_GET_STATUS_CHANNEL, () => {
+  return mcpServerService?.getStatus() ?? createInitialMcpServerStatus(loadProgramSettings().mcp);
+});
+
+ipcRegistration.handle(MCP_SERVER_COPY_CREDENTIAL_CHANNEL, (): McpCopyResult => {
+  const token = mcpServerService?.getCredentialForMain();
+  if (!token) {
+    return {
+      ok: false,
+      code: 'MCP_UNAVAILABLE',
+      message: 'Start the local MCP server before copying its bearer credential.',
+    };
+  }
+  clipboard.writeText(token);
+  return { ok: true };
+});
+
+ipcRegistration.handle(
+  MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL,
+  (_event, target: unknown): McpCopyResult => {
+    if (!isMcpClientConfigTarget(target)) {
+      return {
+        ok: false,
+        code: 'MCP_UNAVAILABLE',
+        message: 'Unsupported MCP client configuration target.',
+      };
+    }
+    const status = mcpServerService?.getStatus();
+    const token = mcpServerService?.getCredentialForMain();
+    if (!status || status.phase !== 'listening' || status.activePort === null || !token) {
+      return {
+        ok: false,
+        code: 'MCP_UNAVAILABLE',
+        message: 'Start the local MCP server before copying client configuration.',
+      };
+    }
+    const endpointUrl = `http://127.0.0.1:${status.activePort}/mcp`;
+    clipboard.writeText(buildMcpClientConfig(target, endpointUrl, token));
+    return { ok: true };
+  },
+);
+
+ipcRegistration.handle(MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL, async (): Promise<McpRotateResult> => {
+  if (!mcpServerService) {
+    return {
+      ok: false,
+      code: 'MCP_UNAVAILABLE',
+      message: 'MCP server service is not initialized.',
+    };
+  }
+  const result = await mcpServerService.rotateCredential();
+  if (result.kind === 'ready') {
+    return { ok: true, storage: result.storage };
+  }
+  return {
+    ok: false,
+    code: 'ROTATION_FAILED',
+    message: result.message,
+  };
 });
 
 ipcRegistration.handle('program-settings:usage-matrix', () => {
@@ -6646,6 +7127,11 @@ applicationReadyPromise.then(async () => {
       name: 'OSC control',
       start: initializeOscControlService,
       rollback: rollbackOscStage,
+    },
+    {
+      name: 'MCP server',
+      start: initializeMcpServerService,
+      rollback: rollbackMcpStage,
     },
     {
       name: 'window hooks',

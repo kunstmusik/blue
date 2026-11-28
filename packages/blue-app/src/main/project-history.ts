@@ -38,6 +38,7 @@ import type {
   ProjectHistorySelectionHint,
   ProjectHistoryControlResponse,
   ProjectHistoryOrigin,
+  ProjectRuntimeOutcome,
   ProjectSaveState,
 } from '../shared/project-history';
 import type {
@@ -230,6 +231,81 @@ export interface ProjectHistorySnapshotCaptureContext {
   readonly originContextId?: string;
   readonly changedTargets?: readonly string[];
 }
+
+export interface ProjectHistoryTrustedGuard {
+  readonly expectedDocumentId: string;
+  readonly expectedRevision: number;
+  readonly expectedStateId: string;
+  readonly authorizeBeforeCommit: () =>
+    | { readonly ok: true }
+    | {
+        readonly ok: false;
+        readonly code: 'ACCESS_DENIED' | 'CANCELLED' | 'CONFLICT';
+        readonly reason: string;
+      };
+  readonly rejectOversize?: boolean;
+}
+
+export interface ProjectHistoryDeniedResponse {
+  readonly status: 'denied';
+  readonly operationId: string;
+  readonly documentId: string;
+  readonly code: 'ACCESS_DENIED' | 'CANCELLED' | 'CONFLICT';
+  readonly reason: string;
+}
+
+export type ProjectHistoryGuardedResponse = ProjectHistoryResponse | ProjectHistoryDeniedResponse;
+
+export type ProjectHistoryStructuralGuardedResponse =
+  | {
+      readonly status: 'committed';
+      readonly documentId: string;
+      readonly revision: number;
+      readonly stateId: string;
+      readonly isDirty: boolean;
+      readonly history: ProjectHistoryStateProjection;
+      readonly runtimeOutcomes?: ProjectRuntimeOutcome[];
+      readonly receipt: ProjectDocumentCommitReceipt;
+    }
+  | {
+      readonly status: 'unchanged';
+      readonly documentId: string;
+      readonly revision: number;
+      readonly stateId: string;
+      readonly isDirty: boolean;
+      readonly history: ProjectHistoryStateProjection;
+      readonly receipt: ProjectDocumentCommitReceipt;
+    }
+  | {
+      readonly status: 'stale';
+      readonly documentId: string;
+      readonly currentRevision: number;
+      readonly currentStateId: string;
+      readonly reason: string;
+    }
+  | {
+      readonly status: 'denied';
+      readonly documentId: string;
+      readonly code: 'ACCESS_DENIED' | 'CANCELLED' | 'CONFLICT';
+      readonly reason: string;
+    }
+  | {
+      readonly status: 'invalid';
+      readonly documentId: string;
+      readonly reason: string;
+    }
+  | {
+      readonly status: 'oversize';
+      readonly documentId: string;
+      readonly estimatedBytes: number;
+      readonly limitBytes: number;
+      readonly explanation: string;
+    }
+  | {
+      readonly status: 'failed';
+      readonly documentId: string;
+      readonly error: string;
+    };
 
 export interface ProjectHistoryDependencies {
   readonly session: ProjectSession;
@@ -1061,6 +1137,28 @@ export class ProjectHistory {
     );
   }
 
+  commitGuarded(
+    request: Omit<ProjectHistoryCommitRequest, 'preconditions' | 'proposalToken'>,
+    guard: ProjectHistoryTrustedGuard,
+  ): Promise<ProjectHistoryGuardedResponse> {
+    return this.enqueueOrderedMutation(async () => {
+      if (this.participants.size > 0) {
+        try {
+          await this.settleBoundary('save');
+        } catch (err) {
+          const current = this.session.read();
+          return {
+            status: 'failed',
+            operationId: request.operationId,
+            documentId: current.documentId ?? request.documentId,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+      return this.commitInternal(request, guard);
+    });
+  }
+
   private isPendingParticipantCommit(request: ProjectHistoryCommitRequest): boolean {
     const contextId = request.origin?.contextId;
     // Until this context acknowledges prepare, its untagged arrivals were
@@ -1072,15 +1170,34 @@ export class ProjectHistory {
     );
   }
 
+  private commitInternal(request: ProjectHistoryCommitRequest): Promise<ProjectHistoryResponse>;
+  private commitInternal(
+    request: ProjectHistoryCommitRequest,
+    guard: ProjectHistoryTrustedGuard,
+  ): Promise<ProjectHistoryGuardedResponse>;
   private async commitInternal(
     request: ProjectHistoryCommitRequest,
-  ): Promise<ProjectHistoryResponse> {
+    guard?: ProjectHistoryTrustedGuard,
+  ): Promise<ProjectHistoryGuardedResponse> {
     const isPrefix = this.activeBarrier && request.barrierId === this.activeBarrier.barrierId;
     if (this.barrierReleasePromise && !isPrefix) {
       await this.waitForBarrierToRelease();
     }
 
     const current = this.session.read();
+
+    if (guard) {
+      const auth = guard.authorizeBeforeCommit();
+      if (!auth.ok) {
+        return {
+          status: 'denied',
+          operationId: request.operationId,
+          documentId: current.documentId ?? request.documentId,
+          code: auth.code,
+          reason: auth.reason,
+        };
+      }
+    }
 
     if (!current.data || !current.documentId) {
       const resp: ProjectHistoryInvalidResponse = {
@@ -1089,8 +1206,25 @@ export class ProjectHistory {
         documentId: request.documentId,
         reason: 'No active project document in session',
       };
-      this.cacheReceipt(request.operationId, resp);
+      if (!guard) this.cacheReceipt(request.operationId, resp);
       return resp;
+    }
+
+    if (guard) {
+      if (
+        current.documentId !== guard.expectedDocumentId ||
+        current.revision !== guard.expectedRevision ||
+        current.stateId !== guard.expectedStateId
+      ) {
+        return {
+          status: 'stale',
+          operationId: request.operationId,
+          documentId: request.documentId,
+          currentRevision: current.revision,
+          currentStateId: current.stateId ?? '',
+          reason: `Receipt mismatch (expected ${guard.expectedDocumentId}@${guard.expectedRevision}:${guard.expectedStateId}, current ${current.documentId}@${current.revision}:${current.stateId ?? ''})`,
+        };
+      }
     }
 
     // Document lifetime mismatch
@@ -1621,6 +1755,17 @@ export class ProjectHistory {
       ((isLiveGesture || canGroup) && totalRetainedBytes > this.retainedBytesLimit * 2)
     ) {
       if (transaction.kind === 'scalar') transaction.rollback();
+      if (guard && (guard.rejectOversize ?? true)) {
+        return {
+          status: 'oversize',
+          operationId: request.operationId,
+          documentId: current.documentId,
+          proposalToken: '',
+          estimatedBytes: candidateBytes,
+          limitBytes: this.retainedBytesLimit,
+          explanation: oversizeExplanation(candidateBytes, this.retainedBytesLimit),
+        };
+      }
       if (this.activeCheckpoint && matchesActiveGroup(this.activeGroup, request)) {
         await this.commitInternal({
           ...request,
@@ -1867,6 +2012,218 @@ export class ProjectHistory {
     onCommitted?: () => void;
   }): Promise<ProjectDocumentCommitReceipt> {
     return this.enqueueOrderedMutation(() => this.commitScopedMutationInternal(options));
+  }
+
+  async commitPreparedStructuralMutationGuarded(
+    options: {
+      label: string;
+      candidate: BlueData;
+      rootFields: readonly ProjectMutationRoot[];
+      expectedDocumentId: string;
+      expectedSessionId: number;
+      expectedRevision: number;
+      origin?: ProjectHistoryOrigin;
+      validateBeforeCommit?: (current: ProjectSessionSnapshot) => string | undefined;
+      onCommitted?: () => void;
+    },
+    guard: ProjectHistoryTrustedGuard,
+  ): Promise<ProjectHistoryStructuralGuardedResponse> {
+    return this.enqueueOrderedMutation(async () => {
+      if (this.participants.size > 0) {
+        try {
+          await this.settleBoundary('save');
+        } catch (err) {
+          const current = this.session.read();
+          return {
+            status: 'failed',
+            documentId: current.documentId ?? options.expectedDocumentId,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+      return this.commitPreparedStructuralMutationGuardedInternal(options, guard);
+    });
+  }
+
+  private async commitPreparedStructuralMutationGuardedInternal(
+    options: {
+      label: string;
+      candidate: BlueData;
+      rootFields: readonly ProjectMutationRoot[];
+      expectedDocumentId: string;
+      expectedSessionId: number;
+      expectedRevision: number;
+      origin?: ProjectHistoryOrigin;
+      validateBeforeCommit?: (current: ProjectSessionSnapshot) => string | undefined;
+      onCommitted?: () => void;
+    },
+    guard: ProjectHistoryTrustedGuard,
+  ): Promise<ProjectHistoryStructuralGuardedResponse> {
+    await this.waitForBarrierToRelease();
+    const current = this.session.read();
+
+    const auth = guard.authorizeBeforeCommit();
+    if (!auth.ok) {
+      return {
+        status: 'denied',
+        documentId: current.documentId ?? options.expectedDocumentId,
+        code: auth.code,
+        reason: auth.reason,
+      };
+    }
+
+    if (!current.data || !current.documentId) {
+      return {
+        status: 'invalid',
+        documentId: options.expectedDocumentId,
+        reason: 'No active project session',
+      };
+    }
+
+    if (
+      current.documentId !== guard.expectedDocumentId ||
+      current.revision !== guard.expectedRevision ||
+      current.stateId !== guard.expectedStateId ||
+      current.documentId !== options.expectedDocumentId ||
+      current.sessionId !== options.expectedSessionId ||
+      current.revision !== options.expectedRevision
+    ) {
+      return {
+        status: 'stale',
+        documentId: options.expectedDocumentId,
+        currentRevision: current.revision,
+        currentStateId: current.stateId ?? '',
+        reason: 'Prepared structural mutation is stale and was discarded',
+      };
+    }
+
+    const validationError = options.validateBeforeCommit?.(current);
+    if (validationError) {
+      return {
+        status: 'invalid',
+        documentId: current.documentId,
+        reason: validationError,
+      };
+    }
+
+    const beforeStateId = current.stateId ?? `state-${randomUUID()}`;
+    const nextStateId = `state-${randomUUID()}`;
+    const scope = new Set(options.rootFields);
+    const { delta: directDelta, beforeSnapshot: directBeforeSnapshot } =
+      captureProjectGraphDeltaWithSnapshots(current.data, options.candidate, scope);
+    if (isNetZeroProjectGraphDelta(directDelta)) {
+      return {
+        status: 'unchanged',
+        documentId: current.documentId,
+        revision: current.revision,
+        stateId: current.stateId ?? '',
+        isDirty: this.isDirty(),
+        history: this.read(),
+        receipt: this.createDirectReceipt(current, false),
+      };
+    }
+
+    const historyRecord: HistoryRecord = {
+      kind: 'structure',
+      delta: directDelta,
+    };
+    const estimatedBytes =
+      estimateEntryBytes(historyRecord) +
+      JSON.stringify({ label: options.label, origin: options.origin }).length * 2 +
+      256;
+
+    if ((guard.rejectOversize ?? true) && estimatedBytes > this.retainedBytesLimit) {
+      return {
+        status: 'oversize',
+        documentId: current.documentId,
+        estimatedBytes,
+        limitBytes: this.retainedBytesLimit,
+        explanation: oversizeExplanation(estimatedBytes, this.retainedBytesLimit),
+      };
+    }
+
+    this.closeGroup();
+    if (this.cursor < this.entries.length) {
+      this.entries.splice(this.cursor);
+    }
+
+    const entry: HistoryEntry = {
+      entryId: `entry-${randomUUID()}`,
+      documentId: current.documentId,
+      beforeStateId,
+      afterStateId: nextStateId,
+      label: options.label,
+      sourceContextId: options.origin?.contextId,
+      originViewId: options.origin?.viewId,
+      originSelectionHints: options.origin?.selection,
+      timestamp: Date.now(),
+      retainedBytes: estimatedBytes,
+      record: historyRecord,
+      forwardPatches: [{ orchestra: { type: 'structuralChange' } as never }],
+      inversePatches: [{ orchestra: { type: 'structuralChange' } as never }],
+    };
+
+    this.entries.push(entry);
+    this.cursor = this.entries.length;
+    this.activeGroup = null;
+
+    applyProjectGraphDelta(current.data, historyRecord.delta, 'after', directBeforeSnapshot);
+    if (scope.has('score') || scope.has('liveData')) {
+      copyAssignedScoreObjectIds(options.candidate, current.data);
+    }
+    this.session.recordMutation({ changed: true, stateId: nextStateId });
+    this.enforceLimits();
+    options.onCommitted?.();
+
+    const updatedSnap = this.session.read();
+    const projection = this.read();
+    const publishedIsDirty = this.isDirty();
+    const publishedSnapshot = this.capturePublishedSnapshot({
+      reason: 'direct-structure',
+      originContextId: options.origin?.contextId,
+    });
+
+    const reconciliationPromise = this.reconciliation
+      ? this.reconciliation.reconcileCommit({
+          documentId: updatedSnap.documentId!,
+          revision: updatedSnap.revision,
+          patches: [{ orchestra: { type: 'structuralChange' } as never }],
+        })
+      : undefined;
+
+    const updatedEvent: ProjectDocumentUpdatedEvent = {
+      documentId: updatedSnap.documentId!,
+      sessionId: updatedSnap.sessionId,
+      revision: updatedSnap.revision,
+      stateId: updatedSnap.stateId!,
+      isDirty: publishedIsDirty,
+      history: projection,
+      acceptedOperationIds: [],
+      snapshot: publishedSnapshot,
+      selectionHints: options.origin?.selection,
+      originViewId: options.origin?.viewId,
+      originContextId: options.origin?.contextId,
+    };
+    await this.publishUpdated?.(updatedEvent);
+    const runtimeOutcomes = reconciliationPromise ? await reconciliationPromise : undefined;
+    const receipt: ProjectDocumentCommitReceipt = {
+      revision: updatedSnap.revision,
+      sessionId: updatedSnap.sessionId,
+      changed: true,
+      documentId: updatedSnap.documentId!,
+      stateId: updatedSnap.stateId!,
+    };
+
+    return {
+      status: 'committed',
+      documentId: updatedSnap.documentId!,
+      revision: updatedSnap.revision,
+      stateId: updatedSnap.stateId!,
+      isDirty: publishedIsDirty,
+      history: projection,
+      runtimeOutcomes,
+      receipt,
+    };
   }
 
   async commitScopedMutation<Root extends ProjectMutationRoot>(options: {

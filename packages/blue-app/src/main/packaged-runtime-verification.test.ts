@@ -42,6 +42,17 @@ function createEngineResources(
       sha256: createHash('sha256').update(bytes).digest('hex'),
     }),
   );
+  mkdirSync(path.join(resources, 'licenses'));
+  for (const notice of [
+    'THIRD_PARTY_NOTICES.md',
+    'NPM-PRODUCTION-DEPENDENCIES.md',
+    'MCP-TypeScript-SDK-Apache-2.0-MIT.txt',
+    'Hono-MIT.txt',
+    'Hono-Node-Server-MIT.txt',
+    'Zod-MIT.txt',
+  ]) {
+    writeFileSync(path.join(resources, 'licenses', notice), 'License notice');
+  }
   return resources;
 }
 
@@ -182,7 +193,7 @@ describe('packaged-runtime-verification', () => {
     });
 
     expect(report.ok).toBe(true);
-    expect(report.results.length).toBe(7);
+    expect(report.results.length).toBe(8);
     expect(report.results.every((r) => r.ok)).toBe(true);
     const aspects = report.results.map((r) => r.aspect);
     expect(aspects).toEqual([
@@ -193,7 +204,27 @@ describe('packaged-runtime-verification', () => {
       'workspace-data',
       'workspace-engine-client',
       'bundled-engine',
+      'mcp-runtime',
     ]);
+  });
+
+  it('reports absent packaged MCP dependencies and license notices', () => {
+    const resources = createEngineResources();
+    writeFileSync(path.join(resources, 'licenses', 'Zod-MIT.txt'), '');
+    const report = verifyPackagedRuntime({
+      isPackaged: true,
+      mainModuleDir: __dirname,
+      resourcesPath: resources,
+      userDataPath: resources,
+      resolveExternalModule: (name) => (name === '@modelcontextprotocol/node' ? null : name),
+      runBlueEngineProbe: recoverableMissingCsoundProbe,
+    });
+
+    expect(report.results.find((result) => result.aspect === 'mcp-runtime')).toMatchObject({
+      ok: false,
+      code: 'MCP_PACKAGE_CONTENTS_MISSING',
+      detail: ['@modelcontextprotocol/node', 'Zod-MIT.txt'],
+    });
   });
 
   it('reports ok=false and codes for missing Java helper and Python library', () => {
@@ -278,14 +309,14 @@ describe('packaged-runtime-verification', () => {
         ...base,
         arch: HOST_ARCH === 'arm64' ? 'x64' : 'arm64',
         runBlueEngineProbe: recoverableMissingCsoundProbe,
-      }).results.at(-1)?.code,
+      }).results.find((result) => result.aspect === 'bundled-engine')?.code,
     ).toBe('BLUE_ENGINE_RESOURCE_MISMATCH');
 
     expect(
       verifyPackagedRuntime({
         ...base,
         runBlueEngineProbe: () => ({ status: 1, stdout: '{}', stderr: 'failed' }),
-      }).results.at(-1)?.code,
+      }).results.find((result) => result.aspect === 'bundled-engine')?.code,
     ).toBe('BLUE_ENGINE_NO_CSOUND_PROBE_FAILED');
   });
 

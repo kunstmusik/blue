@@ -31,6 +31,7 @@ project:
     - soundobject-types.qmd
     - instruments.qmd
     - tools.qmd
+    - mcp.qmd
     - importing.qmd
     - workflow-features.qmd
     - settings.qmd
@@ -97,6 +98,7 @@ book:
     - part: 'Tools'
       chapters:
         - tools.qmd
+        - mcp.qmd
     - part: 'Other features and tasks'
       chapters:
         - importing.qmd

@@ -265,6 +265,21 @@ import {
   type OscServerRuntimeSnapshot,
 } from '../shared/osc-control';
 import {
+  MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL,
+  MCP_SERVER_COPY_CREDENTIAL_CHANNEL,
+  MCP_SERVER_GET_STATUS_CHANNEL,
+  MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL,
+  MCP_SERVER_STATUS_CHANGED_CHANNEL,
+  isMcpClientConfigTarget,
+  isMcpCopyResult,
+  isMcpRotateResult,
+  isMcpServerStatus,
+  type McpClientConfigTarget,
+  type McpCopyResult,
+  type McpRotateResult,
+  type McpServerStatus,
+} from '../shared/mcp-server';
+import {
   UNIFIED_LIBRARY_BROWSE_CHANNEL,
   UNIFIED_LIBRARY_APPLY_INSERTION_CHANNEL,
   UNIFIED_LIBRARY_DRAFT_RESOLVE_CHANNEL,
@@ -1284,6 +1299,49 @@ contextBridge.exposeInMainWorld('blueAPI', {
     return () => {
       ipcRenderer.removeListener(OSC_CONTROL_COMMAND_CHANNEL, handler);
     };
+  },
+
+  // MCP Server
+  getMcpServerStatus: async (): Promise<McpServerStatus> => {
+    const status = await ipcRenderer.invoke(MCP_SERVER_GET_STATUS_CHANNEL);
+    if (!isMcpServerStatus(status)) {
+      throw new Error('Invalid MCP server status payload.');
+    }
+    return status;
+  },
+  onMcpServerStatus: (callback: (status: McpServerStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, status: unknown) => {
+      if (isMcpServerStatus(status)) callback(status);
+    };
+    ipcRenderer.on(MCP_SERVER_STATUS_CHANGED_CHANNEL, handler);
+    return () => {
+      ipcRenderer.removeListener(MCP_SERVER_STATUS_CHANGED_CHANNEL, handler);
+    };
+  },
+  copyMcpCredential: async (): Promise<McpCopyResult> => {
+    const result = await ipcRenderer.invoke(MCP_SERVER_COPY_CREDENTIAL_CHANNEL);
+    return isMcpCopyResult(result)
+      ? result
+      : { ok: false, code: 'MCP_UNAVAILABLE', message: 'Invalid MCP copy response.' };
+  },
+  copyMcpClientConfig: async (target: McpClientConfigTarget): Promise<McpCopyResult> => {
+    if (!isMcpClientConfigTarget(target)) {
+      return { ok: false, code: 'MCP_UNAVAILABLE', message: 'Unsupported MCP client target.' };
+    }
+    const result = await ipcRenderer.invoke(MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL, target);
+    return isMcpCopyResult(result)
+      ? result
+      : { ok: false, code: 'MCP_UNAVAILABLE', message: 'Invalid MCP copy response.' };
+  },
+  rotateMcpCredential: async (): Promise<McpRotateResult> => {
+    const result = await ipcRenderer.invoke(MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL);
+    return isMcpRotateResult(result)
+      ? result
+      : {
+          ok: false,
+          code: 'ROTATION_FAILED',
+          message: 'Invalid MCP credential rotation response.',
+        };
   },
 
   // Window Layout

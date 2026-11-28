@@ -100,3 +100,7 @@ saved preference stays the same. The **Supported OSC Messages** table lists
 the accepted address prefixes. Message arguments and bundle timetags are
 ignored. Blue listens on all IPv4 interfaces without authentication, so use
 OSC on a trusted network and control access with the host firewall.
+
+## MCP
+
+Use the MCP panel to enable a local client, choose its access mode, and copy its configuration. See [Blue MCP](mcp.qmd) for setup and examples.

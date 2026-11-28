@@ -1,4 +1,10 @@
 import {
+  MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL,
+  MCP_SERVER_COPY_CREDENTIAL_CHANNEL,
+  MCP_SERVER_GET_STATUS_CHANNEL,
+  MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL,
+} from '../../shared/mcp-server';
+import {
   registerIpcTransaction,
   type IpcMainEventListener,
   type IpcMainInvokeHandler,
@@ -20,6 +26,10 @@ export const APPLICATION_IPC_CHANNELS = [
   'engine-runtime:query-csound-io',
   'program-settings:reset-panel',
   'osc-control:get-snapshot',
+  MCP_SERVER_GET_STATUS_CHANNEL,
+  MCP_SERVER_COPY_CREDENTIAL_CHANNEL,
+  MCP_SERVER_COPY_CLIENT_CONFIG_CHANNEL,
+  MCP_SERVER_ROTATE_CREDENTIAL_CHANNEL,
   'program-settings:usage-matrix',
   'program-settings:sync-legacy-renderer-settings',
   'program-settings:update-playback-preferences',

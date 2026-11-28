@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import {
   BLUE_ENGINE_PROTOCOL_VERSION,
   AUTOMATION_DECIMAL_FEATURE,
+  CSOUND_CONFINED_RENDER_FEATURE,
   CSOUND_IO_FEATURE,
   CSOUND_PERFORMANCE_FEATURE,
   CSOUND_UTILITY_FEATURE,
@@ -32,11 +33,13 @@ describe('engine capabilities decoder', () => {
         CSOUND_IO_FEATURE,
         CSOUND_UTILITY_FEATURE,
         CSOUND_PERFORMANCE_FEATURE,
+        CSOUND_CONFINED_RENDER_FEATURE,
         OWNER_LIVENESS_FEATURE,
       ],
     };
     expect(hasEngineFeature(capabilities, CSOUND_IO_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, CSOUND_UTILITY_FEATURE)).toBe(true);
+    expect(hasEngineFeature(capabilities, CSOUND_CONFINED_RENDER_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, OWNER_LIVENESS_FEATURE)).toBe(true);
     expect(hasEngineFeature(capabilities, 'future-feature')).toBe(false);
   });

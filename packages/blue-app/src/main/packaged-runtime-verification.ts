@@ -32,7 +32,8 @@ export type RuntimeAspect =
   | 'node-sqlite'
   | 'workspace-data'
   | 'workspace-engine-client'
-  | 'bundled-engine';
+  | 'bundled-engine'
+  | 'mcp-runtime';
 
 /** Single aspect verification result. */
 export interface RuntimeVerificationResult {
@@ -440,6 +441,41 @@ export function verifyBundledEngine(
   };
 }
 
+function verifyMcpRuntime(context: RuntimeVerificationContext): RuntimeVerificationResult {
+  const resolveModule =
+    context.resolveExternalModule ?? ((name) => safeResolveExternal(context, name));
+  const packages = ['@modelcontextprotocol/server', '@modelcontextprotocol/node', 'zod'];
+  const licenseFiles = [
+    'THIRD_PARTY_NOTICES.md',
+    'NPM-PRODUCTION-DEPENDENCIES.md',
+    'MCP-TypeScript-SDK-Apache-2.0-MIT.txt',
+    'Hono-MIT.txt',
+    'Hono-Node-Server-MIT.txt',
+    'Zod-MIT.txt',
+  ];
+  const missing = packages.filter((name) => !resolveModule(name));
+  for (const name of licenseFiles) {
+    try {
+      if (fs.readFileSync(path.join(context.resourcesPath ?? '', 'licenses', name)).length > 0) {
+        continue;
+      }
+    } catch {
+      // Report missing and unreadable files together with missing dependencies.
+    }
+    missing.push(name);
+  }
+  return {
+    aspect: 'mcp-runtime',
+    ok: missing.length === 0,
+    code: missing.length === 0 ? 'OK' : 'MCP_PACKAGE_CONTENTS_MISSING',
+    message:
+      missing.length === 0
+        ? 'MCP production dependencies and third-party license files are available.'
+        : 'The packaged MCP runtime is missing required dependencies or license files.',
+    ...(missing.length > 0 ? { detail: missing } : {}),
+  };
+}
+
 function safeResolveExternal(
   context: RuntimeVerificationContext,
   packageName: string,
@@ -490,7 +526,7 @@ export function verifyPackagedRuntime(
   verifyNodeSqlite(context, results);
   verifyWorkspaceData(context, results);
   verifyWorkspaceEngineClient(context, results);
-  results.push(verifyBundledEngine(context));
+  results.push(verifyBundledEngine(context), verifyMcpRuntime(context));
 
   return {
     ok: results.every((result) => result.ok),

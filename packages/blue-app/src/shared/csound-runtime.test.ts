@@ -158,6 +158,23 @@ describe('Csound runtime shared contract', () => {
         args: [],
         cwd: '/tmp',
       } as any),
-    ).toThrow('utility or performance');
+    ).toThrow('utility, performance, or confined-render');
+    expect(
+      normalizeCsoundExecutionRequest({
+        kind: 'confined-render',
+        operationId: 'confined-1',
+        rootPath: '/tmp/render',
+        rootDev: '1',
+        rootIno: '2',
+        outputFilename: 'out.wav',
+        csdText: '<CsoundSynthesizer></CsoundSynthesizer>',
+        args: ['-d'],
+      }),
+    ).toMatchObject({
+      kind: 'confined-render',
+      operationId: 'confined-1',
+      rootPath: '/tmp/render',
+      outputFilename: 'out.wav',
+    });
   });
 });

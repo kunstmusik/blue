@@ -170,6 +170,11 @@ export class PianoRoll extends AbstractSoundObject {
     this._scale = s;
   }
 
+  /** Returns the number of notes stored on the piano roll. */
+  getNoteCount(): number {
+    return this._notes.length;
+  }
+
   /** Returns the notes currently stored in the piano roll. */
   getNotes(): PianoNote[] {
     return [...this._notes];

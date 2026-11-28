@@ -32,6 +32,13 @@ import {
   type FreezeArtifactSettlement,
   type FreezeExecutionSeam,
 } from './freeze-score-objects';
+import {
+  executeConfinedMcpRender,
+  type AuthorizedRenderRoot,
+  type ConfinedMcpRenderSuccess,
+  type McpRenderFsSeam,
+} from './mcp-render';
+import type { McpAuthContext, McpDocumentReceipt, McpResult } from './mcp-bridge';
 
 /** Output tab name used to stream disk-render Csound subprocess output. */
 const DISK_RENDER_OUTPUT_TAB = 'Csound (Disk)';
@@ -43,6 +50,7 @@ export interface RenderFreezeCoordinatorDeps {
   getCurrentProjectSessionId: () => number;
   getCurrentProjectSessionDocumentId: () => string;
   getCurrentProjectRevision: () => number;
+  getCurrentProjectStateId?: () => string | null;
   getCurrentProjectDocument: () => ProjectEditorSnapshot | null;
   getMainWindow: () => BrowserWindow | null;
   getEngineRuntimeService: () => EngineRuntimeService | null;
@@ -57,6 +65,18 @@ export interface RenderFreezeCoordinatorDeps {
   rebuildApplicationMenuIfChanged: () => void;
 }
 
+export interface McpRenderToDiskRequest {
+  readonly auth: McpAuthContext;
+  readonly expectedReceipt: McpDocumentReceipt;
+  readonly getCurrentReceipt?: () => McpDocumentReceipt | null;
+  readonly nativeRoot: string;
+  readonly authorizedRoot?: AuthorizedRenderRoot;
+  readonly filename: string;
+  readonly operationId?: string;
+  readonly fsSeam?: McpRenderFsSeam;
+  readonly platform?: NodeJS.Platform | string;
+}
+
 export interface RenderFreezeCoordinator {
   isRenderOperationActive: () => boolean;
   createCsoundExecutionSeam: (
@@ -68,8 +88,12 @@ export interface RenderFreezeCoordinator {
     action: DiskRenderAction,
     requestedOperationId?: string,
   ) => Promise<RenderOperationResult>;
+  handleMcpRenderToDisk: (
+    request: McpRenderToDiskRequest,
+  ) => Promise<McpResult<ConfinedMcpRenderSuccess>>;
   handleFreezeScoreObjects: (request: FreezeScoreObjectsRequest) => Promise<FreezeOperationResult>;
   handleCancelRenderOperation: (request: CancelRenderOperationRequest) => Promise<boolean>;
+  shutdownMcpRender: () => Promise<void>;
 }
 
 export function createRenderFreezeCoordinator(
@@ -79,6 +103,7 @@ export function createRenderFreezeCoordinator(
   let activeRenderAbortController: AbortController | null = null;
   let activeRenderAction: DiskRenderAction | null = null;
   let activeRenderCancellationSignal: { cancelled: boolean } | null = null;
+  let activeMcpRenderSettlement: Promise<void> | null = null;
 
   function createCsoundExecutionSeam(
     cancellationSignal?: { cancelled: boolean },
@@ -144,6 +169,49 @@ export function createRenderFreezeCoordinator(
           stdout: result.stdout,
           cancelled: result.state === 'cancelled',
           errorCode: result.errorCode,
+        };
+      },
+      async runConfinedCsound(request) {
+        const controller =
+          trackRenderProcess && activeRenderAbortController
+            ? activeRenderAbortController
+            : new AbortController();
+        if (cancellationSignal?.cancelled) controller.abort();
+        const result = await deps.getEngineRuntimeService()?.executeCsound(
+          {
+            kind: 'confined-render',
+            operationId: activeRenderOperationId ?? `csound-confined-${Date.now()}`,
+            rootPath: request.rootPath,
+            rootDev: request.rootDev,
+            rootIno: request.rootIno,
+            outputFilename: request.outputFilename,
+            csdText: request.csdText,
+            args: request.args,
+          },
+          {
+            signal: controller.signal,
+            beforeLaunch: request.beforeLaunch,
+            beforePublish: request.beforePublish,
+            onOutput: (text, source) => {
+              streamOutput?.(text, source);
+            },
+          },
+        );
+        if (!result) {
+          return {
+            exitCode: -1,
+            stderr: 'Blue Engine runtime service is unavailable.',
+            stdout: '',
+            errorCode: 'CSOUND_UNAVAILABLE',
+          };
+        }
+        return {
+          exitCode: result.exitCode ?? -1,
+          stderr: result.stderr || (result.state === 'failed' ? result.message : ''),
+          stdout: result.stdout,
+          cancelled: result.state === 'cancelled',
+          errorCode: result.errorCode,
+          message: result.message,
         };
       },
     };
@@ -518,6 +586,123 @@ export function createRenderFreezeCoordinator(
     }
   }
 
+  async function handleMcpRenderToDisk(
+    request: McpRenderToDiskRequest,
+  ): Promise<McpResult<ConfinedMcpRenderSuccess>> {
+    const resolveReceipt = (): McpDocumentReceipt | null => {
+      if (request.getCurrentReceipt) {
+        return request.getCurrentReceipt();
+      }
+      if (!deps.getCurrentData()) return null;
+      const documentId = deps.getCurrentProjectSessionDocumentId();
+      const stateId = deps.getCurrentProjectStateId?.() ?? '';
+      if (!documentId || !stateId) return null;
+      return {
+        documentId,
+        revision: deps.getCurrentProjectRevision(),
+        stateId,
+      };
+    };
+
+    if (request.auth.signal.aborted) {
+      return { ok: false, code: 'CANCELLED', message: 'The MCP render request was cancelled.' };
+    }
+    if (
+      !request.auth.isAuthorized() ||
+      request.auth.accessMode !== 'read-write' ||
+      request.auth.action !== 'runtime'
+    ) {
+      return {
+        ok: false,
+        code: 'ACCESS_DENIED',
+        message: 'Read-write MCP authorization is required to render to disk.',
+      };
+    }
+
+    const data = deps.getCurrentData();
+    if (!data) {
+      return {
+        ok: false,
+        code: 'NO_ACTIVE_PROJECT',
+        message: 'No project is currently open in Blue. Open or create a project and retry.',
+      };
+    }
+
+    const currentReceipt = resolveReceipt();
+    if (
+      !currentReceipt ||
+      currentReceipt.documentId !== request.expectedReceipt.documentId ||
+      currentReceipt.revision !== request.expectedReceipt.revision ||
+      currentReceipt.stateId !== request.expectedReceipt.stateId
+    ) {
+      return {
+        ok: false,
+        code: 'CONFLICT',
+        message:
+          'The active project changed before rendering started. Reread the receipt and retry.',
+      };
+    }
+
+    if (activeRenderOperationId) {
+      return {
+        ok: false,
+        code: 'BUSY',
+        message: 'Another render/freeze operation is already running.',
+      };
+    }
+
+    const operationId = request.operationId ?? `mcp-disk-${Date.now()}`;
+    activeRenderOperationId = operationId;
+    activeRenderAction = null;
+    const cancellationSignal = { cancelled: false };
+    activeRenderCancellationSignal = cancellationSignal;
+    activeRenderAbortController = new AbortController();
+    deps.rebuildApplicationMenuIfChanged();
+
+    let settleRender!: () => void;
+    activeMcpRenderSettlement = new Promise<void>((resolve) => {
+      settleRender = resolve;
+    });
+
+    const onAbort = (): void => {
+      cancellationSignal.cancelled = true;
+      activeRenderAbortController?.abort();
+    };
+    request.auth.signal.addEventListener('abort', onAbort, { once: true });
+    if (request.auth.signal.aborted) {
+      onAbort();
+    }
+
+    try {
+      const settings = deps.loadProgramSettings();
+      const seam = createCsoundExecutionSeam(cancellationSignal);
+
+      return await executeConfinedMcpRender({
+        data,
+        expectedReceipt: request.expectedReceipt,
+        getCurrentReceipt: resolveReceipt,
+        auth: request.auth,
+        nativeRoot: request.nativeRoot,
+        authorizedRoot: request.authorizedRoot,
+        filename: request.filename,
+        diskRender: settings.diskRender,
+        messageColorsEnabled: settings.general.messageColorsEnabled,
+        executionSeam: seam,
+        isCancelled: () => cancellationSignal.cancelled,
+        fsSeam: request.fsSeam,
+        platform: request.platform,
+      });
+    } finally {
+      request.auth.signal.removeEventListener('abort', onAbort);
+      activeMcpRenderSettlement = null;
+      try {
+        finishRenderOperation(operationId);
+      } finally {
+        settleRender();
+      }
+    }
+  }
+
   async function handleCancelRenderOperation(
     request: CancelRenderOperationRequest,
   ): Promise<boolean> {
@@ -535,7 +720,13 @@ export function createRenderFreezeCoordinator(
     isRenderOperationActive: () => activeRenderOperationId !== null,
     createCsoundExecutionSeam,
     handleRenderToDisk,
+    handleMcpRenderToDisk,
     handleFreezeScoreObjects,
     handleCancelRenderOperation,
+    async shutdownMcpRender() {
+      if (!activeMcpRenderSettlement) return;
+      activeRenderAbortController?.abort();
+      await activeMcpRenderSettlement;
+    },
   };
 }

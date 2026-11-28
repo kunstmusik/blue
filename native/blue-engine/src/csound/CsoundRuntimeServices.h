@@ -54,6 +54,9 @@ public:
                             const std::vector<std::string> &arguments,
                             const CsoundMessageCallback &onMessage);
 
+  static int performCompiled(csound::CSOUND *csound, int compileResult,
+                             const CsoundMessageCallback &onMessage);
+
   static void drainMessages(csound::CSOUND *csound,
                             const CsoundMessageCallback &onMessage);
 

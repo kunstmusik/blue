@@ -199,8 +199,14 @@ export type PlaybackCompleteCallback = (stopReason: string) => void;
 export type PlaybackErrorWarningCallback = (message: string) => void;
 export type PlaybackStateChangeCallback = (running: boolean) => void;
 
+export interface EnginePlaybackFence {
+  check(): { readonly ok: boolean; readonly code?: string; readonly message?: string };
+}
+
 export interface EngineOperationResult {
   ok: boolean;
+  /** True when aborted due to an MCP authorization/receipt fence before engine start. */
+  fenced?: boolean;
   /** Distinguishes invalid project source from an engine/runtime failure. */
   failureKind?: 'engine' | 'project';
   failureCategory?: EngineRecoveryFailureCategory;
@@ -978,6 +984,7 @@ export class EngineBridge {
     workingDirectory?: string | null,
     extraOptions: string[] = [],
     meterBindingMap?: MeterBindingMapPayload,
+    fence?: EnginePlaybackFence,
   ): Promise<EngineOperationResult> {
     if (this.playbackLock) {
       console.warn('[EngineBridge] Playback already in progress, ignoring');
@@ -990,7 +997,24 @@ export class EngineBridge {
     this.playbackLock = true;
     this.setWorkingDirectory(workingDirectory);
 
+    const abortIfFenced = async (): Promise<EngineOperationResult | null> => {
+      if (!fence) return null;
+      const gate = fence.check();
+      if (gate.ok) return null;
+      await this.killEngine();
+      return {
+        ok: false,
+        fenced: true,
+        failureKind: 'project',
+        failureCategory: 'unexpected',
+        errorMessage: gate.message ?? 'Playback authorization is no longer valid.',
+      };
+    };
+
     try {
+      const entryFenced = await abortIfFenced();
+      if (entryFenced) return entryFenced;
+
       const { orchestra, score } = parseCSD(csd);
       const options = [...new Set(extraOptions.filter((opt) => opt.trim().length > 0))];
 
@@ -1000,6 +1024,9 @@ export class EngineBridge {
       console.log(`[EngineBridge] Score: ${score?.length || 0} chars`);
 
       const tempCsdPath = await writeTempCsdSnapshot(csd, this.workingDirectory);
+      const preStartFenced = await abortIfFenced();
+      if (preStartFenced) return preStartFenced;
+
       const renderCommandOptions = options.includes('-d') ? [...options] : ['-d', ...options];
       this.outputCallback?.(
         formatRenderCommandLine(renderCommandOptions, tempCsdPath, this.enginePath),
@@ -1008,6 +1035,9 @@ export class EngineBridge {
 
       const started = await this.startEngine();
       if (!started.ok) return started;
+      const postStartEngineFenced = await abortIfFenced();
+      if (postStartEngineFenced) return postStartEngineFenced;
+
       const client = this.activeSession?.getClient();
       if (!client) {
         const cleaned = await this.killEngine();
@@ -1030,6 +1060,8 @@ export class EngineBridge {
       }
 
       for (const opt of options) {
+        const optionFenced = await abortIfFenced();
+        if (optionFenced) return optionFenced;
         console.log(`[EngineBridge] setOption: ${opt}`);
         try {
           const resp = await client.setOption(opt);
@@ -1044,6 +1076,8 @@ export class EngineBridge {
       }
 
       if (orchestra) {
+        const preOrcFenced = await abortIfFenced();
+        if (preOrcFenced) return preOrcFenced;
         console.log(`[EngineBridge] compileOrc (${orchestra.length} chars)`);
         const resp = await client.compileOrc(orchestra);
         console.log(`[EngineBridge] compileOrc: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
@@ -1060,10 +1094,14 @@ export class EngineBridge {
       }
 
       if (parameters && parameters.length > 0) {
+        const preAutoFenced = await abortIfFenced();
+        if (preAutoFenced) return preAutoFenced;
         await this.sendAutomationDefinitions(client, parameters, automationTiming);
       }
 
       if (score) {
+        const preScoreFenced = await abortIfFenced();
+        if (preScoreFenced) return preScoreFenced;
         console.log(`[EngineBridge] readScore (${score.length} chars)`);
         const resp = await client.readScore(score);
         console.log(`[EngineBridge] readScore: ${resp.ok ? 'OK' : 'FAILED'} ${resp.message}`);
@@ -1078,6 +1116,9 @@ export class EngineBridge {
           };
         }
       }
+
+      const preStartPerfFenced = await abortIfFenced();
+      if (preStartPerfFenced) return preStartPerfFenced;
 
       console.log(`[EngineBridge] start()`);
       const startResp = await client.start();

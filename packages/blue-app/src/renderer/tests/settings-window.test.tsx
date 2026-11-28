@@ -108,6 +108,7 @@ describe('settings renderer (044)', () => {
     // mapping and realtime-render MIDI options).
     expect(container.textContent).toContain('MIDI');
     expect(container.textContent).toContain('OSC');
+    expect(container.textContent).toContain('MCP');
     const navButtons = Array.from(container.querySelectorAll('nav button'));
     expect(navButtons.map((button) => button.textContent)).toEqual([
       'General',
@@ -118,6 +119,7 @@ describe('settings renderer (044)', () => {
       'Disk Render',
       'MIDI',
       'OSC',
+      'MCP',
     ]);
   });
 

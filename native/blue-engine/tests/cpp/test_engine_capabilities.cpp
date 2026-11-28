@@ -28,6 +28,7 @@ int main() {
   assert(json.find("\"csound-io-v1\"") != std::string::npos);
   assert(json.find("\"csound-utility-v1\"") != std::string::npos);
   assert(json.find("\"csound-performance-v1\"") != std::string::npos);
+  assert(json.find("\"csound-confined-render-v5\"") != std::string::npos);
 
   blue::CsoundLoadReport loadReport;
   loadReport.status = blue::CsoundLoadStatus::READY;

@@ -1,8 +1,19 @@
-import { execFile, spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { constants, createReadStream } from 'node:fs';
+import { execFile, spawn, spawnSync } from 'node:child_process';
+import { createHash, randomUUID } from 'node:crypto';
+import {
+  closeSync,
+  constants,
+  createReadStream,
+  fstatSync,
+  lstatSync,
+  mkdtempSync,
+  openSync,
+  realpathSync,
+} from 'node:fs';
 import { access, readFile, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import * as path from 'node:path';
+import { openMacRenderScratch } from './macos-render-scratch';
 import { BLUE_ENGINE_PROTOCOL_VERSION, hasEngineFeature } from '@blue/engine-client/capabilities';
 import {
   boundedDiagnostic,
@@ -15,6 +26,7 @@ import {
   type EngineSelection,
   type EngineSelectionSource,
 } from '../shared/engine-runtime';
+import type { RenderBeforeLaunchCheck } from './render-to-disk';
 import {
   CSOUND_IO_FEATURE,
   decodeCsoundIoReportJson,
@@ -68,12 +80,20 @@ export type ExecutionProcessRunner = (
   cwd: string,
   signal: AbortSignal | undefined,
   onOutput: (text: string, source: ExecutionOutputSource) => void,
+  stdin?: string,
+  stdoutFd?: number,
 ) => Promise<ExecutionProcessResult>;
+
+export interface NativeConfinedFsResult {
+  status: number | null;
+  stderr: string;
+}
 
 export interface EngineRuntimeOptions {
   isPackaged: boolean;
   resourcesPath: string;
   repoRoot: string;
+  scratchProfile?: string;
   platform?: NodeJS.Platform;
   arch?: string;
   environment?: NodeJS.ProcessEnv;
@@ -82,6 +102,16 @@ export interface EngineRuntimeOptions {
   probeTimeoutMs?: number;
   runProbeProcess?: ProbeProcessRunner;
   runExecutionProcess?: ExecutionProcessRunner;
+  publishConfinedWav?: (
+    executablePath: string,
+    args: string[],
+    wavFd: number,
+  ) => NativeConfinedFsResult;
+  cleanupConfinedStaging?: (
+    executablePath: string,
+    args: string[],
+    wavFd?: number,
+  ) => NativeConfinedFsResult;
 }
 
 class EngineRuntimeError extends Error {
@@ -155,6 +185,8 @@ async function defaultExecutionProcess(
   cwd: string,
   signal: AbortSignal | undefined,
   onOutput: (text: string, source: ExecutionOutputSource) => void,
+  stdin?: string,
+  stdoutFd?: number,
 ): Promise<ExecutionProcessResult> {
   return new Promise((resolve) => {
     const outputLimit = 1024 * 1024;
@@ -181,8 +213,18 @@ async function defaultExecutionProcess(
       cwd,
       shell: false,
       windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [
+        stdin !== undefined ? 'pipe' : 'ignore',
+        stdoutFd !== undefined ? stdoutFd : 'pipe',
+        'pipe',
+      ],
     });
+    if (stdin !== undefined && child.stdin) {
+      child.stdin.on('error', () => {
+        // Ignore EPIPE if the engine rejects arguments before draining stdin.
+      });
+      child.stdin.end(stdin, 'utf8');
+    }
     const finish = (result: ExecutionProcessResult) => {
       if (settled) return;
       settled = true;
@@ -191,7 +233,7 @@ async function defaultExecutionProcess(
     };
     const onAbort = () => {
       try {
-        child.kill('SIGTERM');
+        child.kill(stdin === undefined ? 'SIGTERM' : 'SIGKILL');
       } catch {
         // The child may have exited between the abort and kill calls.
       }
@@ -211,22 +253,17 @@ async function defaultExecutionProcess(
     child.once('spawn', () => {
       started = true;
     });
-    child.once('error', (error) => {
-      finish({
-        exitCode: null,
-        signal: null,
-        stdout,
-        stderr,
-        started,
-        errorMessage: error.message,
-        stdoutTruncated,
-        stderrTruncated,
-      });
+    let processError: string | undefined;
+    child.on('error', (error) => {
+      // A signal-delivery error can occur while the child still owns stdout.
+      // Record it here and settle only once the writer has closed.
+      processError = error.message;
     });
     child.once('close', (exitCode, closeSignal) => {
       finish({
-        exitCode,
+        exitCode: processError ? null : exitCode,
         signal: closeSignal,
+        errorMessage: processError,
         stdout,
         stderr,
         started,
@@ -235,6 +272,308 @@ async function defaultExecutionProcess(
       });
     });
   });
+}
+
+// On Linux x64/arm64, O_TMPFILE = __O_TMPFILE (0o20000000) | O_DIRECTORY.
+const LINUX_O_TMPFILE_BIT = 0o20000000;
+const CONFINED_CLEANUP_DIR_NOT_EMPTY = 74;
+
+interface ConfinedStaging {
+  wavFd: number;
+  wavDev: bigint;
+  wavIno: bigint;
+  cwdPath: string;
+  cwdDev: bigint;
+  cwdIno: bigint;
+  clear?: () => void;
+  stageDir?: { path: string; dev: bigint; ino: bigint };
+}
+
+function defaultNativeConfinedFs(
+  executablePath: string,
+  args: string[],
+  wavFd?: number,
+): NativeConfinedFsResult {
+  const result = spawnSync(executablePath, args, {
+    encoding: 'utf8',
+    windowsHide: true,
+    stdio: [wavFd !== undefined ? wavFd : 'ignore', 'ignore', 'pipe'],
+  });
+  return {
+    status: result.status,
+    stderr: result.stderr || result.error?.message || '',
+  };
+}
+
+function acquireConfinedStaging(
+  executablePath: string,
+  destination: Extract<CsoundExecutionRequest, { kind: 'confined-render' }>,
+  scratchProfile: string | undefined,
+  runCleanup: (executablePath: string, args: string[], wavFd?: number) => NativeConfinedFsResult,
+): { ok: true; staging: ConfinedStaging } | { ok: false; message: string } {
+  const expectedRootDev = destination.rootDev;
+  const tempPath = realpathSync(tmpdir());
+  const tempStat = lstatSync(tempPath, { bigint: true });
+  const differentVolume = String(tempStat.dev) !== expectedRootDev;
+  const stagingRoot = differentVolume ? destination.rootPath : tempPath;
+  const rootStat = differentVolume ? lstatSync(stagingRoot, { bigint: true }) : tempStat;
+  if (
+    !rootStat.isDirectory() ||
+    String(rootStat.dev) !== expectedRootDev ||
+    (differentVolume && String(rootStat.ino) !== destination.rootIno)
+  ) {
+    return {
+      ok: false,
+      message: 'Render staging directory no longer matches the approved identity.',
+    };
+  }
+
+  const allocateOnDestination = (leaf: string, token?: string) => {
+    const result = spawnSync(
+      executablePath,
+      [
+        '--allocate-confined-staging',
+        '--root-dir',
+        stagingRoot,
+        '--root-dev',
+        String(rootStat.dev),
+        '--root-ino',
+        String(rootStat.ino),
+        '--output-name',
+        leaf,
+        ...(token ? ['--', token] : []),
+      ],
+      { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+    const identity = /^(\d+) (\d+)\s*$/.exec(result.stdout ?? '');
+    if (result.status !== 0 || !identity || identity[1] !== expectedRootDev) {
+      throw new Error(
+        result.stderr?.trim() ||
+          result.error?.message ||
+          'Could not allocate private staging on the approved filesystem.',
+      );
+    }
+    return { dev: BigInt(identity[1]!), ino: BigInt(identity[2]!) };
+  };
+
+  if (process.platform === 'linux') {
+    const oTmpfile = (constants.O_DIRECTORY ?? 0) | LINUX_O_TMPFILE_BIT;
+    let rootFd: number | undefined;
+    let wavFd: number | null = null;
+    try {
+      rootFd = openSync(
+        stagingRoot,
+        constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW,
+      );
+      const anchor = fstatSync(rootFd, { bigint: true });
+      if (anchor.dev !== rootStat.dev || anchor.ino !== rootStat.ino) {
+        throw new Error('Staging directory changed during allocation.');
+      }
+      wavFd = openSync(`/proc/self/fd/${rootFd}`, constants.O_RDWR | oTmpfile, 0o600);
+      const wavStat = fstatSync(wavFd, { bigint: true });
+      if (!wavStat.isFile() || wavStat.nlink !== 0n || String(wavStat.dev) !== expectedRootDev) {
+        closeSync(wavFd);
+        return {
+          ok: false,
+          message: 'Render staging filesystem does not support anonymous temporary files.',
+        };
+      }
+      return {
+        ok: true,
+        staging: {
+          wavFd,
+          wavDev: wavStat.dev,
+          wavIno: wavStat.ino,
+          cwdPath: stagingRoot,
+          cwdDev: rootStat.dev,
+          cwdIno: rootStat.ino,
+        },
+      };
+    } catch (error) {
+      if (wavFd !== null) {
+        try {
+          closeSync(wavFd);
+        } catch {
+          // Ignore close error on failed allocation.
+        }
+      }
+      return {
+        ok: false,
+        message: `Could not allocate anonymous render staging: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    } finally {
+      if (rootFd !== undefined) closeSync(rootFd);
+    }
+  }
+
+  if (process.platform === 'darwin') {
+    if (!scratchProfile) throw new Error('Missing render scratch profile.');
+    const scratch = openMacRenderScratch(
+      scratchProfile,
+      stagingRoot,
+      false,
+      differentVolume
+        ? { dev: rootStat.dev, ino: rootStat.ino, create: allocateOnDestination }
+        : undefined,
+    );
+    if (!scratch) throw new Error('Could not acquire render scratch.');
+    const wav = fstatSync(scratch.wavFd, { bigint: true });
+    return {
+      ok: true,
+      staging: {
+        ...scratch,
+        wavDev: wav.dev,
+        wavIno: wav.ino,
+        cwdPath: stagingRoot,
+        cwdDev: rootStat.dev,
+        cwdIno: rootStat.ino,
+      },
+    };
+  }
+
+  if (process.platform === 'win32') {
+    let stagePath: string | null = null;
+    let stageDev: bigint | null = null;
+    let stageIno: bigint | null = null;
+    let wavFd: number | null = null;
+    let wavDev: bigint | null = null;
+    let wavIno: bigint | null = null;
+    try {
+      if (differentVolume) {
+        const leaf = `blue-mcp-render-${randomUUID()}`;
+        const identity = allocateOnDestination(leaf);
+        stagePath = path.join(stagingRoot, leaf);
+        stageDev = identity.dev;
+        stageIno = identity.ino;
+      } else {
+        stagePath = mkdtempSync(path.join(stagingRoot, 'blue-mcp-render-'));
+        const stageStat = lstatSync(stagePath, { bigint: true });
+        stageDev = stageStat.dev;
+        stageIno = stageStat.ino;
+      }
+      const stageStat = lstatSync(stagePath, { bigint: true });
+      if (
+        !stageStat.isDirectory() ||
+        stageStat.dev !== stageDev ||
+        stageStat.ino !== stageIno ||
+        String(stageDev) !== expectedRootDev
+      ) {
+        runCleanup(executablePath, [
+          '--cleanup-confined-render',
+          '--root-dir',
+          stagePath,
+          '--root-dev',
+          String(stageDev),
+          '--root-ino',
+          String(stageIno),
+        ]);
+        return {
+          ok: false,
+          message: 'Private render staging no longer matches the allocated directory.',
+        };
+      }
+      wavFd = openSync(
+        path.join(stagePath, 'render.wav'),
+        constants.O_RDWR | constants.O_CREAT | constants.O_EXCL,
+        0o600,
+      );
+      const wavStat = fstatSync(wavFd, { bigint: true });
+      wavDev = wavStat.dev;
+      wavIno = wavStat.ino;
+      const recheckStage = lstatSync(stagePath, { bigint: true });
+      const recheckRoot = lstatSync(stagingRoot, { bigint: true });
+      if (
+        !wavStat.isFile() ||
+        wavStat.nlink !== 1n ||
+        wavStat.dev !== stageDev ||
+        !recheckRoot.isDirectory() ||
+        recheckRoot.dev !== rootStat.dev ||
+        recheckRoot.ino !== rootStat.ino ||
+        !recheckStage.isDirectory() ||
+        recheckStage.dev !== stageDev ||
+        recheckStage.ino !== stageIno
+      ) {
+        runCleanup(
+          executablePath,
+          ['--cleanup-confined-render', '--wav-dev', String(wavDev), '--wav-ino', String(wavIno)],
+          wavFd,
+        );
+        closeSync(wavFd);
+        wavFd = null;
+        runCleanup(executablePath, [
+          '--cleanup-confined-render',
+          '--root-dir',
+          stagePath,
+          '--root-dev',
+          String(stageDev),
+          '--root-ino',
+          String(stageIno),
+        ]);
+        return { ok: false, message: 'Could not establish ownership of staged WAV.' };
+      }
+      return {
+        ok: true,
+        staging: {
+          wavFd,
+          wavDev,
+          wavIno,
+          cwdPath: stagePath,
+          cwdDev: stageDev,
+          cwdIno: stageIno,
+          stageDir: { path: stagePath, dev: stageDev, ino: stageIno },
+        },
+      };
+    } catch (error) {
+      if (wavFd !== null) {
+        if (wavDev !== null && wavIno !== null) {
+          try {
+            runCleanup(
+              executablePath,
+              [
+                '--cleanup-confined-render',
+                '--wav-dev',
+                String(wavDev),
+                '--wav-ino',
+                String(wavIno),
+              ],
+              wavFd,
+            );
+          } catch {
+            // Ignore cleanup failure during error handling.
+          }
+        }
+        try {
+          closeSync(wavFd);
+        } catch {
+          // Ignore close failure during error handling.
+        }
+      }
+      if (stagePath !== null && stageDev !== null && stageIno !== null) {
+        try {
+          runCleanup(executablePath, [
+            '--cleanup-confined-render',
+            '--root-dir',
+            stagePath,
+            '--root-dev',
+            String(stageDev),
+            '--root-ino',
+            String(stageIno),
+          ]);
+        } catch {
+          // Refuse path-based fallback cleanup when native verification fails.
+        }
+      }
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    message: `Confined render staging is unsupported on platform: ${process.platform}`,
+  };
 }
 
 export function developmentEnginePath(
@@ -548,6 +887,8 @@ export class EngineRuntimeService {
     hooks: {
       signal?: AbortSignal;
       onOutput?: (text: string, source: ExecutionOutputSource) => void;
+      beforeLaunch?: RenderBeforeLaunchCheck;
+      beforePublish?: RenderBeforeLaunchCheck;
     } = {},
   ): Promise<CsoundExecutionResult> {
     const request = normalizeCsoundExecutionRequest(rawRequest);
@@ -588,48 +929,222 @@ export class EngineRuntimeService {
     if (!hasEngineFeature(probe.report.engine, feature)) {
       return failed(`Blue Engine does not advertise ${feature}`, 'ENGINE_CAPABILITY_MISSING');
     }
-    if (!path.isAbsolute(request.cwd)) {
+    const executionCwd = request.kind === 'confined-render' ? request.rootPath : request.cwd;
+    if (!path.isAbsolute(executionCwd)) {
       return failed(
         'Csound execution working directory must be absolute',
         'CSOUND_EXECUTION_INVALID_CWD',
       );
     }
     try {
-      const cwdStat = await stat(request.cwd);
+      const cwdStat = await stat(executionCwd);
       if (!cwdStat.isDirectory()) {
         return failed(
-          `Csound execution working directory is not a directory: ${request.cwd}`,
+          `Csound execution working directory is not a directory: ${executionCwd}`,
           'CSOUND_EXECUTION_INVALID_CWD',
         );
       }
     } catch {
       return failed(
-        `Csound execution working directory was not found: ${request.cwd}`,
+        `Csound execution working directory was not found: ${executionCwd}`,
         'CSOUND_EXECUTION_INVALID_CWD',
       );
     }
 
-    const args =
-      request.kind === 'utility' ? ['--run-utility', request.utilityName] : ['--run-csound'];
-    if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
-    args.push('--', ...request.args);
+    if (request.kind === 'confined-render' && hooks.signal?.aborted) {
+      return {
+        operationId: request.operationId,
+        state: 'cancelled',
+        exitCode: null,
+        signal: 'SIGTERM',
+        stdout: '',
+        stderr: '',
+        errorCode: 'CSOUND_EXECUTION_CANCELLED',
+        message: 'Csound operation cancelled before launch',
+      };
+    }
+
+    const beforeLaunchResult = hooks.beforeLaunch?.();
+    if (beforeLaunchResult && !beforeLaunchResult.ok) {
+      return {
+        operationId: request.operationId,
+        state: beforeLaunchResult.code === 'CANCELLED' ? 'cancelled' : 'failed',
+        exitCode: null,
+        signal: null,
+        stdout: '',
+        stderr: boundedDiagnostic(beforeLaunchResult.message),
+        errorCode: beforeLaunchResult.code,
+        message: boundedDiagnostic(beforeLaunchResult.message),
+      };
+    }
+
+    const runCleanup = (
+      executablePath: string,
+      cleanupArgs: string[],
+      wavFd?: number,
+    ): NativeConfinedFsResult =>
+      this.options.cleanupConfinedStaging
+        ? this.options.cleanupConfinedStaging(executablePath, cleanupArgs, wavFd)
+        : defaultNativeConfinedFs(executablePath, cleanupArgs, wavFd);
+    let staging: ConfinedStaging | undefined;
     let processResult: ExecutionProcessResult;
+    let published = false;
     try {
+      let cwd = executionCwd;
+      let args: string[];
+      if (request.kind === 'confined-render') {
+        if (!hooks.beforePublish) {
+          return failed('Confined render requires a publication guard.', 'OUTPUT_REJECTED');
+        }
+        const allocated = acquireConfinedStaging(
+          probe.selection.executablePath,
+          request,
+          this.options.scratchProfile,
+          runCleanup,
+        );
+        if (!allocated.ok) {
+          return failed(allocated.message, 'OUTPUT_REJECTED');
+        }
+        staging = allocated.staging;
+        cwd = staging.cwdPath;
+        args = [
+          '--run-confined-render',
+          '--root-dir',
+          staging.cwdPath,
+          '--root-dev',
+          String(staging.cwdDev),
+          '--root-ino',
+          String(staging.cwdIno),
+          '--wav-dev',
+          String(staging.wavDev),
+          '--wav-ino',
+          String(staging.wavIno),
+        ];
+      } else {
+        args =
+          request.kind === 'utility' ? ['--run-utility', request.utilityName] : ['--run-csound'];
+      }
+      if (csoundLibraryPath) args.push('--csound-library', csoundLibraryPath);
+      args.push('--', ...request.args);
       processResult = await this.runExecutionProcess(
         probe.selection.executablePath,
         args,
-        request.cwd,
+        cwd,
         hooks.signal,
         hooks.onOutput ?? (() => undefined),
+        request.kind === 'confined-render' ? request.csdText : undefined,
+        staging?.wavFd,
       );
+      if (request.kind === 'confined-render' && staging && processResult.exitCode === 0) {
+        if (hooks.signal?.aborted) {
+          return {
+            ...failed('Render cancelled before publication.', 'CSOUND_EXECUTION_CANCELLED'),
+            state: 'cancelled',
+          };
+        }
+        const wav = fstatSync(staging.wavFd, { bigint: true });
+        const expectedNlink = process.platform === 'linux' ? 0n : 1n;
+        if (
+          !wav.isFile() ||
+          wav.dev !== staging.wavDev ||
+          wav.ino !== staging.wavIno ||
+          wav.nlink !== expectedNlink ||
+          wav.size < 44n
+        ) {
+          return failed('Could not verify the staged WAV.', 'OUTPUT_REJECTED');
+        }
+        const publicationArgs = [
+          '--publish-confined-render',
+          '--root-dir',
+          request.rootPath,
+          '--root-dev',
+          request.rootDev,
+          '--root-ino',
+          request.rootIno,
+          '--output-name',
+          request.outputFilename,
+          '--wav-dev',
+          String(staging.wavDev),
+          '--wav-ino',
+          String(staging.wavIno),
+        ];
+        const gate = hooks.beforePublish!();
+        if (!gate.ok) {
+          return {
+            ...failed(gate.message, gate.code),
+            state: gate.code === 'CANCELLED' ? 'cancelled' : 'failed',
+          };
+        }
+        // This metadata-only commit runs in the same main-process turn as the authority check.
+        const commit = this.options.publishConfinedWav
+          ? this.options.publishConfinedWav(
+              probe.selection.executablePath,
+              publicationArgs,
+              staging.wavFd,
+            )
+          : defaultNativeConfinedFs(probe.selection.executablePath, publicationArgs, staging.wavFd);
+        if (commit.status !== 0) {
+          return failed(commit.stderr || 'Could not publish the staged WAV.', 'OUTPUT_REJECTED');
+        }
+        published = true;
+      }
     } catch (error) {
       return failed(
         error instanceof Error ? error.message : String(error),
-        'CSOUND_PROCESS_FAILED',
+        request.kind === 'confined-render' ? 'OUTPUT_REJECTED' : 'CSOUND_PROCESS_FAILED',
       );
+    } finally {
+      if (staging) {
+        try {
+          staging.clear?.();
+          if (staging.stageDir && !published) {
+            // Mark the owned WAV handle for delete-on-close by handle before closing wavFd.
+            runCleanup(
+              probe.selection.executablePath,
+              [
+                '--cleanup-confined-render',
+                '--wav-dev',
+                String(staging.wavDev),
+                '--wav-ino',
+                String(staging.wavIno),
+              ],
+              staging.wavFd,
+            );
+          }
+        } catch (error) {
+          console.warn('Could not clear private MCP render staging.', error);
+        } finally {
+          try {
+            closeSync(staging.wavFd);
+          } catch {
+            // Ignore close failure if descriptor is already closed.
+          }
+          if (staging.stageDir) {
+            try {
+              const dirCleanup = runCleanup(probe.selection.executablePath, [
+                '--cleanup-confined-render',
+                '--root-dir',
+                staging.stageDir.path,
+                '--root-dev',
+                String(staging.stageDir.dev),
+                '--root-ino',
+                String(staging.stageDir.ino),
+              ]);
+              if (dirCleanup.status !== 0 && dirCleanup.status !== CONFINED_CLEANUP_DIR_NOT_EMPTY) {
+                console.warn(
+                  'Could not remove private MCP render staging.',
+                  dirCleanup.stderr || `exit ${dirCleanup.status}`,
+                );
+              }
+            } catch (error) {
+              console.warn('Could not remove private MCP render staging.', error);
+            }
+          }
+        }
+      }
     }
 
-    const cancelled = hooks.signal?.aborted ?? false;
+    const cancelled = !published && (hooks.signal?.aborted ?? false);
     const state: CsoundExecutionResult['state'] = cancelled
       ? 'cancelled'
       : processResult.exitCode === 0

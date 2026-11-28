@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { BlueData } from '@blue/data';
 import {
   loadProgramSettings,
   saveProgramSettings,
@@ -11,6 +12,7 @@ import {
   setSettingsFilePathForTesting,
   updatePlaybackPreferences,
 } from './program-settings-store';
+import { applyProgramSettingsToNewProject } from './program-settings-application';
 import { createDefaultProgramSettings } from '../shared/program-settings';
 
 let tempDir: string;
@@ -464,5 +466,153 @@ describe('updatePlaybackPreferences', () => {
     clearSettingsCache();
     const reloaded = loadProgramSettings('darwin');
     expect(reloaded.general.csoundManualUrl).toBe('https://csound.com/manual');
+  });
+
+  describe('MCP server preferences', () => {
+    const MCP_DEFAULTS = { enabled: false, preferredPort: 8765, accessMode: 'read-only' };
+    const MCP_EXPLICIT = { enabled: true, preferredPort: 9000, accessMode: 'read-write' } as const;
+
+    function writeSettingsFile(value: unknown): string {
+      const filePath = path.join(tempDir, 'program-settings.json');
+      fs.writeFileSync(filePath, JSON.stringify(value));
+      clearSettingsCache();
+      return filePath;
+    }
+
+    it('starts disabled and read-only on the default port when no file exists', () => {
+      expect(loadProgramSettings('darwin').mcp).toEqual(MCP_DEFAULTS);
+    });
+
+    it('gives settings saved before MCP existed the safe defaults', () => {
+      writeSettingsFile({ version: 3, osc: { preferredPort: 9010 } });
+
+      expect(loadProgramSettings('darwin').mcp).toEqual(MCP_DEFAULTS);
+    });
+
+    it('persists and reloads explicit preferences', () => {
+      const settings = loadProgramSettings('darwin');
+      settings.mcp = MCP_EXPLICIT;
+      expect(saveProgramSettings(settings, 'darwin').ok).toBe(true);
+
+      clearSettingsCache();
+      expect(loadProgramSettings('darwin').mcp).toEqual(MCP_EXPLICIT);
+    });
+
+    it('fails closed on invalid persisted enablement, mode, and port', () => {
+      const cases: [Record<string, unknown>, Record<string, unknown>][] = [
+        [
+          { enabled: 'true', preferredPort: 9000, accessMode: 'read-write' },
+          { enabled: false, preferredPort: 9000, accessMode: 'read-write' },
+        ],
+        [
+          { enabled: 1, preferredPort: 9000 },
+          { enabled: false, preferredPort: 9000, accessMode: 'read-only' },
+        ],
+        [
+          { enabled: true, preferredPort: 80 },
+          { enabled: true, preferredPort: 8765, accessMode: 'read-only' },
+        ],
+        [
+          { enabled: true, preferredPort: 70000 },
+          { enabled: true, preferredPort: 8765, accessMode: 'read-only' },
+        ],
+        [
+          { enabled: true, preferredPort: 8765.5 },
+          { enabled: true, preferredPort: 8765, accessMode: 'read-only' },
+        ],
+        [
+          { enabled: true, preferredPort: '9000' },
+          { enabled: true, preferredPort: 8765, accessMode: 'read-only' },
+        ],
+        [
+          { enabled: true, preferredPort: 9000, accessMode: 'write' },
+          { enabled: true, preferredPort: 9000, accessMode: 'read-only' },
+        ],
+        [
+          { enabled: true, preferredPort: 9000, accessMode: 'READ-WRITE' },
+          { enabled: true, preferredPort: 9000, accessMode: 'read-only' },
+        ],
+      ];
+
+      for (const [persisted, expected] of cases) {
+        writeSettingsFile({ mcp: persisted });
+        expect(loadProgramSettings('darwin').mcp, JSON.stringify(persisted)).toEqual(expected);
+      }
+    });
+
+    it('rejects invalid renderer payloads without changing the file', () => {
+      const settings = loadProgramSettings('darwin');
+      settings.mcp = MCP_EXPLICIT;
+      saveProgramSettings(settings, 'darwin');
+      const filePath = path.join(tempDir, 'program-settings.json');
+      const before = fs.readFileSync(filePath, 'utf8');
+
+      const cases: [unknown, string][] = [
+        [{ enabled: 'yes', preferredPort: 9000, accessMode: 'read-write' }, 'mcp.enabled'],
+        [{ enabled: true, preferredPort: 80, accessMode: 'read-write' }, 'mcp.preferredPort'],
+        [{ enabled: true, preferredPort: 9000, accessMode: 'write' }, 'mcp.accessMode'],
+      ];
+
+      for (const [mcp, expectedPath] of cases) {
+        const result = saveProgramSettings({ ...settings, mcp } as typeof settings, 'darwin');
+        expect(result.ok).toBe(false);
+        expect(result.validationIssues?.map((issue) => issue.path)).toContain(expectedPath);
+        expect(fs.readFileSync(filePath, 'utf8')).toBe(before);
+      }
+    });
+
+    it('keeps MCP preferences through narrow partial saves', () => {
+      const settings = loadProgramSettings('darwin');
+      settings.mcp = MCP_EXPLICIT;
+      saveProgramSettings(settings, 'darwin');
+
+      updatePlaybackPreferences({ followPlayback: false }, 'darwin');
+      syncLegacyRendererSettings({ recentFiles: ['/a.blue'] }, 'darwin');
+      clearSettingsCache();
+
+      expect(loadProgramSettings('darwin').mcp).toEqual(MCP_EXPLICIT);
+    });
+
+    it('resets the MCP panel to disabled and read-only', () => {
+      const settings = loadProgramSettings('darwin');
+      settings.mcp = MCP_EXPLICIT;
+      saveProgramSettings(settings, 'darwin');
+
+      expect(resetPanel('mcp', 'darwin').mcp).toEqual(MCP_DEFAULTS);
+    });
+
+    it('keeps credential material out of ordinary settings reads and writes', () => {
+      const filePath = writeSettingsFile({
+        mcp: {
+          enabled: true,
+          preferredPort: 9000,
+          accessMode: 'read-only',
+          credential: 'f'.repeat(64),
+          token: 'not-a-preference',
+        },
+      });
+
+      const settings = loadProgramSettings('darwin');
+      expect(Object.keys(settings.mcp).sort()).toEqual(['accessMode', 'enabled', 'preferredPort']);
+      expect(JSON.stringify(settings)).not.toContain('not-a-preference');
+      expect(settings.mcp).toEqual({ enabled: true, preferredPort: 9000, accessMode: 'read-only' });
+
+      settings.general.workDirectory = '/changed';
+      saveProgramSettings(settings, 'darwin');
+      expect(fs.readFileSync(filePath, 'utf8')).not.toContain('not-a-preference');
+    });
+
+    it('never copies MCP preferences into a new project', () => {
+      const settings = createDefaultProgramSettings('darwin');
+      settings.mcp = MCP_EXPLICIT;
+      const data = new BlueData();
+
+      applyProgramSettingsToNewProject(data, settings);
+
+      const xml = data.saveToString();
+      expect(xml).not.toContain('9000');
+      expect(xml).not.toContain('accessMode');
+      expect(xml).not.toContain('read-write');
+    });
   });
 });

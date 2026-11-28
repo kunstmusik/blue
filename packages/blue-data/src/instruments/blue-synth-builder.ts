@@ -409,6 +409,11 @@ export class BlueSynthBuilder extends Instrument {
     return [...this._parameters];
   }
 
+  /** Iterates stored parameters for read-only inspection without synchronizing widgets or copying the list. */
+  *iterateStoredParameters(): IterableIterator<Parameter> {
+    yield* this._parameters;
+  }
+
   private isParameterBackedWidget(widget: BSBWidget): boolean {
     return (
       widget instanceof BSBKnob ||

@@ -1,4 +1,5 @@
 import {
+  CSOUND_CONFINED_RENDER_FEATURE,
   CSOUND_IO_FEATURE,
   CSOUND_PERFORMANCE_FEATURE,
   CSOUND_UTILITY_FEATURE,
@@ -15,6 +16,7 @@ import {
 } from './engine-runtime';
 
 export {
+  CSOUND_CONFINED_RENDER_FEATURE,
   CSOUND_IO_FEATURE,
   CSOUND_PERFORMANCE_FEATURE,
   CSOUND_UTILITY_FEATURE,
@@ -149,9 +151,22 @@ export interface CsoundPerformanceExecutionRequest extends CsoundExecutionCommon
   kind: 'performance';
 }
 
+export interface CsoundConfinedRenderExecutionRequest {
+  kind: 'confined-render';
+  operationId: string;
+  rootPath: string;
+  rootDev: string;
+  rootIno: string;
+  outputFilename: string;
+  csdText: string;
+  args: string[];
+  csoundLibraryPath?: string | null;
+}
+
 export type CsoundExecutionRequest =
   | CsoundUtilityExecutionRequest
-  | CsoundPerformanceExecutionRequest;
+  | CsoundPerformanceExecutionRequest
+  | CsoundConfinedRenderExecutionRequest;
 
 export type CsoundExecutionState = 'completed' | 'failed' | 'cancelled';
 
@@ -343,12 +358,14 @@ export function normalizeCsoundIoQueryRequest(value: unknown): CsoundIoQueryRequ
 export function normalizeCsoundExecutionRequest(
   value: CsoundExecutionRequest,
 ): CsoundExecutionRequest {
-  if (!isObject(value) || (value.kind !== 'utility' && value.kind !== 'performance')) {
-    throw new Error('Csound execution kind must be utility or performance');
+  if (
+    !isObject(value) ||
+    (value.kind !== 'utility' && value.kind !== 'performance' && value.kind !== 'confined-render')
+  ) {
+    throw new Error('Csound execution kind must be utility, performance, or confined-render');
   }
   if (typeof value.operationId !== 'string')
     throw new Error('Csound execution operationId is required');
-  if (typeof value.cwd !== 'string') throw new Error('Csound execution cwd is required');
   const operationId = value.operationId.trim();
   if (!operationId) throw new Error('Csound execution operationId is required');
   if (
@@ -357,8 +374,41 @@ export function normalizeCsoundExecutionRequest(
   ) {
     throw new Error('Csound execution args must be NUL-free strings');
   }
-  if (!value.cwd.trim()) throw new Error('Csound execution cwd is required');
   const csoundLibraryPath = normalizePathValue(value.csoundLibraryPath, 'csoundLibraryPath');
+  if (value.kind === 'confined-render') {
+    if (
+      typeof value.rootPath !== 'string' ||
+      !value.rootPath.trim() ||
+      value.rootPath.includes('\0')
+    ) {
+      throw new Error('Confined render rootPath is required');
+    }
+    if (typeof value.rootDev !== 'string' || !/^\d+$/.test(value.rootDev)) {
+      throw new Error('Confined render rootDev must be an unsigned integer string');
+    }
+    if (typeof value.rootIno !== 'string' || !/^\d+$/.test(value.rootIno)) {
+      throw new Error('Confined render rootIno must be an unsigned integer string');
+    }
+    if (
+      typeof value.outputFilename !== 'string' ||
+      !value.outputFilename.trim() ||
+      value.outputFilename.includes('\0')
+    ) {
+      throw new Error('Confined render outputFilename is required');
+    }
+    if (typeof value.csdText !== 'string' || value.csdText.length === 0) {
+      throw new Error('Confined render csdText is required');
+    }
+    return {
+      ...value,
+      operationId,
+      csoundLibraryPath,
+      rootPath: value.rootPath.trim(),
+    };
+  }
+  if (typeof value.cwd !== 'string' || !value.cwd.trim()) {
+    throw new Error('Csound execution cwd is required');
+  }
   if (value.kind === 'utility') {
     const utilityName = value.utilityName.trim();
     if (
@@ -377,5 +427,7 @@ export function normalizeCsoundExecutionRequest(
 }
 
 export function requiredFeatureForExecution(kind: CsoundExecutionRequest['kind']): string {
-  return kind === 'utility' ? CSOUND_UTILITY_FEATURE : CSOUND_PERFORMANCE_FEATURE;
+  if (kind === 'utility') return CSOUND_UTILITY_FEATURE;
+  if (kind === 'confined-render') return CSOUND_CONFINED_RENDER_FEATURE;
+  return CSOUND_PERFORMANCE_FEATURE;
 }
